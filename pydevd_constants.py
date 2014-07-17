@@ -1,38 +1,33 @@
-from __future__ import nested_scopes
-
 '''
 This module holds the constants used for specifying the states of the debugger.
 '''
 
-
-DEBUG_TRACE_LEVEL = -1
-DEBUG_TRACE_MULTIPROCESSING = -1
-DEBUG_TRACE_BREAKPOINTS = -1
-
-
 STATE_RUN = 1
 STATE_SUSPEND = 2
+
+PYTHON_SUSPEND = 1
+DJANGO_SUSPEND = 2
 
 try:
     __setFalse = False
 except:
     import __builtin__
+
     setattr(__builtin__, 'True', 1)
     setattr(__builtin__, 'False', 0)
 
-# Break debugger, if conditional breakpoint raises an exception during evaluation
-SUSPEND_ON_BREAKPOINT_EXCEPTION = True
-
 class DebugInfoHolder:
-    #we have to put it here because it can be set through the command line (so, the
+    #we have to put it here because it can be set through the command line (so, the 
     #already imported references would not have it).
     DEBUG_RECORD_SOCKET_READS = False
+    DEBUG_TRACE_LEVEL = -1
+    DEBUG_TRACE_BREAKPOINTS = -1
 
-#Optimize with psyco? This gave a 50% speedup in the debugger in tests
+#Optimize with psyco? This gave a 50% speedup in the debugger in tests 
 USE_PSYCO_OPTIMIZATION = True
 
 #Hold a reference to the original _getframe (because psyco will change that as soon as it's imported)
-import sys  #Note: the sys import must be here anyways (others depend on it)
+import sys #Note: the sys import must be here anyways (others depend on it)
 try:
     GetFrame = sys._getframe
 except AttributeError:
@@ -44,21 +39,25 @@ except AttributeError:
 #this value was raised from 200 to 1000.
 MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 1000
 
-import threading
 import os
 
-_nextThreadIdLock = threading.Lock()
+import pydevd_vm_type
+
+IS_JYTHON = pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON
 
 #=======================================================================================================================
 # Python 3?
 #=======================================================================================================================
 IS_PY3K = False
 IS_PY27 = False
+IS_PY24 = False
 try:
     if sys.version_info[0] >= 3:
         IS_PY3K = True
     elif sys.version_info[0] == 2 and sys.version_info[1] == 7:
         IS_PY27 = True
+    elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
+        IS_PY24 = True
 except AttributeError:
     pass  #Not all versions have sys.version_info
 
@@ -70,6 +69,17 @@ except AttributeError:
         IS_64_BITS = struct.calcsize("P") * 8 > 32
     except:
         IS_64_BITS = False
+
+SUPPORT_GEVENT = os.getenv('GEVENT_SUPPORT', 'False') == 'True'
+
+USE_LIB_COPY = SUPPORT_GEVENT and not IS_PY3K and sys.version_info[1] >= 6
+
+if USE_LIB_COPY:
+    import _pydev_threading as threading
+else:
+    import threading
+
+_nextThreadIdLock = threading.Lock()
 
 #=======================================================================================================================
 # Jython?
@@ -118,10 +128,10 @@ try:
 except:
     def enumerate(lst):
         ret = []
-        i = 0
+        i=0
         for element in lst:
             ret.append((i, element))
-            i += 1
+            i+=1
         return ret
 
 #=======================================================================================================================
@@ -164,7 +174,8 @@ def GetThreadId(thread):
                 except AttributeError:
                     try:
                         #Jython does not have it!
-                        import java.lang.management.ManagementFactory  #@UnresolvedImport -- just for jython
+                        import java.lang.management.ManagementFactory #@UnresolvedImport -- just for jython
+
                         pid = java.lang.management.ManagementFactory.getRuntimeMXBean().getName()
                         pid = pid.replace('@', '_')
                     except:
@@ -251,4 +262,4 @@ def call_only_once(func):
 if __name__ == '__main__':
     if Null():
         sys.stdout.write('here\n')
-
+        

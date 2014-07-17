@@ -1,6 +1,9 @@
 import sys
-from pydevd_constants import *  #@UnusedWildImport
-import threading
+from pydevd_constants import * #@UnusedWildImport
+if USE_LIB_COPY:
+    import _pydev_threading as threading
+else:
+    import threading
 from pydevd_frame import PyDBFrame
 import weakref
 
@@ -13,8 +16,10 @@ class AbstractPyDBAdditionalThreadInfo:
         self.pydev_step_stop = None
         self.pydev_step_cmd = None
         self.pydev_notify_kill = False
-        self.pydev_force_stop_at_exception = None  #(current_frame, frame_id_to_frame)
-        self.conditional_breakpoint_exception = None
+        self.pydev_force_stop_at_exception = None
+        self.pydev_smart_step_stop = None
+        self.pydev_django_resolve_frame = None
+        self.is_tracing = False
 
         
     def IterFrames(self):
@@ -35,7 +40,7 @@ class PyDBAdditionalThreadInfoWithCurrentFramesSupport(AbstractPyDBAdditionalThr
     
     def IterFrames(self):
         #sys._current_frames(): dictionary with thread id -> topmost frame
-        return sys._current_frames().values()  #return a copy... don't know if it's changed if we did get an iterator
+        return sys._current_frames().values() #return a copy... don't know if it's changed if we did get an iterator
 
     #just create the db frame directly
     CreateDbFrame = PyDBFrame
@@ -113,7 +118,7 @@ class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(AbstractPyDBAdditional
                 try:
                     ret.append(weak_db_frame().frame)
                 except AttributeError:
-                    pass  #ok, garbage-collected already
+                    pass  # ok, garbage-collected already
             return ret
         finally:
             self._release_lock()
@@ -138,4 +143,4 @@ else:
     except:
         #If all fails, let's use the support without frames
         PyDBAdditionalThreadInfo = PyDBAdditionalThreadInfoWithoutCurrentFramesSupport
-    
+

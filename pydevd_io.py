@@ -23,11 +23,16 @@ class IORedirector:
         for r in self._redirectTo:
             r.flush()
 
+    def __getattr__(self, name):
+            for r in self._redirectTo:
+                if hasattr(r, name):
+                    return r.__getattribute__(name)
+            raise AttributeError(name)
 
 class IOBuf:
     '''This class works as a replacement for stdio and stderr.
     It is a buffer and when its contents are requested, it will erase what
-
+    
     it has so far so that the next return will not return the same contents again.
     '''
     def __init__(self):
@@ -39,7 +44,7 @@ class IOBuf:
         b = self.buflist
         self.buflist = [] #clear it
         return ''.join(b)
-
+    
     def write(self, s):
         if not IS_PY3K:
             if isinstance(s, unicode):

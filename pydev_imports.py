@@ -1,13 +1,20 @@
+from pydevd_constants import USE_LIB_COPY
 try:
     try:
-        import xmlrpclib
+        if USE_LIB_COPY:
+            import _pydev_xmlrpclib as xmlrpclib
+        else:
+            import xmlrpclib
     except ImportError:
         import xmlrpc.client as xmlrpclib
 except ImportError:
     import _pydev_xmlrpclib as xmlrpclib
 try:
     try:
-        from SimpleXMLRPCServer import SimpleXMLRPCServer
+        if USE_LIB_COPY:
+            from _pydev_SimpleXMLRPCServer import SimpleXMLRPCServer
+        else:
+            from SimpleXMLRPCServer import SimpleXMLRPCServer
     except ImportError:
         from xmlrpc.server import SimpleXMLRPCServer
 except ImportError:
@@ -21,13 +28,18 @@ try:
 except NameError:
     from _pydev_execfile import execfile
 try:
-    import Queue
+    if USE_LIB_COPY:
+        import _pydev_Queue as _queue
+    else:
+        import Queue as _queue
 except:
-    import queue as Queue #@UnresolvedImport
+    import queue as _queue #@UnresolvedImport
+
 try:
     from pydevd_exec import Exec
 except:
     from pydevd_exec2 import Exec
+
 try:
     from urllib import quote
 except:

@@ -41,18 +41,19 @@
 
 
 
-from pydevd_constants import *  #@UnusedWildImport
+from pydevd_constants import * #@UnusedWildImport
 import os.path
 import sys
 import traceback
 
-normcase = os.path.normcase
+
+
 basename = os.path.basename
 exists = os.path.exists
 join = os.path.join
 
 try:
-    rPath = os.path.realpath  #@UndefinedVariable
+    rPath = os.path.realpath #@UndefinedVariable
 except:
     # jython does not support os.path.realpath
     # realpath is a no-op on systems without islink support
@@ -64,16 +65,10 @@ except:
 PATHS_FROM_ECLIPSE_TO_PYTHON = []
 
 
-# Note: not using enumerate nor list comprehension because it may not be available in older python versions...
-i = 0
-for path in PATHS_FROM_ECLIPSE_TO_PYTHON[:]:
-    PATHS_FROM_ECLIPSE_TO_PYTHON[i] = (normcase(path[0]), normcase(path[1]))
-    i += 1
-
 #example:
 #PATHS_FROM_ECLIPSE_TO_PYTHON = [
-#  (r'd:\temp\temp_workspace_2\test_python\src\yyy\yyy', r'd:\temp\temp_workspace_2\test_python\src\hhh\xxx')
-#]
+#(normcase(r'd:\temp\temp_workspace_2\test_python\src\yyy\yyy'),
+# normcase(r'd:\temp\temp_workspace_2\test_python\src\hhh\xxx'))]
 
 DEBUG_CLIENT_SERVER_TRANSLATION = False
 
@@ -83,14 +78,74 @@ NORM_FILENAME_AND_BASE_CONTAINER = {}
 NORM_FILENAME_TO_SERVER_CONTAINER = {}
 NORM_FILENAME_TO_CLIENT_CONTAINER = {}
 
+
+pycharm_os = None
+
+def normcase(file):
+    global pycharm_os
+    if pycharm_os == 'UNIX':
+        return file
+    else:
+        return os.path.normcase(file)
+
+
 def _NormFile(filename):
     try:
         return NORM_FILENAME_CONTAINER[filename]
     except KeyError:
         r = normcase(rPath(filename))
         #cache it for fast access later
+        ind = r.find('.zip')
+        if ind == -1:
+            ind = r.find('.egg')
+        if ind != -1:
+            ind+=4
+            zip_path = r[:ind]
+            if r[ind] == "!":
+                ind+=1
+            inner_path = r[ind:]
+            if inner_path.startswith('/'):
+                inner_path = inner_path[1:]
+            r = zip_path + "/" + inner_path
+
         NORM_FILENAME_CONTAINER[filename] = r
         return r
+
+ZIP_SEARCH_CACHE = {}
+def exists(file):
+    if os.path.exists(file):
+        return file
+
+    ind = file.find('.zip')
+    if ind == -1:
+        ind = file.find('.egg')
+
+    if ind != -1:
+        ind+=4
+        zip_path = file[:ind]
+        if file[ind] == "!":
+            ind+=1
+        inner_path = file[ind:]
+        try:
+            zip = ZIP_SEARCH_CACHE[zip_path]
+        except KeyError:
+            try:
+                import zipfile
+                zip = zipfile.ZipFile(zip_path, 'r')
+                ZIP_SEARCH_CACHE[zip_path] = zip
+            except :
+                return None
+
+        try:
+            if inner_path.startswith('/'):
+                inner_path = inner_path[1:]
+
+            info = zip.getinfo(inner_path)
+
+            return zip_path + "/" + inner_path
+        except KeyError:
+            return None
+    return None
 
     
 #Now, let's do a quick test to see if we're working with a version of python that has no problems
@@ -106,11 +161,12 @@ try:
         sys.stderr.write('pydev debugger: The debugger may still function, but it will work slower and may miss breakpoints.\n')
         sys.stderr.write('pydev debugger: Related bug: http://bugs.python.org/issue1666807\n')
         sys.stderr.write('-------------------------------------------------------------------------------\n')
+        sys.stderr.flush()
         
         NORM_SEARCH_CACHE = {}
         
         initial_norm_file = _NormFile
-        def _NormFile(filename):  #Let's redefine _NormFile to work with paths that may be incorrect
+        def _NormFile(filename): #Let's redefine _NormFile to work with paths that may be incorrect
             try:
                 return NORM_SEARCH_CACHE[filename]
             except KeyError:
@@ -196,11 +252,11 @@ if PATHS_FROM_ECLIPSE_TO_PYTHON:
         except KeyError:
             #used to translate a path from the debug server to the client
             translated = _NormFile(filename)
-            for eclipse_prefix, pyhon_prefix in PATHS_FROM_ECLIPSE_TO_PYTHON:
-                if translated.startswith(pyhon_prefix):
+            for eclipse_prefix, python_prefix in PATHS_FROM_ECLIPSE_TO_PYTHON:
+                if translated.startswith(python_prefix):
                     if DEBUG_CLIENT_SERVER_TRANSLATION:
                         sys.stderr.write('pydev debugger: replacing to client: %s\n' % (translated,))
-                    translated = translated.replace(pyhon_prefix, eclipse_prefix)
+                    translated = translated.replace(python_prefix, eclipse_prefix)
                     if DEBUG_CLIENT_SERVER_TRANSLATION:
                         sys.stderr.write('pydev debugger: sent to client: %s\n' % (translated,))
                     break
@@ -221,11 +277,9 @@ else:
     #no translation step needed (just inline the calls)
     NormFileToClient = _NormFile
     NormFileToServer = _NormFile
-    
 
-def GetFilenameAndBase(frame):
-    #This one is just internal (so, does not need any kind of client-server translation)
-    f = frame.f_code.co_filename
+
+def GetFileNameAndBaseFromFile(f):
     try:
         return NORM_FILENAME_AND_BASE_CONTAINER[f]
     except KeyError:
@@ -233,3 +287,18 @@ def GetFilenameAndBase(frame):
         base = basename(filename)
         NORM_FILENAME_AND_BASE_CONTAINER[f] = filename, base
         return filename, base
+
+
+def GetFilenameAndBase(frame):
+    #This one is just internal (so, does not need any kind of client-server translation)
+    f = frame.f_code.co_filename
+    if f is not None and f.startswith('build/bdist.'):
+        # files from eggs in Python 2.7 have paths like build/bdist.linux-x86_64/egg/<path-inside-egg>
+        f = frame.f_globals['__file__']
+        if f.endswith('.pyc'):
+            f = f[:-1]
+    return GetFileNameAndBaseFromFile(f)
+
+def set_pycharm_os(os):
+    global pycharm_os
+    pycharm_os = os
