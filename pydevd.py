@@ -1,4 +1,7 @@
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
+from __future__ import nested_scopes # Jython 2.1 support
+from pydevd_constants import * # @UnusedWildImport
+
 import traceback
 
 from django_debug import DjangoLineBreakpoint
@@ -35,7 +38,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_ADD_DJANGO_EXCEPTION_BREAK, \
                          CMD_REMOVE_DJANGO_EXCEPTION_BREAK, \
                          CMD_SMART_STEP_INTO,\
-    InternalChangeVariable, \
+                         InternalChangeVariable, \
                          InternalGetCompletions, \
                          InternalEvaluateExpression, \
                          InternalConsoleExec, \
@@ -80,6 +83,10 @@ import os
 threadingEnumerate = threading.enumerate
 threadingCurrentThread = threading.currentThread
 
+try:
+    'dummy'.encode('utf-8') # Added because otherwise Jython 2.2.1 wasn't finding the encoding (if it wasn't loaded in the main thread).
+except:
+    pass
 
 DONT_TRACE = {
               # commonly used things from the stdlib that we don't want to trace
@@ -115,7 +122,8 @@ DONT_TRACE = {
               'pydevd_vars.py':1,
               'pydevd_vm_type.py':1,
               '_pydev_execfile.py':1,
-              '_pydev_jython_execfile.py':1
+              '_pydev_jython_execfile.py':1,
+              'pydevd_dont_trace.py':1,
             }
 
 if IS_PY3K:

@@ -388,7 +388,7 @@ def patch_stackless():
         _application_set_schedule_callback = callable
         return old
 
-    def get_schedule_callback(callable):
+    def get_schedule_callback():
         global _application_set_schedule_callback
         return _application_set_schedule_callback
 

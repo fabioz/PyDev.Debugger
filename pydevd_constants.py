@@ -128,10 +128,10 @@ try:
 except:
     def enumerate(lst):
         ret = []
-        i=0
+        i = 0
         for element in lst:
             ret.append((i, element))
-            i+=1
+            i += 1
         return ret
 
 #=======================================================================================================================
@@ -174,8 +174,7 @@ def GetThreadId(thread):
                 except AttributeError:
                     try:
                         #Jython does not have it!
-                        import java.lang.management.ManagementFactory #@UnresolvedImport -- just for jython
-
+                        import java.lang.management.ManagementFactory  #@UnresolvedImport -- just for jython
                         pid = java.lang.management.ManagementFactory.getRuntimeMXBean().getName()
                         pid = pid.replace('@', '_')
                     except:
@@ -262,4 +261,4 @@ def call_only_once(func):
 if __name__ == '__main__':
     if Null():
         sys.stdout.write('here\n')
-        
+
