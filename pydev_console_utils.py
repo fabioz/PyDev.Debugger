@@ -152,7 +152,7 @@ class BaseInterpreterInterface:
         self.interruptable = False
         self.exec_queue = _queue.Queue(0)
         self.buffer = None
-
+        
     def needMoreForCode(self, source):
         if hasattr(self.interpreter, 'is_complete'):
             return not self.interpreter.is_complete(source)
@@ -176,6 +176,9 @@ class BaseInterpreterInterface:
         
         return self.needMoreForCode(self.buffer.text)
 
+    def createStdIn(self):
+        return StdIn(self, self.host, self.client_port)
+
     def addExec(self, code_fragment):
         original_in = sys.stdin
         try:
@@ -194,7 +197,7 @@ class BaseInterpreterInterface:
 
         more = False
         try:
-            sys.stdin = StdIn(self, self.host, self.client_port)
+            sys.stdin = self.createStdIn()
             try:
                 if help is not None:
                     #This will enable the help() function to work.
