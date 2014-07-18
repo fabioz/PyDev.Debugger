@@ -1,0 +1,17 @@
+Done in the merge (started from the PyCharm version and bringing in things from PyDev):
+
+- Added modules which were unused in PyCharm but are used in PyDev.
+
+- execfile was upgraded to the PyDev version (it had errors with BOM in utf-8)
+
+
+Already reviewed:
+
+1. pycompletionserver.py
+2. pydev_console_utils.py
+3. pydev_ipython_console_011.py
+
+
+Need reviewing later:
+
+pydev_ipython_console_011.py:
