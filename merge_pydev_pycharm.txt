@@ -15,3 +15,21 @@ Already reviewed:
 Need reviewing later:
 
 pydev_ipython_console_011.py:
+pydevd_comm.py: renumbered to keep all commands from pydev/pycharm.
+
+
+Manual test:
+
+* Find referrers(objects that reference to) of an object instance
+* Support for IPython GUI event loop in console
+* Code autoreload in debugger/console
+* Ignore thrown/caught exceptions on source code
+
+* Django template debugging
+* Gevent debugging
+* Smart step into
+* Code block execution in python console
+* Possibility of interruption of a command, executing in python console
+* Collection of type information of arguments in debug mode
+* Ability to stop tracing
+* Ability to run debugger and console on remote interpreter
