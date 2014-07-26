@@ -555,6 +555,7 @@ class PyDB:
 
                 elif cmd_id == CMD_VERSION:
                     # response is version number
+                    # ide_os should be 'WINDOWS' or 'UNIX'.
                     local_version, ide_os = text.split('\t', 1)
 
                     pydevd_file_utils.set_ide_os(ide_os)

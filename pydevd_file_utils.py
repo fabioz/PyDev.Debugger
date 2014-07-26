@@ -70,14 +70,19 @@ PATHS_FROM_ECLIPSE_TO_PYTHON = []
 #]
 
 
+normcase = os_normcase # May be rebound on set_ide_os
+
 def set_ide_os(os):
     '''
     We need to set the IDE os because the host where the code is running may be
     actually different from the client (and the point is that we want the proper
     paths to translate from the client to the server).
     '''
-    global ide_os
-    ide_os = os
+    global normcase
+    if os == 'UNIX':
+        normcase = lambda f:f #Change to no-op if the client side is on unix/mac.
+    else:
+        normcase = os_normcase
 
     # After setting the ide OS, apply the normcase to the existing paths.
 
@@ -86,14 +91,6 @@ def set_ide_os(os):
     for path in PATHS_FROM_ECLIPSE_TO_PYTHON[:]:
         PATHS_FROM_ECLIPSE_TO_PYTHON[i] = (normcase(path[0]), normcase(path[1]))
         i += 1
-
-ide_os = None
-
-def normcase(filename):
-    if ide_os == 'UNIX':
-        return filename
-    else:
-        return os_normcase(filename)
 
 
 DEBUG_CLIENT_SERVER_TRANSLATION = False
