@@ -1,10 +1,9 @@
 import os
-import shlex
 import sys
 import pydev_log
 import traceback
 
-helpers = os.path.dirname(__file__).replace('\\', '/')
+pydev_src_dir = os.path.dirname(__file__)
 
 def is_python(path):
     if path.endswith("'") or path.endswith('"'):
@@ -38,7 +37,9 @@ def patch_args(args):
 
                 if port is not None:
                     new_args.extend(args)
-                    new_args[indC + 1] = "import sys; sys.path.append('%s'); import pydevd; pydevd.settrace(host='%s', port=%s, suspend=False); %s"%(helpers, host, port, args[indC + 1])
+                    new_args[indC + 1] = ("import sys; sys.path.append(r'%s'); import pydevd; "
+                        "pydevd.settrace(host='%s', port=%s, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); %s") % (
+                        pydev_src_dir, host, port, args[indC + 1])
                     return new_args
             else:
                 new_args.append(args[0])
@@ -52,14 +53,14 @@ def patch_args(args):
                 new_args.append(args[i])
             else:
                 break
-            i+=1
+            i += 1
 
         if args[i].endswith('pydevd.py'): #no need to add pydevd twice
             return args
 
         for x in sys.original_argv:
             if sys.platform == "win32" and not x.endswith('"'):
-                arg = '"%s"'%x
+                arg = '"%s"' % x
             else:
                 arg = x
             new_args.append(arg)
@@ -68,7 +69,7 @@ def patch_args(args):
 
         while i < len(args):
             new_args.append(args[i])
-            i+=1
+            i += 1
 
         return new_args
     except:
@@ -82,26 +83,101 @@ def args_to_str(args):
         if x.startswith('"') and x.endswith('"'):
             quoted_args.append(x)
         else:
+            x = x.replace('"', '\\"')
             quoted_args.append('"%s"' % x)
 
     return ' '.join(quoted_args)
 
-def remove_quotes(str):
-    if str.startswith('"') and str.endswith('"'):
-        return str[1:-1]
-    else:
-        return str
 
-def str_to_args(str):
-    return [remove_quotes(x) for x in shlex.split(str)]
+def str_to_args_windows(args):
+    # see http:#msdn.microsoft.com/en-us/library/a1y7w461.aspx
+    result = []
+
+    DEFAULT = 0
+    ARG = 1
+    IN_DOUBLE_QUOTE = 2
+
+    state = DEFAULT
+    backslashes = 0
+    buf = ''
+
+    args_len = len(args)
+    for i in range(args_len):
+        ch = args[i]
+        if (ch == '\\'):
+            backslashes+=1
+            continue
+        elif (backslashes != 0):
+            if ch == '"':
+                while backslashes >= 2:
+                    backslashes -= 2
+                    buf += '\\'
+                if (backslashes == 1):
+                    if (state == DEFAULT):
+                        state = ARG
+
+                    buf += '"'
+                    backslashes = 0
+                    continue
+                # else fall through to switch
+            else:
+                # false alarm, treat passed backslashes literally...
+                if (state == DEFAULT):
+                    state = ARG
+
+                while backslashes > 0:
+                    backslashes-=1
+                    buf += '\\'
+                # fall through to switch
+        if ch in (' ', '\t'):
+            if (state == DEFAULT):
+                # skip
+                continue
+            elif (state == ARG):
+                state = DEFAULT
+                result.append(buf)
+                buf = ''
+                continue
+
+        if state in (DEFAULT, ARG):
+            if ch == '"':
+                state = IN_DOUBLE_QUOTE
+            else:
+                state = ARG
+                buf += ch
+
+        elif state == IN_DOUBLE_QUOTE:
+            if ch == '"':
+                if (i + 1 < args_len and args[i + 1] == '"'):
+                    # Undocumented feature in Windows:
+                    # Two consecutive double quotes inside a double-quoted argument are interpreted as
+                    # a single double quote.
+                    buf += '"'
+                    i+=1
+                elif len(buf) == 0:
+                    # empty string on Windows platform. Account for bug in constructor of JDK's java.lang.ProcessImpl.
+                    result.append("\"\"")
+                    state = DEFAULT
+                else:
+                    state = ARG
+            else:
+                buf += ch
+
+        else:
+            raise RuntimeError('Illegal condition')
+
+    if len(buf) > 0 or state != DEFAULT:
+        result.append(buf)
+
+    return result
+
 
 def patch_arg_str_win(arg_str):
-    new_arg_str = arg_str.replace('\\', '/')
-    args = str_to_args(new_arg_str)
+    args = str_to_args_windows(arg_str)
     if not is_python(args[0]):
         return arg_str
     arg_str = args_to_str(patch_args(args))
-    pydev_log.debug("New args: %s"% arg_str)
+    pydev_log.debug("New args: %s" % arg_str)
     return arg_str
 
 def monkey_patch_module(module, funcname, create_func):
@@ -120,7 +196,8 @@ def warn_multiproc():
     import pydev_log
 
     pydev_log.error_once(
-        "New process is launching. Breakpoints won't work.\n To debug that process please enable 'Attach to subprocess automatically while debugging' option in the debugger settings.\n")
+        "pydev debugger: New process is launching (breakpoints won't work in the new process).\n"
+        "pydev debugger: To debug that process please enable 'Attach to subprocess automatically while debugging?' option in the debugger settings.\n")
 
 
 def create_warn_multiproc(original_name):

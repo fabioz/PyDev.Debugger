@@ -195,7 +195,7 @@ def killAllPydevThreads():
     for t in threads:
         if hasattr(t, 'doKillPydevThread'):
             t.doKillPydevThread()
-    
+
 
 #=======================================================================================================================
 # PyDBCheckAliveThread
@@ -253,8 +253,9 @@ class NewThreadStartup:
 
     def __call__(self):
         global_debugger = GetGlobalDebugger()
-        global_debugger.SetTrace(global_debugger.trace_dispatch)
-        self.original_func(*self.args, **self.kwargs)
+        if global_debugger is not None:
+            global_debugger.SetTrace(global_debugger.trace_dispatch)
+        return self.original_func(*self.args, **self.kwargs)
 
 thread.NewThreadStartup = NewThreadStartup
 
@@ -554,9 +555,9 @@ class PyDB:
 
                 elif cmd_id == CMD_VERSION:
                     # response is version number
-                    local_version, pycharm_os = text.split('\t', 1)
+                    local_version, ide_os = text.split('\t', 1)
 
-                    pydevd_file_utils.set_pycharm_os(pycharm_os)
+                    pydevd_file_utils.set_ide_os(ide_os)
 
                     cmd = self.cmdFactory.makeVersionMessage(seq)
 
@@ -1193,7 +1194,7 @@ class PyDB:
             sys.modules['__main__'] = m
             if hasattr(sys.modules['pydevd'], '__loader__'):
                 setattr(m, '__loader__', getattr(sys.modules['pydevd'], '__loader__'))
-                
+
             m.__file__ = file
             globals = m.__dict__
             try:
@@ -1254,7 +1255,8 @@ def processCommandLine(argv):
     setup['server'] = False
     setup['port'] = 0
     setup['file'] = ''
-    setup['multiproc'] = False
+    setup['multiproc'] = False #Used by PyCharm (reuses connection: ssh tunneling)
+    setup['multiprocess'] = False # Used by PyDev (creates new connection to ide)
     setup['save-signatures'] = False
     i = 0
     del argv[0]
@@ -1287,6 +1289,9 @@ def processCommandLine(argv):
         elif (argv[i] == '--multiproc'):
             del argv[i]
             setup['multiproc'] = True
+        elif (argv[i] == '--multiprocess'):
+            del argv[i]
+            setup['multiprocess'] = True
         elif (argv[i] == '--save-signatures'):
             del argv[i]
             setup['save-signatures'] = True
@@ -1500,24 +1505,24 @@ def stoptrace():
             threading.settrace(None) # for all future threads
         except:
             pass
-        
+
         try:
             thread.start_new_thread = _original_start_new_thread
             thread.start_new = _original_start_new_thread
         except:
             pass
-    
+
         debugger = GetGlobalDebugger()
-        
+
         if debugger:
             debugger.trace_dispatch = None
-    
+
             debugger.SetTraceForFrameAndParents(GetFrame(), False)
-        
+
             debugger.exiting()
-        
-            killAllPydevThreads()  
-        
+
+            killAllPydevThreads()
+
         connected = False
 
 class Dispatcher(object):
@@ -1552,21 +1557,28 @@ class DispatchReader(ReaderThread):
             self.killReceived = True
 
 
+DISPATCH_APPROACH_NEW_CONNECTION = 1 # Used by PyDev
+DISPATCH_APPROACH_EXISTING_CONNECTION = 2 # Used by PyCharm
+DISPATCH_APPROACH = DISPATCH_APPROACH_NEW_CONNECTION
+
 def dispatch():
-    argv = sys.original_argv[:]
-    setup = processCommandLine(argv)
+    setup = SetupHolder.setup
     host = setup['client']
     port = setup['port']
-    dispatcher = Dispatcher()
-    try:
-        dispatcher.connect(host, port)
-        port = dispatcher.port
-    finally:
-        dispatcher.close()
+    if DISPATCH_APPROACH == DISPATCH_APPROACH_EXISTING_CONNECTION:
+        dispatcher = Dispatcher()
+        try:
+            dispatcher.connect(host, port)
+            port = dispatcher.port
+        finally:
+            dispatcher.close()
     return host, port
 
 
 def settrace_forked():
+    '''
+    When creating a fork from a process in the debugger, we need to reset the whole debugger environment!
+    '''
     host, port = dispatch()
 
     import pydevd_tracing
@@ -1586,6 +1598,15 @@ def settrace_forked():
             overwrite_prev_trace=True,
             patch_multiprocessing=True,
             )
+
+#=======================================================================================================================
+# SetupHolder
+#=======================================================================================================================
+class SetupHolder:
+
+    setup = None
+
+
 #=======================================================================================================================
 # main
 #=======================================================================================================================
@@ -1594,6 +1615,7 @@ if __name__ == '__main__':
     try:
         sys.original_argv = sys.argv[:]
         setup = processCommandLine(sys.argv)
+        SetupHolder.setup = setup
     except ValueError:
         traceback.print_exc()
         usage(1)
@@ -1619,62 +1641,73 @@ if __name__ == '__main__':
     f = setup['file']
     fix_app_engine_debug = False
 
-    if setup['multiproc']:
-        pydev_log.debug("Started in multiproc mode\n")
 
-        dispatcher = Dispatcher()
-        try:
-            dispatcher.connect(host, port)
-            if dispatcher.port is not None:
-                port = dispatcher.port
-                pydev_log.debug("Received port %d\n" %port)
-                pydev_log.info("pydev debugger: process %d is connecting\n"% os.getpid())
-
-                try:
-                    pydev_monkey.patch_new_process_functions()
-                except:
-                    pydev_log.error("Error patching process functions\n")
-                    traceback.print_exc()
-            else:
-                pydev_log.error("pydev debugger: couldn't get port for new debug process\n")
-        finally:
-            dispatcher.close()
+    try:
+        import pydev_monkey
+    except:
+        pass #Not usable on jython 2.1
     else:
-        pydev_log.info("pydev debugger: starting\n")
+        if setup['multiprocess']: # PyDev
+            pydev_monkey.patch_new_process_functions()
 
-        try:
-            pydev_monkey.patch_new_process_functions_with_warning()
-        except:
-            pydev_log.error("Error patching process functions\n")
-            traceback.print_exc()
+        elif setup['multiproc']: # PyCharm
+            pydev_log.debug("Started in multiproc mode\n")
+            # Note: we're not inside method, so, no need for 'global'
+            DISPATCH_APPROACH = DISPATCH_APPROACH_EXISTING_CONNECTION
 
-        # Only do this patching if we're not running with multiprocess turned on.
-        if f.find('dev_appserver.py') != -1:
-            if os.path.basename(f).startswith('dev_appserver.py'):
-                appserver_dir = os.path.dirname(f)
-                version_file = os.path.join(appserver_dir, 'VERSION')
-                if os.path.exists(version_file):
+            dispatcher = Dispatcher()
+            try:
+                dispatcher.connect(host, port)
+                if dispatcher.port is not None:
+                    port = dispatcher.port
+                    pydev_log.debug("Received port %d\n" %port)
+                    pydev_log.info("pydev debugger: process %d is connecting\n"% os.getpid())
+
                     try:
-                        stream = open(version_file, 'r')
-                        try:
-                            for line in stream.read().splitlines():
-                                line = line.strip()
-                                if line.startswith('release:'):
-                                    line = line[8:].strip()
-                                    version = line.replace('"', '')
-                                    version = version.split('.')
-                                    if int(version[0]) > 1:
-                                        fix_app_engine_debug = True
-
-                                    elif int(version[0]) == 1:
-                                        if int(version[1]) >= 7:
-                                            # Only fix from 1.7 onwards
-                                            fix_app_engine_debug = True
-                                    break
-                        finally:
-                            stream.close()
+                        pydev_monkey.patch_new_process_functions()
                     except:
+                        pydev_log.error("Error patching process functions\n")
                         traceback.print_exc()
+                else:
+                    pydev_log.error("pydev debugger: couldn't get port for new debug process\n")
+            finally:
+                dispatcher.close()
+        else:
+            pydev_log.info("pydev debugger: starting\n")
+
+            try:
+                pydev_monkey.patch_new_process_functions_with_warning()
+            except:
+                pydev_log.error("Error patching process functions\n")
+                traceback.print_exc()
+
+            # Only do this patching if we're not running with multiprocess turned on.
+            if f.find('dev_appserver.py') != -1:
+                if os.path.basename(f).startswith('dev_appserver.py'):
+                    appserver_dir = os.path.dirname(f)
+                    version_file = os.path.join(appserver_dir, 'VERSION')
+                    if os.path.exists(version_file):
+                        try:
+                            stream = open(version_file, 'r')
+                            try:
+                                for line in stream.read().splitlines():
+                                    line = line.strip()
+                                    if line.startswith('release:'):
+                                        line = line[8:].strip()
+                                        version = line.replace('"', '')
+                                        version = version.split('.')
+                                        if int(version[0]) > 1:
+                                            fix_app_engine_debug = True
+
+                                        elif int(version[0]) == 1:
+                                            if int(version[1]) >= 7:
+                                                # Only fix from 1.7 onwards
+                                                fix_app_engine_debug = True
+                                        break
+                            finally:
+                                stream.close()
+                        except:
+                            traceback.print_exc()
 
     try:
         # In the default run (i.e.: run directly on debug mode), we try to patch stackless as soon as possible
@@ -1726,16 +1759,21 @@ if __name__ == '__main__':
             import pydevd_psyco_stub
             sys.modules['psyco'] = pydevd_psyco_stub
 
-    debugger = PyDB()
+        debugger = PyDB()
 
-    if setup['save-signatures']:
-        if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON:
-            sys.stderr.write("Collecting run-time type information is not supported for Jython\n")
-        else:
-            debugger.signature_factory = SignatureFactory()
+        if setup['save-signatures']:
+            if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON:
+                sys.stderr.write("Collecting run-time type information is not supported for Jython\n")
+            else:
+                debugger.signature_factory = SignatureFactory()
 
-    debugger.connect(host, port)
+        try:
+            debugger.connect(host, port)
+        except:
+            sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
+            traceback.print_exc()
+            sys.exit(1)
 
-    connected = True #Mark that we're connected when started from inside ide.
+        connected = True  # Mark that we're connected when started from inside ide.
 
-    debugger.run(setup['file'], None, None)
+        debugger.run(setup['file'], None, None)

@@ -60,11 +60,11 @@ class LineBreakpoint:
             sys.stderr.flush()
 
     def add(self, breakpoints, file, line, func_name):
-      self.trace(file, line, func_name)
+        self.trace(file, line, func_name)
 
-      breakDict = self.get_break_dict(breakpoints, file)
+        breakDict = self.get_break_dict(breakpoints, file)
 
-      breakDict[line] = self
+        breakDict[line] = self
 
 def get_exception_full_qname(exctype):
     if not exctype:
@@ -82,12 +82,12 @@ def get_exception_breakpoint(exctype, exceptions, notify_class):
     exc = None
     if exceptions is not None:
         for k, e in exceptions.items():
-          if e.notify[notify_class]:
-            if name == k:
-                return e
-            if (e.type is not None and issubclass(exctype, e.type)):
-                if exc is None or issubclass(e.type, exc.type):
-                    exc = e
+            if e.notify[notify_class]:
+                if name == k:
+                    return e
+                if (e.type is not None and issubclass(exctype, e.type)):
+                    if exc is None or issubclass(e.type, exc.type):
+                        exc = e
     return exc
 
 #=======================================================================================================================
@@ -107,7 +107,7 @@ def excepthook(exctype, value, tb):
     _original_excepthook(exctype, value, tb)
 
     if tb is None:  #sometimes it can be None, e.g. with GTK
-      return
+        return
 
     frames = []
 

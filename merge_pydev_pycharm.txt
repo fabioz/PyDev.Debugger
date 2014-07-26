@@ -4,6 +4,11 @@ Done in the merge (started from the PyCharm version and bringing in things from 
 
 - execfile was upgraded to the PyDev version (it had errors with BOM in utf-8)
 
+- pydevd_file_utils: automatically doing normcase
+
+- pyded: multiprocessing supporting 2 approaches (use new connection/use same connection)
+
+- pydev_monkey: fixes from PyDev to properly deal with windows command lines
 
 Already reviewed:
 
