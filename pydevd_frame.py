@@ -38,52 +38,52 @@ class PyDBFrame:
             (flag, frame) = self.shouldStopOnException(frame, event, arg)
 
             if flag:
-              self.handle_exception(frame, event, arg)
-              return self.trace_dispatch
+                self.handle_exception(frame, event, arg)
+                return self.trace_dispatch
 
         return self.trace_exception
 
     def shouldStopOnException(self, frame, event, arg):
-      mainDebugger, filename, info, thread = self._args
-      flag = False
+        mainDebugger, filename, info, thread = self._args
+        flag = False
 
-      if info.pydev_state != STATE_SUSPEND:  #and breakpoint is not None:
-          (exception, value, trace) = arg
+        if info.pydev_state != STATE_SUSPEND:  #and breakpoint is not None:
+            (exception, value, trace) = arg
 
-          if trace is not None: #on jython trace is None on the first event
-              exception_breakpoint = get_exception_breakpoint(exception, dict(mainDebugger.exception_set), NOTIFY_ALWAYS)
-              if exception_breakpoint is not None:
-                  if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):
-                      curr_func_name = frame.f_code.co_name
-                      add_exception_to_frame(frame, (exception, value, trace))
-                      self.setSuspend(thread, CMD_ADD_EXCEPTION_BREAK)
-                      thread.additionalInfo.message = exception_breakpoint.qname
-                      flag = True
-                  else:
-                      flag = False
-              else:
-                  try:
-                      if mainDebugger.django_exception_break and get_exception_name(exception) in ['VariableDoesNotExist', 'TemplateDoesNotExist', 'TemplateSyntaxError'] and just_raised(trace) and is_django_exception_break_context(frame):
-                          render_frame = find_django_render_frame(frame)
-                          if render_frame:
-                              suspend_frame = suspend_django(self, mainDebugger, thread, render_frame, CMD_ADD_DJANGO_EXCEPTION_BREAK)
+            if trace is not None: #on jython trace is None on the first event
+                exception_breakpoint = get_exception_breakpoint(exception, dict(mainDebugger.exception_set), NOTIFY_ALWAYS)
+                if exception_breakpoint is not None:
+                    if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):
+                        curr_func_name = frame.f_code.co_name
+                        add_exception_to_frame(frame, (exception, value, trace))
+                        self.setSuspend(thread, CMD_ADD_EXCEPTION_BREAK)
+                        thread.additionalInfo.message = exception_breakpoint.qname
+                        flag = True
+                    else:
+                        flag = False
+                else:
+                    try:
+                        if mainDebugger.django_exception_break and get_exception_name(exception) in ['VariableDoesNotExist', 'TemplateDoesNotExist', 'TemplateSyntaxError'] and just_raised(trace) and is_django_exception_break_context(frame):
+                            render_frame = find_django_render_frame(frame)
+                            if render_frame:
+                                suspend_frame = suspend_django(self, mainDebugger, thread, render_frame, CMD_ADD_DJANGO_EXCEPTION_BREAK)
 
-                              if suspend_frame:
-                                  add_exception_to_frame(suspend_frame, (exception, value, trace))
-                                  flag = True
-                                  thread.additionalInfo.message = 'VariableDoesNotExist'
-                                  suspend_frame.f_back = frame
-                                  frame = suspend_frame
-                  except :
-                      flag = False
+                                if suspend_frame:
+                                    add_exception_to_frame(suspend_frame, (exception, value, trace))
+                                    flag = True
+                                    thread.additionalInfo.message = 'VariableDoesNotExist'
+                                    suspend_frame.f_back = frame
+                                    frame = suspend_frame
+                    except :
+                        flag = False
 
-      return (flag, frame)
+        return (flag, frame)
 
     def handle_exception(self, frame, event, arg):
-      mainDebugger = self._args[0]
-      thread = self._args[3]
-      self.doWaitSuspend(thread, frame, event, arg)
-      mainDebugger.SetTraceForFrameAndParents(frame)
+        mainDebugger = self._args[0]
+        thread = self._args[3]
+        self.doWaitSuspend(thread, frame, event, arg)
+        mainDebugger.SetTraceForFrameAndParents(frame)
 
     def trace_dispatch(self, frame, event, arg):
         mainDebugger, filename, info, thread = self._args

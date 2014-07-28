@@ -20,6 +20,7 @@ threadingCurrentThread = threading.currentThread
 from pydevd_comm import GetGlobalDebugger
 
 class ExceptionBreakpoint:
+
     def __init__(self, qname, notify_always, notify_on_terminate):
         exctype = get_class(qname)
         self.qname = qname
@@ -40,29 +41,22 @@ class ExceptionBreakpoint:
         return self.qname
 
 class LineBreakpoint:
+
     def __init__(self, type, flag, condition, func_name, expression):
         self.type = type
         self.condition = condition
         self.func_name = func_name
         self.expression = expression
 
-    def get_break_dict(self, breakpoints, file):
-        if DictContains(breakpoints, file):
-            breakDict = breakpoints[file]
-        else:
-            breakDict = {}
-        breakpoints[file] = breakDict
-        return breakDict
-
-    def trace(self, file, line, func_name):
+    def add(self, breakpoints, file, line, func_name):
         if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
             pydev_log.debug('Added breakpoint:%s - line:%s - func_name:%s\n' % (file, line, func_name))
             sys.stderr.flush()
 
-    def add(self, breakpoints, file, line, func_name):
-        self.trace(file, line, func_name)
-
-        breakDict = self.get_break_dict(breakpoints, file)
+        if DictContains(breakpoints, file):
+            breakDict = breakpoints[file]
+        else:
+            breakDict = breakpoints[file] = {}
 
         breakDict[line] = self
 

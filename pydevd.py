@@ -556,7 +556,20 @@ class PyDB:
                 elif cmd_id == CMD_VERSION:
                     # response is version number
                     # ide_os should be 'WINDOWS' or 'UNIX'.
-                    local_version, ide_os = text.split('\t', 1)
+                    ide_os = 'WINDOWS'
+
+                    # Breakpoints can be grouped by 'LINE' or by 'ID'.
+                    breakpoints_by = 'LINE'
+
+                    splitted = text.split('\t', 1)
+                    if len(splitted) == 1:
+                        local_version = splitted
+
+                    elif len(splitted) == 2:
+                        local_version, ide_os = splitted
+
+                    elif len(splitted) == 3:
+                        local_version, ide_os, breakpoints_by = splitted
 
                     pydevd_file_utils.set_ide_os(ide_os)
 
