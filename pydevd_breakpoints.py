@@ -42,23 +42,11 @@ class ExceptionBreakpoint:
 
 class LineBreakpoint:
 
-    def __init__(self, type, flag, condition, func_name, expression):
-        self.type = type
+    def __init__(self, line, condition, func_name, expression):
+        self.line = line
         self.condition = condition
         self.func_name = func_name
         self.expression = expression
-
-    def add(self, breakpoints, file, line, func_name):
-        if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
-            pydev_log.debug('Added breakpoint:%s - line:%s - func_name:%s\n' % (file, line, func_name))
-            sys.stderr.flush()
-
-        if DictContains(breakpoints, file):
-            breakDict = breakpoints[file]
-        else:
-            breakDict = breakpoints[file] = {}
-
-        breakDict[line] = self
 
 def get_exception_full_qname(exctype):
     if not exctype:

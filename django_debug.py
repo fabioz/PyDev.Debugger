@@ -9,18 +9,9 @@ import traceback
 
 class DjangoLineBreakpoint(LineBreakpoint):
 
-    def __init__(self, type, file, line, flag, condition, func_name, expression):
+    def __init__(self, file, line, condition, func_name, expression):
         self.file = file
-        self.line = line
-        LineBreakpoint.__init__(self, type, flag, condition, func_name, expression)
-
-    # Note: __eq__ was defined without __hash__ (which was wrong)
-    # Now, it seems that __eq__ wasn't used at all for the django line breakpoint
-    # so, removed the method (leaving default identity-based implementation).
-    # def __eq__(self, other):
-    #     if not isinstance(other, DjangoLineBreakpoint):
-    #         return False
-    #     return self.file == other.file and self.line == other.line
+        LineBreakpoint.__init__(self, line, condition, func_name, expression)
 
     def is_triggered(self, frame):
         file = get_template_file_name(frame)

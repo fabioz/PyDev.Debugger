@@ -23,7 +23,35 @@ pydev_ipython_console_011.py:
 pydevd_comm.py: renumbered to keep all commands from pydev/pycharm.
 
 
+Things to be fixed in PyCharm:
+--------------------------------
+
+1. CMD_VERSION now should receive that it wants breakpoints by ID (and it
+    should give a breakpoint id which should be used to remove it later).
+
+2. Setting breakpoint: the func_name is not being properly passed (and as such,
+    PyCharm debugging is slower than it should be).
+
+    Note that it works passing 'None', but the func_name should be given when possible.
+
+    I.e.:
+
+    class MyClass(object):
+        def __init__(self):
+            print('here') # Break here: '__init__' as func_name
+            print(a)
+
+        def bar(self):
+            print('bar') # Break here: 'bar' as func_name
+
+3. Note (may not need to change anything):
+    Removed support for removing breakpoint without knowing its type (i.e.:
+    remove breakpoint tried to remove a breakpoint if the type wasn't
+    python-line nor django-line, now, it'll give an exception).
+
+
 Manual test:
+---------------
 
 * Find referrers(objects that reference to) of an object instance
 * Support for IPython GUI event loop in console

@@ -313,8 +313,13 @@ class PyDB:
         self.quitting = None
         self.cmdFactory = NetCommandFactory()
         self._cmd_queue = {}  # the hash of Queues. Key is thread id, value is thread
+
         self.breakpoints = {}
         self.django_breakpoints = {}
+
+        self.file_to_id_to_line_breakpoint = {}
+        self.file_to_id_to_django_breakpoint = {}
+
         self.exception_set = {}
         self.always_exception_set = set()
         self.django_exception_break = {}
@@ -334,6 +339,7 @@ class PyDB:
         #find that thread alive anymore, we must remove it from this list and make the java side know that the thread
         #was killed.
         self._running_thread_ids = {}
+        self._set_breakpoints_with_id = False
 
     def haveAliveThreads(self):
         for t in threadingEnumerate():
@@ -530,6 +536,14 @@ class PyDB:
             additionalInfo = None
 
 
+    def consolidate_breakpoints(self, file, id_to_breakpoint, breakpoints):
+        break_dict = {}
+        for breakpoint_id, pybreakpoint in id_to_breakpoint.items():
+            break_dict[pybreakpoint.line] = pybreakpoint
+
+        breakpoints[file] = break_dict
+
+
     def processNetCommand(self, cmd_id, seq, text):
         '''Processes a command received from the Java side
 
@@ -561,15 +575,20 @@ class PyDB:
                     # Breakpoints can be grouped by 'LINE' or by 'ID'.
                     breakpoints_by = 'LINE'
 
-                    splitted = text.split('\t', 1)
+                    splitted = text.split('\t')
                     if len(splitted) == 1:
-                        local_version = splitted
+                        _local_version = splitted
 
                     elif len(splitted) == 2:
-                        local_version, ide_os = splitted
+                        _local_version, ide_os = splitted
 
                     elif len(splitted) == 3:
-                        local_version, ide_os, breakpoints_by = splitted
+                        _local_version, ide_os, breakpoints_by = splitted
+
+                    if breakpoints_by == 'ID':
+                        self._set_breakpoints_with_id = True
+                    else:
+                        self._set_breakpoints_with_id = False
 
                     pydevd_file_utils.set_ide_os(ide_os)
 
@@ -707,26 +726,42 @@ class PyDB:
 
                 elif cmd_id == CMD_SET_BREAK:
                     # func name: 'None': match anything. Empty: match global, specified: only method context.
-
                     # command to add some breakpoint.
                     # text is file\tline. Add to breakpoints dictionary
-                    type, file, line, condition, expression = text.split('\t', 4)
+                    if self._set_breakpoints_with_id:
+                        breakpoint_id, type, file, line, func_name, condition, expression = text.split('\t', 6)
 
-                    if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
-                        file = file.encode(file_system_encoding)
-
-                    if condition.startswith('**FUNC**'):
-                        func_name, condition = condition.split('\t', 1)
+                        breakpoint_id = int(breakpoint_id)
+                        line = int(line)
 
                         # We must restore new lines and tabs as done in
                         # AbstractDebugTarget.breakpointAdded
                         condition = condition.replace("@_@NEW_LINE_CHAR@_@", '\n').\
                             replace("@_@TAB_CHAR@_@", '\t').strip()
 
-                        func_name = func_name[8:]
+                        expression = expression.replace("@_@NEW_LINE_CHAR@_@", '\n').\
+                            replace("@_@TAB_CHAR@_@", '\t').strip()
                     else:
-                        func_name = 'None'  # Match anything if not specified.
+                        #Note: this else should be removed after PyCharm migrates to setting
+                        #breakpoints by id (and ideally also provides func_name).
+                        type, file, line, condition, expression = text.split('\t', 4)
+                        # If we don't have an id given for each breakpoint, consider
+                        # the id to be the line.
+                        breakpoint_id = line = int(line)
+                        if condition.startswith('**FUNC**'):
+                            func_name, condition = condition.split('\t', 1)
 
+                            # We must restore new lines and tabs as done in
+                            # AbstractDebugTarget.breakpointAdded
+                            condition = condition.replace("@_@NEW_LINE_CHAR@_@", '\n').\
+                                replace("@_@TAB_CHAR@_@", '\t').strip()
+
+                            func_name = func_name[8:]
+                        else:
+                            func_name = 'None'  # Match anything if not specified.
+
+                    if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
+                        file = file.encode(file_system_encoding)
 
                     file = NormFileToServer(file)
 
@@ -735,7 +770,6 @@ class PyDB:
                             ' to file that does not exist: %s (will have no effect)\n' % (file,))
                         sys.stderr.flush()
 
-                    line = int(line)
 
                     if len(condition) <= 0 or condition is None or condition == "None":
                         condition = None
@@ -744,20 +778,34 @@ class PyDB:
                         expression = None
 
                     if type == 'python-line':
-                        breakpoint = LineBreakpoint(type, True, condition, func_name, expression)
-                        breakpoint.add(self.breakpoints, file, line, func_name)
+                        breakpoint = LineBreakpoint(line, condition, func_name, expression)
+                        breakpoints = self.breakpoints
+                        file_to_id_to_breakpoint = self.file_to_id_to_line_breakpoint
                     elif type == 'django-line':
-                        breakpoint = DjangoLineBreakpoint(type, file, line, True, condition, func_name, expression)
-                        breakpoint.add(self.django_breakpoints, file, line, func_name)
+                        breakpoint = DjangoLineBreakpoint(file, line, condition, func_name, expression)
+                        breakpoints = self.django_breakpoints
+                        file_to_id_to_breakpoint = self.file_to_id_to_django_breakpoint
                     else:
                         raise NameError(type)
+
+                    if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
+                        pydev_log.debug('Added breakpoint:%s - line:%s - func_name:%s\n' % (file, line, func_name.encode('utf-8')))
+                        sys.stderr.flush()
+
+                    if DictContains(file_to_id_to_breakpoint, file):
+                        id_to_pybreakpoint = file_to_id_to_breakpoint[file]
+                    else:
+                        id_to_pybreakpoint = file_to_id_to_breakpoint[file] = {}
+
+                    id_to_pybreakpoint[line] = breakpoint
+                    self.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
 
                     self.setTracingForUntracedContexts()
 
                 elif cmd_id == CMD_REMOVE_BREAK:
                     #command to remove some breakpoint
-                    #text is file\tline. Remove from breakpoints dictionary
-                    type, file, line = text.split('\t', 2)
+                    #text is type\file\tid. Remove from breakpoints dictionary
+                    breakpoint_type, file, breakpoint_id = text.split('\t', 2)
 
                     if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
                         file = file.encode(file_system_encoding)
@@ -765,41 +813,33 @@ class PyDB:
                     file = NormFileToServer(file)
 
                     try:
-                        line = int(line)
+                        breakpoint_id = int(breakpoint_id)
                     except ValueError:
                         pass
 
                     else:
-                        found = False
+                        if breakpoint_type == 'python-line':
+                            breakpoints = self.breakpoints
+                            file_to_id_to_breakpoint = self.file_to_id_to_line_breakpoint
+                        elif breakpoint_type == 'django-line':
+                            breakpoints = self.django_breakpoints
+                            file_to_id_to_breakpoint = self.file_to_id_to_django_breakpoint
+                        else:
+                            raise NameError(breakpoint_type)
+
                         try:
-                            if type == 'django-line':
-                                del self.django_breakpoints[file][line]
-                            elif type == 'python-line':
-                                del self.breakpoints[file][line] #remove the breakpoint in that line
-                            else:
-                                try:
-                                    del self.django_breakpoints[file][line]
-                                    found = True
-                                except:
-                                    pass
-                                try:
-                                    del self.breakpoints[file][line] #remove the breakpoint in that line
-                                    found = True
-                                except:
-                                    pass
-
+                            id_to_pybreakpoint = file_to_id_to_breakpoint[file]
                             if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
-                                sys.stderr.write('Removed breakpoint:%s - %s\n' % (file, line))
-                                sys.stderr.flush()
+                                existing = id_to_pybreakpoint[breakpoint_id]
+                                sys.stderr.write('Removed breakpoint:%s - line:%s - func_name:%s (id: %s)\n' % (
+                                    file, existing.line, existing.func_name.encode('utf-8'), breakpoint_id))
+
+                            del id_to_pybreakpoint[breakpoint_id]
+                            self.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
                         except KeyError:
-                            found = False
-
-                        if not found:
-                            #ok, it's not there...
                             if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
-                                #Sometimes, when adding a breakpoint, it adds a remove command before (don't really know why)
-                                sys.stderr.write("breakpoint not found: %s - %s\n" % (file, line))
-                                sys.stderr.flush()
+                                sys.stderr.write("breakpoint not found: %s id: %s\n" % (file, breakpoint_id))
+
 
                 elif cmd_id == CMD_EVALUATE_EXPRESSION or cmd_id == CMD_EXEC_EXPRESSION:
                     #command to evaluate the given expression
@@ -1148,18 +1188,18 @@ class PyDB:
 
     def update_trace(self, frame, dispatch_func, overwrite_prev):
         if frame.f_trace is None:
-          frame.f_trace = dispatch_func
+            frame.f_trace = dispatch_func
         else:
-          if overwrite_prev:
-              frame.f_trace = dispatch_func
-          else:
-              try:
-                  #If it's the trace_exception, go back to the frame trace dispatch!
-                  if frame.f_trace.im_func.__name__ == 'trace_exception':
-                      frame.f_trace = frame.f_trace.im_self.trace_dispatch
-              except AttributeError:
-                  pass
-              frame = frame.f_back
+            if overwrite_prev:
+                frame.f_trace = dispatch_func
+            else:
+                try:
+                    #If it's the trace_exception, go back to the frame trace dispatch!
+                    if frame.f_trace.im_func.__name__ == 'trace_exception':
+                        frame.f_trace = frame.f_trace.im_self.trace_dispatch
+                except AttributeError:
+                    pass
+                frame = frame.f_back
         del frame
 
     def prepareToRun(self):
