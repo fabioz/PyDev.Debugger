@@ -58,7 +58,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          PydevdLog, \
                          StartClient, \
                          StartServer, \
-                         InternalSetNextStatementThread, ReloadCodeCommand
+                         InternalSetNextStatementThread, ReloadCodeCommand, ID_TO_MEANING
 from pydevd_file_utils import NormFileToServer, GetFilenameAndBase
 import pydevd_file_utils
 import pydevd_vars
@@ -559,6 +559,7 @@ class PyDB:
         it may be worth refactoring it (actually, reordering the ifs so that the ones used mostly come before
         probably will give better performance).
         '''
+        #print ID_TO_MEANING[str(cmd_id)], repr(text)
 
         self._main_lock.acquire()
         try:

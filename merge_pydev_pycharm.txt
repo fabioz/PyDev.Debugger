@@ -12,10 +12,11 @@ Done in the merge (started from the PyCharm version and bringing in things from 
 
 Already reviewed:
 
-1. pycompletionserver.py
-2. pydev_console_utils.py
-3. pydev_ipython_console_011.py
-4. pydev_xml.py
+. pycompletionserver.py
+. pydev_console_utils.py
+. pydev_ipython_console_011.py
+. pydev_xml.py
+. pydevd_tracing.py
 
 
 Need reviewing later:
