@@ -47,16 +47,6 @@ class VariableError(RuntimeError): pass
 
 class FrameNotFoundError(RuntimeError): pass
 
-
-if USE_PSYCO_OPTIMIZATION:
-    try:
-        import psyco
-
-        varToXML = psyco.proxy(varToXML)
-    except ImportError:
-        if hasattr(sys, 'exc_clear'): #jython does not have it
-            sys.exc_clear() #don't keep the traceback -- clients don't want to see it
-
 def iterFrames(initialFrame):
     '''NO-YIELD VERSION: Iterates through all the frames starting at the specified frame (which will be the first returned item)'''
     #cannot use yield
@@ -173,7 +163,7 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
         return {}
 
     attrList = attrs.split('\t')
-    
+
     if scope == "GLOBAL":
         var = frame.f_globals
         del attrList[0] # globals are special, and they get a single dummy unused attribute
@@ -194,22 +184,22 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
         return resolver.getDictionary(var)
     except:
         traceback.print_exc()
-        
-        
+
+
 def resolveVar(var, attrs):
     attrList = attrs.split('\t')
-    
+
     for k in attrList:
         type, _typeName, resolver = getType(var)
-        
+
         var = resolver.resolve(var, k)
-    
+
     try:
         type, _typeName, resolver = getType(var)
         return resolver.getDictionary(var)
     except:
         traceback.print_exc()
-    
+
 
 def evaluateExpression(thread_id, frame_id, expression, doExec):
     '''returns the result of the evaluated expression

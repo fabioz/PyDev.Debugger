@@ -70,16 +70,19 @@ def get_referrer_info(searched_obj):
         try:
             if searched_obj is None:
                 ret = ['<xml>\n']
-        
+
                 ret.append('<for>\n')
-                ret.append(pydevd_vars.varToXML(searched_obj, 'Skipping getting referrers for None', ' id="%s"' % (id(searched_obj),)))
+                ret.append(pydevd_vars.varToXML(
+                    searched_obj,
+                    'Skipping getting referrers for None',
+                    additionalInXml=' id="%s"' % (id(searched_obj),)))
                 ret.append('</for>\n')
                 ret.append('</xml>')
                 ret = ''.join(ret)
                 return ret
-            
+
             obj_id = id(searched_obj)
-    
+
             try:
                 if DEBUG:
                     sys.stderr.write('Getting referrers...\n')
@@ -88,55 +91,60 @@ def get_referrer_info(searched_obj):
             except:
                 traceback.print_exc()
                 ret = ['<xml>\n']
-        
+
                 ret.append('<for>\n')
-                ret.append(pydevd_vars.varToXML(searched_obj, 'Exception raised while trying to get_referrers.', ' id="%s"' % (id(searched_obj),)))
+                ret.append(pydevd_vars.varToXML(
+                    searched_obj,
+                    'Exception raised while trying to get_referrers.',
+                    additionalInXml=' id="%s"' % (id(searched_obj),)))
                 ret.append('</for>\n')
                 ret.append('</xml>')
                 ret = ''.join(ret)
                 return ret
-    
+
             if DEBUG:
                 sys.stderr.write('Found %s referrers.\n' % (len(referrers),))
-                
+
             curr_frame = sys._getframe()
             frame_type = type(curr_frame)
-    
+
             #Ignore this frame and any caller frame of this frame
-    
+
             ignore_frames = {}  #Should be a set, but it's not available on all python versions.
             while curr_frame is not None:
                 if basename(curr_frame.f_code.co_filename).startswith('pydev'):
                     ignore_frames[curr_frame] = 1
                 curr_frame = curr_frame.f_back
-    
-    
+
+
             ret = ['<xml>\n']
-    
+
             ret.append('<for>\n')
             if DEBUG:
                 sys.stderr.write('Searching Referrers of obj with id="%s"\n' % (obj_id,))
-                
-            ret.append(pydevd_vars.varToXML(searched_obj, 'Referrers of obj with id="%s"' % (obj_id,)))
+
+            ret.append(pydevd_vars.varToXML(
+                searched_obj,
+                'Referrers of obj with id="%s"' % (obj_id,)))
             ret.append('</for>\n')
-    
+
             all_objects = None
-    
+
             for r in referrers:
                 try:
                     if DictContains(ignore_frames, r):
                         continue  #Skip the references we may add ourselves
                 except:
                     pass  #Ok: unhashable type checked...
-    
+
                 if r is referrers:
                     continue
-    
+
                 r_type = type(r)
                 r_id = str(id(r))
-    
+
                 representation = str(r_type)
-    
+
                 found_as = ''
                 if r_type == frame_type:
                     if DEBUG:
@@ -145,11 +153,11 @@ def get_referrer_info(searched_obj):
                         if val is searched_obj:
                             found_as = key
                             break
-    
+
                 elif r_type == dict:
                     if DEBUG:
                         sys.stderr.write('Found dict referrer: %r\n' % (r,))
-                        
+
                     # Try to check if it's a value in the dict (and under which key it was found)
                     for key, val in r.items():
                         if val is searched_obj:
@@ -157,13 +165,13 @@ def get_referrer_info(searched_obj):
                             if DEBUG:
                                 sys.stderr.write('    Found as %r in dict\n' % (found_as,))
                             break
-    
+
                     #Ok, there's one annoying thing: many times we find it in a dict from an instance,
                     #but with this we don't directly have the class, only the dict, so, to workaround that
                     #we iterate over all reachable objects ad check if one of those has the given dict.
                     if all_objects is None:
                         all_objects = gc.get_objects()
-    
+
                     for x in all_objects:
                         try:
                             if getattr(x, '__dict__', None) is r:
@@ -174,11 +182,11 @@ def get_referrer_info(searched_obj):
                                 break
                         except:
                             pass  #Just ignore any error here (i.e.: ReferenceError, etc.)
-    
+
                 elif r_type in (tuple, list):
                     if DEBUG:
                         sys.stderr.write('Found tuple referrer: %r\n' % (r,))
-    
+
                     #Don't use enumerate() because not all Python versions have it.
                     i = 0
                     for x in r:
@@ -188,15 +196,18 @@ def get_referrer_info(searched_obj):
                                 sys.stderr.write('    Found as %s in tuple: \n' % (found_as,))
                             break
                         i += 1
-    
+
                 if found_as:
                     found_as = ' found_as="%s"' % (pydevd_vars.makeValidXmlValue(found_as),)
-    
-                ret.append(pydevd_vars.varToXML(r, representation, ' id="%s"%s' % (r_id, found_as)))
+
+                ret.append(pydevd_vars.varToXML(
+                    r,
+                    representation,
+                    additionalInXml=' id="%s"%s' % (r_id, found_as)))
         finally:
             if DEBUG:
                 sys.stderr.write('Done searching for references.\n')
-                
+
             #If we have any exceptions, don't keep dangling references from this frame to any of our objects.
             all_objects = None
             referrers = None
@@ -212,12 +223,15 @@ def get_referrer_info(searched_obj):
         ret = ['<xml>\n']
 
         ret.append('<for>\n')
-        ret.append(pydevd_vars.varToXML(searched_obj, 'Error getting referrers for:', ' id="%s"' % (id(searched_obj),)))
+        ret.append(pydevd_vars.varToXML(
+            searched_obj,
+            'Error getting referrers for:',
+            additionalInXml=' id="%s"' % (id(searched_obj),)))
         ret.append('</for>\n')
         ret.append('</xml>')
         ret = ''.join(ret)
         return ret
-    
+
     ret.append('</xml>')
     ret = ''.join(ret)
     return ret

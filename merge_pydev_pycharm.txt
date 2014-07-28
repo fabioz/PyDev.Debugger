@@ -15,6 +15,7 @@ Already reviewed:
 1. pycompletionserver.py
 2. pydev_console_utils.py
 3. pydev_ipython_console_011.py
+4. pydev_xml.py
 
 
 Need reviewing later:
