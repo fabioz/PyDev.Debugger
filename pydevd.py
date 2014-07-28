@@ -758,7 +758,12 @@ class PyDB:
                     #command to remove some breakpoint
                     #text is file\tline. Remove from breakpoints dictionary
                     type, file, line = text.split('\t', 2)
+
+                    if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
+                        file = file.encode(file_system_encoding)
+
                     file = NormFileToServer(file)
+
                     try:
                         line = int(line)
                     except ValueError:
