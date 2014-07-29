@@ -51,7 +51,7 @@ class PyDBFrame:
             (exception, value, trace) = arg
 
             if trace is not None: #on jython trace is None on the first event
-                exception_breakpoint = get_exception_breakpoint(exception, dict(mainDebugger.exception_set), NOTIFY_ALWAYS)
+                exception_breakpoint = get_exception_breakpoint(exception, dict(mainDebugger.break_on_caught_exceptions), NOTIFY_ALWAYS)
                 if exception_breakpoint is not None:
                     if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):
                         curr_func_name = frame.f_code.co_name
@@ -130,7 +130,7 @@ class PyDBFrame:
                 #so, that's why the additional checks are there.
                 if not breakpoints_for_file:
                     if can_skip:
-                        if mainDebugger.always_exception_set or mainDebugger.django_exception_break:
+                        if mainDebugger.break_on_caught_exceptions or mainDebugger.django_exception_break:
                             return self.trace_exception
                         else:
                             return None
@@ -253,7 +253,7 @@ class PyDBFrame:
                             curr_func_name = ''
 
                         if curr_func_name == info.pydev_func_name:
-                                stop = True
+                            stop = True
 
                 elif info.pydev_step_cmd == CMD_STEP_RETURN:
                     stop = event == 'return' and info.pydev_step_stop is frame

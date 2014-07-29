@@ -17,13 +17,13 @@ except:
     setattr(__builtin__, 'False', 0)
 
 class DebugInfoHolder:
-    #we have to put it here because it can be set through the command line (so, the 
+    #we have to put it here because it can be set through the command line (so, the
     #already imported references would not have it).
     DEBUG_RECORD_SOCKET_READS = False
     DEBUG_TRACE_LEVEL = -1
     DEBUG_TRACE_BREAKPOINTS = -1
 
-#Optimize with psyco? This gave a 50% speedup in the debugger in tests 
+#Optimize with psyco? This gave a 50% speedup in the debugger in tests
 USE_PSYCO_OPTIMIZATION = True
 
 #Hold a reference to the original _getframe (because psyco will change that as soon as it's imported)
@@ -110,6 +110,12 @@ except:
         except:
             return default
 
+
+if IS_PY3K:
+    def DictKeys(d):
+        return list(d.keys())
+else:
+    DictKeys = dict.keys
 
 try:
     xrange

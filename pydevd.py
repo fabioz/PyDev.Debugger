@@ -10,6 +10,7 @@ from pydevd_frame import add_exception_to_frame
 import pydev_imports
 from pydevd_breakpoints import * #@UnusedWildImport
 import fix_getpass
+import pydevd_import_class
 from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_EVALUATE_EXPRESSION, \
                          CMD_EXEC_EXPRESSION, \
@@ -58,7 +59,10 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          PydevdLog, \
                          StartClient, \
                          StartServer, \
-                         InternalSetNextStatementThread, ReloadCodeCommand, ID_TO_MEANING
+                         InternalSetNextStatementThread, \
+                         ReloadCodeCommand, \
+                         ID_TO_MEANING,\
+                         CMD_SET_PY_EXCEPTION
 from pydevd_file_utils import NormFileToServer, GetFilenameAndBase
 import pydevd_file_utils
 import pydevd_vars
@@ -320,8 +324,8 @@ class PyDB:
         self.file_to_id_to_line_breakpoint = {}
         self.file_to_id_to_django_breakpoint = {}
 
-        self.exception_set = {}
-        self.always_exception_set = set()
+        self.break_on_uncaught_exceptions = {}
+        self.break_on_caught_exceptions = {}
         self.django_exception_break = {}
         self.readyToRun = False
         self._main_lock = threading.Lock()
@@ -330,7 +334,6 @@ class PyDB:
         CustomFramesContainer._py_db_command_thread_event = self._py_db_command_thread_event
         self._finishDebuggingSession = False
         self._terminationEventSent = False
-        self.force_post_mortem_stop = 0
         self.signature_factory = None
         self.SetTrace = pydevd_tracing.SetTrace
 
@@ -542,6 +545,46 @@ class PyDB:
             break_dict[pybreakpoint.line] = pybreakpoint
 
         breakpoints[file] = break_dict
+
+
+    def add_break_on_exception(
+        self,
+        exception,
+        notify_always,
+        notify_on_terminate,
+        notify_on_first_raise_only,
+        ):
+        eb = ExceptionBreakpoint(
+            exception,
+            notify_always,
+            notify_on_terminate,
+            notify_on_first_raise_only,
+        )
+
+        if eb.notify_on_terminate:
+            self.break_on_uncaught_exceptions[exception] = eb
+            if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
+                pydev_log.error("Exceptions to hook on terminate: %s\n" % (self.break_on_uncaught_exceptions,))
+
+        if eb.notify_always:
+            self.break_on_caught_exceptions[exception] = eb
+            if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
+                pydev_log.error("Exceptions to hook always: %s\n" % (self.break_on_caught_exceptions,))
+
+        return eb
+
+    def update_after_exceptions_added(self, added):
+        updated_on_caught = False
+        updated_on_uncaught = False
+
+        for eb in added:
+            if not updated_on_uncaught and eb.notify_on_terminate:
+                updated_on_uncaught = True
+                update_exception_hook(self)
+
+            if not updated_on_caught and eb.notify_always:
+                updated_on_caught = True
+                self.setTracingForUntracedContexts()
 
 
     def processNetCommand(self, cmd_id, seq, text):
@@ -859,29 +902,72 @@ class PyDB:
                     int_cmd = InternalConsoleExec(seq, thread_id, frame_id, expression)
                     self.postInternalCommand(int_cmd, thread_id)
 
+                elif cmd_id == CMD_SET_PY_EXCEPTION:
+                    # Command which receives set of exceptions on which user wants to break the debugger
+                    # text is: break_on_uncaught;break_on_caught;TypeError;ImportError;zipimport.ZipImportError;
+                    # This API is optional and works 'in bulk' -- it's possible
+                    # to get finer-grained control with CMD_ADD_EXCEPTION_BREAK/CMD_REMOVE_EXCEPTION_BREAK
+                    # which allows setting caught/uncaught per exception.
+                    #
+                    splitted = text.split(';')
+                    self.break_on_uncaught_exceptions.clear()
+                    self.break_on_caught_exceptions.clear()
+                    added = []
+                    if len(splitted) >= 4:
+                        if splitted[0] == 'true':
+                            break_on_uncaught = True
+                        else:
+                            break_on_uncaught = False
+
+                        if splitted[1] == 'true':
+                            break_on_caught = True
+                        else:
+                            break_on_caught = False
+
+# TODO: Must migrate these capabilities
+#                         if splitted[2] == 'true':
+#                             self.break_on_exceptions_thrown_in_same_context = True
+#                         else:
+#                             self.break_on_exceptions_thrown_in_same_context = False
+#
+#                         if splitted[3] == 'true':
+#                             self.ignore_exceptions_thrown_in_lines_with_ignore_exception = True
+#                         else:
+#                             self.ignore_exceptions_thrown_in_lines_with_ignore_exception = False
+
+                        for exception_type in splitted[4:]:
+                            exception_type = exception_type.strip()
+                            if not exception_type:
+                                continue
+
+                            exception_breakpoint = self.add_break_on_exception(
+                                exception_type,
+                                notify_always=break_on_caught,
+                                notify_on_terminate=break_on_uncaught,
+                                notify_on_first_raise_only=False,
+                            )
+                            added.append(exception_breakpoint)
+
+                        self.update_after_exceptions_added(added)
+
+                    else:
+                        sys.stderr.write("Error when setting exception list. Received: %s\n" % (text,))
+
                 elif cmd_id == CMD_ADD_EXCEPTION_BREAK:
                     exception, notify_always, notify_on_terminate = text.split('\t', 2)
-
-                    eb = ExceptionBreakpoint(exception, notify_always, notify_on_terminate)
-
-                    self.exception_set[exception] = eb
-
-                    if eb.notify_on_terminate:
-                        update_exception_hook(self)
-                    if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
-                        pydev_log.error("Exceptions to hook on terminate: %s\n" % (self.exception_set,))
-
-                    if eb.notify_always:
-                        self.always_exception_set.add(exception)
-                        if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
-                            pydev_log.error("Exceptions to hook always: %s\n" % (self.always_exception_set,))
-                        self.setTracingForUntracedContexts()
+                    exception_breakpoint = self.add_break_on_exception(
+                        exception,
+                        notify_always=int(notify_always) > 0,
+                        notify_on_terminate = int(notify_on_terminate) == 1,
+                        notify_on_first_raise_only=int(notify_always) == 2
+                    )
+                    self.update_after_exceptions_added([exception_breakpoint])
 
                 elif cmd_id == CMD_REMOVE_EXCEPTION_BREAK:
                     exception = text
                     try:
-                        del self.exception_set[exception]
-                        self.always_exception_set.remove(exception)
+                        DictPop(self.break_on_uncaught_exceptions, exception, None)
+                        DictPop(self.break_on_caught_exceptions, exception, None)
                     except:
                         pydev_log.debug("Error while removing exception %s"%sys.exc_info()[0]);
                     update_exception_hook(self)
@@ -1060,7 +1146,6 @@ class PyDB:
 
     def handle_post_mortem_stop(self, additionalInfo, t):
         pydev_log.debug("We are stopping in post-mortem\n")
-        self.force_post_mortem_stop -= 1
         frame, frames_byid = additionalInfo.pydev_force_stop_at_exception
         thread_id = GetThreadId(t)
         pydevd_vars.addAdditionalFrameById(thread_id, frames_byid)
