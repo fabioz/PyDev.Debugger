@@ -1,6 +1,6 @@
-from django_debug import is_django_render_call, get_template_file_name, get_template_line, is_django_suspended, suspend_django, is_django_resolve_call, is_django_context_get_call
+from django_debug import is_django_render_call, is_django_suspended, suspend_django, is_django_resolve_call, is_django_context_get_call
 from django_debug import find_django_render_frame
-from django_frame import just_raised
+from django_frame import just_raised, get_template_file_name, get_template_line
 from django_frame import is_django_exception_break_context
 from django_frame import DjangoTemplateFrame
 from pydevd_comm import * #@UnusedWildImport
@@ -241,6 +241,9 @@ class PyDBFrame:
                     #I believe this can only happen in jython on some frontiers on jython and java code, which we don't want to trace.
                     return None
 
+            stop_frame = info.pydev_step_stop
+            step_cmd = info.pydev_step_cmd
+
             if is_exception_event:
                 breakpoints_for_file = None
             else:
@@ -252,10 +255,10 @@ class PyDBFrame:
                     #we can skip if:
                     #- we have no stop marked
                     #- we should make a step return/step over and we're not in the current frame
-                    can_skip = (info.pydev_step_cmd is None and info.pydev_step_stop is None)\
-                    or (info.pydev_step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and info.pydev_step_stop is not frame)
+                    can_skip = (step_cmd is None and stop_frame is None)\
+                        or (step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and stop_frame is not frame)
 
-                if  mainDebugger.django_breakpoints:
+                if mainDebugger.django_breakpoints:
                     can_skip = False
 
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
@@ -284,7 +287,7 @@ class PyDBFrame:
 
                     else: # if we had some break, it won't get here (so, that's a context that we want to skip)
                         if can_skip:
-                            #print 'skipping', frame.f_lineno, info.pydev_state, info.pydev_step_stop, info.pydev_step_cmd
+                            #print 'skipping', frame.f_lineno, info.pydev_state, stop_frame, step_cmd
                             return None
 
             #We may have hit a breakpoint or we are already in step mode. Either way, let's check what we should do in this frame
@@ -296,20 +299,20 @@ class PyDBFrame:
 
                 flag = False
                 if event == 'call' and info.pydev_state != STATE_SUSPEND and mainDebugger.django_breakpoints \
-                and is_django_render_call(frame):
+                    and is_django_render_call(frame):
                     (flag, frame) = self.shouldStopOnDjangoBreak(frame, event, arg)
 
                 #return is not taken into account for breakpoint hit because we'd have a double-hit in this case
                 #(one for the line and the other for the return).
 
                 if not flag and event != 'return' and info.pydev_state != STATE_SUSPEND and breakpoints_for_file is not None\
-                and DictContains(breakpoints_for_file, line):
+                    and DictContains(breakpoints_for_file, line):
                     #ok, hit breakpoint, now, we have to discover if it is a conditional breakpoint
                     # lets do the conditional stuff here
                     breakpoint = breakpoints_for_file[line]
 
                     stop = True
-                    if info.pydev_step_cmd == CMD_STEP_OVER and info.pydev_step_stop is frame and event in ('line', 'return'):
+                    if step_cmd == CMD_STEP_OVER and stop_frame is frame and event in ('line', 'return'):
                         stop = False #we don't stop on breakpoint if we have to stop by step-over (it will be processed later)
                     else:
                         if breakpoint.condition is not None:
@@ -348,7 +351,7 @@ class PyDBFrame:
             #step handling. We stop when we hit the right frame
             try:
                 django_stop = False
-                if info.pydev_step_cmd == CMD_STEP_INTO:
+                if step_cmd == CMD_STEP_INTO:
                     stop = event in ('line', 'return')
                     if is_django_suspended(thread):
                         #django_stop = event == 'call' and is_django_render_call(frame)
@@ -356,7 +359,7 @@ class PyDBFrame:
                         if stop:
                             info.pydev_django_resolve_frame = 1 #we remember that we've go into python code from django rendering frame
 
-                elif info.pydev_step_cmd == CMD_STEP_OVER:
+                elif step_cmd == CMD_STEP_OVER:
                     if is_django_suspended(thread):
                         django_stop = event == 'call' and is_django_render_call(frame)
 
@@ -364,14 +367,14 @@ class PyDBFrame:
                     else:
                         if event == 'return' and info.pydev_django_resolve_frame is not None and is_django_resolve_call(frame.f_back):
                             #we return to Django suspend mode and should not stop before django rendering frame
-                            info.pydev_step_stop = info.pydev_django_resolve_frame
+                            stop_frame = info.pydev_step_stop = info.pydev_django_resolve_frame
                             info.pydev_django_resolve_frame = None
                             thread.additionalInfo.suspend_type = DJANGO_SUSPEND
 
 
-                        stop = info.pydev_step_stop is frame and event in ('line', 'return')
+                        stop = stop_frame is frame and event in ('line', 'return')
 
-                elif info.pydev_step_cmd == CMD_SMART_STEP_INTO:
+                elif step_cmd == CMD_SMART_STEP_INTO:
                     stop = False
                     if info.pydev_smart_step_stop is frame:
                         info.pydev_func_name = None
@@ -387,10 +390,10 @@ class PyDBFrame:
                         if curr_func_name == info.pydev_func_name:
                             stop = True
 
-                elif info.pydev_step_cmd == CMD_STEP_RETURN:
-                    stop = event == 'return' and info.pydev_step_stop is frame
+                elif step_cmd == CMD_STEP_RETURN:
+                    stop = event == 'return' and stop_frame is frame
 
-                elif info.pydev_step_cmd == CMD_RUN_TO_LINE or info.pydev_step_cmd == CMD_SET_NEXT_STATEMENT:
+                elif step_cmd == CMD_RUN_TO_LINE or step_cmd == CMD_SET_NEXT_STATEMENT:
                     stop = False
 
                     if event == 'line' or event == 'exception':
@@ -424,7 +427,7 @@ class PyDBFrame:
                 elif stop:
                     #event is always == line or return at this point
                     if event == 'line':
-                        self.setSuspend(thread, info.pydev_step_cmd)
+                        self.setSuspend(thread, step_cmd)
                         self.doWaitSuspend(thread, frame, event, arg)
                     else: #return event
                         back = frame.f_back
@@ -437,7 +440,7 @@ class PyDBFrame:
 
                         if back is not None:
                             #if we're in a return, we want it to appear to the user in the previous frame!
-                            self.setSuspend(thread, info.pydev_step_cmd)
+                            self.setSuspend(thread, step_cmd)
                             self.doWaitSuspend(thread, back, event, arg)
                         else:
                             #in jython we may not have a back frame
@@ -472,23 +475,35 @@ class PyDBFrame:
             pass #ok, psyco not available
 
     def shouldStopOnDjangoBreak(self, frame, event, arg):
-        mainDebugger, filename, info, thread = self._args
+        mainDebugger = self._args[0]
+        thread = self._args[3]
         flag = False
-        filename = get_template_file_name(frame)
-        pydev_log.debug("Django is rendering a template: %s\n" % filename)
-        django_breakpoints_for_file = mainDebugger.django_breakpoints.get(filename)
+        template_frame_file = get_template_file_name(frame)
+
+        #pydev_log.debug("Django is rendering a template: %s\n" % template_frame_file)
+
+        django_breakpoints_for_file = mainDebugger.django_breakpoints.get(template_frame_file)
         if django_breakpoints_for_file:
-            pydev_log.debug("Breakpoints for that file: %s\n" % django_breakpoints_for_file)
-            template_line = get_template_line(frame)
-            pydev_log.debug("Tracing template line: %d\n" % template_line)
 
-            if DictContains(django_breakpoints_for_file, template_line):
-                django_breakpoint = django_breakpoints_for_file[template_line]
+            #pydev_log.debug("Breakpoints for that file: %s\n" % django_breakpoints_for_file)
 
-                if django_breakpoint.is_triggered(frame):
-                    pydev_log.debug("Breakpoint is triggered.\n")
+            template_frame_line = get_template_line(frame)
+
+            #pydev_log.debug("Tracing template line: %d\n" % template_frame_line)
+
+            if DictContains(django_breakpoints_for_file, template_frame_line):
+                django_breakpoint = django_breakpoints_for_file[template_frame_line]
+
+                if django_breakpoint.is_triggered(template_frame_file, template_frame_line):
+
+                    #pydev_log.debug("Breakpoint is triggered.\n")
+
                     flag = True
-                    new_frame = DjangoTemplateFrame(frame)
+                    new_frame = DjangoTemplateFrame(
+                        frame,
+                        template_frame_file=template_frame_file,
+                        template_frame_line=template_frame_line,
+                    )
 
                     if django_breakpoint.condition is not None:
                         try:
@@ -511,7 +526,7 @@ class PyDBFrame:
                                 thread.additionalInfo.message = val
                     if flag:
                         frame = suspend_django(self, mainDebugger, thread, frame)
-        return (flag, frame)
+        return flag, frame
 
 def add_exception_to_frame(frame, exception_info):
     frame.f_locals['__exception__'] = exception_info

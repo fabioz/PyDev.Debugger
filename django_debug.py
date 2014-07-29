@@ -1,5 +1,5 @@
 import inspect
-from django_frame import DjangoTemplateFrame, get_template_file_name, get_template_line
+from django_frame import DjangoTemplateFrame
 from pydevd_comm import CMD_SET_BREAK
 from pydevd_constants import DJANGO_SUSPEND, GetThreadId, DictContains
 from pydevd_file_utils import NormFileToServer
@@ -13,10 +13,8 @@ class DjangoLineBreakpoint(LineBreakpoint):
         self.file = file
         LineBreakpoint.__init__(self, line, condition, func_name, expression)
 
-    def is_triggered(self, frame):
-        file = get_template_file_name(frame)
-        line = get_template_line(frame)
-        return self.file == file and self.line == line
+    def is_triggered(self, template_frame_file, template_frame_line):
+        return self.file == template_frame_file and self.line == template_frame_line
 
     def __str__(self):
         return "DjangoLineBreakpoint: %s-%d" %(self.file, self.line)

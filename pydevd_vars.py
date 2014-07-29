@@ -28,7 +28,7 @@ try:
     import types
     frame_type = types.FrameType
 except:
-    frame_type = None
+    frame_type = type(sys._getframe())
 
 
 #-------------------------------------------------------------------------- defining true and false for earlier versions
@@ -278,22 +278,18 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
 
 def changeAttrExpression(thread_id, frame_id, attr, expression):
     '''Changes some attribute in a given frame.
-    @note: it will not (currently) work if we're not in the topmost frame (that's a python
-    deficiency -- and it appears that there is no way of making it currently work --
-    will probably need some change to the python internals)
     '''
     frame = findFrame(thread_id, frame_id)
     if frame is None:
         return
 
-    if isinstance(frame, DjangoTemplateFrame):
-        result = eval(expression, frame.f_globals, frame.f_locals)
-        frame.changeVariable(attr, result)
-
     try:
         expression = expression.replace('@LINE@', '\n')
 
-
+        if isinstance(frame, DjangoTemplateFrame):
+            result = eval(expression, frame.f_globals, frame.f_locals)
+            frame.changeVariable(attr, result)
+            return
 
         if attr[:7] == "Globals":
             attr = attr[8:]
