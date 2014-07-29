@@ -114,8 +114,16 @@ except:
 if IS_PY3K:
     def DictKeys(d):
         return list(d.keys())
+
+    def DictValues(d):
+        return list(d.values())
+
+    DictIterValues = dict.values
 else:
     DictKeys = dict.keys
+    DictIterValues = dict.itervalues
+    DictValues = dict.values
+
 
 try:
     xrange

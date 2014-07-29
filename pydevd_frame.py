@@ -1,22 +1,25 @@
-from django_debug import is_django_render_call, is_django_suspended, suspend_django, is_django_resolve_call, is_django_context_get_call
-from django_debug import find_django_render_frame
-from django_frame import just_raised, get_template_file_name, get_template_line
-from django_frame import is_django_exception_break_context
-from django_frame import DjangoTemplateFrame
-from pydevd_comm import * #@UnusedWildImport
-from pydevd_breakpoints import * #@UnusedWildImport
-import traceback #@Reimport
-import os.path
-import sys
-import pydev_log
-from pydevd_signature import sendSignatureCallTrace
-from pydevd_file_utils import GetFilenameAndBase
 import linecache
-import pydevd_dont_trace
+import os.path
+import re
+import traceback  # @Reimport
+
+from django_debug import find_django_render_frame
+from django_debug import is_django_render_call, is_django_suspended, suspend_django, is_django_resolve_call, is_django_context_get_call
+from django_frame import DjangoTemplateFrame
+from django_frame import is_django_exception_break_context
+from django_frame import just_raised, get_template_file_name, get_template_line
+import pydev_log
+from pydevd_breakpoints import get_exception_breakpoint, get_exception_name
+from pydevd_comm import CMD_ADD_DJANGO_EXCEPTION_BREAK, \
+    CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
+    CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT
+from pydevd_constants import *  # @UnusedWildImport
+from pydevd_file_utils import GetFilenameAndBase
+from pydevd_signature import sendSignatureCallTrace
+import pydevd_vars
 
 basename = os.path.basename
 
-import re
 IGNORE_EXCEPTION_TAG = re.compile('[^#]*#.*@IgnoreException')
 
 
@@ -58,17 +61,19 @@ class PyDBFrame:
         return self.trace_exception
 
     def shouldStopOnException(self, frame, event, arg):
-        mainDebugger, filename, info, thread = self._args
+        mainDebugger, _filename, info, thread = self._args
         flag = False
 
         if info.pydev_state != STATE_SUSPEND:  #and breakpoint is not None:
-            (exception, value, trace) = arg
+            exception, value, trace = arg
 
             if trace is not None: #on jython trace is None on the first event
-                exception_breakpoint = get_exception_breakpoint(exception, dict(mainDebugger.break_on_caught_exceptions), NOTIFY_ALWAYS)
+                exception_breakpoint = get_exception_breakpoint(
+                    exception, mainDebugger.break_on_caught_exceptions.copy())
+
                 if exception_breakpoint is not None:
                     if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):
-                        curr_func_name = frame.f_code.co_name
+                        # print frame.f_code.co_name
                         add_exception_to_frame(frame, (exception, value, trace))
                         thread.additionalInfo.message = exception_breakpoint.qname
                         flag = True
@@ -82,7 +87,8 @@ class PyDBFrame:
 
                             render_frame = find_django_render_frame(frame)
                             if render_frame:
-                                suspend_frame = suspend_django(self, mainDebugger, thread, render_frame, CMD_ADD_DJANGO_EXCEPTION_BREAK)
+                                suspend_frame = suspend_django(
+                                    self, mainDebugger, thread, render_frame, CMD_ADD_DJANGO_EXCEPTION_BREAK)
 
                                 if suspend_frame:
                                     add_exception_to_frame(suspend_frame, (exception, value, trace))

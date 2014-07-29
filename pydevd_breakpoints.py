@@ -8,9 +8,6 @@ _original_excepthook = None
 _handle_exceptions = None
 
 
-NOTIFY_ALWAYS="NOTIFY_ALWAYS"
-NOTIFY_ON_TERMINATE="NOTIFY_ON_TERMINATE"
-
 if USE_LIB_COPY:
     import _pydev_threading as threading
 else:
@@ -41,10 +38,7 @@ class ExceptionBreakpoint:
         self.notify_on_first_raise_only = notify_on_first_raise_only
 
         self.type = exctype
-        self.notify = {
-            NOTIFY_ALWAYS: self.notify_always,
-            NOTIFY_ON_TERMINATE: self.notify_on_terminate
-        }
+
 
     def __str__(self):
         return self.qname
@@ -68,18 +62,18 @@ def get_exception_name(exctype):
     return exctype.__name__
 
 
-def get_exception_breakpoint(exctype, exceptions, notify_class):
-    name = get_exception_full_qname(exctype)
+def get_exception_breakpoint(exctype, exceptions):
+    exception_full_qname = get_exception_full_qname(exctype)
+
     exc = None
     if exceptions is not None:
-        for k, e in exceptions.items():
-            if e.notify[notify_class]:
-                if name == k:
-                    return e
-
-                if (e.type is not None and issubclass(exctype, e.type)):
-                    if exc is None or issubclass(e.type, exc.type):
-                        exc = e
+        try:
+            return exceptions[exception_full_qname]
+        except KeyError:
+            for exception_breakpoint in DictIterValues(exceptions):
+                if exception_breakpoint.type is not None and issubclass(exctype, exception_breakpoint.type):
+                    if exc is None or issubclass(exception_breakpoint.type, exc.type):
+                        exc = exception_breakpoint
     return exc
 
 #=======================================================================================================================
@@ -88,7 +82,7 @@ def get_exception_breakpoint(exctype, exceptions, notify_class):
 def _excepthook(exctype, value, tb):
     global _handle_exceptions
     if _handle_exceptions:
-        exception_breakpoint = get_exception_breakpoint(exctype, _handle_exceptions, NOTIFY_ON_TERMINATE)
+        exception_breakpoint = get_exception_breakpoint(exctype, _handle_exceptions)
     else:
         exception_breakpoint = None
 
