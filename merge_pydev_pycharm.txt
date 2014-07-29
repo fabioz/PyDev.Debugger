@@ -24,6 +24,9 @@ Done in the merge (started from the PyCharm version and bringing in things from 
 - When exception is thrown evaluating breakpoint condition, the debugger will stop
     (can be configured in main_debugger.suspend_on_breakpoint_exception).
 
+- #@DontTrace comments can be used on methods so that they are ignored when stepping
+    in (needs UI for CMD_ENABLE_DONT_TRACE)
+
 Already reviewed:
 
 . pycompletionserver.py
@@ -82,6 +85,9 @@ Things to be fixed in PyCharm:
 7. When an exception is detected on a breakpoint condition evaluation, we'll send
     a CMD_GET_BREAKPOINT_EXCEPTION (which should be handled by PyCharm to show some
     UI notification).
+
+8. The CMD_ENABLE_DONT_TRACE must be sent from the UI to skip methods which have
+    an #@DontTrace above it.
 
 
 Manual test:

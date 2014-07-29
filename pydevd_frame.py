@@ -17,6 +17,7 @@ from pydevd_constants import *  # @UnusedWildImport
 from pydevd_file_utils import GetFilenameAndBase
 from pydevd_signature import sendSignatureCallTrace
 import pydevd_vars
+import pydevd_dont_trace
 
 basename = os.path.basename
 
@@ -266,6 +267,16 @@ class PyDBFrame:
             if is_exception_event:
                 breakpoints_for_file = None
             else:
+                # If we are in single step mode and something causes us to exit the current frame, we need to make sure we break
+                # eventually.  Force the step mode to step into and the step stop frame to None.
+                # I.e.: F6 in the end of a function should stop in the next possible position (instead of forcing the user
+                # to make a step in or step over at that location).
+                # Note: this is especially troublesome when we're skipping code with the
+                # @DontTrace comment.
+                if stop_frame is frame and event in ('return', 'exception') and step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER):
+                    info.pydev_step_cmd = CMD_STEP_INTO
+                    info.pydev_step_stop = None
+
                 breakpoints_for_file = main_debugger.breakpoints.get(filename)
 
                 can_skip = False
@@ -404,8 +415,23 @@ class PyDBFrame:
             #step handling. We stop when we hit the right frame
             try:
                 django_stop = False
-                if step_cmd == CMD_STEP_INTO:
+
+                should_skip = False
+                if pydevd_dont_trace.should_trace_hook is not None:
+                    if not hasattr(self, 'should_skip'):
+                        # I.e.: cache the result on self.should_skip (no need to evaluate the same frame multiple times).
+                        # Note that on a code reload, we won't re-evaluate this because in practice, the frame.f_code
+                        # Which will be handled by this frame is read-only, so, we can cache it safely.
+                        should_skip = self.should_skip = not pydevd_dont_trace.should_trace_hook(frame, filename)
+                    else:
+                        should_skip = self.should_skip
+
+                if should_skip:
+                    stop = False
+
+                elif step_cmd == CMD_STEP_INTO:
                     stop = event in ('line', 'return')
+
                     if is_django_suspended(thread):
                         #django_stop = event == 'call' and is_django_render_call(frame)
                         stop = stop and is_django_resolve_call(frame.f_back) and not is_django_context_get_call(frame)

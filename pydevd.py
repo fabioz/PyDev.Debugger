@@ -66,7 +66,8 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_IGNORE_THROWN_EXCEPTION_AT,\
                          InternalGetBreakpointException, \
                          InternalSendCurrExceptionTrace,\
-                         InternalSendCurrExceptionTraceProceeded
+                         InternalSendCurrExceptionTraceProceeded,\
+                         CMD_ENABLE_DONT_TRACE
 from pydevd_file_utils import NormFileToServer, GetFilenameAndBase
 import pydevd_file_utils
 import pydevd_vars
@@ -76,6 +77,7 @@ import pydevd_io
 import pydev_monkey
 from pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 from pydevd_custom_frames import CustomFramesContainer, CustomFramesContainerInit
+import pydevd_dont_trace
 
 
 if USE_LIB_COPY:
@@ -1034,6 +1036,15 @@ class PyDB:
                                 else:
                                     sys.stderr.write('pydev debugger: warning: trying to ignore exception thrown'\
                                         ' on file that does not exist: %s (will have no effect)\n' % (filename,))
+
+                elif cmd_id == CMD_ENABLE_DONT_TRACE:
+                    if text:
+                        true_str = 'true'  # Not all 3.x versions support u'str', so, doing workaround.
+                        if not IS_PY3K:
+                            true_str = unicode(true_str)
+
+                        mode = text.strip() == true_str
+                        pydevd_dont_trace.trace_filter(mode)
 
                 else:
                     #I have no idea what this is all about
