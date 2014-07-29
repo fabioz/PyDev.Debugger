@@ -29,6 +29,8 @@ Done in the merge (started from the PyCharm version and bringing in things from 
 
 - Code which stops tracing inside python properties integrated (CMD_SET_PROPERTY_TRACE)
 
+- Find Referrers integrated.
+
 Already reviewed:
 
 . pycompletionserver.py
@@ -94,6 +96,10 @@ Things to be fixed in PyCharm:
 
 9. The CMD_SET_PROPERTY_TRACE must be sent from the UI to skip setter/getter/deleter
     python properties.
+
+10. Integrate find referrers UI in PyCharm. In the backend it uses a CMD_RUN_CUSTOM_OPERATION with:
+    from pydevd_referrers import get_referrer_info
+    get_referrer_info
 
 
 Things to be fixed in PyDev:

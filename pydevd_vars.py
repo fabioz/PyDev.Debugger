@@ -155,33 +155,87 @@ def findFrame(thread_id, frame_id):
         traceback.print_exc()
         return None
 
-def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
-    """ returns the value of the compound variable as a dictionary"""
+def getVariable(thread_id, frame_id, scope, attrs):
+    """
+    returns the value of a variable
+
+    :scope: can be BY_ID, EXPRESSION, GLOBAL, LOCAL, FRAME
+
+    BY_ID means we'll traverse the list of all objects alive to get the object.
+
+    :attrs: after reaching the proper scope, we have to get the attributes until we find
+            the proper location (i.e.: obj\tattr1\tattr2)
+
+    :note: when BY_ID is used, the frame_id is considered the id of the object to find and
+           not the frame (as we don't care about the frame in this case).
+    """
+    if scope == 'BY_ID':
+        if thread_id != GetThreadId(threading.currentThread()) :
+            raise VariableError("getVariable: must execute on same thread")
+
+        try:
+            import gc
+            objects = gc.get_objects()
+        except:
+            pass  #Not all python variants have it.
+        else:
+            frame_id = int(frame_id)
+            for var in objects:
+                if id(var) == frame_id:
+                    if attrs is not None:
+                        attrList = attrs.split('\t')
+                        for k in attrList:
+                            _type, _typeName, resolver = getType(var)
+                            var = resolver.resolve(var, k)
+
+                    return var
+
+        #If it didn't return previously, we coudn't find it by id (i.e.: alrceady garbage collected).
+        sys.stderr.write('Unable to find object with id: %s\n' % (frame_id,))
+        return None
+
     frame = findFrame(thread_id, frame_id)
     if frame is None:
         return {}
 
-    attrList = attrs.split('\t')
-
-    if scope == "GLOBAL":
-        var = frame.f_globals
-        del attrList[0] # globals are special, and they get a single dummy unused attribute
+    if attrs is not None:
+        attrList = attrs.split('\t')
     else:
-        var = frame.f_locals
-        type, _typeName, resolver = getType(var)
-        try:
-            resolver.resolve(var, attrList[0])
-        except:
-            var = frame.f_globals
+        attrList = []
 
-    for k in attrList:
-        type, _typeName, resolver = getType(var)
-        var = resolver.resolve(var, k)
+    if scope == 'EXPRESSION':
+        for count in range(len(attrList)):
+            if count == 0:
+                # An Expression can be in any scope (globals/locals), therefore it needs to evaluated as an expression
+                var = evaluateExpression(thread_id, frame_id, attrList[count], False)
+            else:
+                _type, _typeName, resolver = getType(var)
+                var = resolver.resolve(var, attrList[count])
+    else:
+        if scope == "GLOBAL":
+            var = frame.f_globals
+            del attrList[0]  # globals are special, and they get a single dummy unused attribute
+        else:
+            var = frame.f_locals
+
+        for k in attrList:
+            _type, _typeName, resolver = getType(var)
+            var = resolver.resolve(var, k)
+
+    return var
+
+
+def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
+    """ returns the value of the compound variable as a dictionary"""
+
+    var = getVariable(thread_id, frame_id, scope, attrs)
 
     try:
-        type, _typeName, resolver = getType(var)
+        _type, _typeName, resolver = getType(var)
         return resolver.getDictionary(var)
     except:
+        sys.stderr.write('Error evaluating: thread_id: %s\nframe_id: %s\nscope: %s\nattrs: %s\n' % (
+            thread_id, frame_id, scope, attrs,))
         traceback.print_exc()
 
 
@@ -196,6 +250,29 @@ def resolveVar(var, attrs):
     try:
         type, _typeName, resolver = getType(var)
         return resolver.getDictionary(var)
+    except:
+        traceback.print_exc()
+
+
+def customOperation(thread_id, frame_id, scope, attrs, style, code_or_file, operation_fn_name):
+    """
+    We'll execute the code_or_file and then search in the namespace the operation_fn_name to execute with the given var.
+
+    code_or_file: either some code (i.e.: from pprint import pprint) or a file to be executed.
+    operation_fn_name: the name of the operation to execute after the exec (i.e.: pprint)
+    """
+    expressionValue = getVariable(thread_id, frame_id, scope, attrs)
+
+    try:
+        namespace = {'__name__': '<customOperation>'}
+        if style == "EXECFILE":
+            namespace['__file__'] = code_or_file
+            execfile(code_or_file, namespace, namespace)
+        else:  # style == EXEC
+            namespace['__file__'] = '<customOperationCode>'
+            Exec(code_or_file, namespace, namespace)
+
+        return str(namespace[operation_fn_name](expressionValue))
     except:
         traceback.print_exc()
 

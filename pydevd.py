@@ -68,7 +68,8 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          InternalSendCurrExceptionTraceProceeded,\
                          CMD_ENABLE_DONT_TRACE, \
                          CMD_GET_FILE_CONTENTS,\
-                         CMD_SET_PROPERTY_TRACE
+                         CMD_SET_PROPERTY_TRACE, CMD_RUN_CUSTOM_OPERATION,\
+                         InternalRunCustomOperation
 from pydevd_file_utils import NormFileToServer, GetFilenameAndBase
 import pydevd_file_utils
 import pydevd_vars
@@ -1058,6 +1059,30 @@ class PyDB:
                         del self.django_exception_break[exception]
                     except :
                         pass
+
+                elif cmd_id == CMD_RUN_CUSTOM_OPERATION:
+                    # Command which runs a custom operation
+                    if text != "":
+                        try:
+                            location, custom = text.split('||', 1)
+                        except:
+                            sys.stderr.write('Custom operation now needs a || separator. Found: %s\n' % (text,))
+                            raise
+
+                        thread_id, frame_id, scopeattrs = location.split('\t', 2)
+
+                        if scopeattrs.find('\t') != -1:  # there are attributes beyond scope
+                            scope, attrs = scopeattrs.split('\t', 1)
+                        else:
+                            scope, attrs = (scopeattrs, None)
+
+                        # : style: EXECFILE or EXEC
+                        # : encoded_code_or_file: file to execute or code
+                        # : fname: name of function to be executed in the resulting namespace
+                        style, encoded_code_or_file, fnname = custom.split('\t', 3)
+                        int_cmd = InternalRunCustomOperation(seq, thread_id, frame_id, scope, attrs,
+                                                             style, encoded_code_or_file, fnname)
+                        self.postInternalCommand(int_cmd, thread_id)
 
                 elif cmd_id == CMD_IGNORE_THROWN_EXCEPTION_AT:
                     if text:
