@@ -10,7 +10,6 @@ from pydevd_frame import add_exception_to_frame
 import pydev_imports
 from pydevd_breakpoints import * #@UnusedWildImport
 import fix_getpass
-import pydevd_import_class
 from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_EVALUATE_EXPRESSION, \
                          CMD_EXEC_EXPRESSION, \
@@ -67,17 +66,19 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          InternalGetBreakpointException, \
                          InternalSendCurrExceptionTrace,\
                          InternalSendCurrExceptionTraceProceeded,\
-                         CMD_ENABLE_DONT_TRACE
+                         CMD_ENABLE_DONT_TRACE, \
+                         CMD_GET_FILE_CONTENTS,\
+                         CMD_SET_PROPERTY_TRACE
 from pydevd_file_utils import NormFileToServer, GetFilenameAndBase
 import pydevd_file_utils
 import pydevd_vars
 import pydevd_vm_type
 import pydevd_tracing
 import pydevd_io
-import pydev_monkey
 from pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 from pydevd_custom_frames import CustomFramesContainer, CustomFramesContainerInit
 import pydevd_dont_trace
+import pydevd_traceproperty
 
 
 if USE_LIB_COPY:
@@ -348,6 +349,12 @@ class PyDB:
         # Suspend debugger even if breakpoint condition raises an exception
         SUSPEND_ON_BREAKPOINT_EXCEPTION = True
         self.suspend_on_breakpoint_exception = SUSPEND_ON_BREAKPOINT_EXCEPTION
+
+        # By default user can step into properties getter/setter/deleter methods
+        self.disable_property_trace = False
+        self.disable_property_getter_trace = False
+        self.disable_property_setter_trace = False
+        self.disable_property_deleter_trace = False
 
         #this is a dict of thread ids pointing to thread ids. Whenever a command is passed to the java end that
         #acknowledges that a thread was created, the thread id should be passed here -- and if at some time we do not
@@ -967,6 +974,48 @@ class PyDB:
 
                     else:
                         sys.stderr.write("Error when setting exception list. Received: %s\n" % (text,))
+
+                elif cmd_id == CMD_GET_FILE_CONTENTS:
+
+                    if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
+                        text = text.encode(file_system_encoding)
+
+                    if os.path.exists(text):
+                        f = open(text, 'r')
+                        try:
+                            source = f.read()
+                        finally:
+                            f.close()
+                        cmd = self.cmdFactory.makeGetFileContents(seq, source)
+
+                elif cmd_id == CMD_SET_PROPERTY_TRACE:
+                    # Command which receives whether to trace property getter/setter/deleter
+                    # text is feature_state(true/false);disable_getter/disable_setter/disable_deleter
+                    if text != "":
+                        splitted = text.split(';')
+                        if len(splitted) >= 3:
+                            if self.disable_property_trace is False and splitted[0] == 'true':
+                                # Replacing property by custom property only when the debugger starts
+                                pydevd_traceproperty.replace_builtin_property()
+                                self.disable_property_trace = True
+                            # Enable/Disable tracing of the property getter
+                            if splitted[1] == 'true':
+                                self.disable_property_getter_trace = True
+                            else:
+                                self.disable_property_getter_trace = False
+                            # Enable/Disable tracing of the property setter
+                            if splitted[2] == 'true':
+                                self.disable_property_setter_trace = True
+                            else:
+                                self.disable_property_setter_trace = False
+                            # Enable/Disable tracing of the property deleter
+                            if splitted[3] == 'true':
+                                self.disable_property_deleter_trace = True
+                            else:
+                                self.disable_property_deleter_trace = False
+                    else:
+                        # User hasn't configured any settings for property tracing
+                        pass
 
                 elif cmd_id == CMD_ADD_EXCEPTION_BREAK:
                     exception, notify_always, notify_on_terminate = text.split('\t', 2)
