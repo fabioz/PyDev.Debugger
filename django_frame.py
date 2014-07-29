@@ -5,8 +5,10 @@ from pydevd_constants import DictContains
 
 def read_file(filename):
     f = open(filename, "r")
-    s = f.read()
-    f.close()
+    try:
+        s = f.read()
+    finally:
+        f.close()
     return s
 
 
@@ -35,7 +37,9 @@ def get_source(frame):
         if hasattr(node, 'source'):
             return node.source
         else:
-            pydev_log.error_once("WARNING: Template path is not available. Please set TEMPLATE_DEBUG=True in your settings.py to make django template breakpoints working")
+            pydev_log.error_once(
+                "WARNING: Template path is not available. Please set TEMPLATE_DEBUG=True "
+                "in your settings.py to make django template breakpoints working")
             return None
 
     except:
@@ -62,13 +66,12 @@ def get_template_file_name(frame):
         return None
 
 
-def get_template_line(frame):
+def get_template_line(frame, template_frame_file):
     source = get_source(frame)
-    file_name = get_template_file_name(frame)
     try:
-        return offset_to_line_number(read_file(file_name), source[1][0])
+        return offset_to_line_number(read_file(template_frame_file), source[1][0])
     except:
-        return None
+        return 0
 
 
 class DjangoTemplateFrame:
@@ -85,18 +88,18 @@ class DjangoTemplateFrame:
         self.f_code = FCode('Django Template', template_frame_file)
 
         if template_frame_line is None:
-            template_frame_line = get_template_line(frame)
+            template_frame_line = get_template_line(frame, template_frame_file)
         self.f_lineno = template_frame_line
 
         self.f_back = frame
         self.f_globals = {}
-        self.f_locals = self.collect_context(self.back_context)
+        self.f_locals = self.collect_context()
         self.f_trace = None
 
-    def collect_context(self, context):
+    def collect_context(self):
         res = {}
         try:
-            for d in context.dicts:
+            for d in self.back_context.dicts:
                 res.update(d)
         except AttributeError:
             pass

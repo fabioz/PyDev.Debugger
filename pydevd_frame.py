@@ -487,7 +487,7 @@ class PyDBFrame:
 
             #pydev_log.debug("Breakpoints for that file: %s\n" % django_breakpoints_for_file)
 
-            template_frame_line = get_template_line(frame)
+            template_frame_line = get_template_line(frame, template_frame_file)
 
             #pydev_log.debug("Tracing template line: %d\n" % template_frame_line)
 
