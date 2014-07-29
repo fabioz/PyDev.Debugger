@@ -137,7 +137,7 @@ class CodeFragment:
     def __init__(self, text, is_single_line=True):
         self.text = text
         self.is_single_line = is_single_line
-        
+
     def append(self, code_fragment):
         self.text = self.text + "\n" + code_fragment.text
         if not code_fragment.is_single_line:
@@ -152,7 +152,7 @@ class BaseInterpreterInterface:
         self.interruptable = False
         self.exec_queue = _queue.Queue(0)
         self.buffer = None
-        
+
     def needMoreForCode(self, source):
         if hasattr(self.interpreter, 'is_complete'):
             return not self.interpreter.is_complete(source)
@@ -173,7 +173,7 @@ class BaseInterpreterInterface:
             self.buffer = code_fragment
         else:
             self.buffer.append(code_fragment)
-        
+
         return self.needMoreForCode(self.buffer.text)
 
     def createStdIn(self):
@@ -254,7 +254,7 @@ class BaseInterpreterInterface:
     def doAddExec(self, codeFragment):
         '''
         Subclasses should override.
-        
+
         @return: more (True if more input is needed to complete the statement and False if the statement is complete).
         '''
         raise NotImplementedError()
@@ -263,7 +263,7 @@ class BaseInterpreterInterface:
     def getNamespace(self):
         '''
         Subclasses should override.
-        
+
         @return: dict with namespace.
         '''
         raise NotImplementedError()
@@ -315,14 +315,14 @@ class BaseInterpreterInterface:
                     pass
 
             try:
-                #if no attempt succeeded, try to return repr()... 
+                #if no attempt succeeded, try to return repr()...
                 return repr(obj)
             except:
                 try:
-                    #otherwise the class 
+                    #otherwise the class
                     return str(obj.__class__)
                 except:
-                    #if all fails, go to an empty string 
+                    #if all fails, go to an empty string
                     return ''
         except:
             traceback.print_exc()
@@ -438,7 +438,11 @@ class BaseInterpreterInterface:
             # Try to import the packages needed to attach the debugger
             import pydevd
             import pydevd_vars
-            import threading
+            if USE_LIB_COPY:
+                import _pydev_threading as threading
+            else:
+                import threading
+
         except:
             # This happens on Jython embedded in host eclipse
             import traceback;traceback.print_exc()
