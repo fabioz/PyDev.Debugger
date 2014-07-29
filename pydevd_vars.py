@@ -37,15 +37,14 @@ try:
     __setFalse = False
 except:
     import __builtin__
-
     setattr(__builtin__, 'True', 1)
     setattr(__builtin__, 'False', 0)
 
 #------------------------------------------------------------------------------------------------------ class for errors
 
-class VariableError(RuntimeError): pass
+class VariableError(RuntimeError):pass
 
-class FrameNotFoundError(RuntimeError): pass
+class FrameNotFoundError(RuntimeError):pass
 
 def iterFrames(initialFrame):
     '''NO-YIELD VERSION: Iterates through all the frames starting at the specified frame (which will be the first returned item)'''
@@ -220,6 +219,7 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
     updated_globals.update(frame.f_locals)  #locals later because it has precedence over the actual globals
 
     try:
+
         if doExec:
             try:
                 #try to make it an eval (if it is an eval we can print it, otherwise we'll exec it and
@@ -230,7 +230,7 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
                 pydevd_save_locals.save_locals(frame)
             else:
                 result = eval(compiled, updated_globals, frame.f_locals)
-                if result is not None: #Only print if it's not None (as python does)
+                if result is not None:  #Only print if it's not None (as python does)
                     sys.stdout.write('%s\n' % (result,))
             return
 
@@ -241,7 +241,6 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
             except Exception:
                 s = StringIO()
                 traceback.print_exc(file=s)
-
                 result = s.getvalue()
 
                 try:
@@ -254,6 +253,22 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
                     pass
 
                 result = ExceptionOnEvaluate(result)
+
+                # Ok, we have the initial error message, but let's see if we're dealing with a name mangling error...
+                try:
+                    if '__' in expression:
+                        # Try to handle '__' name mangling...
+                        split = expression.split('.')
+                        curr = frame.f_locals.get(split[0])
+                        for entry in split[1:]:
+                            if entry.startswith('__') and not hasattr(curr, entry):
+                                entry = '_%s%s' % (curr.__class__.__name__, entry)
+                            curr = getattr(curr, entry)
+
+                        result = curr
+                except:
+                    pass
+
 
             return result
     finally:

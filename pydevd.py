@@ -62,7 +62,11 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          InternalSetNextStatementThread, \
                          ReloadCodeCommand, \
                          ID_TO_MEANING,\
-                         CMD_SET_PY_EXCEPTION
+                         CMD_SET_PY_EXCEPTION, \
+                         CMD_IGNORE_THROWN_EXCEPTION_AT,\
+                         InternalGetBreakpointException, \
+                         InternalSendCurrExceptionTrace,\
+                         InternalSendCurrExceptionTraceProceeded
 from pydevd_file_utils import NormFileToServer, GetFilenameAndBase
 import pydevd_file_utils
 import pydevd_vars
@@ -336,6 +340,12 @@ class PyDB:
         self._terminationEventSent = False
         self.signature_factory = None
         self.SetTrace = pydevd_tracing.SetTrace
+        self.break_on_exceptions_thrown_in_same_context = False
+        self.ignore_exceptions_thrown_in_lines_with_ignore_exception = True
+
+        # Suspend debugger even if breakpoint condition raises an exception
+        SUSPEND_ON_BREAKPOINT_EXCEPTION = True
+        self.suspend_on_breakpoint_exception = SUSPEND_ON_BREAKPOINT_EXCEPTION
 
         #this is a dict of thread ids pointing to thread ids. Whenever a command is passed to the java end that
         #acknowledges that a thread was created, the thread id should be passed here -- and if at some time we do not
@@ -343,6 +353,10 @@ class PyDB:
         #was killed.
         self._running_thread_ids = {}
         self._set_breakpoints_with_id = False
+
+        # This attribute holds the file-> lines which have an @IgnoreException.
+        self.filename_to_lines_where_exceptions_are_ignored = {}
+
 
     def haveAliveThreads(self):
         for t in threadingEnumerate():
@@ -924,16 +938,15 @@ class PyDB:
                         else:
                             break_on_caught = False
 
-# TODO: Must migrate these capabilities
-#                         if splitted[2] == 'true':
-#                             self.break_on_exceptions_thrown_in_same_context = True
-#                         else:
-#                             self.break_on_exceptions_thrown_in_same_context = False
-#
-#                         if splitted[3] == 'true':
-#                             self.ignore_exceptions_thrown_in_lines_with_ignore_exception = True
-#                         else:
-#                             self.ignore_exceptions_thrown_in_lines_with_ignore_exception = False
+                        if splitted[2] == 'true':
+                            self.break_on_exceptions_thrown_in_same_context = True
+                        else:
+                            self.break_on_exceptions_thrown_in_same_context = False
+
+                        if splitted[3] == 'true':
+                            self.ignore_exceptions_thrown_in_lines_with_ignore_exception = True
+                        else:
+                            self.ignore_exceptions_thrown_in_lines_with_ignore_exception = False
 
                         for exception_type in splitted[4:]:
                             exception_type = exception_type.strip()
@@ -995,6 +1008,33 @@ class PyDB:
                     except :
                         pass
 
+                elif cmd_id == CMD_IGNORE_THROWN_EXCEPTION_AT:
+                    if text:
+                        replace = 'REPLACE:'  # Not all 3.x versions support u'REPLACE:', so, doing workaround.
+                        if not IS_PY3K:
+                            replace = unicode(replace)
+
+                        if text.startswith(replace):
+                            text = text[8:]
+                            self.filename_to_lines_where_exceptions_are_ignored.clear()
+
+                        if text:
+                            for line in text.split('||'):  # Can be bulk-created (one in each line)
+                                filename, line_number = line.split('|')
+                                if not IS_PY3K:
+                                    filename = filename.encode(file_system_encoding)
+
+                                filename = NormFileToServer(filename)
+
+                                if os.path.exists(filename):
+                                    lines_ignored = self.filename_to_lines_where_exceptions_are_ignored.get(filename)
+                                    if lines_ignored is None:
+                                        lines_ignored = self.filename_to_lines_where_exceptions_are_ignored[filename] = {}
+                                    lines_ignored[int(line_number)] = 1
+                                else:
+                                    sys.stderr.write('pydev debugger: warning: trying to ignore exception thrown'\
+                                        ' on file that does not exist: %s (will have no effect)\n' % (filename,))
+
                 else:
                     #I have no idea what this is all about
                     cmd = self.cmdFactory.makeErrorMessage(seq, "unexpected command " + str(cmd_id))
@@ -1035,6 +1075,44 @@ class PyDB:
         thread.additionalInfo.suspend_type = PYTHON_SUSPEND
         thread.additionalInfo.pydev_state = STATE_SUSPEND
         thread.stop_reason = stop_reason
+
+        # If conditional breakpoint raises any exception during evaluation send details to Java
+        if stop_reason == CMD_SET_BREAK and self.suspend_on_breakpoint_exception:
+            self.sendBreakpointConditionException(thread)
+
+
+    def sendBreakpointConditionException(self, thread):
+        """If conditional breakpoint raises an exception during evaluation
+        send exception details to java
+        """
+        thread_id = GetThreadId(thread)
+        conditional_breakpoint_exception_tuple = thread.additionalInfo.conditional_breakpoint_exception
+        # conditional_breakpoint_exception_tuple - should contain 2 values (exception_type, stacktrace)
+        if conditional_breakpoint_exception_tuple and len(conditional_breakpoint_exception_tuple) == 2:
+            exc_type, stacktrace = conditional_breakpoint_exception_tuple
+            int_cmd = InternalGetBreakpointException(thread_id, exc_type, stacktrace)
+            # Reset the conditional_breakpoint_exception details to None
+            thread.additionalInfo.conditional_breakpoint_exception = None
+            self.postInternalCommand(int_cmd, thread_id)
+
+
+    def sendCaughtExceptionStack(self, thread, arg, curr_frame_id):
+        """Sends details on the exception which was caught (and where we stopped) to the java side.
+
+        arg is: exception type, description, traceback object
+        """
+        thread_id = GetThreadId(thread)
+        int_cmd = InternalSendCurrExceptionTrace(thread_id, arg, curr_frame_id)
+        self.postInternalCommand(int_cmd, thread_id)
+
+
+    def sendCaughtExceptionStackProceeded(self, thread):
+        """Sends that some thread was resumed and is no longer showing an exception trace.
+        """
+        thread_id = GetThreadId(thread)
+        int_cmd = InternalSendCurrExceptionTraceProceeded(thread_id)
+        self.postInternalCommand(int_cmd, thread_id)
+        self.processInternalCommands()
 
 
     def doWaitSuspend(self, thread, frame, event, arg): #@UnusedVariable

@@ -10,6 +10,10 @@ Done in the merge (started from the PyCharm version and bringing in things from 
 
 - pydev_monkey: fixes from PyDev to properly deal with windows command lines
 
+- Private variables (name-mangled) are now evaluated (so they can be hovered)
+
+- Exceptions raised from lines with a #@IgnoreException are ignored
+
 Already reviewed:
 
 . pycompletionserver.py
@@ -23,16 +27,18 @@ Need reviewing later:
 
 pydev_ipython_console_011.py:
 pydevd_comm.py: renumbered to keep all commands from pydev/pycharm.
+pydevd_vars.py: resolving variables by variable id().
 
 
 Things to be fixed in PyCharm:
 --------------------------------
 
 1. CMD_VERSION now should receive that it wants breakpoints by ID (and it
-    should give a breakpoint id which should be used to remove it later).
+    should give a breakpoint id which should be used to remove it later
+    when setting a breakpoint).
 
-2. Setting breakpoint: the func_name is not being properly passed (and as such,
-    PyCharm debugging is slower than it should be).
+2. Setting breakpoint: the func_name is not being properly passed from PyCharm
+    (and as such, PyCharm debugging is slower than it should be).
 
     Note that it works passing 'None', but the func_name should be given when possible.
 
@@ -50,6 +56,18 @@ Things to be fixed in PyCharm:
     Removed support for removing breakpoint without knowing its type (i.e.:
     remove breakpoint tried to remove a breakpoint if the type wasn't
     python-line nor django-line, now, it'll give an exception).
+
+4. break_on_exceptions_thrown_in_same_context / ignore_exceptions_thrown_in_lines_with_ignore_exception
+
+    These are currently set in the bulk operation to add exceptions, but
+    it does make sense to create a separate command for that (but it's only
+    worth doing it when/if PyCharm gets an UI to add it).
+
+5. UI to ignore exception from additional places (not only from #@IgnoreException code-comments)
+    i.e.: UI for CMD_IGNORE_THROWN_EXCEPTION_AT.
+
+6. UI to show the current exception (i.e.: deal with CMD_SEND_CURR_EXCEPTION_TRACE and
+    CMD_SEND_CURR_EXCEPTION_TRACE_PROCEEDED in the client side).
 
 
 Manual test:
