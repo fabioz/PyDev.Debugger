@@ -121,7 +121,10 @@ if IS_PY3K:
     DictIterValues = dict.values
 else:
     DictKeys = dict.keys
-    DictIterValues = dict.itervalues
+    try:
+        DictIterValues = dict.itervalues
+    except:
+        DictIterValues = dict.values #Older versions don't have the itervalues
     DictValues = dict.values
 
 

@@ -50,9 +50,20 @@ class PyDBFrame:
     def doWaitSuspend(self, *args, **kwargs):
         self._args[0].doWaitSuspend(*args, **kwargs)
 
+    def _is_django_render_call(self, frame):
+        try:
+            return self._cached_is_django_render_call
+        except:
+            # Calculate lazily: note that a PyDBFrame always deals with the same
+            # frame over and over, so, we can cache this.
+            # -- although we can't cache things which change over time (such as
+            #    the breakpoints for the file).
+            ret = self._cached_is_django_render_call = is_django_render_call(frame)
+            return ret
+
     def trace_exception(self, frame, event, arg):
         if event == 'exception':
-            flag, frame = self.shouldStopOnException(frame, event, arg)
+            flag, frame = self.should_stop_on_exception(frame, event, arg)
 
             if flag:
                 self.handle_exception(frame, event, arg)
@@ -60,7 +71,7 @@ class PyDBFrame:
 
         return self.trace_exception
 
-    def shouldStopOnException(self, frame, event, arg):
+    def should_stop_on_exception(self, frame, event, arg):
         mainDebugger, _filename, info, thread = self._args
         flag = False
 
@@ -222,30 +233,32 @@ class PyDBFrame:
             thread = None
 
     def trace_dispatch(self, frame, event, arg):
-        mainDebugger, filename, info, thread = self._args
+        main_debugger, filename, info, thread = self._args
         try:
             info.is_tracing = True
 
-            if mainDebugger._finishDebuggingSession:
+            if main_debugger._finishDebuggingSession:
                 return None
 
             if getattr(thread, 'pydev_do_not_trace', None):
                 return None
 
             if event == 'call':
-                sendSignatureCallTrace(mainDebugger, frame, filename)
+                sendSignatureCallTrace(main_debugger, frame, filename)
 
             is_exception_event = event == 'exception'
+            has_exception_breakpoints = main_debugger.break_on_caught_exceptions or main_debugger.django_exception_break
 
-            if event not in ('line', 'call', 'return'):
-                if is_exception_event:
-                    flag, frame = self.shouldStopOnException(frame, event, arg)
+            if is_exception_event:
+                if has_exception_breakpoints:
+                    flag, frame = self.should_stop_on_exception(frame, event, arg)
                     if flag:
                         self.handle_exception(frame, event, arg)
                         return self.trace_dispatch
-                else:
-                    #I believe this can only happen in jython on some frontiers on jython and java code, which we don't want to trace.
-                    return None
+
+            elif event not in ('line', 'call', 'return'):
+                #I believe this can only happen in jython on some frontiers on jython and java code, which we don't want to trace.
+                return None
 
             stop_frame = info.pydev_step_stop
             step_cmd = info.pydev_step_cmd
@@ -253,7 +266,7 @@ class PyDBFrame:
             if is_exception_event:
                 breakpoints_for_file = None
             else:
-                breakpoints_for_file = mainDebugger.breakpoints.get(filename)
+                breakpoints_for_file = main_debugger.breakpoints.get(filename)
 
                 can_skip = False
 
@@ -264,7 +277,8 @@ class PyDBFrame:
                     can_skip = (step_cmd is None and stop_frame is None)\
                         or (step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and stop_frame is not frame)
 
-                if mainDebugger.django_breakpoints:
+                check_stop_on_django_render_call = main_debugger.django_breakpoints and self._is_django_render_call(frame)
+                if check_stop_on_django_render_call:
                     can_skip = False
 
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
@@ -273,7 +287,7 @@ class PyDBFrame:
                 #so, that's why the additional checks are there.
                 if not breakpoints_for_file:
                     if can_skip:
-                        if mainDebugger.break_on_caught_exceptions or mainDebugger.django_exception_break:
+                        if has_exception_breakpoints:
                             return self.trace_exception
                         else:
                             return None
@@ -286,15 +300,18 @@ class PyDBFrame:
                     if curr_func_name in ('?', '<module>'):
                         curr_func_name = ''
 
-                    for breakpoint in breakpoints_for_file.values(): #jython does not support itervalues()
+                    for breakpoint in DictIterValues(breakpoints_for_file): #jython does not support itervalues()
                         #will match either global or some function
                         if breakpoint.func_name in ('None', curr_func_name):
                             break
 
                     else: # if we had some break, it won't get here (so, that's a context that we want to skip)
                         if can_skip:
-                            #print 'skipping', frame.f_lineno, info.pydev_state, stop_frame, step_cmd
-                            return None
+                            if has_exception_breakpoints:
+                                return self.trace_exception
+                            else:
+                                return None
+
 
             #We may have hit a breakpoint or we are already in step mode. Either way, let's check what we should do in this frame
             #print 'NOT skipped', frame.f_lineno, frame.f_code.co_name, event
@@ -304,9 +321,8 @@ class PyDBFrame:
 
 
                 flag = False
-                if event == 'call' and info.pydev_state != STATE_SUSPEND and mainDebugger.django_breakpoints \
-                    and is_django_render_call(frame):
-                    (flag, frame) = self.shouldStopOnDjangoBreak(frame, event, arg)
+                if event == 'call' and info.pydev_state != STATE_SUSPEND and check_stop_on_django_render_call:
+                    flag, frame = self.should_stop_on_django_breakpoint(frame, event, arg)
 
                 #return is not taken into account for breakpoint hit because we'd have a double-hit in this case
                 #(one for the line and the other for the return).
@@ -321,16 +337,47 @@ class PyDBFrame:
                     if step_cmd == CMD_STEP_OVER and stop_frame is frame and event in ('line', 'return'):
                         stop = False #we don't stop on breakpoint if we have to stop by step-over (it will be processed later)
                     else:
-                        if breakpoint.condition is not None:
+                        condition = breakpoint.condition
+                        if condition is not None:
                             try:
-                                val = eval(breakpoint.condition, frame.f_globals, frame.f_locals)
+                                val = eval(condition, frame.f_globals, frame.f_locals)
                                 if not val:
                                     return self.trace_dispatch
 
                             except:
-                                pydev_log.info('Error while evaluating condition \'%s\': %s\n' % (breakpoint.condition, sys.exc_info()[1]))
+                                if type(condition) != type(''):
+                                    if hasattr(condition, 'encode'):
+                                        condition = condition.encode('utf-8')
 
-                                return self.trace_dispatch
+                                msg = 'Error while evaluating expression: %s\n' % (condition,)
+                                sys.stderr.write(msg)
+                                traceback.print_exc()
+                                if not main_debugger.suspend_on_breakpoint_exception:
+                                    return self.trace_dispatch
+                                else:
+                                    stop = True
+                                    try:
+                                        additional_info = None
+                                        try:
+                                            additional_info = thread.additionalInfo
+                                        except AttributeError:
+                                            pass  #that's ok, no info currently set
+
+                                        if additional_info is not None:
+                                            # add exception_type and stacktrace into thread additional info
+                                            etype, value, tb = sys.exc_info()
+                                            try:
+                                                error = ''.join(traceback.format_exception_only(etype, value))
+                                                stack = traceback.extract_stack(f=tb.tb_frame.f_back)
+
+                                                # On self.setSuspend(thread, CMD_SET_BREAK) this info will be
+                                                # sent to the client.
+                                                additional_info.conditional_breakpoint_exception = \
+                                                    ('Condition:\n' + condition + '\n\nError:\n' + error, stack)
+                                            finally:
+                                                etype, value, tb = None, None, None
+                                    except:
+                                        traceback.print_exc()
 
                     if breakpoint.expression is not None:
                         try:
@@ -367,7 +414,7 @@ class PyDBFrame:
 
                 elif step_cmd == CMD_STEP_OVER:
                     if is_django_suspended(thread):
-                        django_stop = event == 'call' and is_django_render_call(frame)
+                        django_stop = event == 'call' and self._is_django_render_call(frame)
 
                         stop = False
                     else:
@@ -427,7 +474,7 @@ class PyDBFrame:
                     stop = False
 
                 if django_stop:
-                    frame = suspend_django(self, mainDebugger, thread, frame)
+                    frame = suspend_django(self, main_debugger, thread, frame)
                     if frame:
                         self.doWaitSuspend(thread, frame, event, arg)
                 elif stop:
@@ -461,7 +508,7 @@ class PyDBFrame:
 
             #if we are quitting, let's stop the tracing
             retVal = None
-            if not mainDebugger.quitting:
+            if not main_debugger.quitting:
                 retVal = self.trace_dispatch
 
             return retVal
@@ -480,7 +527,7 @@ class PyDBFrame:
                 sys.exc_clear() #don't keep the traceback
             pass #ok, psyco not available
 
-    def shouldStopOnDjangoBreak(self, frame, event, arg):
+    def should_stop_on_django_breakpoint(self, frame, event, arg):
         mainDebugger = self._args[0]
         thread = self._args[3]
         flag = False
