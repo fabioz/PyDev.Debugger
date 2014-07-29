@@ -514,8 +514,14 @@ class PyDBFrame:
                             #When we get to the pydevd run function, the debugging has actually finished for the main thread
                             #(note that it can still go on for other threads, but for this one, we just make it finish)
                             #So, just setting it to None should be OK
-                            if basename(back.f_code.co_filename) == 'pydevd.py' and back.f_code.co_name == 'run':
+                            base = basename(back.f_code.co_filename)
+                            if base == 'pydevd.py' and back.f_code.co_name == 'run':
                                 back = None
+
+                            elif base == 'pydevd_traceproperty.py':
+                                # We dont want to trace the return event of pydevd_traceproperty (custom property for debugging)
+                                #if we're in a return, we want it to appear to the user in the previous frame!
+                                return None
 
                         if back is not None:
                             #if we're in a return, we want it to appear to the user in the previous frame!

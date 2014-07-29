@@ -34,6 +34,7 @@ Already reviewed:
 . pydev_ipython_console_011.py
 . pydev_xml.py
 . pydevd_tracing.py
+. pydevd_frame.py
 
 
 Need reviewing later:
@@ -88,6 +89,12 @@ Things to be fixed in PyCharm:
 
 8. The CMD_ENABLE_DONT_TRACE must be sent from the UI to skip methods which have
     an #@DontTrace above it.
+
+
+Things to be fixed in PyDev:
+--------------------------------
+
+1. Provide UI for 'smart step into'
 
 
 Manual test:

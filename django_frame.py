@@ -71,7 +71,7 @@ def get_template_line(frame, template_frame_file):
     try:
         return offset_to_line_number(read_file(template_frame_file), source[1][0])
     except:
-        return 0
+        return None
 
 
 class DjangoTemplateFrame:
