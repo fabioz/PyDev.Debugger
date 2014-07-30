@@ -865,7 +865,7 @@ class PyDB:
                     else:
                         id_to_pybreakpoint = file_to_id_to_breakpoint[file] = {}
 
-                    id_to_pybreakpoint[line] = breakpoint
+                    id_to_pybreakpoint[breakpoint_id] = breakpoint
                     self.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
 
                     self.setTracingForUntracedContexts()
@@ -883,7 +883,7 @@ class PyDB:
                     try:
                         breakpoint_id = int(breakpoint_id)
                     except ValueError:
-                        pass
+                        pydev_log.error('Error removing breakpoint. Expected breakpoint_id to be an int. Found: %s' % (breakpoint_id,))
 
                     else:
                         if breakpoint_type == 'python-line':
@@ -905,8 +905,8 @@ class PyDB:
                             del id_to_pybreakpoint[breakpoint_id]
                             self.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
                         except KeyError:
-                            if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
-                                sys.stderr.write("breakpoint not found: %s id: %s\n" % (file, breakpoint_id))
+                            pydev_log.error("Error removing breakpoint: Breakpoint id not found: %s id: %s. Available ids: %s\n" % (
+                                file, breakpoint_id, DictKeys(id_to_pybreakpoint)))
 
 
                 elif cmd_id == CMD_EVALUATE_EXPRESSION or cmd_id == CMD_EXEC_EXPRESSION:
