@@ -145,7 +145,7 @@ class TestRunningCode(TestBase):
     def testEdit(self):
         ''' Make sure we can issue an edit command '''
         called_RequestInput = [False]
-        called_OpenEditor = [False]
+        called_IPythonEditor = [False]
         def startClientThread(client_port):
             class ClientThread(threading.Thread):
                 def __init__(self, client_port):
@@ -156,8 +156,8 @@ class TestRunningCode(TestBase):
                         def RequestInput(self):
                             called_RequestInput[0] = True
                             return '\n'
-                        def OpenEditor(self, name, line):
-                            called_OpenEditor[0] = (name, line)
+                        def IPythonEditor(self, name, line):
+                            called_IPythonEditor[0] = (name, line)
                             return True
 
                     handle_request_input = HandleRequestInput()
@@ -165,7 +165,7 @@ class TestRunningCode(TestBase):
                     import pydev_localhost
                     client_server = SimpleXMLRPCServer((pydev_localhost.get_localhost(), self.client_port), logRequests=False)
                     client_server.register_function(handle_request_input.RequestInput)
-                    client_server.register_function(handle_request_input.OpenEditor)
+                    client_server.register_function(handle_request_input.IPythonEditor)
                     client_server.serve_forever()
 
             client_thread = ClientThread(client_port)
@@ -179,7 +179,7 @@ class TestRunningCode(TestBase):
         try:
             filename = 'made_up_file.py'
             addExec('%edit ' + filename)
-            eq_(called_OpenEditor[0], (os.path.abspath(filename), 0))
+            eq_(called_IPythonEditor[0], (os.path.abspath(filename), 0))
             assert called_RequestInput[0], "Make sure the 'wait' parameter has been respected"
         finally:
             sys.stdin = orig_stdin

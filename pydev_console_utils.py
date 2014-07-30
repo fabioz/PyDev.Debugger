@@ -379,6 +379,8 @@ class BaseInterpreterInterface:
         else:
             return None
 
+    server = property(get_server)
+
     def finishExec(self, more):
         self.interruptable = False
 

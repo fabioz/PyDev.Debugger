@@ -31,6 +31,8 @@ Done in the merge (started from the PyCharm version and bringing in things from 
 
 - Find Referrers integrated.
 
+- Using same facade for IPython integration
+
 
 Things to be fixed in PyCharm:
 --------------------------------
@@ -89,6 +91,9 @@ Things to be fixed in PyCharm:
     for 'hot' auto-reload of the code -- note that it's not needed if the
     user already has some sort of auto-reload builtin -- i.e.: django).
 
+12. Console Completions: See: pydev_ipython_console_011.PyDevFrontEnd.getCompletions
+    Now we're completing as they come from the IPython backend (i.e.: not stripping %
+    for magic commands).
 
 Things to be fixed in PyDev:
 --------------------------------

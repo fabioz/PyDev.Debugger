@@ -47,7 +47,7 @@ except NameError: # version < 2.3 -- didn't have the True/False builtins
     setattr(__builtin__, 'True', 1) #Python 3.0 does not accept __builtin__.True = 1 in its syntax
     setattr(__builtin__, 'False', 0)
 
-from pydev_console_utils import BaseInterpreterInterface
+from pydev_console_utils import BaseInterpreterInterface, BaseStdIn
 from pydev_console_utils import CodeFragment
 
 IS_PYTHON_3K = False
@@ -145,7 +145,7 @@ class InterpreterInterface(BaseInterpreterInterface):
 
             traceback.print_exc()
             return []
-        
+
     def close(self):
         sys.exit(0)
 
@@ -221,16 +221,6 @@ def handshake():
     return "PyCharm"
 
 
-def ipython_editor(interpreter):
-    def editor(file, line):
-        if file is None:
-            file = ""
-        if line is None:
-            line = "-1"
-        interpreter.ipython_editor(file, line)
-
-    return editor
-
 #=======================================================================================================================
 # StartServer
 #=======================================================================================================================
@@ -262,12 +252,10 @@ def start_server(host, port, interpreter):
     server.register_function(interpreter.interrupt)
     server.register_function(handshake)
     server.register_function(interpreter.connectToDebugger)
+    server.register_function(interpreter.hello)
 
-    if IPYTHON:
-        try:
-            interpreter.interpreter.ipython.hooks.editor = ipython_editor(interpreter)
-        except:
-            pass
+    # Functions for GUI main loop integration
+    server.register_function(interpreter.enableGui)
 
     if port == 0:
         (h, port) = server.socket.getsockname()
@@ -318,10 +306,15 @@ def get_completions(text, token, globals, locals):
 
     return interpreterInterface.getCompletions(text, token)
 
-def get_frame():
-    interpreterInterface = get_interpreter()
+# -- doesn't seem to be used?
+# def get_frame():
+#     interpreterInterface = get_interpreter()
+#
+#     return interpreterInterface.getFrame()
 
-    return interpreterInterface.getFrame()
+#===============================================================================
+# Debugger integration
+#===============================================================================
 
 def exec_code(code, globals, locals):
     interpreterInterface = get_interpreter()
@@ -337,21 +330,20 @@ def exec_code(code, globals, locals):
 
     return False
 
+# -- doesn't seem to be used?
+# def read_line(s):
+#     ret = ''
+#
+#     while True:
+#         c = s.recv(1)
+#
+#         if c == '\n' or c == '':
+#             break
+#         else:
+#             ret += c
+#
+#     return ret
 
-def read_line(s):
-    ret = ''
-
-    while True:
-        c = s.recv(1)
-
-        if c == '\n' or c == '':
-            break
-        else:
-            ret += c
-
-    return ret
-
-# Debugger integration
 
 class ConsoleWriter(InteractiveInterpreter):
     skip = 0
@@ -408,7 +400,7 @@ class ConsoleWriter(InteractiveInterpreter):
         sys.stderr.write(''.join(lines))
 
 def consoleExec(thread_id, frame_id, expression):
-    """returns 'False' in case expression is partialy correct
+    """returns 'False' in case expression is partially correct
     """
     frame = pydevd_vars.findFrame(thread_id, frame_id)
 
@@ -452,9 +444,8 @@ def consoleExec(thread_id, frame_id, expression):
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-
-
 if __name__ == '__main__':
+    sys.stdin = BaseStdIn()
     port, client_port = sys.argv[1:3]
     import pydev_localhost
 
