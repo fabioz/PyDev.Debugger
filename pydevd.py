@@ -440,12 +440,12 @@ class PyDB:
         global bufferStdErrToServer
 
         if bufferStdOutToServer:
-                initStdoutRedirect()
-                self.checkOutput(sys.stdoutBuf, 1) #@UndefinedVariable
+            initStdoutRedirect()
+            self.checkOutput(sys.stdoutBuf, 1) #@UndefinedVariable
 
         if bufferStdErrToServer:
-                initStderrRedirect()
-                self.checkOutput(sys.stderrBuf, 2) #@UndefinedVariable
+            initStderrRedirect()
+            self.checkOutput(sys.stderrBuf, 2) #@UndefinedVariable
 
     def checkOutput(self, out, outCtx):
         '''Checks the output to see if we have to send some buffered output to the debug server
