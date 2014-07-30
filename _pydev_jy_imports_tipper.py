@@ -262,7 +262,7 @@ def ismethod(func):
                     infos.append(info)
     
             return 1, infos
-    except Exception, e:
+    except Exception:
         s = StringIO.StringIO()
         traceback.print_exc(file=s)
         return 1, [Info(str('ERROR'), doc=s.getvalue())]

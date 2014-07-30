@@ -31,22 +31,6 @@ Done in the merge (started from the PyCharm version and bringing in things from 
 
 - Find Referrers integrated.
 
-Already reviewed:
-
-. pycompletionserver.py
-. pydev_console_utils.py
-. pydev_ipython_console_011.py
-. pydev_xml.py
-. pydevd_tracing.py
-. pydevd_frame.py
-
-
-Need reviewing later:
-
-pydev_ipython_console_011.py:
-pydevd_comm.py: renumbered to keep all commands from pydev/pycharm.
-pydevd_vars.py: resolving variables by variable id().
-
 
 Things to be fixed in PyCharm:
 --------------------------------
@@ -111,15 +95,27 @@ Things to be fixed in PyDev:
 
 1. Provide UI for 'smart step into'
 
+2. Check what to do with 'message' from xml.
+
+3. Enable/test GEvent debugging (environment variable: GEVENT_SUPPORT).
+
+4. Deal with sendSignatureCallTrace.
+
+5. Work with Django exceptions: CMD_ADD_DJANGO_EXCEPTION_BREAK/CMD_REMOVE_DJANGO_EXCEPTION_BREAK
+
+TODO:
+--------
+sendSignatureCallTrace: don't call if not needed
+
+Console integration (IPython and 'regular') (interrupt)
+
+Add back: CMD_EVALUATE_CONSOLE_EXPRESSION
 
 Manual test:
 ---------------
 
-* Find referrers(objects that reference to) of an object instance
 * Support for IPython GUI event loop in console
-* Code autoreload in debugger/console
 * Ignore thrown/caught exceptions on source code
-
 * Django template debugging
 * Gevent debugging
 * Smart step into
