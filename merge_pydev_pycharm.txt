@@ -101,6 +101,10 @@ Things to be fixed in PyCharm:
     from pydevd_referrers import get_referrer_info
     get_referrer_info
 
+11. CMD_RELOAD_CODE has to be integrated (when a file changes it should be issued
+    for 'hot' auto-reload of the code -- note that it's not needed if the
+    user already has some sort of auto-reload builtin -- i.e.: django).
+
 
 Things to be fixed in PyDev:
 --------------------------------
