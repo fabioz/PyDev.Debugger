@@ -97,6 +97,11 @@ Things to be fixed in PyCharm:
     Now we're completing as they come from the IPython backend (i.e.: not stripping %
     for magic commands).
 
+13. In PyDev, interrupt can be used to clear the current buffer (whereas in PyCharm it's only
+    possible to activate it to stop the execution of a command) -- note that this is only a
+    client-side limitation.
+
+
 Things to be fixed in PyDev:
 --------------------------------
 
