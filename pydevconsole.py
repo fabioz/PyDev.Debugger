@@ -150,7 +150,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         sys.exit(0)
 
     def get_greeting_msg(self):
-        return 'PyDev console: starting.'
+        return 'PyDev console: starting.\n'
 
 
 def process_exec_queue(interpreter):

@@ -445,7 +445,7 @@ class PyDevFrontEnd:
         return self.ipython.automagic
 
     def get_greeting_msg(self):
-        return 'PyDev console: using IPython %s' % self.version
+        return 'PyDev console: using IPython %s\n' % self.version
 
 
 # If we have succeeded in importing this module, then monkey patch inputhook
