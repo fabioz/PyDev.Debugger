@@ -356,6 +356,7 @@ class BaseInterpreterInterface:
 
 
     def interrupt(self):
+        self.buffer = None # Also clear the buffer when it's interrupted.
         try:
             if self.interruptable:
                 if hasattr(thread, 'interrupt_main'): #Jython doesn't have it
