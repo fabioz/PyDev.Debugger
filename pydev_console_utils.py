@@ -415,7 +415,12 @@ class BaseInterpreterInterface:
         return xml
 
     def changeVariable(self, attr, value):
-        Exec('%s=%s' % (attr, value), self.getNamespace(), self.getNamespace())
+        def do_change_variable():
+            Exec('%s=%s' % (attr, value), self.getNamespace(), self.getNamespace())
+
+        # Important: it has to be really enabled in the main thread, so, schedule
+        # it to run in the main thread.
+        self.exec_queue.put(do_connect_to_debugger)
 
     def _findFrame(self, thread_id, frame_id):
         '''
@@ -437,43 +442,49 @@ class BaseInterpreterInterface:
         Used to show console with variables connection.
         Mainly, monkey-patches things in the debugger structure so that the debugger protocol works.
         '''
-        try:
-            # Try to import the packages needed to attach the debugger
-            import pydevd
-            import pydevd_vars
-            if USE_LIB_COPY:
-                import _pydev_threading as threading
-            else:
-                import threading
+        def do_connect_to_debugger():
+            try:
+                # Try to import the packages needed to attach the debugger
+                import pydevd
+                import pydevd_vars
+                if USE_LIB_COPY:
+                    import _pydev_threading as threading
+                else:
+                    import threading
 
-        except:
-            # This happens on Jython embedded in host eclipse
-            import traceback;traceback.print_exc()
-            return ('pydevd is not available, cannot connect',)
+            except:
+                # This happens on Jython embedded in host eclipse
+                import traceback;traceback.print_exc()
+                sys.stderr.write('pydevd is not available, cannot connect\n',)
 
-        import pydev_localhost
-        threading.currentThread().__pydevd_id__ = "console_main"
+            import pydev_localhost
+            threading.currentThread().__pydevd_id__ = "console_main"
 
-        self.orig_findFrame = pydevd_vars.findFrame
-        pydevd_vars.findFrame = self._findFrame
+            self.orig_findFrame = pydevd_vars.findFrame
+            pydevd_vars.findFrame = self._findFrame
 
-        self.debugger = pydevd.PyDB()
-        try:
-            self.debugger.connect(pydev_localhost.get_localhost(), debuggerPort)
-            self.debugger.prepareToRun()
-            import pydevd_tracing
-            pydevd_tracing.SetTrace(None)
-        except:
-            import traceback;traceback.print_exc()
-            return ('Failed to connect to target debugger.')
+            self.debugger = pydevd.PyDB()
+            try:
+                self.debugger.connect(pydev_localhost.get_localhost(), debuggerPort)
+                self.debugger.prepareToRun()
+                import pydevd_tracing
+                pydevd_tracing.SetTrace(None)
+            except:
+                import traceback;traceback.print_exc()
+                sys.stderr.write('Failed to connect to target debugger.\n')
 
-        # Register to process commands when idle
-        self.debugrunning = False
-        try:
-            self.server.setDebugHook(self.debugger.processInternalCommands)
-        except:
-            import traceback;traceback.print_exc()
-            return ('Version of Python does not support debuggable Interactive Console.')
+            # Register to process commands when idle
+            self.debugrunning = False
+            try:
+                import pydevconsole
+                pydevconsole.set_debug_hook(self.debugger.processInternalCommands)
+            except:
+                import traceback;traceback.print_exc()
+                sys.stderr.write('Version of Python does not support debuggable Interactive Console.\n')
+
+        # Important: it has to be really enabled in the main thread, so, schedule
+        # it to run in the main thread.
+        self.exec_queue.put(do_connect_to_debugger)
 
         return ('connect complete',)
 
@@ -486,19 +497,24 @@ class BaseInterpreterInterface:
             As with IPython, enabling multiple GUIs isn't an error, but
             only the last one's main loop runs and it may not work
         '''
-        from pydev_versioncheck import versionok_for_gui
-        if versionok_for_gui():
-            try:
-                from pydev_ipython.inputhook import enable_gui
-                enable_gui(guiname)
-            except:
-                sys.stderr.write("Failed to enable GUI event loop integration for '%s'\n" % guiname)
-                import traceback;traceback.print_exc()
-        elif guiname not in ['none', '', None]:
-            # Only print a warning if the guiname was going to do something
-            sys.stderr.write("PyDev console: Python version does not support GUI event loop integration for '%s'\n" % guiname)
-        # Return value does not matter, so return back what was sent
-        return guiname
+        def do_enable_gui():
+            from pydev_versioncheck import versionok_for_gui
+            if versionok_for_gui():
+                try:
+                    from pydev_ipython.inputhook import enable_gui
+                    enable_gui(guiname)
+                except:
+                    sys.stderr.write("Failed to enable GUI event loop integration for '%s'\n" % guiname)
+                    import traceback;traceback.print_exc()
+            elif guiname not in ['none', '', None]:
+                # Only print a warning if the guiname was going to do something
+                sys.stderr.write("PyDev console: Python version does not support GUI event loop integration for '%s'\n" % guiname)
+            # Return value does not matter, so return back what was sent
+            return guiname
+
+        # Important: it has to be really enabled in the main thread, so, schedule
+        # it to run in the main thread.
+        self.exec_queue.put(do_enable_gui)
 
 #=======================================================================================================================
 # FakeFrame

@@ -101,6 +101,11 @@ Things to be fixed in PyCharm:
     possible to activate it to stop the execution of a command) -- note that this is only a
     client-side limitation.
 
+14. The UI integration can have some UI integrated.
+    Note that the user can enable it manually (i.e.: by writing something as "%gui qt"
+    the qt backend is integrated, but it's possible to call 'enableGui' with the
+    backend to use from PyCharm too -- in PyDev this is an option with the possible backends).
+
 
 Things to be fixed in PyDev:
 --------------------------------
@@ -117,6 +122,8 @@ Things to be fixed in PyDev:
 
 6. Check console in debug frame.
 
+7. Set IPYTHONENABLE to False/True to use IPython console.
+
 TODO:
 --------
 sendSignatureCallTrace: don't call if not needed
@@ -129,12 +136,9 @@ Manual test:
 ---------------
 
 * Support for IPython GUI event loop in console
-* Ignore thrown/caught exceptions on source code
 * Django template debugging
 * Gevent debugging
 * Smart step into
-* Code block execution in python console
-* Possibility of interruption of a command, executing in python console
 * Collection of type information of arguments in debug mode
 * Ability to stop tracing
 * Ability to run debugger and console on remote interpreter

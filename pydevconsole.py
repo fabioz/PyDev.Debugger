@@ -153,15 +153,63 @@ class InterpreterInterface(BaseInterpreterInterface):
         return 'PyDev console: starting.\n'
 
 
+class _ProcessExecQueueHelper:
+    _debug_hook = None
+    _return_control_osc = False
+
+def set_debug_hook(debug_hook):
+    _ProcessExecQueueHelper._debug_hook = debug_hook
+
+
 def process_exec_queue(interpreter):
+
+    from pydev_ipython.inputhook import get_inputhook, set_return_control_callback
+
+    def return_control():
+        ''' A function that the inputhooks can call (via inputhook.stdin_ready()) to find
+            out if they should cede control and return '''
+        if _ProcessExecQueueHelper._debug_hook:
+            # Some of the input hooks check return control without doing
+            # a single operation, so we don't return True on every
+            # call when the debug hook is in place to allow the GUI to run
+            # XXX: Eventually the inputhook code will have diverged enough
+            # from the IPython source that it will be worthwhile rewriting
+            # it rather than pretending to maintain the old API
+            _ProcessExecQueueHelper._return_control_osc = not _ProcessExecQueueHelper._return_control_osc
+            if _ProcessExecQueueHelper._return_control_osc:
+                return True
+
+        if not interpreter.exec_queue.empty():
+            return True
+        return False
+
+    set_return_control_callback(return_control)
+
     while 1:
+        # Running the request may have changed the inputhook in use
+        inputhook = get_inputhook()
+
+        if _ProcessExecQueueHelper._debug_hook:
+            _ProcessExecQueueHelper._debug_hook()
+
+        if inputhook:
+            try:
+                # Note: it'll block here until return_control returns True.
+                inputhook()
+            except:
+                import traceback;traceback.print_exc()
         try:
             try:
-                codeFragment = interpreter.exec_queue.get(block=True, timeout=0.05)
+                code_fragment = interpreter.exec_queue.get(block=True, timeout=1/20.) # 20 calls/second
             except _queue.Empty:
                 continue
 
-            more = interpreter.addExec(codeFragment)
+            if callable(code_fragment):
+                # It can be a callable (i.e.: something that must run in the main
+                # thread can be put in the queue for later execution).
+                code_fragment()
+            else:
+                more = interpreter.addExec(code_fragment)
         except KeyboardInterrupt:
             interpreter.buffer = None
             continue
@@ -228,11 +276,8 @@ def start_server(host, port, interpreter):
     if port == 0:
         host = ''
 
-    try:
-        from _pydev_xmlrpc_hook import InputHookedXMLRPCServer as XMLRPCServer  #@UnusedImport
-    except:
-        #I.e.: supporting the internal Jython version in PyDev to create a Jython interactive console inside Eclipse.
-        from pydev_imports import SimpleXMLRPCServer as XMLRPCServer  #@Reimport
+    #I.e.: supporting the internal Jython version in PyDev to create a Jython interactive console inside Eclipse.
+    from pydev_imports import SimpleXMLRPCServer as XMLRPCServer  #@Reimport
 
     try:
         server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
@@ -306,12 +351,6 @@ def get_completions(text, token, globals, locals):
 
     return interpreterInterface.getCompletions(text, token)
 
-# -- doesn't seem to be used?
-# def get_frame():
-#     interpreterInterface = get_interpreter()
-#
-#     return interpreterInterface.getFrame()
-
 #===============================================================================
 # Debugger integration
 #===============================================================================
@@ -330,19 +369,6 @@ def exec_code(code, globals, locals):
 
     return False
 
-# -- doesn't seem to be used?
-# def read_line(s):
-#     ret = ''
-#
-#     while True:
-#         c = s.recv(1)
-#
-#         if c == '\n' or c == '':
-#             break
-#         else:
-#             ret += c
-#
-#     return ret
 
 
 class ConsoleWriter(InteractiveInterpreter):
