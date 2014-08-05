@@ -91,7 +91,7 @@ Things to be fixed in PyCharm:
 
 11. CMD_RELOAD_CODE has to be integrated (when a file changes it should be issued
     for 'hot' auto-reload of the code -- note that it's not needed if the
-    user already has some sort of auto-reload builtin -- i.e.: django).
+    user already has some sort of auto-reload builtin -- i.e.: django without the noreload option).
 
 12. Console Completions: See: pydev_ipython_console_011.PyDevFrontEnd.getCompletions
     Now we're completing as they come from the IPython backend (i.e.: not stripping %
@@ -101,7 +101,7 @@ Things to be fixed in PyCharm:
     possible to activate it to stop the execution of a command) -- note that this is only a
     client-side limitation.
 
-14. The UI integration can have some UI integrated.
+14. Console GUI event loop can have some UI integrated.
     Note that the user can enable it manually (i.e.: by writing something as "%gui qt"
     the qt backend is integrated, but it's possible to call 'enableGui' with the
     backend to use from PyCharm too -- in PyDev this is an option with the possible backends).
