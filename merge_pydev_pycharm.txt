@@ -35,11 +35,8 @@ Done in the merge (started from the PyCharm version and bringing in things from 
 
 - When the code is interrupted, the buffer in the python side is cleared.
 
-- Changes to GEvent debugging so that we don't have copied modules. Still, in the
-    current version it still has the limitation it had previously where the remote
-    debugger won't work if it's imported after the gevent monkey patching took
-    place (so, one has to import pydevd before doing the patching -- even if
-    pydevd.settrace will only be done later).
+- GEvent debugging: for remote debugging, one has to import pydevd before doing the gevent patching -- even if
+    pydevd.settrace will only be done later.
 
     Also, the gevent debugging should probably be closer to the stackless debugging,
     where we actually show the live stackless threads -- so, we should show the live
