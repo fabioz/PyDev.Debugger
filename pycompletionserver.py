@@ -197,7 +197,7 @@ class T(Thread):
 
 
     def connectToServer(self):
-        import socket
+        from _pydev_imps import _pydev_socket as socket
 
         self.socket = s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:

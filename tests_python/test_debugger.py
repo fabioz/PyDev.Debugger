@@ -5,7 +5,7 @@
 
     Note that it's a python script but it'll spawn a process to run as jython, ironpython and as python.
 '''
-CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION = 133, 134, 135
+CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION, CMD_ENABLE_DONT_TRACE = 133, 134, 135, 141
 PYTHON_EXE = None
 IRONPYTHON_EXE = None
 JYTHON_JAR_LOCATION = None
@@ -47,7 +47,7 @@ import subprocess
 import socket
 import threading
 import time
-from urllib import quote_plus, quote
+from urllib import quote_plus, quote, unquote_plus
 
 
 #=======================================================================================================================
@@ -172,7 +172,7 @@ class AbstractWriterThread(threading.Thread):
         # we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" ...
         splitted = self.readerThread.lastReceived.split('"')
         threadId = splitted[1]
-        frameId = splitted[5]
+        frameId = splitted[7]
         if get_line:
             return threadId, frameId, int(splitted[13])
 
@@ -192,16 +192,8 @@ class AbstractWriterThread(threading.Thread):
         return True
 
     def WaitForEvaluation(self, expected):
-        i = 0
-        # wait for hit breakpoint
-        while not expected in self.readerThread.lastReceived:
-            i += 1
-            time.sleep(1)
-            if i >= 10:
-                raise AssertionError('After %s seconds, the expected evaluation was not found. Last found:\n%s' % 
-                    (i, self.readerThread.lastReceived))
+        return self._WaitFor(expected, 'the expected evaluation was not found')
 
-        return True
 
     def WaitForVars(self, expected):
         i = 0
@@ -216,25 +208,39 @@ class AbstractWriterThread(threading.Thread):
         return True
 
     def WaitForVar(self, expected):
+        self._WaitFor(expected, 'the var was not found')
+        
+    def _WaitFor(self, expected, error_msg):
+        '''
+        :param expected:
+            If a list we'll work with any of the choices.
+        '''
+        if not isinstance(expected, (list, tuple)):
+            expected = [expected]
+            
         i = 0
-        while not expected in self.readerThread.lastReceived:
+        found = False
+        while not found:
+            last = self.readerThread.lastReceived
+            for e in expected:
+                if e in last:
+                    found = True
+                    break
+                
+            last = unquote_plus(last)
+            for e in expected:
+                if e in last:
+                    found = True
+                    break
+
+            if found:
+                break
+                        
             i += 1
             time.sleep(1)
             if i >= 10:
-                raise AssertionError('After %s seconds, the var was not found. Last found:\n%s' % 
-                    (i, self.readerThread.lastReceived))
-
-        return True
-
-    def WaitForVarRE(self, expected_regular_expression):
-        i = 0
-        pattern = re.compile(expected_regular_expression)
-        while not pattern.search(self.readerThread.lastReceived):
-            i += 1
-            time.sleep(1)
-            if i >= 10:
-                raise AssertionError('After %s seconds, the var (using RE) was not found. Last found:\n%s' % 
-                    (i, self.readerThread.lastReceived))
+                raise AssertionError('After %s seconds, %s. Last found:\n%s' % 
+                    (i, error_msg, last))
 
         return True
 
@@ -271,7 +277,7 @@ class AbstractWriterThread(threading.Thread):
         return breakpoint_id
 
     def WriteRemoveBreakpoint(self, breakpoint_id):
-        self.Write("112\t%s\t%s\t%s" % (self.NextSeq(), breakpoint_id, self.TEST_FILE))
+        self.Write("112\t%s\t%s\t%s\t%s" % (self.NextSeq(), 'python-line', self.TEST_FILE, breakpoint_id))
 
     def WriteChangeVariable(self, thread_id, frame_id, varname, value):
         self.Write("117\t%s\t%s\t%s\t%s\t%s\t%s" % (self.NextSeq(), thread_id, frame_id, 'FRAME', varname, value))
@@ -307,14 +313,14 @@ class AbstractWriterThread(threading.Thread):
         self.Write("%s\t%s\t%s||%s\t%s\t%s" % (CMD_RUN_CUSTOM_OPERATION, self.NextSeq(), locator, style, codeOrFile, operation_fn_name))
         
     def WriteEvaluateExpression(self, locator, expression):
-        self.Write("113\t%s\t%s\t%s" % (self.NextSeq(), locator, expression))
+        self.Write("113\t%s\t%s\t%s\t1" % (self.NextSeq(), locator, expression))
 
     def WriteEnableDontTrace(self, enable):
         if enable:
             enable = 'true'
         else:
             enable = 'false'
-        self.Write("133\t%s\t%s" % (self.NextSeq(), enable))
+        self.Write("%s\t%s\t%s" % (CMD_ENABLE_DONT_TRACE, self.NextSeq(), enable))
 
 
 #=======================================================================================================================
@@ -414,34 +420,34 @@ class WriterThreadCase16(AbstractWriterThread):
 
         # For each variable, check each of the resolved (meta data) attributes...
         self.WriteGetVariable(threadId, frameId, 'smallarray')
-        self.WaitForVar('<var name="min" type="complex128" value="complex128%253A 1j" />')
-        self.WaitForVar('<var name="max" type="complex128" value="complex128%253A %252899%252B1j%2529" />')
-        self.WaitForVar('<var name="shape" type="tuple" value="tuple%253A %2528100%252C%2529" isContainer="True" />')
-        self.WaitForVar('<var name="dtype" type="dtype" value="dtype%253A complex128" isContainer="True" />')
-        self.WaitForVar('<var name="size" type="int" value="int%253A 100" />')
+        self.WaitForVar('<var name="min" type="complex128"')
+        self.WaitForVar('<var name="max" type="complex128"')
+        self.WaitForVar('<var name="shape" type="tuple"')
+        self.WaitForVar('<var name="dtype" type="dtype"')
+        self.WaitForVar('<var name="size" type="int"')
         # ...and check that the internals are resolved properly
         self.WriteGetVariable(threadId, frameId, 'smallarray\t__internals__')
-        self.WaitForVarRE('<var name="size %28.*%29" type="int" value="int%253A 100" />')
+        self.WaitForVar('<var name="%27size%27')
 
         self.WriteGetVariable(threadId, frameId, 'bigarray')
-        self.WaitForVar('<var name="min" type="int64" value="int64%253A 0" />')  # TODO: When on a 32 bit python we get an int32 (which makes this test fail).
-        self.WaitForVar('<var name="max" type="int64" value="int64%253A 99999" />')
-        self.WaitForVar('<var name="shape" type="tuple" value="tuple%253A %252810%252C 10000%2529" isContainer="True" />')
-        self.WaitForVar('<var name="dtype" type="dtype" value="dtype%253A int64" isContainer="True" />')
-        self.WaitForVar('<var name="size" type="int" value="int%253A 100000" />')
+        self.WaitForVar(['<var name="min" type="int64" value="int64%253A 0" />', '<var name="size" type="int" value="int%3A 100000" />'])  # TODO: When on a 32 bit python we get an int32 (which makes this test fail).
+        self.WaitForVar(['<var name="max" type="int64" value="int64%253A 99999" />', '<var name="max" type="int32" value="int32%253A 99999" />'])
+        self.WaitForVar('<var name="shape" type="tuple"')
+        self.WaitForVar('<var name="dtype" type="dtype"')
+        self.WaitForVar('<var name="size" type="int"')
         self.WriteGetVariable(threadId, frameId, 'bigarray\t__internals__')
-        self.WaitForVarRE('<var name="size %28.*%29" type="int" value="int%253A 100000" />')
+        self.WaitForVar('<var name="%27size%27')
 
         # this one is different because it crosses the magic threshold where we don't calculate
         # the min/max
         self.WriteGetVariable(threadId, frameId, 'hugearray')
         self.WaitForVar('<var name="min" type="str" value="str%253A ndarray too big%252C calculating min would slow down debugging" />')
         self.WaitForVar('<var name="max" type="str" value="str%253A ndarray too big%252C calculating max would slow down debugging" />')
-        self.WaitForVar('<var name="shape" type="tuple" value="tuple%253A %252810000000%252C%2529" isContainer="True" />')
-        self.WaitForVar('<var name="dtype" type="dtype" value="dtype%253A int64" isContainer="True" />')
-        self.WaitForVar('<var name="size" type="int" value="int%253A 10000000" />')
+        self.WaitForVar('<var name="shape" type="tuple"')
+        self.WaitForVar('<var name="dtype" type="dtype"')
+        self.WaitForVar('<var name="size" type="int"')
         self.WriteGetVariable(threadId, frameId, 'hugearray\t__internals__')
-        self.WaitForVarRE('<var name="size %28.*%29" type="int" value="int%253A 10000000" />')
+        self.WaitForVar('<var name="%27size%27')
 
         self.WriteRunThread(threadId)
         self.finishedOk = True
@@ -488,6 +494,8 @@ class WriterThreadCase14(AbstractWriterThread):
         self.WriteMakeInitialRun()
 
         threadId, frameId, line = self.WaitForBreakpointHit('111', True)
+        assert threadId, '%s not valid.' % threadId
+        assert frameId, '%s not valid.' % frameId
 
         # Access some variable
         self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\tcarObj.color" % (threadId, frameId))
@@ -981,7 +989,8 @@ class DebuggerBase(object):
         if SHOW_OTHER_DEBUG_INFO:
             print 'executing', ' '.join(args)
 
-        process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=os.path.dirname(PYDEVD_FILE))
+#         process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=os.path.dirname(PYDEVD_FILE))
+        process = subprocess.Popen(args, stdout=subprocess.PIPE, cwd=os.path.dirname(PYDEVD_FILE))
         class ProcessReadThread(threading.Thread):
             def run(self):
                 self.resultStr = None
@@ -1157,6 +1166,7 @@ try:
         var, loc = SplitLine(line)
         if 'PYTHON_EXE' == var:
             PYTHON_EXE = loc
+        PYTHON_EXE = r'C:\bin\Anaconda\python.exe'
 
         if 'IRONPYTHON_EXE' == var:
             IRONPYTHON_EXE = loc
@@ -1178,11 +1188,15 @@ assert os.path.exists(IRONPYTHON_EXE), 'The location: %s is not valid' % (IRONPY
 assert os.path.exists(JYTHON_JAR_LOCATION), 'The location: %s is not valid' % (JYTHON_JAR_LOCATION,)
 assert os.path.exists(JAVA_LOCATION), 'The location: %s is not valid' % (JAVA_LOCATION,)
 
-if False:
+if True:
     suite = unittest.TestSuite()
 #     suite.addTest(TestPython('testCase10'))
-    suite.addTest(TestPython('testCase14'))
-#     suite = unittest.makeSuite(TestPython)
+#     suite.addTest(TestPython('testCase3'))
+#     suite.addTest(TestPython('testCase16'))
+#     suite.addTest(TestPython('testCase17'))
+#     suite.addTest(TestPython('testCase18'))
+#     suite.addTest(TestPython('testCase19'))
+    suite = unittest.makeSuite(TestPython)
     unittest.TextTestRunner(verbosity=3).run(suite)
     
 #    unittest.TextTestRunner(verbosity=3).run(suite)

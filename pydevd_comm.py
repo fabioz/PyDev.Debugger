@@ -65,10 +65,9 @@ from _pydev_imps import _pydev_time as time
 from _pydev_imps import _pydev_thread as thread
 if USE_LIB_COPY:
     import _pydev_threading as threading
-    from _pydev_imps._pydev_socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
 else:
-    from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
-
+    import threading
+from _pydev_imps._pydev_socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
 from pydev_imports import _queue
 
 try:
@@ -992,7 +991,7 @@ class InternalEvaluateExpression(InternalThreadCommand):
         try:
             result = pydevd_vars.evaluateExpression(self.thread_id, self.frame_id, self.expression, self.doExec)
             xml = "<xml>"
-            xml += pydevd_vars.varToXML(result, "", self.doTrim)
+            xml += pydevd_vars.varToXML(result, self.expression, self.doTrim)
             xml += "</xml>"
             cmd = dbg.cmdFactory.makeEvaluateExpressionMessage(self.sequence, xml)
             dbg.writer.addCommand(cmd)
@@ -1152,7 +1151,12 @@ class InternalEvaluateConsoleExpression(InternalThreadCommand):
                 console_message = pydevd_console.execute_console_command(frame, self.thread_id, self.frame_id, self.line)
                 cmd = dbg.cmdFactory.makeSendConsoleMessage(self.sequence, console_message.toXML())
             else:
-                console_message.add_console_message(pydevd_console.CONSOLE_ERROR, "Select the valid frame in the debug view")
+                from pydevd_console import ConsoleMessage
+                console_message = ConsoleMessage()
+                console_message.add_console_message(
+                    pydevd_console.CONSOLE_ERROR, 
+                    "Select the valid frame in the debug view (thread: %s, frame: %s invalid)" % (self.thread_id, self.frame_id), 
+                )
                 cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, console_message.toXML())
         except:
             exc = GetExceptionTracebackStr()
