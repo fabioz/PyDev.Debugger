@@ -10,7 +10,6 @@ import os
 import sys
 
 from pydevd_constants import USE_LIB_COPY
-from pydevd_constants import IS_JYTHON
 
 if USE_LIB_COPY:
     import _pydev_threading as threading
@@ -50,17 +49,6 @@ try:
 except:
     #That's OK, not all versions of python have sys.version_info
     pass
-
-try:
-    try:
-        if USE_LIB_COPY:
-            from _pydev_imps import _pydev_xmlrpclib as xmlrpclib
-        else:
-            import xmlrpclib
-    except ImportError:
-        import xmlrpc.client as xmlrpclib
-except ImportError:
-    from _pydev_imps import _pydev_xmlrpclib as xmlrpclib
 
 
 class Command:

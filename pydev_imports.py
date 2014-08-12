@@ -35,7 +35,7 @@ except ImportError:
 try:
     execfile=execfile #Not in Py3k
 except NameError:
-    from _pydev_execfile import execfile
+    from _pydev_imps._pydev_execfile import execfile
 
 
 try:

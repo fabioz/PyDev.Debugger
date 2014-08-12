@@ -2,7 +2,7 @@ try:
     import inspect
 except:
     try:
-        import _pydev_inspect as inspect # for older versions
+        from _pydev_imps import _pydev_inspect as inspect
     except:
         import traceback;traceback.print_exc() #Ok, no inspect available (search will not work)
 
