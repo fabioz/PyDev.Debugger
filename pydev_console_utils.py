@@ -419,7 +419,7 @@ class BaseInterpreterInterface:
                 # Try to import the packages needed to attach the debugger
                 import pydevd
                 if USE_LIB_COPY:
-                    from _pydev_imps import _pydev_thread as threading
+                    import _pydev_threading as threading
                 else:
                     import threading
 

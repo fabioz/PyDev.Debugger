@@ -103,7 +103,6 @@ except:
 
 DONT_TRACE = {
               # commonly used things from the stdlib that we don't want to trace
-              'threading.py':1,
               'Queue.py':1,
               'queue.py':1,
               'socket.py':1,
@@ -1014,7 +1013,7 @@ class PyDB:
                         elif console_command == 'GET_COMPLETIONS':
                             int_cmd = InternalConsoleGetCompletions(seq, thread_id, frame_id, line)
                         self.postInternalCommand(int_cmd, thread_id)
-                        
+
                 elif cmd_id == CMD_RUN_CUSTOM_OPERATION:
                     # Command which runs a custom operation
                     if text != "":
