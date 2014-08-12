@@ -244,7 +244,7 @@ class PyDBFrame:
             if getattr(thread, 'pydev_do_not_trace', None):
                 return None
 
-            if event == 'call':
+            if event == 'call' and main_debugger.signature_factory:
                 sendSignatureCallTrace(main_debugger, frame, filename)
 
             is_exception_event = event == 'exception'

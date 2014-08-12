@@ -123,9 +123,8 @@ def create_signature_message(signature):
     return NetCommand(CMD_SIGNATURE_CALL_TRACE, 0, cmdText)
 
 def sendSignatureCallTrace(dbg, frame, filename):
-    if dbg.signature_factory:
-        if dbg.signature_factory.is_in_scope(filename):
-            dbg.writer.addCommand(create_signature_message(dbg.signature_factory.create_signature(frame)))
+    if dbg.signature_factory.is_in_scope(filename):
+        dbg.writer.addCommand(create_signature_message(dbg.signature_factory.create_signature(frame)))
 
 
 

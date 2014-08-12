@@ -1166,7 +1166,6 @@ try:
         var, loc = SplitLine(line)
         if 'PYTHON_EXE' == var:
             PYTHON_EXE = loc
-        PYTHON_EXE = r'C:\bin\Anaconda\python.exe'
 
         if 'IRONPYTHON_EXE' == var:
             IRONPYTHON_EXE = loc
@@ -1188,8 +1187,9 @@ assert os.path.exists(IRONPYTHON_EXE), 'The location: %s is not valid' % (IRONPY
 assert os.path.exists(JYTHON_JAR_LOCATION), 'The location: %s is not valid' % (JYTHON_JAR_LOCATION,)
 assert os.path.exists(JAVA_LOCATION), 'The location: %s is not valid' % (JAVA_LOCATION,)
 
-if True:
+if False:
     suite = unittest.TestSuite()
+    #PYTHON_EXE = r'C:\bin\Anaconda\python.exe'
 #     suite.addTest(TestPython('testCase10'))
 #     suite.addTest(TestPython('testCase3'))
 #     suite.addTest(TestPython('testCase16'))

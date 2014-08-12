@@ -117,27 +117,16 @@ Things to be fixed in PyCharm:
 Things to be fixed in PyDev:
 --------------------------------
 
-1. Provide UI for 'smart step into'
+.Provide UI for 'smart step into' (later)
 
-2. Check what to do with 'message' from xml.
+. Check what to do with 'message' from xml (later)
 
-3. Enable/test GEvent debugging (environment variable: GEVENT_SUPPORT).
+. Deal with sendSignatureCallTrace (later)
 
-4. Deal with sendSignatureCallTrace.
+. Work with Django exceptions: CMD_ADD_DJANGO_EXCEPTION_BREAK/CMD_REMOVE_DJANGO_EXCEPTION_BREAK.
 
-5. Work with Django exceptions: CMD_ADD_DJANGO_EXCEPTION_BREAK/CMD_REMOVE_DJANGO_EXCEPTION_BREAK.
+. Set IPYTHONENABLE to False/True to use IPython console (later)
 
-6. Check console in debug frame.
-
-7. Set IPYTHONENABLE to False/True to use IPython console.
-
-TODO:
---------
-sendSignatureCallTrace: don't call if not needed
-
-Console integration (IPython and 'regular') (interrupt)
-
-Add back: CMD_EVALUATE_CONSOLE_EXPRESSION
 
 Manual test:
 ---------------
