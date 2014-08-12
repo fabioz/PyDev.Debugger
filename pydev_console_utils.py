@@ -19,13 +19,7 @@ try:
 except:
     from pydevd_exec2 import Exec
 
-try:
-    if USE_LIB_COPY:
-        import _pydev_thread as thread
-    else:
-        import thread
-except:
-    import _thread as thread
+from _pydev_imps import _pydev_thread as thread
 
 import pydevd_xml
 import pydevd_vars
@@ -448,7 +442,7 @@ class BaseInterpreterInterface:
                 import pydevd
                 import pydevd_vars
                 if USE_LIB_COPY:
-                    import _pydev_threading as threading
+                    from _pydev_imps import _pydev_thread as threading
                 else:
                     import threading
 

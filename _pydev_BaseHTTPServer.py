@@ -71,8 +71,8 @@ __version__ = "0.3"
 __all__ = ["HTTPServer", "BaseHTTPRequestHandler"]
 
 import sys
-import _pydev_time as time
-import _pydev_socket as socket # For gethostbyaddr()
+from _pydev_imps import _pydev_time as time
+from _pydev_imps import _pydev_socket as socket
 from warnings import filterwarnings, catch_warnings
 with catch_warnings():
     if sys.py3kwarning:

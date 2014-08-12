@@ -1,6 +1,6 @@
 """A multi-producer, multi-consumer queue."""
 
-from _pydev_time import time as _time
+from _pydev_imps._pydev_time import time as _time
 try:
     import _pydev_threading as _threading
 except ImportError:

@@ -129,8 +129,8 @@ BaseServer:
 __version__ = "0.4"
 
 
-import _pydev_socket as socket
-import _pydev_select as select
+from _pydev_imps import _pydev_socket as socket
+from _pydev_imps import _pydev_select as select
 import sys
 import os
 try:

@@ -70,6 +70,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_GET_FILE_CONTENTS,\
                          CMD_SET_PROPERTY_TRACE, CMD_RUN_CUSTOM_OPERATION,\
                          InternalRunCustomOperation
+
 from pydevd_file_utils import NormFileToServer, GetFilenameAndBase
 import pydevd_file_utils
 import pydevd_vars
@@ -81,12 +82,11 @@ from pydevd_custom_frames import CustomFramesContainer, CustomFramesContainerIni
 import pydevd_dont_trace
 import pydevd_traceproperty
 
+from _pydev_imps import _pydev_time as time
 
 if USE_LIB_COPY:
-    import _pydev_time as time
     import _pydev_threading as threading
 else:
-    import time
     import threading
 
 import os
@@ -240,63 +240,6 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
     def doKillPydevThread(self):
         pass
 
-if USE_LIB_COPY:
-    import _pydev_thread as thread
-else:
-    try:
-        import thread
-    except ImportError:
-        import _thread as thread #Py3K changed it.
-
-_original_start_new_thread = thread.start_new_thread
-
-if getattr(thread, '_original_start_new_thread', None) is None:
-    thread._original_start_new_thread = thread.start_new_thread
-
-#=======================================================================================================================
-# NewThreadStartup
-#=======================================================================================================================
-class NewThreadStartup:
-
-    def __init__(self, original_func, args, kwargs):
-        self.original_func = original_func
-        self.args = args
-        self.kwargs = kwargs
-
-    def __call__(self):
-        global_debugger = GetGlobalDebugger()
-        if global_debugger is not None:
-            global_debugger.SetTrace(global_debugger.trace_dispatch)
-        return self.original_func(*self.args, **self.kwargs)
-
-thread.NewThreadStartup = NewThreadStartup
-
-#=======================================================================================================================
-# pydev_start_new_thread
-#=======================================================================================================================
-def _pydev_start_new_thread(function, args, kwargs={}):
-    '''
-    We need to replace the original thread.start_new_thread with this function so that threads started through
-    it and not through the threading module are properly traced.
-    '''
-    if USE_LIB_COPY:
-        import _pydev_thread as thread
-    else:
-        try:
-            import thread
-        except ImportError:
-            import _thread as thread #Py3K changed it.
-
-    return thread._original_start_new_thread(thread.NewThreadStartup(function, args, kwargs), ())
-
-class PydevStartNewThread(object):
-    def __get__(self, obj, type=None):
-        return self
-
-    def __call__(self, function, args, kwargs={}):
-        return _pydev_start_new_thread(function, args, kwargs)
-
-pydev_start_new_thread = PydevStartNewThread()
 
 
 #=======================================================================================================================
@@ -1467,6 +1410,7 @@ class PyDB:
         PyDBCommandThread(self).start()
         PyDBCheckAliveThread(self).start()
 
+
     def patch_threads(self):
         try:
             # not available in jython!
@@ -1474,11 +1418,8 @@ class PyDB:
         except:
             pass
 
-        try:
-            thread.start_new_thread = pydev_start_new_thread
-            thread.start_new = pydev_start_new_thread
-        except:
-            pass
+        from pydev_monkey import patch_thread_modules
+        patch_thread_modules()
 
 
     def run(self, file, globals=None, locals=None, set_trace=True):
@@ -1814,11 +1755,8 @@ def stoptrace():
         except:
             pass
 
-        try:
-            thread.start_new_thread = _original_start_new_thread
-            thread.start_new = _original_start_new_thread
-        except:
-            pass
+        from pydev_monkey import undo_patch_thread_modules
+        undo_patch_thread_modules()
 
         debugger = GetGlobalDebugger()
 
