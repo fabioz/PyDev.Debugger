@@ -23,15 +23,7 @@ fix_getpass.fixGetpass()
 
 import pydevd_vars
 
-from pydev_imports import Exec
-
-try:
-    if USE_LIB_COPY:
-        import _pydev_Queue as _queue
-    else:
-        import Queue as _queue
-except:
-    import queue as _queue
+from pydev_imports import Exec, _queue
 
 try:
     import __builtin__

@@ -65,14 +65,11 @@ from _pydev_imps import _pydev_time as time
 from _pydev_imps import _pydev_thread as thread
 if USE_LIB_COPY:
     import _pydev_threading as threading
-    import _pydev_Queue as _queue
     from _pydev_imps._pydev_socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
 else:
-    try:
-        import Queue as _queue
-    except ImportError:
-        import queue as _queue
     from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
+
+from pydev_imports import _queue
 
 try:
     from urllib import quote, quote_plus, unquote, unquote_plus

@@ -1,3 +1,6 @@
 eclipse.preferences.version=1
 encoding//pydev_ipython/inputhook.py=utf-8
+encoding//pydev_ipython/inputhookglut.py=utf-8
+encoding//pydev_ipython/inputhookpyglet.py=utf-8
 encoding//pydev_ipython/inputhookqt4.py=utf-8
+encoding//pydev_ipython/inputhookwx.py=utf-8
