@@ -347,7 +347,7 @@ class BaseInterpreterInterface:
         self.interruptable = True
 
     def get_server(self):
-        if self.host is not None:
+        if getattr(self, 'host', None) is not None:
             return xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
         else:
             return None

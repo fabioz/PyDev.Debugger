@@ -86,6 +86,7 @@ import pydev_log
 import _pydev_completer
 
 from pydevd_tracing import GetExceptionTracebackStr
+import pydevd_console
 
 
 

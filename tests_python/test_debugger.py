@@ -5,6 +5,7 @@
 
     Note that it's a python script but it'll spawn a process to run as jython, ironpython and as python.
 '''
+CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION = 133, 134, 135
 PYTHON_EXE = None
 IRONPYTHON_EXE = None
 JYTHON_JAR_LOCATION = None
@@ -26,7 +27,7 @@ def UpdatePort():
 import os
 def NormFile(filename):
     try:
-        rPath = os.path.realpath  #@UndefinedVariable
+        rPath = os.path.realpath  # @UndefinedVariable
     except:
         # jython does not support os.path.realpath
         # realpath is a no-op on systems without islink support
@@ -74,7 +75,7 @@ class ReaderThread(threading.Thread):
                 if SHOW_WRITES_AND_READS:
                     print 'Test Reader Thread Received %s' % self.lastReceived.strip()
         except:
-            pass  #ok, finished it
+            pass  # ok, finished it
 
     def DoKill(self):
         self.sock.close()
@@ -92,7 +93,7 @@ class AbstractWriterThread(threading.Thread):
 
     def DoKill(self):
         if hasattr(self, 'readerThread'):
-            #if it's not created, it's not there...
+            # if it's not created, it's not there...
             self.readerThread.DoKill()
         self.sock.close()
 
@@ -127,7 +128,7 @@ class AbstractWriterThread(threading.Thread):
         self.sock = newSock
 
         self._sequence = -1
-        #initial command is always the version
+        # initial command is always the version
         self.WriteVersion()
 
     def NextBreakpointId(self):
@@ -141,14 +142,14 @@ class AbstractWriterThread(threading.Thread):
 
     def WaitForNewThread(self):
         i = 0
-        #wait for hit breakpoint
+        # wait for hit breakpoint
         while not '<xml><thread name="' in self.readerThread.lastReceived or '<xml><thread name="pydevd.' in self.readerThread.lastReceived:
             i += 1
             time.sleep(1)
             if i >= 15:
                 raise AssertionError('After %s seconds, a thread was not created.' % i)
 
-        #we have something like <xml><thread name="MainThread" id="12103472" /></xml>
+        # we have something like <xml><thread name="MainThread" id="12103472" /></xml>
         splitted = self.readerThread.lastReceived.split('"')
         threadId = splitted[3]
         return threadId
@@ -160,7 +161,7 @@ class AbstractWriterThread(threading.Thread):
             111 is breakpoint
         '''
         i = 0
-        #wait for hit breakpoint
+        # wait for hit breakpoint
         while not ('stop_reason="%s"' % reason) in self.readerThread.lastReceived:
             i += 1
             time.sleep(1)
@@ -168,18 +169,18 @@ class AbstractWriterThread(threading.Thread):
                 raise AssertionError('After %s seconds, a break with reason: %s was not hit. Found: %s' % \
                     (i, reason, self.readerThread.lastReceived))
 
-        #we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" ...
+        # we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" ...
         splitted = self.readerThread.lastReceived.split('"')
         threadId = splitted[1]
         frameId = splitted[5]
         if get_line:
-            return threadId, frameId, int(splitted[11])
+            return threadId, frameId, int(splitted[13])
 
         return threadId, frameId
 
     def WaitForCustomOperation(self, expected):
         i = 0
-        #wait for custom operation response, the response is double encoded
+        # wait for custom operation response, the response is double encoded
         expectedEncoded = quote(quote_plus(expected))
         while not expectedEncoded in self.readerThread.lastReceived:
             i += 1
@@ -192,7 +193,7 @@ class AbstractWriterThread(threading.Thread):
 
     def WaitForEvaluation(self, expected):
         i = 0
-        #wait for hit breakpoint
+        # wait for hit breakpoint
         while not expected in self.readerThread.lastReceived:
             i += 1
             time.sleep(1)
@@ -204,7 +205,7 @@ class AbstractWriterThread(threading.Thread):
 
     def WaitForVars(self, expected):
         i = 0
-        #wait for hit breakpoint
+        # wait for hit breakpoint
         while not expected in self.readerThread.lastReceived:
             i += 1
             time.sleep(1)
@@ -239,11 +240,11 @@ class AbstractWriterThread(threading.Thread):
 
     def WaitForMultipleVars(self, expected_vars):
         i = 0
-        #wait for hit breakpoint
+        # wait for hit breakpoint
         while True:
             for expected in expected_vars:
                 if expected not in self.readerThread.lastReceived:
-                    break  #Break out of loop (and don't get to else)
+                    break  # Break out of loop (and don't get to else)
             else:
                 return True
 
@@ -259,17 +260,14 @@ class AbstractWriterThread(threading.Thread):
         self.Write("101\t%s\t" % self.NextSeq())
 
     def WriteVersion(self):
-        self.Write("501\t%s\t1.0" % self.NextSeq())
+        self.Write("501\t%s\t1.0\tWINDOWS\tID" % self.NextSeq())
 
     def WriteAddBreakpoint(self, line, func):
         '''
             @param line: starts at 1
         '''
         breakpoint_id = self.NextBreakpointId()
-        if func is not None:
-            self.Write("111\t%s\t%s\t%s\t%s\t**FUNC**%s\tNone" % (self.NextSeq(), breakpoint_id, self.TEST_FILE, line, func))
-        else:
-            self.Write("111\t%s\t%s\t%s\t%s\tNone" % (self.NextSeq(), breakpoint_id, self.TEST_FILE, line))
+        self.Write("111\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (self.NextSeq(), breakpoint_id, 'python-line', self.TEST_FILE, line, func))
         return breakpoint_id
 
     def WriteRemoveBreakpoint(self, breakpoint_id):
@@ -303,10 +301,10 @@ class AbstractWriterThread(threading.Thread):
         self.Write("104\t%s\t%s" % (self.NextSeq(), threadId,))
 
     def WriteDebugConsoleExpression(self, locator):
-        self.Write("126\t%s\t%s" % (self.NextSeq(), locator))
+        self.Write("%s\t%s\t%s" % (CMD_EVALUATE_CONSOLE_EXPRESSION, self.NextSeq(), locator))
 
     def WriteCustomOperation(self, locator, style, codeOrFile, operation_fn_name):
-        self.Write("127\t%s\t%s||%s\t%s\t%s" % (self.NextSeq(), locator, style, codeOrFile, operation_fn_name))
+        self.Write("%s\t%s\t%s||%s\t%s\t%s" % (CMD_RUN_CUSTOM_OPERATION, self.NextSeq(), locator, style, codeOrFile, operation_fn_name))
         
     def WriteEvaluateExpression(self, locator, expression):
         self.Write("113\t%s\t%s\t%s" % (self.NextSeq(), locator, expression))
@@ -426,7 +424,7 @@ class WriterThreadCase16(AbstractWriterThread):
         self.WaitForVarRE('<var name="size %28.*%29" type="int" value="int%253A 100" />')
 
         self.WriteGetVariable(threadId, frameId, 'bigarray')
-        self.WaitForVar('<var name="min" type="int64" value="int64%253A 0" />') #TODO: When on a 32 bit python we get an int32 (which makes this test fail).
+        self.WaitForVar('<var name="min" type="int64" value="int64%253A 0" />')  # TODO: When on a 32 bit python we get an int32 (which makes this test fail).
         self.WaitForVar('<var name="max" type="int64" value="int64%253A 99999" />')
         self.WaitForVar('<var name="shape" type="tuple" value="tuple%253A %252810%252C 10000%2529" isContainer="True" />')
         self.WaitForVar('<var name="dtype" type="dtype" value="dtype%253A int64" isContainer="True" />')
@@ -524,7 +522,7 @@ class WriterThreadCase13(AbstractWriterThread):
     def run(self):
         self.StartSocket()
         self.WriteAddBreakpoint(35, 'main')
-        self.Write("124\t%s\t%s" % (self.NextSeq(), "true;false;false;true"))
+        self.Write("%s\t%s\t%s" % (CMD_SET_PROPERTY_TRACE, self.NextSeq(), "true;false;false;true"))
         self.WriteMakeInitialRun()
         threadId, frameId, line = self.WaitForBreakpointHit('111', True)
 
@@ -547,14 +545,14 @@ class WriterThreadCase13(AbstractWriterThread):
         threadId, frameId, line = self.WaitForBreakpointHit('107', True)
 
         # Disable property tracing
-        self.Write("124\t%s\t%s" % (self.NextSeq(), "true;true;true;true"))
+        self.Write("%s\t%s\t%s" % (CMD_SET_PROPERTY_TRACE, self.NextSeq(), "true;true;true;true"))
         self.WriteStepIn(threadId)
         threadId, frameId, line = self.WaitForBreakpointHit('107', True)
         # Should Skip step into properties setter
         assert line == 39, 'Expected return to be in line 39, was: %s' % line
 
         # Enable property tracing
-        self.Write("124\t%s\t%s" % (self.NextSeq(), "true;false;false;true"))
+        self.Write("%s\t%s\t%s" % (CMD_SET_PROPERTY_TRACE, self.NextSeq(), "true;false;false;true"))
         self.WriteStepIn(threadId)
         threadId, frameId, line = self.WaitForBreakpointHit('107', True)
         # Should go inside getter method
@@ -573,7 +571,7 @@ class WriterThreadCase12(AbstractWriterThread):
 
     def run(self):
         self.StartSocket()
-        self.WriteAddBreakpoint(2, '')  #Should not be hit: setting empty function (not None) should only hit global.
+        self.WriteAddBreakpoint(2, '')  # Should not be hit: setting empty function (not None) should only hit global.
         self.WriteAddBreakpoint(6, 'Method1a')
         self.WriteAddBreakpoint(11, 'Method2')
         self.WriteMakeInitialRun()
@@ -584,7 +582,7 @@ class WriterThreadCase12(AbstractWriterThread):
 
         self.WriteStepReturn(threadId)
 
-        threadId, frameId, line = self.WaitForBreakpointHit('111', True)  #not a return (it stopped in the other breakpoint)
+        threadId, frameId, line = self.WaitForBreakpointHit('111', True)  # not a return (it stopped in the other breakpoint)
 
         assert line == 6, 'Expected return to be in line 6, was: %s' % line
 
@@ -646,7 +644,7 @@ class WriterThreadCase10(AbstractWriterThread):
 
     def run(self):
         self.StartSocket()
-        self.WriteAddBreakpoint(2, 'None')  #None or Method should make hit.
+        self.WriteAddBreakpoint(2, 'None')  # None or Method should make hit.
         self.WriteMakeInitialRun()
 
         threadId, frameId = self.WaitForBreakpointHit('111')
@@ -749,7 +747,7 @@ class WriterThreadCase7(AbstractWriterThread):
 
         self.WriteGetFrame(threadId, frameId)
 
-        self.WaitForVars('<xml></xml>')  #no vars at this point
+        self.WaitForVars('<xml></xml>')  # no vars at this point
 
         self.WriteStepOver(threadId)
 
@@ -797,7 +795,7 @@ class WriterThreadCase6(AbstractWriterThread):
 
         threadId, frameId, line = self.WaitForBreakpointHit('107', True)
 
-        #goes to line 4 in jython (function declaration line)
+        # goes to line 4 in jython (function declaration line)
         assert line in (4, 5), 'Expecting it to go to line 4 or 5. Went to: %s' % line
 
         self.WriteRunThread(threadId)
@@ -834,7 +832,7 @@ class WriterThreadCase5(AbstractWriterThread):
 
         threadId, frameId, line = self.WaitForBreakpointHit('107', True)
 
-        #goes to line 4 in jython (function declaration line)
+        # goes to line 4 in jython (function declaration line)
         assert line in (4, 5), 'Expecting it to go to line 4 or 5. Went to: %s' % line
 
         self.WriteRunThread(threadId)
@@ -859,7 +857,7 @@ class WriterThreadCase4(AbstractWriterThread):
 
         self.WriteSuspendThread(threadId)
 
-        time.sleep(4)  #wait for time enough for the test to finish if it wasn't suspended
+        time.sleep(4)  # wait for time enough for the test to finish if it wasn't suspended
 
         self.WriteRunThread(threadId)
 
@@ -878,7 +876,7 @@ class WriterThreadCase3(AbstractWriterThread):
         self.WriteMakeInitialRun()
         time.sleep(1)
         breakpoint_id = self.WriteAddBreakpoint(4, '')
-        self.WriteAddBreakpoint(5, 'FuncNotAvailable')  #Check that it doesn't get hit in the global when a function is available
+        self.WriteAddBreakpoint(5, 'FuncNotAvailable')  # Check that it doesn't get hit in the global when a function is available
 
         threadId, frameId = self.WaitForBreakpointHit()
 
@@ -907,7 +905,7 @@ class WriterThreadCase2(AbstractWriterThread):
 
     def run(self):
         self.StartSocket()
-        self.WriteAddBreakpoint(3, 'Call4')  #seq = 3
+        self.WriteAddBreakpoint(3, 'Call4')  # seq = 3
         self.WriteMakeInitialRun()
 
         threadId, frameId = self.WaitForBreakpointHit()
@@ -999,8 +997,8 @@ class DebuggerBase(object):
         if SHOW_OTHER_DEBUG_INFO:
             print 'Both processes started'
 
-        #polls can fail (because the process may finish and the thread still not -- so, we give it some more chances to
-        #finish successfully).
+        # polls can fail (because the process may finish and the thread still not -- so, we give it some more chances to
+        # finish successfully).
         pools_failed = 0
         while writerThread.isAlive():
             if process.poll() is not None:
@@ -1106,14 +1104,14 @@ class TestJython(unittest.TestCase, DebuggerBase):
                 'org.python.util.jython'
             ]
 
-    #This case requires decorators to work (which are not present on Jython 2.1), so, this test is just removed from the jython run.
+    # This case requires decorators to work (which are not present on Jython 2.1), so, this test is just removed from the jython run.
     def testCase13(self):
         self.skipTest("Unsupported Decorators")
 
     def testCase16(self):
         self.skipTest("Unsupported numpy")
 
-    #This case requires decorators to work (which are not present on Jython 2.1), so, this test is just removed from the jython run.
+    # This case requires decorators to work (which are not present on Jython 2.1), so, this test is just removed from the jython run.
     def testCase17(self):
         self.skipTest("Unsupported Decorators")
 
@@ -1182,11 +1180,11 @@ assert os.path.exists(JAVA_LOCATION), 'The location: %s is not valid' % (JAVA_LO
 
 if False:
     suite = unittest.TestSuite()
-    suite.addTest(TestPython('testCase19'))
-    #suite.addTest(Test('testCase10a'))
+#     suite.addTest(TestPython('testCase10'))
+    suite.addTest(TestPython('testCase14'))
+#     suite = unittest.makeSuite(TestPython)
     unittest.TextTestRunner(verbosity=3).run(suite)
     
-#    suite = unittest.makeSuite(TestPython)
 #    unittest.TextTestRunner(verbosity=3).run(suite)
 #    
 #    suite = unittest.makeSuite(TestJython)

@@ -69,7 +69,8 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_ENABLE_DONT_TRACE, \
                          CMD_GET_FILE_CONTENTS,\
                          CMD_SET_PROPERTY_TRACE, CMD_RUN_CUSTOM_OPERATION,\
-                         InternalRunCustomOperation
+                         InternalRunCustomOperation, CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression,\
+                         InternalConsoleGetCompletions
 
 from pydevd_file_utils import NormFileToServer, GetFilenameAndBase
 import pydevd_file_utils
@@ -1003,6 +1004,17 @@ class PyDB:
                     except :
                         pass
 
+                elif cmd_id == CMD_EVALUATE_CONSOLE_EXPRESSION:
+                    # Command which takes care for the debug console communication
+                    if text != "":
+                        thread_id, frame_id, console_command = text.split('\t', 2)
+                        console_command, line = console_command.split('\t')
+                        if console_command == 'EVALUATE':
+                            int_cmd = InternalEvaluateConsoleExpression(seq, thread_id, frame_id, line)
+                        elif console_command == 'GET_COMPLETIONS':
+                            int_cmd = InternalConsoleGetCompletions(seq, thread_id, frame_id, line)
+                        self.postInternalCommand(int_cmd, thread_id)
+                        
                 elif cmd_id == CMD_RUN_CUSTOM_OPERATION:
                     # Command which runs a custom operation
                     if text != "":
