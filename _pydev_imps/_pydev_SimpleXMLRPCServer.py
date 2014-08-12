@@ -108,12 +108,12 @@ except:
     import __builtin__
     setattr(__builtin__, 'True', 1) #Python 3.0 does not accept __builtin__.True = 1 in its syntax
     setattr(__builtin__, 'False', 0)
-    
 
-import _pydev_xmlrpclib as xmlrpclib
-from _pydev_xmlrpclib import Fault
-import _pydev_SocketServer as SocketServer
-import _pydev_BaseHTTPServer as BaseHTTPServer
+
+from _pydev_imps import _pydev_xmlrpclib as xmlrpclib
+from _pydev_imps._pydev_xmlrpclib import Fault
+from _pydev_imps import _pydev_SocketServer as SocketServer
+from _pydev_imps import _pydev_BaseHTTPServer as BaseHTTPServer
 import sys
 import os
 try:
@@ -558,7 +558,7 @@ class CGIXMLRPCRequestHandler(SimpleXMLRPCDispatcher):
         sys.stdout.write('Content-Type: text/xml\n')
         sys.stdout.write('Content-Length: %d\n' % len(response))
         sys.stdout.write('\n')
-        
+
         sys.stdout.write(response)
 
     def handle_get(self):
@@ -581,7 +581,7 @@ class CGIXMLRPCRequestHandler(SimpleXMLRPCDispatcher):
         sys.stdout.write('Content-Type: text/html\n')
         sys.stdout.write('Content-Length: %d\n' % len(response))
         sys.stdout.write('\n')
-        
+
         sys.stdout.write(response)
 
     def handle_request(self, request_text=None):

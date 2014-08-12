@@ -80,7 +80,7 @@ with catch_warnings():
                         DeprecationWarning)
     import mimetools
 
-import _pydev_SocketServer as SocketServer
+from _pydev_imps import _pydev_SocketServer as SocketServer
 
 # Default error message template
 DEFAULT_ERROR_MESSAGE = """\

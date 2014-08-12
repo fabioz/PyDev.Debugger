@@ -54,13 +54,13 @@ except:
 try:
     try:
         if USE_LIB_COPY:
-            import _pydev_xmlrpclib as xmlrpclib
+            from _pydev_imps import _pydev_xmlrpclib as xmlrpclib
         else:
             import xmlrpclib
     except ImportError:
         import xmlrpc.client as xmlrpclib
 except ImportError:
-    import _pydev_xmlrpclib as xmlrpclib
+    from _pydev_imps import _pydev_xmlrpclib as xmlrpclib
 
 
 class Command:
