@@ -245,13 +245,24 @@ def SetGlobalDebugger(dbg):
 #=======================================================================================================================
 # PyDBDaemonThread
 #=======================================================================================================================
-class PyDBDaemonThread(threading.Thread):
+class PyDBDaemonThread:
 
     def __init__(self):
-        threading.Thread.__init__(self)
         self.setDaemon(True)
         self.killReceived = False
         self.dontTraceMe = True
+
+    def setName(self, name):
+        pass
+
+    def setDaemon(self, daemon):
+        pass
+
+    def start(self):
+        from _pydev_imps import _pydev_thread
+        import pydev_monkey
+        start_new_thread = pydev_monkey.get_original_start_new_thread(_pydev_thread)
+        start_new_thread(self.run, (), {})
 
     def run(self):
         if sys.platform.startswith("java"):
@@ -1154,8 +1165,8 @@ class InternalEvaluateConsoleExpression(InternalThreadCommand):
                 from pydevd_console import ConsoleMessage
                 console_message = ConsoleMessage()
                 console_message.add_console_message(
-                    pydevd_console.CONSOLE_ERROR, 
-                    "Select the valid frame in the debug view (thread: %s, frame: %s invalid)" % (self.thread_id, self.frame_id), 
+                    pydevd_console.CONSOLE_ERROR,
+                    "Select the valid frame in the debug view (thread: %s, frame: %s invalid)" % (self.thread_id, self.frame_id),
                 )
                 cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, console_message.toXML())
         except:

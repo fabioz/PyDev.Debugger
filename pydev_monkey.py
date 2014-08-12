@@ -492,3 +492,9 @@ def enable_trace_thread_modules():
     '''
     global _UseNewThreadStartup
     _UseNewThreadStartup = _NewThreadStartupWithTrace
+
+def get_original_start_new_thread(threading_module):
+    try:
+        return threading_module._original_start_new_thread
+    except:
+        return threading_module.start_new_thread
