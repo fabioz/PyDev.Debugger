@@ -203,6 +203,7 @@ class PyDBFrame:
 
             try:
                 frame_id_to_frame = {}
+                frame_id_to_frame[id(frame)] = frame
                 f = trace_obj.tb_frame
                 while f is not None:
                     frame_id_to_frame[id(f)] = f
