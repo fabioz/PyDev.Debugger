@@ -86,6 +86,7 @@ import _pydev_completer
 
 from pydevd_tracing import GetExceptionTracebackStr
 import pydevd_console
+from pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
 
 
 

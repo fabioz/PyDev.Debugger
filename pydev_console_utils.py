@@ -392,7 +392,7 @@ class BaseInterpreterInterface:
 
         # Important: it has to be really enabled in the main thread, so, schedule
         # it to run in the main thread.
-        self.exec_queue.put(do_connect_to_debugger)
+        self.exec_queue.put(do_change_variable)
 
     def _findFrame(self, thread_id, frame_id):
         '''
