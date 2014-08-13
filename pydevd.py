@@ -511,7 +511,7 @@ class PyDB:
 
     def consolidate_breakpoints(self, file, id_to_breakpoint, breakpoints):
         break_dict = {}
-        for breakpoint_id, pybreakpoint in id_to_breakpoint.items():
+        for breakpoint_id, pybreakpoint in DictIterItems(id_to_breakpoint):
             break_dict[pybreakpoint.line] = pybreakpoint
 
         breakpoints[file] = break_dict
@@ -1182,7 +1182,7 @@ class PyDB:
         try:
             from_this_thread = []
 
-            for frame_id, custom_frame in CustomFramesContainer.custom_frames.items():
+            for frame_id, custom_frame in DictIterItems(CustomFramesContainer.custom_frames):
                 if custom_frame.thread_id == thread.ident:
                     # print >> sys.stderr, 'Frame created: ', frame_id
                     self.writer.addCommand(self.cmdFactory.makeCustomFrameCreatedMessage(frame_id, custom_frame.name))
@@ -1708,7 +1708,7 @@ def _locked_settrace(
 
         CustomFramesContainer.custom_frames_lock.acquire()
         try:
-            for _frameId, custom_frame in CustomFramesContainer.custom_frames.items():
+            for _frameId, custom_frame in DictIterItems(CustomFramesContainer.custom_frames):
                 debugger.SetTraceForFrameAndParents(custom_frame.frame, False)
         finally:
             CustomFramesContainer.custom_frames_lock.release()
