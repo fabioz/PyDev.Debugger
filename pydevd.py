@@ -275,8 +275,11 @@ class PyDB:
         self.file_to_id_to_line_breakpoint = {}
         self.file_to_id_to_django_breakpoint = {}
 
+        # Note: breakpoints dict should not be mutated: a copy should be created
+        # and later it should be assigned back (to prevent concurrency issues).
         self.break_on_uncaught_exceptions = {}
         self.break_on_caught_exceptions = {}
+
         self.django_exception_break = {}
         self.readyToRun = False
         self._main_lock = threading.Lock()
@@ -529,14 +532,18 @@ class PyDB:
         )
 
         if eb.notify_on_terminate:
-            self.break_on_uncaught_exceptions[exception] = eb
+            cp = self.break_on_uncaught_exceptions.copy()
+            cp[exception] = eb
             if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
-                pydev_log.error("Exceptions to hook on terminate: %s\n" % (self.break_on_uncaught_exceptions,))
+                pydev_log.error("Exceptions to hook on terminate: %s\n" % (cp,))
+            self.break_on_uncaught_exceptions = cp
 
         if eb.notify_always:
-            self.break_on_caught_exceptions[exception] = eb
+            cp = self.break_on_caught_exceptions.copy()
+            cp[exception] = eb
             if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
-                pydev_log.error("Exceptions to hook always: %s\n" % (self.break_on_caught_exceptions,))
+                pydev_log.error("Exceptions to hook always: %s\n" % (cp,))
+            self.break_on_caught_exceptions = cp
 
         return eb
 
@@ -877,8 +884,8 @@ class PyDB:
                     # which allows setting caught/uncaught per exception.
                     #
                     splitted = text.split(';')
-                    self.break_on_uncaught_exceptions.clear()
-                    self.break_on_caught_exceptions.clear()
+                    self.break_on_uncaught_exceptions = {}
+                    self.break_on_caught_exceptions = {}
                     added = []
                     if len(splitted) >= 4:
                         if splitted[0] == 'true':
@@ -974,8 +981,13 @@ class PyDB:
                 elif cmd_id == CMD_REMOVE_EXCEPTION_BREAK:
                     exception = text
                     try:
-                        DictPop(self.break_on_uncaught_exceptions, exception, None)
-                        DictPop(self.break_on_caught_exceptions, exception, None)
+                        cp = self.break_on_uncaught_exceptions.copy()
+                        DictPop(cp, exception, None)
+                        self.break_on_uncaught_exceptions = cp
+
+                        cp = self.break_on_caught_exceptions.copy()
+                        DictPop(cp, exception, None)
+                        self.break_on_caught_exceptions = cp
                     except:
                         pydev_log.debug("Error while removing exception %s"%sys.exc_info()[0]);
                     update_exception_hook(self)

@@ -81,7 +81,7 @@ class PyDBFrame:
 
             if trace is not None: #on jython trace is None on the first event
                 exception_breakpoint = get_exception_breakpoint(
-                    exception, mainDebugger.break_on_caught_exceptions.copy())
+                    exception, mainDebugger.break_on_caught_exceptions)
 
                 if exception_breakpoint is not None:
                     if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):

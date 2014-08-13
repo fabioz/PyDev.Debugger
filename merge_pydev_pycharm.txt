@@ -123,8 +123,6 @@ Things to be fixed in PyDev:
 
 . Deal with sendSignatureCallTrace (later)
 
-. Work with Django exceptions: CMD_ADD_DJANGO_EXCEPTION_BREAK/CMD_REMOVE_DJANGO_EXCEPTION_BREAK.
-
 . Set IPYTHONENABLE to False/True to use IPython console (later)
 
 
