@@ -215,6 +215,9 @@ class DictResolver:
     def resolve(self, dict, key):
         if key == '__len__':
             return None
+        
+        if key == TOO_LARGE_ATTR:
+            return None
 
         if '(' not in key:
             #we have to treat that because the dict resolver is also used to directly resolve the global and local
@@ -242,10 +245,15 @@ class DictResolver:
     def getDictionary(self, dict):
         ret = {}
 
+        i = 0
         for key, val in DictIterItems(dict):
+            i += 1
             #we need to add the id because otherwise we cannot find the real object to get its contents later on.
             key = '%s (%s)' % (self.keyStr(key), id(key))
             ret[key] = val
+            if i > MAX_ITEMS_TO_HANDLE:
+                ret[TOO_LARGE_ATTR] = TOO_LARGE_MSG
+                break
 
         ret['__len__'] = len(dict)
         return ret
