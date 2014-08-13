@@ -5,6 +5,8 @@ import traceback
 
 pydev_src_dir = os.path.dirname(__file__)
 
+from pydevd_constants import xrange
+
 def is_python(path):
     if path.endswith("'") or path.endswith('"'):
         path = path[1:len(path)-1]
@@ -102,7 +104,7 @@ def str_to_args_windows(args):
     buf = ''
 
     args_len = len(args)
-    for i in range(args_len):
+    for i in xrange(args_len):
         ch = args[i]
         if (ch == '\\'):
             backslashes+=1

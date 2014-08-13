@@ -143,7 +143,7 @@ else:
 
 
 try:
-    xrange
+    xrange = xrange
 except:
     #Python 3k does not have it
     xrange = range

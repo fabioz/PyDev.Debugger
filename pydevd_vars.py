@@ -204,7 +204,7 @@ def getVariable(thread_id, frame_id, scope, attrs):
         attrList = []
 
     if scope == 'EXPRESSION':
-        for count in range(len(attrList)):
+        for count in xrange(len(attrList)):
             if count == 0:
                 # An Expression can be in any scope (globals/locals), therefore it needs to evaluated as an expression
                 var = evaluateExpression(thread_id, frame_id, attrList[count], False)

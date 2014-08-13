@@ -13,7 +13,7 @@ except:
     setattr(__builtin__, 'False', 0)
 
 import pydevd_constants
-from pydevd_constants import DictIterItems
+from pydevd_constants import DictIterItems, xrange
 
 
 MAX_ITEMS_TO_HANDLE = 500
@@ -129,12 +129,12 @@ class DefaultResolver:
 
                 declaredMethods = obj.getDeclaredMethods()
                 declaredFields = obj.getDeclaredFields()
-                for i in range(len(declaredMethods)):
+                for i in xrange(len(declaredMethods)):
                     name = declaredMethods[i].getName()
                     ret[name] = declaredMethods[i].toString()
                     found.put(name, 1)
 
-                for i in range(len(declaredFields)):
+                for i in xrange(len(declaredFields)):
                     name = declaredFields[i].getName()
                     found.put(name, 1)
                     #if declaredFields[i].isAccessible():
@@ -215,7 +215,7 @@ class DictResolver:
     def resolve(self, dict, key):
         if key == '__len__':
             return None
-        
+
         if key == TOO_LARGE_ATTR:
             return None
 
@@ -284,7 +284,7 @@ class TupleResolver: #to enumerate tuples and lists
             format = '%0' + str(int(len(str(l)))) + 'd'
 
 
-            for i, item in zip(range(l), var):
+            for i, item in zip(xrange(l), var):
                 d[ format % i ] = item
         else:
             d[TOO_LARGE_ATTR] = TOO_LARGE_MSG
@@ -334,7 +334,7 @@ class InstanceResolver:
         ret = {}
 
         declaredFields = obj.__class__.getDeclaredFields()
-        for i in range(len(declaredFields)):
+        for i in xrange(len(declaredFields)):
             name = declaredFields[i].getName()
             try:
                 declaredFields[i].setAccessible(True)
@@ -361,7 +361,7 @@ class JyArrayResolver:
     def getDictionary(self, obj):
         ret = {}
 
-        for i in range(len(obj)):
+        for i in xrange(len(obj)):
             ret[ i ] = obj[i]
 
         ret['__len__'] = len(obj)

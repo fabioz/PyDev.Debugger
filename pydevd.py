@@ -179,7 +179,7 @@ class PyDBCommandThread(PyDBDaemonThread):
         self.setName('pydevd.CommandThread')
 
     def OnRun(self):
-        for i in range(1, 10):
+        for i in xrange(1, 10):
             time.sleep(0.5) #this one will only start later on (because otherwise we may not have any non-daemon threads
             if self.killReceived:
                 return
