@@ -1,4 +1,4 @@
-from pydevd_constants import USE_LIB_COPY
+from pydevd_constants import USE_LIB_COPY, izip
 
 
 try:
@@ -92,7 +92,7 @@ except:
             return start
 
         i = 0
-        for start_seg, dest_seg in zip(orig_list, dest_list):
+        for start_seg, dest_seg in izip(orig_list, dest_list):
             if start_seg != os.path.normcase(dest_seg):
                 break
             i += 1

@@ -1,7 +1,6 @@
 '''
 This module holds the constants used for specifying the states of the debugger.
 '''
-
 STATE_RUN = 1
 STATE_SUSPEND = 2
 
@@ -147,6 +146,12 @@ try:
 except:
     #Python 3k does not have it
     xrange = range
+    
+try:
+    import itertools
+    izip = itertools.izip
+except:
+    izip = zip
 
 try:
     object

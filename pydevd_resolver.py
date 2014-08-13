@@ -13,7 +13,7 @@ except:
     setattr(__builtin__, 'False', 0)
 
 import pydevd_constants
-from pydevd_constants import DictIterItems, xrange
+from pydevd_constants import DictIterItems, xrange, izip
 
 
 MAX_ITEMS_TO_HANDLE = 500
@@ -213,10 +213,7 @@ class DefaultResolver:
 class DictResolver:
 
     def resolve(self, dict, key):
-        if key == '__len__':
-            return None
-
-        if key == TOO_LARGE_ATTR:
+        if key in ('__len__', TOO_LARGE_ATTR):
             return None
 
         if '(' not in key:
@@ -270,7 +267,7 @@ class TupleResolver: #to enumerate tuples and lists
             @param var: that's the original attribute
             @param attribute: that's the key passed in the dict (as a string)
         '''
-        if attribute == '__len__' or attribute == TOO_LARGE_ATTR:
+        if attribute in ('__len__', TOO_LARGE_ATTR):
             return None
         return var[int(attribute)]
 
@@ -284,7 +281,7 @@ class TupleResolver: #to enumerate tuples and lists
             format = '%0' + str(int(len(str(l)))) + 'd'
 
 
-            for i, item in zip(xrange(l), var):
+            for i, item in izip(xrange(l), var):
                 d[ format % i ] = item
         else:
             d[TOO_LARGE_ATTR] = TOO_LARGE_MSG
@@ -302,7 +299,7 @@ class SetResolver:
     '''
 
     def resolve(self, var, attribute):
-        if attribute == '__len__':
+        if attribute in ('__len__', TOO_LARGE_ATTR):
             return None
 
         attribute = int(attribute)
@@ -314,8 +311,16 @@ class SetResolver:
 
     def getDictionary(self, var):
         d = {}
+        i = 0
         for item in var:
-            d[ id(item) ] = item
+            i+= 1
+            d[id(item)] = item
+            
+            if i > MAX_ITEMS_TO_HANDLE:
+                d[TOO_LARGE_ATTR] = TOO_LARGE_MSG
+                break
+
+            
         d['__len__'] = len(var)
         return d
 
