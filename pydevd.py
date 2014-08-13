@@ -111,12 +111,19 @@ DONT_TRACE = {
               'threading.py':1,
 
               #things from pydev that we don't want to trace
+              '_pydev_execfile.py':1,
+              '_pydev_jython_execfile.py':1,
+              '_pydev_threading':1,
+              'django_debug.py':1,
+              'django_frame.py':1,
+              'pydev_log.py':1,
               'pydevd.py':1 ,
               'pydevd_additional_thread_info.py':1,
-              'pydevd_custom_frames.py':1,
               'pydevd_comm.py':1,
               'pydevd_console.py':1 ,
               'pydevd_constants.py':1,
+              'pydevd_custom_frames.py':1,
+              'pydevd_dont_trace.py':1,
               'pydevd_exec.py':1,
               'pydevd_exec2.py':1,
               'pydevd_file_utils.py':1,
@@ -124,18 +131,18 @@ DONT_TRACE = {
               'pydevd_import_class.py':1 ,
               'pydevd_io.py':1 ,
               'pydevd_psyco_stub.py':1,
+              'pydevd_referrers.py':1 ,
               'pydevd_reload.py':1 ,
               'pydevd_resolver.py':1 ,
+              'pydevd_save_locals.py':1 ,
+              'pydevd_signature.py':1,
               'pydevd_stackless.py':1 ,
               'pydevd_traceproperty.py':1,
               'pydevd_tracing.py':1 ,
-              'pydevd_signature.py':1,
               'pydevd_utils.py':1,
               'pydevd_vars.py':1,
               'pydevd_vm_type.py':1,
-              '_pydev_execfile.py':1,
-              '_pydev_jython_execfile.py':1,
-              'pydevd_dont_trace.py':1,
+              'pydevd_xml.py':1,
             }
 
 if IS_PY3K:
@@ -1364,9 +1371,6 @@ class PyDB:
             if not isThreadAlive(t):
                 self.processThreadNotAlive(GetThreadId(t))
                 return None  # suspend tracing
-
-            if is_file_to_ignore:
-                return None
 
             # each new frame...
             return additionalInfo.CreateDbFrame((self, filename, additionalInfo, t, frame)).trace_dispatch(frame, event, arg)
