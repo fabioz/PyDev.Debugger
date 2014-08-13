@@ -155,17 +155,28 @@ remote = False
 from _pydev_filesystem_encoding import getfilesystemencoding
 file_system_encoding = getfilesystemencoding()
 
-def isThreadAlive(t):
-    try:
-        # If thread is not started yet we treat it as alive.
-        # It is required to debug threads started by start_new_thread in Python 3.4
-        if hasattr(t, '_is_stopped'):
-            alive = not t._is_stopped
-        else:
-            alive = not t.__stopped
-    except:
-        alive = t.isAlive()
-    return alive
+
+# Hack for https://sw-brainwy.rhcloud.com/tracker/PyDev/363 (i.e.: calling isAlive() can throw AssertionError under some circumstances)
+# It is required to debug threads started by start_new_thread in Python 3.4
+_temp = threading.Thread()
+if hasattr(_temp, '_is_stopped'): # Python 3.4 has this
+    def isThreadAlive(t):
+        try:
+            return not t._is_stopped
+        except:
+            return t.isAlive()
+    
+elif hasattr(_temp, '_Thread__stopped'): # Python 2.7 has this
+    def isThreadAlive(t):
+        try:
+            return not t._Thread__stopped
+        except:
+            return t.isAlive()
+    
+else: # Haven't checked all other versions, so, let's use the regular isAlive call in this case.
+    def isThreadAlive(t):
+        return t.isAlive()
+del _temp
 
 #=======================================================================================================================
 # PyDBCommandThread
