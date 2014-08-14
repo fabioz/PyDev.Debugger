@@ -10,4 +10,4 @@ install:
 # is this needed?  - pip install .
   - pip install -r requirements.txt
 # command to run tests
-script: nosetests
+script: nosetests --verbosity=3
