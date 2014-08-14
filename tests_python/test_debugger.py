@@ -14,7 +14,6 @@ JAVA_LOCATION = None
 
 import unittest
 import pydev_localhost
-import re
 port = None
 
 def UpdatePort():
@@ -25,18 +24,20 @@ def UpdatePort():
     s.close()
 
 import os
-def NormFile(filename):
+def _get_debugger_test_file(filename):
     try:
         rPath = os.path.realpath  # @UndefinedVariable
     except:
         # jython does not support os.path.realpath
         # realpath is a no-op on systems without islink support
         rPath = os.path.abspath
-    return os.path.normcase(rPath(filename))
+        
+    return os.path.normcase(rPath(os.path.join(os.path.dirname(__file__), filename)))
 
-PYDEVD_FILE = NormFile('../pydevd.py')
+import pydevd
+PYDEVD_FILE = pydevd.__file__
+
 import sys
-sys.path.append(os.path.dirname(PYDEVD_FILE))
 
 SHOW_WRITES_AND_READS = False
 SHOW_RESULT_STR = False
@@ -328,7 +329,7 @@ class AbstractWriterThread(threading.Thread):
 #======================================================================================================================
 class WriterThreadCase19(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case19.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case19.py')
 
     def run(self):
         self.StartSocket()
@@ -352,7 +353,7 @@ class WriterThreadCase19(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase18(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case18.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case18.py')
 
     def run(self):
         self.StartSocket()
@@ -372,7 +373,7 @@ class WriterThreadCase18(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase17(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case17.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case17.py')
 
     def run(self):
         self.StartSocket()
@@ -400,7 +401,7 @@ class WriterThreadCase17(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase16(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case16.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case16.py')
 
     def run(self):
         self.StartSocket()
@@ -458,7 +459,7 @@ class WriterThreadCase16(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase15(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case15.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case15.py')
 
     def run(self):
         self.StartSocket()
@@ -472,7 +473,7 @@ class WriterThreadCase15(AbstractWriterThread):
         self.WaitForCustomOperation('val=Black')
         assert 7 == self._sequence, 'Expected 7. Had: %s' % self._sequence
 
-        self.WriteCustomOperation("%s\t%s\tEXPRESSION\tcarObj.color" % (threadId, frameId), "EXECFILE", NormFile('_debugger_case15_execfile.py'), "f")
+        self.WriteCustomOperation("%s\t%s\tEXPRESSION\tcarObj.color" % (threadId, frameId), "EXECFILE", _get_debugger_test_file('_debugger_case15_execfile.py'), "f")
         self.WaitForCustomOperation('val=Black')
         assert 9 == self._sequence, 'Expected 9. Had: %s' % self._sequence
 
@@ -486,7 +487,7 @@ class WriterThreadCase15(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase14(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case14.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case14.py')
 
     def run(self):
         self.StartSocket()
@@ -525,7 +526,7 @@ class WriterThreadCase14(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase13(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case13.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case13.py')
 
     def run(self):
         self.StartSocket()
@@ -575,7 +576,7 @@ class WriterThreadCase13(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase12(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case10.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case10.py')
 
     def run(self):
         self.StartSocket()
@@ -607,7 +608,7 @@ class WriterThreadCase12(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase11(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case10.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case10.py')
 
     def run(self):
         self.StartSocket()
@@ -648,7 +649,7 @@ class WriterThreadCase11(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase10(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case10.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case10.py')
 
     def run(self):
         self.StartSocket()
@@ -682,7 +683,7 @@ class WriterThreadCase10(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase9(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case89.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case89.py')
 
     def run(self):
         self.StartSocket()
@@ -715,7 +716,7 @@ class WriterThreadCase9(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase8(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case89.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case89.py')
 
     def run(self):
         self.StartSocket()
@@ -744,7 +745,7 @@ class WriterThreadCase8(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase7(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case7.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case7.py')
 
     def run(self):
         self.StartSocket()
@@ -782,7 +783,7 @@ class WriterThreadCase7(AbstractWriterThread):
 #=======================================================================================================================
 class WriterThreadCase6(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case56.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case56.py')
 
     def run(self):
         self.StartSocket()
@@ -817,7 +818,7 @@ class WriterThreadCase6(AbstractWriterThread):
 #=======================================================================================================================
 class WriterThreadCase5(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case56.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case56.py')
 
     def run(self):
         self.StartSocket()
@@ -855,7 +856,7 @@ class WriterThreadCase5(AbstractWriterThread):
 #=======================================================================================================================
 class WriterThreadCase4(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case4.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case4.py')
 
     def run(self):
         self.StartSocket()
@@ -877,7 +878,7 @@ class WriterThreadCase4(AbstractWriterThread):
 #=======================================================================================================================
 class WriterThreadCase3(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case3.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case3.py')
 
     def run(self):
         self.StartSocket()
@@ -909,7 +910,7 @@ class WriterThreadCase3(AbstractWriterThread):
 #=======================================================================================================================
 class WriterThreadCase2(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case2.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case2.py')
 
     def run(self):
         self.StartSocket()
@@ -939,7 +940,7 @@ class WriterThreadCase2(AbstractWriterThread):
 #=======================================================================================================================
 class WriterThreadCase1(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case1.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case1.py')
 
     def run(self):
         self.StartSocket()
@@ -1157,49 +1158,67 @@ def SplitLine(line):
 
 
 
+
 import platform
 sysname = platform.system().lower()
 test_dependent = os.path.join('../../../', 'org.python.pydev.core', 'tests', 'org', 'python', 'pydev', 'core', 'TestDependent.' + sysname + '.properties')
-f = open(test_dependent)
-try:
-    for line in f.readlines():
-        var, loc = SplitLine(line)
-        if 'PYTHON_EXE' == var:
-            PYTHON_EXE = loc
 
-        if 'IRONPYTHON_EXE' == var:
-            IRONPYTHON_EXE = loc
-
-        if 'JYTHON_JAR_LOCATION' == var:
-            JYTHON_JAR_LOCATION = loc
-
-        if 'JAVA_LOCATION' == var:
-            JAVA_LOCATION = loc
-finally:
-    f.close()
-
-assert PYTHON_EXE, 'PYTHON_EXE not found in %s' % (test_dependent,)
-assert IRONPYTHON_EXE, 'IRONPYTHON_EXE not found in %s' % (test_dependent,)
-assert JYTHON_JAR_LOCATION, 'JYTHON_JAR_LOCATION not found in %s' % (test_dependent,)
-assert JAVA_LOCATION, 'JAVA_LOCATION not found in %s' % (test_dependent,)
-assert os.path.exists(PYTHON_EXE), 'The location: %s is not valid' % (PYTHON_EXE,)
-assert os.path.exists(IRONPYTHON_EXE), 'The location: %s is not valid' % (IRONPYTHON_EXE,)
-assert os.path.exists(JYTHON_JAR_LOCATION), 'The location: %s is not valid' % (JYTHON_JAR_LOCATION,)
-assert os.path.exists(JAVA_LOCATION), 'The location: %s is not valid' % (JAVA_LOCATION,)
-
-if False:
-    suite = unittest.TestSuite()
-    #PYTHON_EXE = r'C:\bin\Anaconda\python.exe'
-#     suite.addTest(TestPython('testCase10'))
-#     suite.addTest(TestPython('testCase3'))
-#     suite.addTest(TestPython('testCase16'))
-#     suite.addTest(TestPython('testCase17'))
-#     suite.addTest(TestPython('testCase18'))
-#     suite.addTest(TestPython('testCase19'))
-    suite = unittest.makeSuite(TestPython)
-    unittest.TextTestRunner(verbosity=3).run(suite)
+if os.path.exists(test_dependent):
+    f = open(test_dependent)
+    try:
+        for line in f.readlines():
+            var, loc = SplitLine(line)
+            if 'PYTHON_EXE' == var:
+                PYTHON_EXE = loc
     
-#    unittest.TextTestRunner(verbosity=3).run(suite)
-#    
-#    suite = unittest.makeSuite(TestJython)
-#    unittest.TextTestRunner(verbosity=3).run(suite)
+            if 'IRONPYTHON_EXE' == var:
+                IRONPYTHON_EXE = loc
+    
+            if 'JYTHON_JAR_LOCATION' == var:
+                JYTHON_JAR_LOCATION = loc
+    
+            if 'JAVA_LOCATION' == var:
+                JAVA_LOCATION = loc
+    finally:
+        f.close()
+else:
+    pass
+
+if IRONPYTHON_EXE is None:
+    class TestIronPython(unittest.TestCase):
+        pass
+    
+if JAVA_LOCATION is None:
+    class TestJython(unittest.TestCase):
+        pass
+    
+if PYTHON_EXE is None:
+    PYTHON_EXE = sys.executable
+    
+    
+if __name__ == '__main__':
+    assert PYTHON_EXE, 'PYTHON_EXE not found in %s' % (test_dependent,)
+    assert IRONPYTHON_EXE, 'IRONPYTHON_EXE not found in %s' % (test_dependent,)
+    assert JYTHON_JAR_LOCATION, 'JYTHON_JAR_LOCATION not found in %s' % (test_dependent,)
+    assert JAVA_LOCATION, 'JAVA_LOCATION not found in %s' % (test_dependent,)
+    assert os.path.exists(PYTHON_EXE), 'The location: %s is not valid' % (PYTHON_EXE,)
+    assert os.path.exists(IRONPYTHON_EXE), 'The location: %s is not valid' % (IRONPYTHON_EXE,)
+    assert os.path.exists(JYTHON_JAR_LOCATION), 'The location: %s is not valid' % (JYTHON_JAR_LOCATION,)
+    assert os.path.exists(JAVA_LOCATION), 'The location: %s is not valid' % (JAVA_LOCATION,)
+    
+    if False:
+        suite = unittest.TestSuite()
+        suite = unittest.makeSuite(TestPython)
+        unittest.TextTestRunner(verbosity=3).run(suite)
+        #PYTHON_EXE = r'C:\bin\Anaconda\python.exe'
+    #     suite.addTest(TestPython('testCase10'))
+    #     suite.addTest(TestPython('testCase3'))
+    #     suite.addTest(TestPython('testCase16'))
+    #     suite.addTest(TestPython('testCase17'))
+    #     suite.addTest(TestPython('testCase18'))
+    #     suite.addTest(TestPython('testCase19'))
+        
+    #    unittest.TextTestRunner(verbosity=3).run(suite)
+    #    
+    #    suite = unittest.makeSuite(TestJython)
+    #    unittest.TextTestRunner(verbosity=3).run(suite)

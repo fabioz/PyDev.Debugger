@@ -16,7 +16,7 @@ def use_save_locals(name, value):
     save_locals(frame)
 
 
-def test_method(fn):
+def check_method(fn):
     """
     A harness for testing methods that attempt to modify the values of locals on the stack.
     """
@@ -36,7 +36,7 @@ class TestSetLocals(unittest.TestCase):
 
 
     def test_set_locals_using_save_locals(self):
-        x = test_method(use_save_locals)
+        x = check_method(use_save_locals)
         self.assertEqual(x, 2)  # Expected to succeed
 
 
