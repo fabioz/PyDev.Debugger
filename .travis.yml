@@ -30,7 +30,8 @@ before_install:
   - sudo ln -s /run/shm /dev/shm
 # Install packages
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy nose ipython Django
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy nose ipython
+  - pip install django
  
 # Run test
 script:
