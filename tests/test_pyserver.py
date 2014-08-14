@@ -13,6 +13,13 @@ sys.path.insert(1, os.path.join(os.path.dirname(sys.argv[0])))
 IS_PYTHON_3K = 0
 if sys.platform.find('java') == -1:
     
+    try:
+        import __builtin__ #@UnusedImport
+        BUILTIN_MOD = '__builtin__'
+    except ImportError:
+        BUILTIN_MOD = 'builtins'
+
+    
     
     try:
         import inspect
@@ -115,7 +122,7 @@ if sys.platform.find('java') == -1:
     
     
                 #now, test i
-                msg = quote_plus('__builtin__.list')
+                msg = quote_plus('%s.list' % BUILTIN_MOD)
                 send(socket, "@@IMPORTS:%s\nEND@@" % msg)
                 found = self.readMsg()
                 self.assert_('sort' in found, 'Could not find sort in: %s' % (found,))

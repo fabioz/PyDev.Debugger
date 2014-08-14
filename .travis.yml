@@ -36,5 +36,5 @@ install:
  
 # Run test
 script:
-  - nosetests --logging-level=INFO
+  - nosetests --verbosity=3
  

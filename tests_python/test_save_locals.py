@@ -65,7 +65,7 @@ class TestSetLocals(unittest.TestCase):
         def check_co_vars(a):
             frame = sys._getframe()
             def function2():
-                print a
+                print(a)
 
             assert 'a' in frame.f_code.co_cellvars
             frame = sys._getframe()

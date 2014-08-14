@@ -6,6 +6,16 @@ sys.path.insert(0, os.path.split(os.path.split(__file__)[0])[0])
 from pydevd_constants import Null
 import unittest
 
+try:
+    import thread
+except:
+    import _thread as thread
+
+try:
+    xrange
+except:
+    xrange = range
+    
 #=======================================================================================================================
 # TestCase
 #=======================================================================================================================
@@ -41,7 +51,6 @@ class TestCase(unittest.TestCase):
             
             
     def testStartNewThread(self):
-        import thread
         pydev_monkey.patch_thread_modules()
         try:
             found = {}
@@ -65,7 +74,6 @@ class TestCase(unittest.TestCase):
             
             
     def testStartNewThread2(self):
-        import thread
         pydev_monkey.patch_thread_modules()
         try:
             found = {}

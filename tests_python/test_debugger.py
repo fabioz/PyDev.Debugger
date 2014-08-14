@@ -5,6 +5,7 @@
 
     Note that it's a python script but it'll spawn a process to run as jython, ironpython and as python.
 '''
+from pydevd_constants import IS_PY3K
 CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION, CMD_ENABLE_DONT_TRACE = 133, 134, 135, 141
 PYTHON_EXE = None
 IRONPYTHON_EXE = None
@@ -48,7 +49,7 @@ import subprocess
 import socket
 import threading
 import time
-from urllib import quote_plus, quote, unquote_plus
+from pydev_imports import quote_plus, quote, unquote_plus
 
 
 #=======================================================================================================================
@@ -60,13 +61,15 @@ class ReaderThread(threading.Thread):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.sock = sock
-        self.lastReceived = None
+        self.lastReceived = ''
 
     def run(self):
         try:
             buf = ''
             while True:
                 l = self.sock.recv(1024)
+                if IS_PY3K:
+                    l = l.decode('utf-8')
                 buf += l
 
                 if '\n' in buf:
@@ -74,7 +77,7 @@ class ReaderThread(threading.Thread):
                     buf = ''
 
                 if SHOW_WRITES_AND_READS:
-                    print 'Test Reader Thread Received %s' % self.lastReceived.strip()
+                    print('Test Reader Thread Received %s' % self.lastReceived.strip())
         except:
             pass  # ok, finished it
 
@@ -99,10 +102,14 @@ class AbstractWriterThread(threading.Thread):
         self.sock.close()
 
     def Write(self, s):
+        
         last = self.readerThread.lastReceived
         if SHOW_WRITES_AND_READS:
-            print 'Test Writer Thread Written %s' % (s,)
-        self.sock.send(s + '\n')
+            print('Test Writer Thread Written %s' % (s,))
+        msg = s + '\n'
+        if IS_PY3K:
+            msg = msg.encode('utf-8')
+        self.sock.send(msg)
         time.sleep(0.2)
 
         i = 0
@@ -113,16 +120,16 @@ class AbstractWriterThread(threading.Thread):
 
     def StartSocket(self):
         if SHOW_WRITES_AND_READS:
-            print 'StartSocket'
+            print('StartSocket')
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind(('', port))
         s.listen(1)
         if SHOW_WRITES_AND_READS:
-            print 'Waiting in socket.accept()'
+            print('Waiting in socket.accept()')
         newSock, addr = s.accept()
         if SHOW_WRITES_AND_READS:
-            print 'Test Writer Thread Socket:', newSock, addr
+            print('Test Writer Thread Socket:', newSock, addr)
 
         readerThread = self.readerThread = ReaderThread(newSock)
         readerThread.start()
@@ -512,7 +519,7 @@ class WriterThreadCase14(AbstractWriterThread):
         # Iterate some loop
         self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\tfor i in range(3):" % (threadId, frameId))
         self.WaitForVars('<xml><more>True</more></xml>')
-        self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\t    print i" % (threadId, frameId))
+        self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\t    print(i)" % (threadId, frameId))
         self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\t" % (threadId, frameId))
         self.WaitForVars('<xml><more>False</more><output message="0"></output><output message="1"></output><output message="2"></output></xml>')
         assert 17 == self._sequence, 'Expected 19. Had: %s' % self._sequence
@@ -988,14 +995,14 @@ class DebuggerBase(object):
         ]
 
         if SHOW_OTHER_DEBUG_INFO:
-            print 'executing', ' '.join(args)
+            print('executing', ' '.join(args))
 
 #         process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=os.path.dirname(PYDEVD_FILE))
         process = subprocess.Popen(args, stdout=subprocess.PIPE, cwd=os.path.dirname(PYDEVD_FILE))
         class ProcessReadThread(threading.Thread):
             def run(self):
                 self.resultStr = None
-                self.resultStr = process.stdout.read()
+                self.resultStr = process.stdout.read().decode('utf-8')
                 process.stdout.close()
 
             def DoKill(self):
@@ -1005,7 +1012,7 @@ class DebuggerBase(object):
         processReadThread.setDaemon(True)
         processReadThread.start()
         if SHOW_OTHER_DEBUG_INFO:
-            print 'Both processes started'
+            print('Both processes started')
 
         # polls can fail (because the process may finish and the thread still not -- so, we give it some more chances to
         # finish successfully).
@@ -1032,7 +1039,7 @@ class DebuggerBase(object):
 
 
         if SHOW_RESULT_STR:
-            print processReadThread.resultStr
+            print(processReadThread.resultStr)
 
         if processReadThread.resultStr is None:
             self.fail("The other process may still be running -- and didn't give any output")
@@ -1089,7 +1096,12 @@ class DebuggerBase(object):
         self.CheckCase(WriterThreadCase15)
 
     def testCase16(self):
-        self.CheckCase(WriterThreadCase16)
+        try:
+            import numpy
+        except:
+            pass
+        else:
+            self.CheckCase(WriterThreadCase16)
 
     def testCase17(self):
         self.CheckCase(WriterThreadCase17)
@@ -1118,9 +1130,6 @@ class TestJython(unittest.TestCase, DebuggerBase):
     def testCase13(self):
         self.skipTest("Unsupported Decorators")
 
-    def testCase16(self):
-        self.skipTest("Unsupported numpy")
-
     # This case requires decorators to work (which are not present on Jython 2.1), so, this test is just removed from the jython run.
     def testCase17(self):
         self.skipTest("Unsupported Decorators")
@@ -1134,9 +1143,6 @@ class TestIronPython(unittest.TestCase, DebuggerBase):
                 IRONPYTHON_EXE,
                 '-X:Frames'
             ]
-
-    def testCase16(self):
-        self.skipTest("Unsupported numpy")
 
 
 def GetLocationFromLine(line):
@@ -1185,10 +1191,12 @@ else:
     pass
 
 if IRONPYTHON_EXE is None:
+    sys.stderr.write('Warning: not running IronPython tests.')
     class TestIronPython(unittest.TestCase):
         pass
     
 if JAVA_LOCATION is None:
+    sys.stderr.write('Warning: not running Jython tests.')
     class TestJython(unittest.TestCase):
         pass
     
@@ -1197,21 +1205,24 @@ if PYTHON_EXE is None:
     
     
 if __name__ == '__main__':
-    assert PYTHON_EXE, 'PYTHON_EXE not found in %s' % (test_dependent,)
-    assert IRONPYTHON_EXE, 'IRONPYTHON_EXE not found in %s' % (test_dependent,)
-    assert JYTHON_JAR_LOCATION, 'JYTHON_JAR_LOCATION not found in %s' % (test_dependent,)
-    assert JAVA_LOCATION, 'JAVA_LOCATION not found in %s' % (test_dependent,)
-    assert os.path.exists(PYTHON_EXE), 'The location: %s is not valid' % (PYTHON_EXE,)
-    assert os.path.exists(IRONPYTHON_EXE), 'The location: %s is not valid' % (IRONPYTHON_EXE,)
-    assert os.path.exists(JYTHON_JAR_LOCATION), 'The location: %s is not valid' % (JYTHON_JAR_LOCATION,)
-    assert os.path.exists(JAVA_LOCATION), 'The location: %s is not valid' % (JAVA_LOCATION,)
-    
     if False:
+        assert PYTHON_EXE, 'PYTHON_EXE not found in %s' % (test_dependent,)
+        assert IRONPYTHON_EXE, 'IRONPYTHON_EXE not found in %s' % (test_dependent,)
+        assert JYTHON_JAR_LOCATION, 'JYTHON_JAR_LOCATION not found in %s' % (test_dependent,)
+        assert JAVA_LOCATION, 'JAVA_LOCATION not found in %s' % (test_dependent,)
+        assert os.path.exists(PYTHON_EXE), 'The location: %s is not valid' % (PYTHON_EXE,)
+        assert os.path.exists(IRONPYTHON_EXE), 'The location: %s is not valid' % (IRONPYTHON_EXE,)
+        assert os.path.exists(JYTHON_JAR_LOCATION), 'The location: %s is not valid' % (JYTHON_JAR_LOCATION,)
+        assert os.path.exists(JAVA_LOCATION), 'The location: %s is not valid' % (JAVA_LOCATION,)
+    
+    if True:
+        PYTHON_EXE = sys.executable
+        
         suite = unittest.TestSuite()
-        suite = unittest.makeSuite(TestPython)
+        #suite = unittest.makeSuite(TestPython)
+#         suite.addTest(TestPython('testCase3'))
+        suite.addTest(TestPython('testCase19'))
         unittest.TextTestRunner(verbosity=3).run(suite)
-        #PYTHON_EXE = r'C:\bin\Anaconda\python.exe'
-    #     suite.addTest(TestPython('testCase10'))
     #     suite.addTest(TestPython('testCase3'))
     #     suite.addTest(TestPython('testCase16'))
     #     suite.addTest(TestPython('testCase17'))

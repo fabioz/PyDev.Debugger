@@ -363,17 +363,43 @@ class RunfilesTest(unittest.TestCase):
                     ('notifyTest', 'ok', '', '', simple_test, 'SampleTest.test_xxxxxx2'),
                     ('notifyTest', 'ok', '', '', simple_test2, 'YetAnotherSampleTest.test_abc'),
                 ]
+            
             if not IS_JYTHON:
-                expected.append(('notifyTest', 'error', '', 'ValueError: This is an INTENTIONAL value error in setUpClass.',
-                        simpleClass_test.replace('/', os.path.sep), 'simpleClass_test.SetUpClassTest <setUpClass>'))
-                expected.append(('notifyTest', 'error', '', 'ValueError: This is an INTENTIONAL value error in setUpModule.',
-                            simpleModule_test.replace('/', os.path.sep), 'simpleModule_test <setUpModule>'))
+                if 'samples.simpleClass_test' in str(notifications):
+                    expected.append(('notifyTest', 'error', '', 'ValueError: This is an INTENTIONAL value error in setUpClass.',
+                            simpleClass_test.replace('/', os.path.sep), 'samples.simpleClass_test.SetUpClassTest <setUpClass>'))
+                    expected.append(('notifyTest', 'error', '', 'ValueError: This is an INTENTIONAL value error in setUpModule.',
+                                simpleModule_test.replace('/', os.path.sep), 'samples.simpleModule_test <setUpModule>'))
+                else:
+                    expected.append(('notifyTest', 'error', '', 'ValueError: This is an INTENTIONAL value error in setUpClass.',
+                            simpleClass_test.replace('/', os.path.sep), 'simpleClass_test.SetUpClassTest <setUpClass>'))
+                    expected.append(('notifyTest', 'error', '', 'ValueError: This is an INTENTIONAL value error in setUpModule.',
+                                simpleModule_test.replace('/', os.path.sep), 'simpleModule_test <setUpModule>'))
             else:
                 expected.append(('notifyTest', 'ok', '', '', simpleClass_test, 'SetUpClassTest.test_blank'))
                 expected.append(('notifyTest', 'ok', '', '', simpleModule_test, 'SetUpModuleTest.test_blank'))
 
             expected.append(('notifyTestRunFinished',))
             expected.sort()
+            new_notifications = []
+            for notification in expected:
+                try:
+                    if len(notification) == 6:
+                        # Some are binary on Py3.
+                        new_notifications.append((
+                            notification[0], 
+                            notification[1], 
+                            notification[2].encode('latin1'), 
+                            notification[3].encode('latin1'), 
+                            notification[4], 
+                            notification[5], 
+                        ))
+                    else:
+                        new_notifications.append(notification)
+                except:
+                    raise
+            expected = new_notifications
+                    
             notifications.sort()
             self.assertEqual(
                 expected,

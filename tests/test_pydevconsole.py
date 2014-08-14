@@ -104,7 +104,9 @@ class Test(unittest.TestCase):
                          desc.find('str(string[, encoding[, errors]]) -> str') >= 0 or
                          desc.find('str(Char* value)') >= 0 or
                          desc.find('str(object=\'\') -> string') >= 0 or
-                         desc.find('str(value: Char*)') >= 0,
+                         desc.find('str(value: Char*)') >= 0 or
+                         desc.find('str(object=\'\') -> str') >= 0
+                         ,
                          'Could not find what was needed in %s' % desc)
     
             desc = interpreter.getDescription('val.join')
