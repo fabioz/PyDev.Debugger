@@ -131,14 +131,19 @@ class TestRunningCode(TestBase):
 
 
     def testGui(self):
-        from pydev_ipython.inputhook import get_inputhook
-        assert get_inputhook() is None
-        self.addExec('%gui tk')
-        # we can't test the GUI works here because we aren't connected to XML-RPC so
-        # nowhere for hook to run
-        assert get_inputhook() is not None
-        self.addExec('%gui none')
-        assert get_inputhook() is None
+        try:
+            import Tkinter
+        except:
+            return
+        else:
+            from pydev_ipython.inputhook import get_inputhook
+            assert get_inputhook() is None
+            self.addExec('%gui tk')
+            # we can't test the GUI works here because we aren't connected to XML-RPC so
+            # nowhere for hook to run
+            assert get_inputhook() is not None
+            self.addExec('%gui none')
+            assert get_inputhook() is None
 
     def testHistory(self):
         ''' Make sure commands are added to IPython's history '''
