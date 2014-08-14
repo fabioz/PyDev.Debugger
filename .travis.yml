@@ -15,7 +15,6 @@
 
 language: python
 python:
-  - 2.6
   - 2.7
   - 3.3
 
@@ -29,6 +28,9 @@ before_install:
   # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
+  # Fix issue with testGui
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
 # Install packages
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy nose ipython
