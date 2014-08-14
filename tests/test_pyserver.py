@@ -63,7 +63,7 @@ if sys.platform.find('java') == -1:
             Creates the connections needed for testing.
             '''
             t = pycompletionserver.T(p1)
-            
+            t.exit_process_on_kill = False
             t.start()
     
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -1,12 +1,7 @@
 '''
 @author Fabio Zadrozny 
 '''
-import os
 import sys
-#make it as if we were executing from the directory above this one (so that we can use pycompletionserver
-#without the need for it being in the pythonpath)
-#twice the dirname to get the previous level from this file.
-sys.path.insert(1, os.path.split(os.path.split(__file__)[0])[0])
 
 try:
     import __builtin__ #@UnusedImport

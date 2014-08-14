@@ -864,7 +864,7 @@ class PyDB:
                             raise NameError(breakpoint_type)
 
                         try:
-                            id_to_pybreakpoint = file_to_id_to_breakpoint[file]
+                            id_to_pybreakpoint = file_to_id_to_breakpoint.get(file, {})
                             if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
                                 existing = id_to_pybreakpoint[breakpoint_id]
                                 sys.stderr.write('Removed breakpoint:%s - line:%s - func_name:%s (id: %s)\n' % (
