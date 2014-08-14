@@ -5,7 +5,6 @@ from pydevd_constants import * # @UnusedWildImport
 import traceback
 
 from django_debug import DjangoLineBreakpoint
-from pydevd_signature import SignatureFactory
 from pydevd_frame import add_exception_to_frame
 import pydev_imports
 from pydevd_breakpoints import * #@UnusedWildImport
@@ -2049,6 +2048,8 @@ if __name__ == '__main__':
             if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON:
                 sys.stderr.write("Collecting run-time type information is not supported for Jython\n")
             else:
+                # Only import it if we're going to use it!
+                from pydevd_signature import SignatureFactory
                 debugger.signature_factory = SignatureFactory()
 
         try:

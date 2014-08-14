@@ -438,8 +438,16 @@ class WriterThreadCase16(AbstractWriterThread):
         self.WaitForVar('<var name="%27size%27')
 
         self.WriteGetVariable(threadId, frameId, 'bigarray')
-        self.WaitForVar(['<var name="min" type="int64" value="int64%253A 0" />', '<var name="size" type="int" value="int%3A 100000" />'])  # TODO: When on a 32 bit python we get an int32 (which makes this test fail).
-        self.WaitForVar(['<var name="max" type="int64" value="int64%253A 99999" />', '<var name="max" type="int32" value="int32%253A 99999" />'])
+        self.WaitForVar([
+            '<var name="min" type="int64" value="int64%253A 0" />', 
+            '<var name="min" type="int64" value="int64%3A 0" />', 
+            '<var name="size" type="int" value="int%3A 100000" />',
+        ])
+        self.WaitForVar([
+            '<var name="max" type="int64" value="int64%253A 99999" />', 
+            '<var name="max" type="int32" value="int32%253A 99999" />',
+            '<var name="max" type="int64" value="int64%3A 99999"'
+        ])
         self.WaitForVar('<var name="shape" type="tuple"')
         self.WaitForVar('<var name="dtype" type="dtype"')
         self.WaitForVar('<var name="size" type="int"')
@@ -449,8 +457,14 @@ class WriterThreadCase16(AbstractWriterThread):
         # this one is different because it crosses the magic threshold where we don't calculate
         # the min/max
         self.WriteGetVariable(threadId, frameId, 'hugearray')
-        self.WaitForVar('<var name="min" type="str" value="str%253A ndarray too big%252C calculating min would slow down debugging" />')
-        self.WaitForVar('<var name="max" type="str" value="str%253A ndarray too big%252C calculating max would slow down debugging" />')
+        self.WaitForVar([
+            '<var name="min" type="str" value="str%253A ndarray too big%252C calculating min would slow down debugging" />',
+            '<var name="min" type="str" value="str%3A ndarray too big%252C calculating min would slow down debugging" />',
+        ])
+        self.WaitForVar([
+            '<var name="max" type="str" value="str%253A ndarray too big%252C calculating max would slow down debugging" />',
+            '<var name="max" type="str" value="str%3A ndarray too big%252C calculating max would slow down debugging" />',
+        ])
         self.WaitForVar('<var name="shape" type="tuple"')
         self.WaitForVar('<var name="dtype" type="dtype"')
         self.WaitForVar('<var name="size" type="int"')
@@ -997,7 +1011,6 @@ class DebuggerBase(object):
         if SHOW_OTHER_DEBUG_INFO:
             print('executing', ' '.join(args))
 
-#         process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=os.path.dirname(PYDEVD_FILE))
         process = subprocess.Popen(args, stdout=subprocess.PIPE, cwd=os.path.dirname(PYDEVD_FILE))
         class ProcessReadThread(threading.Thread):
             def run(self):
