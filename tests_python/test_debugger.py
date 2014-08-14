@@ -521,21 +521,26 @@ class WriterThreadCase14(AbstractWriterThread):
 
         # Access some variable
         self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\tcarObj.color" % (threadId, frameId))
-        self.WaitForMultipleVars(['<more>False</more>', '%27Black%27'])
+        self.WaitForVar(['<more>False</more>', '%27Black%27'])
         assert 7 == self._sequence, 'Expected 9. Had: %s' % self._sequence
 
         # Change some variable
         self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\tcarObj.color='Red'" % (threadId, frameId))
         self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\tcarObj.color" % (threadId, frameId))
-        self.WaitForMultipleVars(['<more>False</more>', '%27Red%27'])
+        self.WaitForVar(['<more>False</more>', '%27Red%27'])
         assert 11 == self._sequence, 'Expected 13. Had: %s' % self._sequence
 
         # Iterate some loop
         self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\tfor i in range(3):" % (threadId, frameId))
-        self.WaitForVars('<xml><more>True</more></xml>')
+        self.WaitForVar(['<xml><more>True</more></xml>', '<xml><more>1</more></xml>'])
         self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\t    print(i)" % (threadId, frameId))
         self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\t" % (threadId, frameId))
-        self.WaitForVars('<xml><more>False</more><output message="0"></output><output message="1"></output><output message="2"></output></xml>')
+        self.WaitForVar(
+            [
+                '<xml><more>False</more><output message="0"></output><output message="1"></output><output message="2"></output></xml>',
+                '<xml><more>0</more><output message="0"></output><output message="1"></output><output message="2"></output></xml>'
+            ]
+            )
         assert 17 == self._sequence, 'Expected 19. Had: %s' % self._sequence
 
         self.WriteRunThread(threadId)
@@ -964,21 +969,37 @@ class WriterThreadCase1(AbstractWriterThread):
     TEST_FILE = _get_debugger_test_file('_debugger_case1.py')
 
     def run(self):
+        self.log = []
         self.StartSocket()
+        
+        self.log.append('writing add breakpoint')
         self.WriteAddBreakpoint(6, 'SetUp')
+        
+        self.log.append('making initial run')
         self.WriteMakeInitialRun()
 
+        self.log.append('waiting for breakpoint hit')
         threadId, frameId = self.WaitForBreakpointHit()
 
+        self.log.append('get frame')
         self.WriteGetFrame(threadId, frameId)
 
+        self.log.append('step over')
         self.WriteStepOver(threadId)
 
+        self.log.append('get frame')
         self.WriteGetFrame(threadId, frameId)
 
+        self.log.append('run thread')
         self.WriteRunThread(threadId)
 
-        assert 13 == self._sequence, 'Expected 13. Had: %s' % self._sequence
+        self.log.append('asserting')
+        try:
+            assert 13 == self._sequence, 'Expected 13. Had: %s' % self._sequence
+        except:
+            self.log.append('assert failed!')
+            raise
+        self.log.append('asserted')
 
         self.finishedOk = True
 
@@ -994,6 +1015,7 @@ class DebuggerBase(object):
         UpdatePort()
         writerThread = writerThreadClass()
         writerThread.start()
+        time.sleep(1)
 
         localhost = pydev_localhost.get_localhost()
         args = self.getCommandLine()
@@ -1011,12 +1033,27 @@ class DebuggerBase(object):
         if SHOW_OTHER_DEBUG_INFO:
             print('executing', ' '.join(args))
 
-        process = subprocess.Popen(args, stdout=subprocess.PIPE, cwd=os.path.dirname(PYDEVD_FILE))
+        process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(PYDEVD_FILE))
         class ProcessReadThread(threading.Thread):
-            def run(self):
+            
+            def __init__(self):
+                threading.Thread.__init__(self)
                 self.resultStr = None
-                self.resultStr = process.stdout.read().decode('utf-8')
+                self.errStr = None
+                
+            def run(self):
+                read = process.stdout.read()
+                if IS_PY3K:
+                    read = read.decode('utf-8')
+                    
+                self.resultStr = read
+                
+                read = process.stderr.read()
+                if IS_PY3K:
+                    read = read.decode('utf-8')
+                self.errStr = read
                 process.stdout.close()
+                process.stderr.close()
 
             def DoKill(self):
                 process.stdout.close()
@@ -1029,13 +1066,10 @@ class DebuggerBase(object):
 
         # polls can fail (because the process may finish and the thread still not -- so, we give it some more chances to
         # finish successfully).
-        pools_failed = 0
         while writerThread.isAlive():
             if process.poll() is not None:
-                pools_failed += 1
-            time.sleep(.2)
-            if pools_failed == 10:
                 break
+            time.sleep(.2)
 
         if process.poll() is None:
             for i in range(10):
@@ -1053,15 +1087,26 @@ class DebuggerBase(object):
 
         if SHOW_RESULT_STR:
             print(processReadThread.resultStr)
+            if processReadThread.errStr:
+                sys.stderr.write(processReadThread.errStr)
+                sys.stderr.write('\n')
 
         if processReadThread.resultStr is None:
             self.fail("The other process may still be running -- and didn't give any output")
 
         if 'TEST SUCEEDED' not in processReadThread.resultStr:
-            self.fail(processReadThread.resultStr)
+            self.fail("Stdout: \n"+str(processReadThread.resultStr)+"\nStderr:"+str(processReadThread.errStr))
 
+        for i in xrange(10):
+            if not writerThread.finishedOk:
+                time.sleep(.1)
+            
         if not writerThread.finishedOk:
-            self.fail("The thread that was doing the tests didn't finish successfully. Output: %s" % processReadThread.resultStr)
+            log = getattr(writerThread, 'log', [])
+            
+            self.fail("The thread that was doing the tests didn't finish successfully. Stdout: \n"+
+                str(processReadThread.resultStr)+"\nStderr:"+str(processReadThread.errStr)+"\nLog:\n"+
+                '\n'.join(log))
 
     def testCase1(self):
         self.CheckCase(WriterThreadCase1)
@@ -1228,21 +1273,19 @@ if __name__ == '__main__':
         assert os.path.exists(JYTHON_JAR_LOCATION), 'The location: %s is not valid' % (JYTHON_JAR_LOCATION,)
         assert os.path.exists(JAVA_LOCATION), 'The location: %s is not valid' % (JAVA_LOCATION,)
     
-    if True:
+    if False:
         PYTHON_EXE = sys.executable
-        
-        suite = unittest.TestSuite()
-        #suite = unittest.makeSuite(TestPython)
-#         suite.addTest(TestPython('testCase3'))
-        suite.addTest(TestPython('testCase19'))
+        suite = unittest.makeSuite(TestJython)
+#         suite = unittest.makeSuite(TestIronPython)
+#         suite = unittest.makeSuite(TestPython)
+
+
+#         suite = unittest.TestSuite()
+#         suite.addTest(TestJython('testCase14'))
         unittest.TextTestRunner(verbosity=3).run(suite)
-    #     suite.addTest(TestPython('testCase3'))
     #     suite.addTest(TestPython('testCase16'))
     #     suite.addTest(TestPython('testCase17'))
     #     suite.addTest(TestPython('testCase18'))
     #     suite.addTest(TestPython('testCase19'))
         
-    #    unittest.TextTestRunner(verbosity=3).run(suite)
-    #    
-    #    suite = unittest.makeSuite(TestJython)
     #    unittest.TextTestRunner(verbosity=3).run(suite)
