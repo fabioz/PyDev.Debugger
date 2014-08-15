@@ -8,8 +8,12 @@ from pydev_localhost import get_localhost
 from pydev_console_utils import StdIn
 import socket
 from pydev_ipython_console_011 import get_pydev_frontend
+import time
 
-
+try:
+    xrange
+except:
+    xrange = range
 
 
 class TestBase(unittest.TestCase):
@@ -215,6 +219,12 @@ class TestRunningCode(TestBase):
         try:
             filename = 'made_up_file.py'
             self.addExec('%edit ' + filename)
+            
+            for i in xrange(10):
+                if called_IPythonEditor[0] == (os.path.abspath(filename), '0'):
+                    break
+                time.sleep(.1)
+                
             eq_(called_IPythonEditor[0], (os.path.abspath(filename), '0'))
             assert called_RequestInput[0], "Make sure the 'wait' parameter has been respected"
         finally:
