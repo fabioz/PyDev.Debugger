@@ -17,6 +17,11 @@ import unittest
 import pydev_localhost
 port = None
 
+try:
+    xrange
+except:
+    xrange = range
+
 def UpdatePort():
     global port
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
