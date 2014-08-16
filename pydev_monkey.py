@@ -392,24 +392,28 @@ def patch_new_process_functions_with_warning():
 
 class _NewThreadStartupWithTrace:
 
-    def __init__(self, original_func):
+    def __init__(self, original_func, args, kwargs):
         self.original_func = original_func
+        self.args = args
+        self.kwargs = kwargs
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self):
         from pydevd_comm import GetGlobalDebugger
         global_debugger = GetGlobalDebugger()
         if global_debugger is not None:
             global_debugger.SetTrace(global_debugger.trace_dispatch)
 
-        return self.original_func(*args, **kwargs)
+        return self.original_func(*self.args, **self.kwargs)
 
 class _NewThreadStartupWithoutTrace:
 
-    def __init__(self, original_func):
+    def __init__(self, original_func, args, kwargs):
         self.original_func = original_func
+        self.args = args
+        self.kwargs = kwargs
 
-    def __call__(self, *args, **kwargs):
-        return self.original_func(*args, **kwargs)
+    def __call__(self):
+        return self.original_func(*self.args, **self.kwargs)
 
 _UseNewThreadStartup = _NewThreadStartupWithTrace
 
@@ -439,12 +443,12 @@ def patch_thread_module(thread):
 
     class ClassWithPydevStartNewThread:
 
-        def pydev_start_new_thread(self, function, args, kwargs={}):
+        def pydev_start_new_thread(self, function, args=(), kwargs={}):
             '''
             We need to replace the original thread.start_new_thread with this function so that threads started
             through it and not through the threading module are properly traced.
             '''
-            return _original_start_new_thread(_UseNewThreadStartup(function), args, kwargs)
+            return _original_start_new_thread(_UseNewThreadStartup(function, args, kwargs), ())
 
     # This is a hack for the situation where the thread.start_new_thread is declared inside a class, such as the one below
     # class F(object):

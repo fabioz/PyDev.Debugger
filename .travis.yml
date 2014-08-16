@@ -31,6 +31,9 @@ before_install:
   # Fix issue with testGui
   - "export DISPLAY=:99.0"
   - "sh -e /etc/init.d/xvfb start"
+  # Try to get java/jyton in there too for testing...
+  - sudo apt-get update
+  - sudo apt-get install java jython
 # Install packages
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy nose ipython
