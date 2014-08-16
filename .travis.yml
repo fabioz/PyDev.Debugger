@@ -33,7 +33,8 @@ before_install:
   - "sh -e /etc/init.d/xvfb start"
   # Try to get java/jyton in there too for testing...
   - sudo apt-get update
-  - sudo apt-get install java jython
+  - sudo apt-get install java
+  - sudo apt-get install jython
 # Install packages
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy nose ipython
