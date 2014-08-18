@@ -264,7 +264,7 @@ class PyDBDaemonThread:
         from _pydev_imps import _pydev_thread
         import pydev_monkey
         start_new_thread = pydev_monkey.get_original_start_new_thread(_pydev_thread)
-        start_new_thread(self.run, (), {})
+        start_new_thread(self.run, ())
 
     def run(self):
         if sys.platform.startswith("java"):
