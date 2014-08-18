@@ -99,6 +99,8 @@ class AbstractWriterThread(threading.Thread):
         self.setDaemon(True)
         self.finishedOk = False
         self._next_breakpoint_id = 0
+        self.log = []
+
 
     def DoKill(self):
         if hasattr(self, 'readerThread'):
@@ -143,6 +145,7 @@ class AbstractWriterThread(threading.Thread):
         self._sequence = -1
         # initial command is always the version
         self.WriteVersion()
+        self.log.append('StartSocket')
 
     def NextBreakpointId(self):
         self._next_breakpoint_id += 1
@@ -173,6 +176,7 @@ class AbstractWriterThread(threading.Thread):
             109 is return
             111 is breakpoint
         '''
+        self.log.append('Start: WaitForBreakpointHit')
         i = 0
         # wait for hit breakpoint
         while not ('stop_reason="%s"' % reason) in self.readerThread.lastReceived:
@@ -187,8 +191,10 @@ class AbstractWriterThread(threading.Thread):
         threadId = splitted[1]
         frameId = splitted[7]
         if get_line:
+            self.log.append('End(0): WaitForBreakpointHit')
             return threadId, frameId, int(splitted[13])
 
+        self.log.append('End(1): WaitForBreakpointHit')
         return threadId, frameId
 
     def WaitForCustomOperation(self, expected):
@@ -277,6 +283,7 @@ class AbstractWriterThread(threading.Thread):
 
     def WriteMakeInitialRun(self):
         self.Write("101\t%s\t" % self.NextSeq())
+        self.log.append('WriteMakeInitialRun')
 
     def WriteVersion(self):
         self.Write("501\t%s\t1.0\tWINDOWS\tID" % self.NextSeq())
@@ -287,6 +294,7 @@ class AbstractWriterThread(threading.Thread):
         '''
         breakpoint_id = self.NextBreakpointId()
         self.Write("111\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (self.NextSeq(), breakpoint_id, 'python-line', self.TEST_FILE, line, func))
+        self.log.append('WriteAddBreakpoint: %s line: %s func: %s' % (breakpoint_id, line, func))
         return breakpoint_id
 
     def WriteRemoveBreakpoint(self, breakpoint_id):
@@ -297,6 +305,7 @@ class AbstractWriterThread(threading.Thread):
 
     def WriteGetFrame(self, threadId, frameId):
         self.Write("114\t%s\t%s\t%s\tFRAME" % (self.NextSeq(), threadId, frameId))
+        self.log.append('WriteGetFrame')
 
     def WriteGetVariable(self, threadId, frameId, var_attrs):
         self.Write("110\t%s\t%s\t%s\tFRAME\t%s" % (self.NextSeq(), threadId, frameId, var_attrs))
@@ -315,6 +324,7 @@ class AbstractWriterThread(threading.Thread):
 
     def WriteRunThread(self, threadId):
         self.Write("106\t%s\t%s" % (self.NextSeq(), threadId,))
+        self.log.append('WriteRunThread')
 
     def WriteKillThread(self, threadId):
         self.Write("104\t%s\t%s" % (self.NextSeq(), threadId,))
@@ -962,8 +972,10 @@ class WriterThreadCase2(AbstractWriterThread):
 
         self.WriteRunThread(threadId)
 
+        self.log.append('Checking sequence. Found: %s' % (self._sequence))
         assert 15 == self._sequence, 'Expected 15. Had: %s' % self._sequence
 
+        self.log.append('Marking finished ok.')
         self.finishedOk = True
 
 #=======================================================================================================================
@@ -974,7 +986,6 @@ class WriterThreadCase1(AbstractWriterThread):
     TEST_FILE = _get_debugger_test_file('_debugger_case1.py')
 
     def run(self):
-        self.log = []
         self.StartSocket()
         
         self.log.append('writing add breakpoint')
