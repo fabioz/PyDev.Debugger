@@ -605,7 +605,7 @@ class PyDB:
         it may be worth refactoring it (actually, reordering the ifs so that the ones used mostly come before
         probably will give better performance).
         '''
-        #print ID_TO_MEANING[str(cmd_id)], repr(text)
+        #print(ID_TO_MEANING[str(cmd_id)], repr(text))
 
         self._main_lock.acquire()
         try:
@@ -847,7 +847,7 @@ class PyDB:
                     id_to_pybreakpoint[breakpoint_id] = breakpoint
                     self.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
 
-                    self.setTracingForUntracedContexts()
+                    self.setTracingForUntracedContexts(overwrite_prev_trace=True)
 
                 elif cmd_id == CMD_REMOVE_BREAK:
                     #command to remove some breakpoint
@@ -1345,10 +1345,10 @@ class PyDB:
 
             is_file_to_ignore = DictContains(DONT_TRACE, base) #we don't want to debug threading or anything related to pydevd
 
+            #print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, is_file_to_ignore)
             if is_file_to_ignore:
                 return None
 
-            #print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name)
             try:
                 #this shouldn't give an exception, but it could happen... (python bug)
                 #see http://mail.python.org/pipermail/python-bugs-list/2007-June/038796.html
