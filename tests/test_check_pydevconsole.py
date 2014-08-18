@@ -1,19 +1,11 @@
-import sys
-import os
-
-#Put pydevconsole in the path.
-sys.argv[0] = os.path.dirname(sys.argv[0]) 
-sys.path.insert(1, os.path.join(os.path.dirname(sys.argv[0])))
-
-print('Running tests with:', sys.executable)
-print('PYTHONPATH:')
-print('\n'.join(sorted(sys.path)))
-
 import threading
 import unittest
 
 import pydevconsole
 from pydev_imports import xmlrpclib, SimpleXMLRPCServer
+import sys
+from pydev_localhost import get_localhost
+from pydev_ipython_console_011 import get_pydev_frontend
 
 try:
     raw_input
@@ -36,17 +28,28 @@ class Test(unittest.TestCase):
             def run(self):
                 class HandleRequestInput:
                     def RequestInput(self):
+                        client_thread.requested_input = True
                         return 'RequestInput: OK'
+                    
+                    def NotifyFinished(self, *args, **kwargs):
+                        client_thread.notified_finished += 1
+                        return 1
                 
                 handle_request_input = HandleRequestInput()
                 
                 import pydev_localhost
-                print('Starting client with:', pydev_localhost.get_localhost(), self.client_port)
-                client_server = SimpleXMLRPCServer((pydev_localhost.get_localhost(), self.client_port), logRequests=False)
+                self.client_server = client_server = SimpleXMLRPCServer((pydev_localhost.get_localhost(), self.client_port), logRequests=False)
                 client_server.register_function(handle_request_input.RequestInput)
+                client_server.register_function(handle_request_input.NotifyFinished)
                 client_server.serve_forever()
-                
+                    
+            def shutdown(self):
+                return
+                self.client_server.shutdown()
+
         client_thread = ClientThread(client_port)
+        client_thread.requested_input = False
+        client_thread.notified_finished = 0
         client_thread.setDaemon(True)
         client_thread.start()
         return client_thread
@@ -67,6 +70,9 @@ class Test(unittest.TestCase):
         
         
     def testServer(self):
+        # Just making sure that the singleton is created in this thread.
+        get_pydev_frontend(get_localhost(), 0)
+        
         client_port, server_port = self.getFreeAddresses()
         class ServerThread(threading.Thread):
             def __init__(self, client_port, server_port):
@@ -84,18 +90,27 @@ class Test(unittest.TestCase):
 
         client_thread = self.startClientThread(client_port) #@UnusedVariable
         
-        import time
-        time.sleep(.3) #let's give it some time to start the threads
-        
-        import pydev_localhost
-        server = xmlrpclib.Server('http://%s:%s' % (pydev_localhost.get_localhost(), server_port))
-        server.addExec("import sys; print('Running with: %s %s' % (sys.executable or sys.platform, sys.version))")
-        server.addExec('class Foo:')
-        server.addExec('    pass')
-        server.addExec('')
-        server.addExec('foo = Foo()')
-        server.addExec('a = %s()' % raw_input_name)
-        server.addExec('print (a)')
+        try:
+            import time
+            time.sleep(.3) #let's give it some time to start the threads
+            
+            import pydev_localhost
+            server = xmlrpclib.Server('http://%s:%s' % (pydev_localhost.get_localhost(), server_port))
+            server.execLine("import sys; print('Running with: %s %s' % (sys.executable or sys.platform, sys.version))")
+            server.execLine('class Foo:')
+            server.execLine('    pass')
+            server.execLine('')
+            server.execLine('foo = Foo()')
+            server.execLine('a = %s()' % raw_input_name)
+            initial = time.time()
+            while not client_thread.requested_input:
+                if time.time() - initial > 2:
+                    raise AssertionError('Did not get the return asked before the timeout.')
+                time.sleep(.1)
+            frame_xml = server.getFrame()
+            self.assert_('RequestInput' in frame_xml, 'Did not fid RequestInput in:\n%s' % (frame_xml,))
+        finally:
+            client_thread.shutdown()
         
 #=======================================================================================================================
 # main        

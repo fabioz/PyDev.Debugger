@@ -86,6 +86,7 @@ import _pydev_completer
 
 from pydevd_tracing import GetExceptionTracebackStr
 import pydevd_console
+from pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
 
 
 
@@ -257,6 +258,7 @@ class PyDBDaemonThread:
 
     def setDaemon(self, daemon):
         pass
+        #raise AssertionError('always daemon now')
 
     def start(self):
         from _pydev_imps import _pydev_thread
@@ -282,7 +284,18 @@ class PyDBDaemonThread:
 
     def stopTrace(self):
         if self.dontTraceMe:
-            pydevd_tracing.SetTrace(None) # no debugging on this thread
+            
+            disable_tracing = True
+    
+            if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON and sys.hexversion <= 0x020201f0:
+                # don't run untraced threads if we're in jython 2.2.1 or lower
+                # jython bug: if we start a thread and another thread changes the tracing facility
+                # it affects other threads (it's not set only for the thread but globally)
+                # Bug: http://sourceforge.net/tracker/index.php?func=detail&aid=1870039&group_id=12867&atid=112867
+                disable_tracing = False
+    
+            if disable_tracing:
+                pydevd_tracing.SetTrace(None)  # no debugging on this thread
 
 
 #=======================================================================================================================
@@ -383,11 +396,16 @@ class WriterThread(PyDBDaemonThread):
         """ just loop and write responses """
 
         self.stopTrace()
+        get_has_timeout = sys.hexversion >= 0x02030000 # 2.3 onwards have it.
         try:
             while True:
                 try:
                     try:
-                        cmd = self.cmdQueue.get(1, 0.1)
+                        if get_has_timeout:
+                            cmd = self.cmdQueue.get(1, 0.1)
+                        else:
+                            time.sleep(.01)
+                            cmd = self.cmdQueue.get(0)
                     except _queue.Empty:
                         if self.killReceived:
                             try:

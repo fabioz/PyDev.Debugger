@@ -5,6 +5,7 @@
 
     Note that it's a python script but it'll spawn a process to run as jython, ironpython and as python.
 '''
+from pydevd_constants import IS_PY3K
 CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION, CMD_ENABLE_DONT_TRACE = 133, 134, 135, 141
 PYTHON_EXE = None
 IRONPYTHON_EXE = None
@@ -14,8 +15,12 @@ JAVA_LOCATION = None
 
 import unittest
 import pydev_localhost
-import re
 port = None
+
+try:
+    xrange
+except:
+    xrange = range
 
 def UpdatePort():
     global port
@@ -25,18 +30,20 @@ def UpdatePort():
     s.close()
 
 import os
-def NormFile(filename):
+def _get_debugger_test_file(filename):
     try:
         rPath = os.path.realpath  # @UndefinedVariable
     except:
         # jython does not support os.path.realpath
         # realpath is a no-op on systems without islink support
         rPath = os.path.abspath
-    return os.path.normcase(rPath(filename))
+        
+    return os.path.normcase(rPath(os.path.join(os.path.dirname(__file__), filename)))
 
-PYDEVD_FILE = NormFile('../pydevd.py')
+import pydevd
+PYDEVD_FILE = pydevd.__file__
+
 import sys
-sys.path.append(os.path.dirname(PYDEVD_FILE))
 
 SHOW_WRITES_AND_READS = False
 SHOW_RESULT_STR = False
@@ -47,7 +54,7 @@ import subprocess
 import socket
 import threading
 import time
-from urllib import quote_plus, quote, unquote_plus
+from pydev_imports import quote_plus, quote, unquote_plus
 
 
 #=======================================================================================================================
@@ -59,13 +66,15 @@ class ReaderThread(threading.Thread):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.sock = sock
-        self.lastReceived = None
+        self.lastReceived = ''
 
     def run(self):
         try:
             buf = ''
             while True:
                 l = self.sock.recv(1024)
+                if IS_PY3K:
+                    l = l.decode('utf-8')
                 buf += l
 
                 if '\n' in buf:
@@ -73,7 +82,7 @@ class ReaderThread(threading.Thread):
                     buf = ''
 
                 if SHOW_WRITES_AND_READS:
-                    print 'Test Reader Thread Received %s' % self.lastReceived.strip()
+                    print('Test Reader Thread Received %s' % self.lastReceived.strip())
         except:
             pass  # ok, finished it
 
@@ -98,10 +107,14 @@ class AbstractWriterThread(threading.Thread):
         self.sock.close()
 
     def Write(self, s):
+        
         last = self.readerThread.lastReceived
         if SHOW_WRITES_AND_READS:
-            print 'Test Writer Thread Written %s' % (s,)
-        self.sock.send(s + '\n')
+            print('Test Writer Thread Written %s' % (s,))
+        msg = s + '\n'
+        if IS_PY3K:
+            msg = msg.encode('utf-8')
+        self.sock.send(msg)
         time.sleep(0.2)
 
         i = 0
@@ -112,16 +125,16 @@ class AbstractWriterThread(threading.Thread):
 
     def StartSocket(self):
         if SHOW_WRITES_AND_READS:
-            print 'StartSocket'
+            print('StartSocket')
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind(('', port))
         s.listen(1)
         if SHOW_WRITES_AND_READS:
-            print 'Waiting in socket.accept()'
+            print('Waiting in socket.accept()')
         newSock, addr = s.accept()
         if SHOW_WRITES_AND_READS:
-            print 'Test Writer Thread Socket:', newSock, addr
+            print('Test Writer Thread Socket:', newSock, addr)
 
         readerThread = self.readerThread = ReaderThread(newSock)
         readerThread.start()
@@ -328,7 +341,7 @@ class AbstractWriterThread(threading.Thread):
 #======================================================================================================================
 class WriterThreadCase19(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case19.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case19.py')
 
     def run(self):
         self.StartSocket()
@@ -352,7 +365,7 @@ class WriterThreadCase19(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase18(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case18.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case18.py')
 
     def run(self):
         self.StartSocket()
@@ -372,7 +385,7 @@ class WriterThreadCase18(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase17(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case17.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case17.py')
 
     def run(self):
         self.StartSocket()
@@ -400,7 +413,7 @@ class WriterThreadCase17(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase16(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case16.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case16.py')
 
     def run(self):
         self.StartSocket()
@@ -430,8 +443,16 @@ class WriterThreadCase16(AbstractWriterThread):
         self.WaitForVar('<var name="%27size%27')
 
         self.WriteGetVariable(threadId, frameId, 'bigarray')
-        self.WaitForVar(['<var name="min" type="int64" value="int64%253A 0" />', '<var name="size" type="int" value="int%3A 100000" />'])  # TODO: When on a 32 bit python we get an int32 (which makes this test fail).
-        self.WaitForVar(['<var name="max" type="int64" value="int64%253A 99999" />', '<var name="max" type="int32" value="int32%253A 99999" />'])
+        self.WaitForVar([
+            '<var name="min" type="int64" value="int64%253A 0" />', 
+            '<var name="min" type="int64" value="int64%3A 0" />', 
+            '<var name="size" type="int" value="int%3A 100000" />',
+        ])
+        self.WaitForVar([
+            '<var name="max" type="int64" value="int64%253A 99999" />', 
+            '<var name="max" type="int32" value="int32%253A 99999" />',
+            '<var name="max" type="int64" value="int64%3A 99999"'
+        ])
         self.WaitForVar('<var name="shape" type="tuple"')
         self.WaitForVar('<var name="dtype" type="dtype"')
         self.WaitForVar('<var name="size" type="int"')
@@ -441,8 +462,14 @@ class WriterThreadCase16(AbstractWriterThread):
         # this one is different because it crosses the magic threshold where we don't calculate
         # the min/max
         self.WriteGetVariable(threadId, frameId, 'hugearray')
-        self.WaitForVar('<var name="min" type="str" value="str%253A ndarray too big%252C calculating min would slow down debugging" />')
-        self.WaitForVar('<var name="max" type="str" value="str%253A ndarray too big%252C calculating max would slow down debugging" />')
+        self.WaitForVar([
+            '<var name="min" type="str" value="str%253A ndarray too big%252C calculating min would slow down debugging" />',
+            '<var name="min" type="str" value="str%3A ndarray too big%252C calculating min would slow down debugging" />',
+        ])
+        self.WaitForVar([
+            '<var name="max" type="str" value="str%253A ndarray too big%252C calculating max would slow down debugging" />',
+            '<var name="max" type="str" value="str%3A ndarray too big%252C calculating max would slow down debugging" />',
+        ])
         self.WaitForVar('<var name="shape" type="tuple"')
         self.WaitForVar('<var name="dtype" type="dtype"')
         self.WaitForVar('<var name="size" type="int"')
@@ -458,7 +485,7 @@ class WriterThreadCase16(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase15(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case15.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case15.py')
 
     def run(self):
         self.StartSocket()
@@ -472,7 +499,7 @@ class WriterThreadCase15(AbstractWriterThread):
         self.WaitForCustomOperation('val=Black')
         assert 7 == self._sequence, 'Expected 7. Had: %s' % self._sequence
 
-        self.WriteCustomOperation("%s\t%s\tEXPRESSION\tcarObj.color" % (threadId, frameId), "EXECFILE", NormFile('_debugger_case15_execfile.py'), "f")
+        self.WriteCustomOperation("%s\t%s\tEXPRESSION\tcarObj.color" % (threadId, frameId), "EXECFILE", _get_debugger_test_file('_debugger_case15_execfile.py'), "f")
         self.WaitForCustomOperation('val=Black')
         assert 9 == self._sequence, 'Expected 9. Had: %s' % self._sequence
 
@@ -486,7 +513,7 @@ class WriterThreadCase15(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase14(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case14.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case14.py')
 
     def run(self):
         self.StartSocket()
@@ -499,21 +526,26 @@ class WriterThreadCase14(AbstractWriterThread):
 
         # Access some variable
         self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\tcarObj.color" % (threadId, frameId))
-        self.WaitForMultipleVars(['<more>False</more>', '%27Black%27'])
+        self.WaitForVar(['<more>False</more>', '%27Black%27'])
         assert 7 == self._sequence, 'Expected 9. Had: %s' % self._sequence
 
         # Change some variable
         self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\tcarObj.color='Red'" % (threadId, frameId))
         self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\tcarObj.color" % (threadId, frameId))
-        self.WaitForMultipleVars(['<more>False</more>', '%27Red%27'])
+        self.WaitForVar(['<more>False</more>', '%27Red%27'])
         assert 11 == self._sequence, 'Expected 13. Had: %s' % self._sequence
 
         # Iterate some loop
         self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\tfor i in range(3):" % (threadId, frameId))
-        self.WaitForVars('<xml><more>True</more></xml>')
-        self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\t    print i" % (threadId, frameId))
+        self.WaitForVar(['<xml><more>True</more></xml>', '<xml><more>1</more></xml>'])
+        self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\t    print(i)" % (threadId, frameId))
         self.WriteDebugConsoleExpression("%s\t%s\tEVALUATE\t" % (threadId, frameId))
-        self.WaitForVars('<xml><more>False</more><output message="0"></output><output message="1"></output><output message="2"></output></xml>')
+        self.WaitForVar(
+            [
+                '<xml><more>False</more><output message="0"></output><output message="1"></output><output message="2"></output></xml>',
+                '<xml><more>0</more><output message="0"></output><output message="1"></output><output message="2"></output></xml>'
+            ]
+            )
         assert 17 == self._sequence, 'Expected 19. Had: %s' % self._sequence
 
         self.WriteRunThread(threadId)
@@ -525,7 +557,7 @@ class WriterThreadCase14(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase13(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case13.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case13.py')
 
     def run(self):
         self.StartSocket()
@@ -575,7 +607,7 @@ class WriterThreadCase13(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase12(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case10.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case10.py')
 
     def run(self):
         self.StartSocket()
@@ -607,7 +639,7 @@ class WriterThreadCase12(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase11(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case10.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case10.py')
 
     def run(self):
         self.StartSocket()
@@ -648,7 +680,7 @@ class WriterThreadCase11(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase10(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case10.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case10.py')
 
     def run(self):
         self.StartSocket()
@@ -682,7 +714,7 @@ class WriterThreadCase10(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase9(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case89.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case89.py')
 
     def run(self):
         self.StartSocket()
@@ -715,7 +747,7 @@ class WriterThreadCase9(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase8(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case89.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case89.py')
 
     def run(self):
         self.StartSocket()
@@ -744,7 +776,7 @@ class WriterThreadCase8(AbstractWriterThread):
 #======================================================================================================================
 class WriterThreadCase7(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case7.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case7.py')
 
     def run(self):
         self.StartSocket()
@@ -782,7 +814,7 @@ class WriterThreadCase7(AbstractWriterThread):
 #=======================================================================================================================
 class WriterThreadCase6(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case56.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case56.py')
 
     def run(self):
         self.StartSocket()
@@ -817,7 +849,7 @@ class WriterThreadCase6(AbstractWriterThread):
 #=======================================================================================================================
 class WriterThreadCase5(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case56.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case56.py')
 
     def run(self):
         self.StartSocket()
@@ -855,7 +887,7 @@ class WriterThreadCase5(AbstractWriterThread):
 #=======================================================================================================================
 class WriterThreadCase4(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case4.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case4.py')
 
     def run(self):
         self.StartSocket()
@@ -877,7 +909,7 @@ class WriterThreadCase4(AbstractWriterThread):
 #=======================================================================================================================
 class WriterThreadCase3(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case3.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case3.py')
 
     def run(self):
         self.StartSocket()
@@ -909,7 +941,7 @@ class WriterThreadCase3(AbstractWriterThread):
 #=======================================================================================================================
 class WriterThreadCase2(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case2.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case2.py')
 
     def run(self):
         self.StartSocket()
@@ -939,24 +971,40 @@ class WriterThreadCase2(AbstractWriterThread):
 #=======================================================================================================================
 class WriterThreadCase1(AbstractWriterThread):
 
-    TEST_FILE = NormFile('_debugger_case1.py')
+    TEST_FILE = _get_debugger_test_file('_debugger_case1.py')
 
     def run(self):
+        self.log = []
         self.StartSocket()
+        
+        self.log.append('writing add breakpoint')
         self.WriteAddBreakpoint(6, 'SetUp')
+        
+        self.log.append('making initial run')
         self.WriteMakeInitialRun()
 
+        self.log.append('waiting for breakpoint hit')
         threadId, frameId = self.WaitForBreakpointHit()
 
+        self.log.append('get frame')
         self.WriteGetFrame(threadId, frameId)
 
+        self.log.append('step over')
         self.WriteStepOver(threadId)
 
+        self.log.append('get frame')
         self.WriteGetFrame(threadId, frameId)
 
+        self.log.append('run thread')
         self.WriteRunThread(threadId)
 
-        assert 13 == self._sequence, 'Expected 13. Had: %s' % self._sequence
+        self.log.append('asserting')
+        try:
+            assert 13 == self._sequence, 'Expected 13. Had: %s' % self._sequence
+        except:
+            self.log.append('assert failed!')
+            raise
+        self.log.append('asserted')
 
         self.finishedOk = True
 
@@ -972,6 +1020,7 @@ class DebuggerBase(object):
         UpdatePort()
         writerThread = writerThreadClass()
         writerThread.start()
+        time.sleep(1)
 
         localhost = pydev_localhost.get_localhost()
         args = self.getCommandLine()
@@ -987,15 +1036,29 @@ class DebuggerBase(object):
         ]
 
         if SHOW_OTHER_DEBUG_INFO:
-            print 'executing', ' '.join(args)
+            print('executing', ' '.join(args))
 
-#         process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=os.path.dirname(PYDEVD_FILE))
-        process = subprocess.Popen(args, stdout=subprocess.PIPE, cwd=os.path.dirname(PYDEVD_FILE))
+        process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(PYDEVD_FILE))
         class ProcessReadThread(threading.Thread):
-            def run(self):
+            
+            def __init__(self):
+                threading.Thread.__init__(self)
                 self.resultStr = None
-                self.resultStr = process.stdout.read()
+                self.errStr = None
+                
+            def run(self):
+                read = process.stdout.read()
+                if IS_PY3K:
+                    read = read.decode('utf-8')
+                    
+                self.resultStr = read
+                
+                read = process.stderr.read()
+                if IS_PY3K:
+                    read = read.decode('utf-8')
+                self.errStr = read
                 process.stdout.close()
+                process.stderr.close()
 
             def DoKill(self):
                 process.stdout.close()
@@ -1004,17 +1067,14 @@ class DebuggerBase(object):
         processReadThread.setDaemon(True)
         processReadThread.start()
         if SHOW_OTHER_DEBUG_INFO:
-            print 'Both processes started'
+            print('Both processes started')
 
         # polls can fail (because the process may finish and the thread still not -- so, we give it some more chances to
         # finish successfully).
-        pools_failed = 0
         while writerThread.isAlive():
             if process.poll() is not None:
-                pools_failed += 1
-            time.sleep(.2)
-            if pools_failed == 10:
                 break
+            time.sleep(.2)
 
         if process.poll() is None:
             for i in range(10):
@@ -1031,16 +1091,27 @@ class DebuggerBase(object):
 
 
         if SHOW_RESULT_STR:
-            print processReadThread.resultStr
+            print(processReadThread.resultStr)
+            if processReadThread.errStr:
+                sys.stderr.write(processReadThread.errStr)
+                sys.stderr.write('\n')
 
         if processReadThread.resultStr is None:
             self.fail("The other process may still be running -- and didn't give any output")
 
         if 'TEST SUCEEDED' not in processReadThread.resultStr:
-            self.fail(processReadThread.resultStr)
+            self.fail("Stdout: \n"+str(processReadThread.resultStr)+"\nStderr:"+str(processReadThread.errStr))
 
+        for i in xrange(10):
+            if not writerThread.finishedOk:
+                time.sleep(.1)
+            
         if not writerThread.finishedOk:
-            self.fail("The thread that was doing the tests didn't finish successfully. Output: %s" % processReadThread.resultStr)
+            log = getattr(writerThread, 'log', [])
+            
+            self.fail("The thread that was doing the tests didn't finish successfully. Stdout: \n"+
+                str(processReadThread.resultStr)+"\nStderr:"+str(processReadThread.errStr)+"\nLog:\n"+
+                '\n'.join(log))
 
     def testCase1(self):
         self.CheckCase(WriterThreadCase1)
@@ -1088,7 +1159,12 @@ class DebuggerBase(object):
         self.CheckCase(WriterThreadCase15)
 
     def testCase16(self):
-        self.CheckCase(WriterThreadCase16)
+        try:
+            import numpy
+        except:
+            pass
+        else:
+            self.CheckCase(WriterThreadCase16)
 
     def testCase17(self):
         self.CheckCase(WriterThreadCase17)
@@ -1117,9 +1193,6 @@ class TestJython(unittest.TestCase, DebuggerBase):
     def testCase13(self):
         self.skipTest("Unsupported Decorators")
 
-    def testCase16(self):
-        self.skipTest("Unsupported numpy")
-
     # This case requires decorators to work (which are not present on Jython 2.1), so, this test is just removed from the jython run.
     def testCase17(self):
         self.skipTest("Unsupported Decorators")
@@ -1133,9 +1206,6 @@ class TestIronPython(unittest.TestCase, DebuggerBase):
                 IRONPYTHON_EXE,
                 '-X:Frames'
             ]
-
-    def testCase16(self):
-        self.skipTest("Unsupported numpy")
 
 
 def GetLocationFromLine(line):
@@ -1157,49 +1227,75 @@ def SplitLine(line):
 
 
 
+
 import platform
 sysname = platform.system().lower()
 test_dependent = os.path.join('../../../', 'org.python.pydev.core', 'tests', 'org', 'python', 'pydev', 'core', 'TestDependent.' + sysname + '.properties')
-f = open(test_dependent)
-try:
-    for line in f.readlines():
-        var, loc = SplitLine(line)
-        if 'PYTHON_EXE' == var:
-            PYTHON_EXE = loc
 
-        if 'IRONPYTHON_EXE' == var:
-            IRONPYTHON_EXE = loc
-
-        if 'JYTHON_JAR_LOCATION' == var:
-            JYTHON_JAR_LOCATION = loc
-
-        if 'JAVA_LOCATION' == var:
-            JAVA_LOCATION = loc
-finally:
-    f.close()
-
-assert PYTHON_EXE, 'PYTHON_EXE not found in %s' % (test_dependent,)
-assert IRONPYTHON_EXE, 'IRONPYTHON_EXE not found in %s' % (test_dependent,)
-assert JYTHON_JAR_LOCATION, 'JYTHON_JAR_LOCATION not found in %s' % (test_dependent,)
-assert JAVA_LOCATION, 'JAVA_LOCATION not found in %s' % (test_dependent,)
-assert os.path.exists(PYTHON_EXE), 'The location: %s is not valid' % (PYTHON_EXE,)
-assert os.path.exists(IRONPYTHON_EXE), 'The location: %s is not valid' % (IRONPYTHON_EXE,)
-assert os.path.exists(JYTHON_JAR_LOCATION), 'The location: %s is not valid' % (JYTHON_JAR_LOCATION,)
-assert os.path.exists(JAVA_LOCATION), 'The location: %s is not valid' % (JAVA_LOCATION,)
-
-if True:
-    PYTHON_EXE = r'C:\bin\Anaconda\python.exe'
-    suite = unittest.TestSuite()
-#     suite.addTest(TestPython('testCase10'))
-#     suite.addTest(TestPython('testCase3'))
-#     suite.addTest(TestPython('testCase16'))
-#     suite.addTest(TestPython('testCase17'))
-#     suite.addTest(TestPython('testCase18'))
-#     suite.addTest(TestPython('testCase19'))
-    suite = unittest.makeSuite(TestPython)
-    unittest.TextTestRunner(verbosity=3).run(suite)
+if os.path.exists(test_dependent):
+    f = open(test_dependent)
+    try:
+        for line in f.readlines():
+            var, loc = SplitLine(line)
+            if 'PYTHON_EXE' == var:
+                PYTHON_EXE = loc
     
-#    unittest.TextTestRunner(verbosity=3).run(suite)
-#    
-#    suite = unittest.makeSuite(TestJython)
-#    unittest.TextTestRunner(verbosity=3).run(suite)
+            if 'IRONPYTHON_EXE' == var:
+                IRONPYTHON_EXE = loc
+    
+            if 'JYTHON_JAR_LOCATION' == var:
+                JYTHON_JAR_LOCATION = loc
+    
+            if 'JAVA_LOCATION' == var:
+                JAVA_LOCATION = loc
+    finally:
+        f.close()
+else:
+    pass
+
+if IRONPYTHON_EXE is None:
+    sys.stderr.write('Warning: not running IronPython tests.\n')
+    class TestIronPython(unittest.TestCase):
+        pass
+    
+if JAVA_LOCATION is None:
+    sys.stderr.write('Warning: not running Jython tests.\n')
+    class TestJython(unittest.TestCase):
+        pass
+    
+if PYTHON_EXE is None:
+    PYTHON_EXE = sys.executable
+    
+    
+if __name__ == '__main__':
+    if False:
+        assert PYTHON_EXE, 'PYTHON_EXE not found in %s' % (test_dependent,)
+        assert IRONPYTHON_EXE, 'IRONPYTHON_EXE not found in %s' % (test_dependent,)
+        assert JYTHON_JAR_LOCATION, 'JYTHON_JAR_LOCATION not found in %s' % (test_dependent,)
+        assert JAVA_LOCATION, 'JAVA_LOCATION not found in %s' % (test_dependent,)
+        assert os.path.exists(PYTHON_EXE), 'The location: %s is not valid' % (PYTHON_EXE,)
+        assert os.path.exists(IRONPYTHON_EXE), 'The location: %s is not valid' % (IRONPYTHON_EXE,)
+        assert os.path.exists(JYTHON_JAR_LOCATION), 'The location: %s is not valid' % (JYTHON_JAR_LOCATION,)
+        assert os.path.exists(JAVA_LOCATION), 'The location: %s is not valid' % (JAVA_LOCATION,)
+    
+    if True:
+        suite = unittest.TestSuite()
+        
+#         suite = unittest.makeSuite(TestJython)
+#         unittest.TextTestRunner(verbosity=3).run(suite)
+#         
+#         suite = unittest.makeSuite(TestIronPython)
+#         unittest.TextTestRunner(verbosity=3).run(suite)
+#         
+#         suite = unittest.makeSuite(TestPython)
+#         unittest.TextTestRunner(verbosity=3).run(suite)
+
+
+#         suite.addTest(TestJython('testCase14'))
+        suite.addTest(TestPython('testCase2'))
+        unittest.TextTestRunner(verbosity=3).run(suite)
+    #     suite.addTest(TestPython('testCase17'))
+    #     suite.addTest(TestPython('testCase18'))
+    #     suite.addTest(TestPython('testCase19'))
+        
+    #    unittest.TextTestRunner(verbosity=3).run(suite)

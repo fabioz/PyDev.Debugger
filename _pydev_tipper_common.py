@@ -15,6 +15,7 @@ except:
         import traceback;traceback.print_exc() #Ok, no inspect available (search will not work)
 
 
+from pydevd_constants import xrange
 
 def DoFind(f, mod):
     import linecache
@@ -26,7 +27,7 @@ def DoFind(f, mod):
     if inspect.isclass(mod):
         name = mod.__name__
         pat = re.compile(r'^\s*class\s*' + name + r'\b')
-        for i in range(len(lines)):
+        for i in xrange(len(lines)):
             if pat.match(lines[i]):
                 return f, i, 0
 

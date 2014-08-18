@@ -185,6 +185,8 @@ class Processor:
 
         return '%s(%s)%s' % (MSG_COMPLETIONS, ''.join(compMsg), MSG_END)
 
+class Exit(Exception):
+    pass
 
 class T(Thread):
 
@@ -193,6 +195,7 @@ class T(Thread):
         self.ended = False
         self.port = port
         self.socket = None  # socket to send messages.
+        self.exit_process_on_kill = True
         self.processor = Processor()
 
 
@@ -266,7 +269,7 @@ class T(Thread):
                 while data.find(MSG_END) == -1:
                     received = self.socket.recv(BUFFER_SIZE)
                     if len(received) == 0:
-                        sys.exit(0)  # ok, connection ended
+                        raise Exit()  # ok, connection ended
                     if IS_PYTHON3K:
                         data = data + received.decode('utf-8')
                     else:
@@ -278,7 +281,7 @@ class T(Thread):
                             dbg(SERVER_NAME + ' kill message received', INFO1)
                             # break if we received kill message.
                             self.ended = True
-                            sys.exit(0)
+                            raise Exit()
 
                         dbg(SERVER_NAME + ' starting keep alive thread', INFO2)
 
@@ -359,7 +362,7 @@ class T(Thread):
 
                             else:
                                 self.send(MSG_INVALID_REQUEST)
-                    except SystemExit:
+                    except Exit:
                         self.send(self.getCompletionsMessage(None, [('Exit:', 'SystemExit', '')]))
                         raise
 
@@ -378,11 +381,12 @@ class T(Thread):
 
             self.socket.close()
             self.ended = True
-            sys.exit(0)  # connection broken
+            raise Exit()  # connection broken
 
 
-        except SystemExit:
-            raise
+        except Exit:
+            if self.exit_process_on_kill:
+                sys.exit(0)
             # No need to log SystemExit error
         except:
             s = StringIO.StringIO()
