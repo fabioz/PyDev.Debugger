@@ -12,7 +12,10 @@ SHOW_STDOUT = False
 
 
 from pydevd_constants import IS_PY3K
-from thread import start_new_thread
+try:
+    from thread import start_new_thread
+except:
+    from _thread import start_new_thread
 CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION, CMD_ENABLE_DONT_TRACE = 133, 134, 135, 141
 PYTHON_EXE = None
 IRONPYTHON_EXE = None
