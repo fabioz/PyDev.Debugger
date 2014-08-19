@@ -3,11 +3,17 @@ import pydevd_tracing
 import sys
 import pydev_log
 import pydevd_import_class
-import _pydev_threading
 
 _original_excepthook = None
 _handle_exceptions = None
 
+
+if USE_LIB_COPY:
+    import _pydev_threading as threading
+else:
+    import threading
+
+threadingCurrentThread = threading.currentThread
 
 from pydevd_comm import GetGlobalDebugger
 
@@ -95,7 +101,7 @@ def _excepthook(exctype, value, tb):
         frames.append(tb.tb_frame)
         tb = tb.tb_next
 
-    thread = _pydev_threading.get_current_thread_additional_info()
+    thread = threadingCurrentThread()
     frames_byid = dict([(id(frame),frame) for frame in frames])
     frame = frames[-1]
     thread.additionalInfo.exception = (exctype, value, tb)
