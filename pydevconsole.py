@@ -1,3 +1,5 @@
+from _pydev_imps._pydev_thread import start_new_thread
+
 try:
     from code import InteractiveConsole
 except ImportError:
@@ -305,11 +307,7 @@ def StartServer(host, port, client_port):
 
     interpreter = InterpreterInterface(host, client_port, threading.currentThread())
 
-    server_thread = threading.Thread(target=start_server,
-                                     name='ServerThread',
-                                     args=(host, port, interpreter))
-    server_thread.setDaemon(True)
-    server_thread.start()
+    start_new_thread(start_server,(host, port, interpreter))
 
     process_exec_queue(interpreter)
 

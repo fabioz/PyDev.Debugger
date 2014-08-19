@@ -61,7 +61,7 @@ from pydevd_constants import * #@UnusedWildImport
 
 import sys
 
-from _pydev_imps import _pydev_time as time
+from _pydev_imps import _pydev_time as time, _pydev_thread
 from _pydev_imps import _pydev_thread as thread
 if USE_LIB_COPY:
     import _pydev_threading as threading
@@ -802,7 +802,7 @@ class ReloadCodeCommand(InternalThreadCommand):
         self.thread_id = thread_id
         self.module_name = module_name
         self.executed = False
-        self.lock = threading.Lock()
+        self.lock = _pydev_thread.allocate_lock()
 
 
     def canBeExecutedBy(self, thread_id):

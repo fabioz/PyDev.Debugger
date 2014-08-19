@@ -417,19 +417,17 @@ class _NewThreadStartupWithoutTrace:
 
 _UseNewThreadStartup = _NewThreadStartupWithTrace
 
-def _get_threading_modules():
-    threading_modules = []
-    from _pydev_imps import _pydev_thread
-    threading_modules.append(_pydev_thread)
+def _get_threading_modules_to_patch():
+    threading_modules_to_patch = []
     try:
         import thread as _thread
-        threading_modules.append(_thread)
+        threading_modules_to_patch.append(_thread)
     except:
         import _thread
-        threading_modules.append(_thread)
-    return threading_modules
+        threading_modules_to_patch.append(_thread)
+    return threading_modules_to_patch
 
-threading_modules = _get_threading_modules()
+threading_modules_to_patch = _get_threading_modules_to_patch()
 
 
 
@@ -469,11 +467,11 @@ def patch_thread_module(thread):
         pass
 
 def patch_thread_modules():
-    for t in threading_modules:
+    for t in threading_modules_to_patch:
         patch_thread_module(t)
 
 def undo_patch_thread_modules():
-    for t in threading_modules:
+    for t in threading_modules_to_patch:
         try:
             t.start_new_thread = t._original_start_new_thread
         except:

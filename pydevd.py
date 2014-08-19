@@ -82,7 +82,7 @@ from pydevd_custom_frames import CustomFramesContainer, CustomFramesContainerIni
 import pydevd_dont_trace
 import pydevd_traceproperty
 
-from _pydev_imps import _pydev_time as time
+from _pydev_imps import _pydev_time as time, _pydev_thread
 
 if USE_LIB_COPY:
     import _pydev_threading as threading
@@ -311,8 +311,8 @@ class PyDB:
 
         self.django_exception_break = {}
         self.readyToRun = False
-        self._main_lock = threading.Lock()
-        self._lock_running_thread_ids = threading.Lock()
+        self._main_lock = _pydev_thread.allocate_lock()
+        self._lock_running_thread_ids = _pydev_thread.allocate_lock()
         self._py_db_command_thread_event = threading.Event()
         CustomFramesContainer._py_db_command_thread_event = self._py_db_command_thread_event
         self._finishDebuggingSession = False
@@ -1679,7 +1679,7 @@ def settrace(
 
 
 
-_set_trace_lock = threading.Lock()
+_set_trace_lock = _pydev_thread.allocate_lock()
 
 def _locked_settrace(
     host,
