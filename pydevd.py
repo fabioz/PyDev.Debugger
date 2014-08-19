@@ -1560,43 +1560,47 @@ def processCommandLine(argv):
     setup['multiproc'] = False #Used by PyCharm (reuses connection: ssh tunneling)
     setup['multiprocess'] = False # Used by PyDev (creates new connection to ide)
     setup['save-signatures'] = False
+    setup['print-in-debugger-startup'] = False
     i = 0
     del argv[0]
     while (i < len(argv)):
-        if (argv[i] == '--port'):
+        if argv[i] == '--port':
             del argv[i]
             setup['port'] = int(argv[i])
             del argv[i]
-        elif (argv[i] == '--vm_type'):
+        elif argv[i] == '--vm_type':
             del argv[i]
             setup['vm_type'] = argv[i]
             del argv[i]
-        elif (argv[i] == '--client'):
+        elif argv[i] == '--client':
             del argv[i]
             setup['client'] = argv[i]
             del argv[i]
-        elif (argv[i] == '--server'):
+        elif argv[i] == '--server':
             del argv[i]
             setup['server'] = True
-        elif (argv[i] == '--file'):
+        elif argv[i] == '--file':
             del argv[i]
             setup['file'] = argv[i]
             i = len(argv) # pop out, file is our last argument
-        elif (argv[i] == '--DEBUG_RECORD_SOCKET_READS'):
+        elif argv[i] == '--DEBUG_RECORD_SOCKET_READS':
             del argv[i]
             setup['DEBUG_RECORD_SOCKET_READS'] = True
-        elif (argv[i] == '--DEBUG'):
+        elif argv[i] == '--DEBUG':
             del argv[i]
             set_debug(setup)
-        elif (argv[i] == '--multiproc'):
+        elif argv[i] == '--multiproc':
             del argv[i]
             setup['multiproc'] = True
-        elif (argv[i] == '--multiprocess'):
+        elif argv[i] == '--multiprocess':
             del argv[i]
             setup['multiprocess'] = True
-        elif (argv[i] == '--save-signatures'):
+        elif argv[i] == '--save-signatures':
             del argv[i]
             setup['save-signatures'] = True
+        elif argv[i] == '--print-in-debugger-startup':
+            del argv[i]
+            setup['print-in-debugger-startup'] = True
         else:
             raise ValueError("unexpected option " + argv[i])
     return setup
@@ -1908,11 +1912,6 @@ class SetupHolder:
 # main
 #=======================================================================================================================
 if __name__ == '__main__':
-    try:
-        pid = ' (pid: %s)' % os.getpid()
-    except:
-        pid = ''
-    sys.stderr.write("pydev debugger: starting%s\n" % pid)
     
     # parse the command line. --file is our last argument that is required
     try:
@@ -1923,6 +1922,12 @@ if __name__ == '__main__':
         traceback.print_exc()
         usage(1)
 
+    if setup['print-in-debugger-startup']:
+        try:
+            pid = ' (pid: %s)' % os.getpid()
+        except:
+            pid = ''
+        sys.stderr.write("pydev debugger: starting%s\n" % pid)
 
     fix_getpass.fixGetpass()
 
