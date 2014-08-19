@@ -248,16 +248,12 @@ class PyDBDaemonThread:
     created_pydb_daemon_threads = {}
 
     def __init__(self):
-        self.setDaemon(True)
+        # Note: subclasses are always daemon threads.
         self.killReceived = False
         self.dontTraceMe = True
 
     def setName(self, name):
         self.name = name
-
-    def setDaemon(self, daemon):
-        pass
-        #raise AssertionError('always daemon now')
 
     def start(self):
         import pydev_monkey
@@ -385,7 +381,6 @@ class WriterThread(PyDBDaemonThread):
     """ writer thread writes out the commands in an infinite loop """
     def __init__(self, sock):
         PyDBDaemonThread.__init__(self)
-        self.setDaemon(False)  #writer isn't daemon to be able to deliver all messages after main thread terminated
         self.sock = sock
         self.setName("pydevd.Writer")
         self.cmdQueue = _queue.Queue()

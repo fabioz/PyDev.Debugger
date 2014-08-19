@@ -111,6 +111,7 @@ DONT_TRACE = {
               '_pydev_execfile.py':1,
               '_pydev_jython_execfile.py':1,
               '_pydev_threading':1,
+              '_pydev_Queue':1,
               'django_debug.py':1,
               'django_frame.py':1,
               'pydev_log.py':1,
@@ -233,7 +234,6 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
     def __init__(self, pyDb):
         PyDBDaemonThread.__init__(self)
         self.pyDb = pyDb
-        self.setDaemon(False)
         self.setName('pydevd.CheckAliveThread')
 
     def OnRun(self):
