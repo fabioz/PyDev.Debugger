@@ -1,55 +1,53 @@
-language: python
-python:
-  - 2.6
-  - 2.7
-  - 3.2
-  - 3.3
-  - "pypy"
-
-# Setup anaconda
-before_install:
-  # Fix issue with testGui
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
-# Install packages
-install:
-  - pip install numpy
-  - pip install nose
-  - pip install ipython
-  - pip install django
- 
-# Run test
-script:
-  - nosetests --verbosity=3
-
-
 # language: python
 # python:
-#   - 2.6 -- not there in conda
+#   - 2.6
 #   - 2.7
-#   - 3.2 -- not there in conda
+#   - 3.2
 #   - 3.3
-#   - "pypy" -- not there in conda
+#   - "pypy"
 # 
 # # Setup anaconda
 # before_install:
-#   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-#   - chmod +x miniconda.sh
-#   - ./miniconda.sh -b
-#   - export PATH=/home/travis/miniconda/bin:$PATH
-#   - conda update --yes conda
-#   # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
-#   - sudo rm -rf /dev/shm
-#   - sudo ln -s /run/shm /dev/shm
 #   # Fix issue with testGui
 #   - "export DISPLAY=:99.0"
 #   - "sh -e /etc/init.d/xvfb start"
 # # Install packages
 # install:
-#   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy nose ipython
+#   - pip install numpy
+#   - pip install nose
+#   - pip install ipython
 #   - pip install django
 #  
 # # Run test
 # script:
 #   - nosetests --verbosity=3
-#  
+
+
+# IPython only works with 2.7/3.3, so, test only on those. 
+language: python
+python:
+  - 2.7
+  - 3.3
+
+# Setup anaconda
+before_install:
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/miniconda/bin:$PATH
+  - conda update --yes conda
+  # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
+  - sudo rm -rf /dev/shm
+  - sudo ln -s /run/shm /dev/shm
+  # Fix issue with testGui
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+# Install packages
+install:
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy nose ipython
+  - pip install django
+ 
+# Run test
+script:
+  - nosetests --verbosity=3
+ 
