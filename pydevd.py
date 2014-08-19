@@ -114,6 +114,7 @@ DONT_TRACE = {
               'django_debug.py':1,
               'django_frame.py':1,
               'pydev_log.py':1,
+              'pydev_monkey.py':1 ,
               'pydevd.py':1 ,
               'pydevd_additional_thread_info.py':1,
               'pydevd_comm.py':1,
@@ -1416,8 +1417,9 @@ class PyDB:
 
 
 
-    def SetTraceForFrameAndParents(self, frame, also_add_to_passed_frame=True, overwrite_prev_trace=False):
-        dispatch_func = self.trace_dispatch
+    def SetTraceForFrameAndParents(self, frame, also_add_to_passed_frame=True, overwrite_prev_trace=False, dispatch_func=None):
+        if dispatch_func is None:
+            dispatch_func = self.trace_dispatch
 
         if also_add_to_passed_frame:
             self.update_trace(frame, dispatch_func, overwrite_prev_trace)
@@ -1614,9 +1616,6 @@ def SetTraceForParents(frame, dispatch_func):
         frame = frame.f_back
     del frame
 
-def exit_hook():
-    debugger = GetGlobalDebugger()
-    debugger.exiting()
 
 def initStdoutRedirect():
     if not getattr(sys, 'stdoutBuf', None):
@@ -1763,7 +1762,9 @@ def _locked_settrace(
             # As this is the first connection, also set tracing for any untraced threads
             debugger.setTracingForUntracedContexts(ignore_frame=GetFrame(), overwrite_prev_trace=overwrite_prev_trace)
 
-        sys.exitfunc = exit_hook
+        # Stop the tracing as the last thing before the actual shutdown for a clean exit.
+        atexit.register(stoptrace)
+        
         #Suspend as the last thing after all tracing is in place.
         if suspend:
             debugger.setSuspend(t, CMD_SET_BREAK)
@@ -1808,16 +1809,15 @@ def stoptrace():
 
         from pydev_monkey import undo_patch_thread_modules
         undo_patch_thread_modules()
-
+ 
         debugger = GetGlobalDebugger()
-
+ 
         if debugger:
-            debugger.trace_dispatch = None
-
-            debugger.SetTraceForFrameAndParents(GetFrame(), False)
-
+  
+            debugger.SetTraceForFrameAndParents(
+                GetFrame(), also_add_to_passed_frame=True, overwrite_prev_trace=True, dispatch_func=lambda *args:None)
             debugger.exiting()
-
+  
             killAllPydevThreads()
 
         connected = False
@@ -2083,5 +2083,3 @@ if __name__ == '__main__':
 
         debugger.run(setup['file'], None, None)
         
-    # Stop the tracing as the last thing before the actual shutdown for a clean exit.
-    atexit.register(stoptrace)

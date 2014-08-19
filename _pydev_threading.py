@@ -1,4 +1,9 @@
-from threading import enumerate, currentThread, Condition, Event, Timer, settrace, Thread
+from threading import enumerate, currentThread, Condition, Event, Timer, Thread
+try:
+    from threading import settrace
+except:
+    pass
+
 
 try:
     from gevent import monkey

@@ -268,13 +268,17 @@ class PyDBDaemonThread:
         created_pydb_daemon = self.created_pydb_daemon_threads
         created_pydb_daemon[self] = 1
         try:
-            if sys.platform.startswith("java"):
-                import org.python.core as PyCore #@UnresolvedImport
-                ss = PyCore.PySystemState()
-                # Note: Py.setSystemState() affects only the current thread.
-                PyCore.Py.setSystemState(ss)
-    
-            self.OnRun()
+            try:
+                if IS_JYTHON:
+                    import org.python.core as PyCore #@UnresolvedImport
+                    ss = PyCore.PySystemState()
+                    # Note: Py.setSystemState() affects only the current thread.
+                    PyCore.Py.setSystemState(ss)
+        
+                self.OnRun()
+            except:
+                if sys is not None and traceback is not None:
+                    traceback.print_exc()
         finally:
             del created_pydb_daemon[self]
 
