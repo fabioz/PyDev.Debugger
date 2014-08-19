@@ -3,6 +3,7 @@
 '''
 import sys
 import os
+from _pydev_imps._pydev_thread import start_new_thread
 
 #make it as if we were executing from the directory above this one (so that we can use pycompletionserver
 #without the need for it being in the pythonpath)
@@ -48,7 +49,7 @@ if sys.platform.find('java') == -1:
             unittest.TestCase.tearDown(self)
         
         def testMessage(self):
-            t = pycompletionserver.T(0)
+            t = pycompletionserver.CompletionServer(0)
             
             l = []
             l.append(('Def', 'description'  , 'args'))
@@ -73,9 +74,9 @@ if sys.platform.find('java') == -1:
             server.bind((pycompletionserver.HOST, p1))
             server.listen(1)  #socket to receive messages.
     
-            t = pycompletionserver.T(p1)
+            t = pycompletionserver.CompletionServer(p1)
             t.exit_process_on_kill = False
-            t.start()
+            start_new_thread(t.run, ())
     
             s, addr = server.accept()
     

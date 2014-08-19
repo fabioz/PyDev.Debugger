@@ -17,23 +17,17 @@ except NameError:
     setattr(__builtin__, 'True', 1)  # Python 3.0 does not accept __builtin__.True = 1 in its syntax
     setattr(__builtin__, 'False', 0)
 
-import pydevd_constants
+from pydevd_constants import IS_JYTHON
 
-try:
-    from java.lang import Thread
-    IS_JYTHON = True
+if IS_JYTHON:
+    import java.lang
     SERVER_NAME = 'jycompletionserver'
     import _pydev_jy_imports_tipper  # as _pydev_imports_tipper #changed to be backward compatible with 1.5
     _pydev_imports_tipper = _pydev_jy_imports_tipper
 
-except ImportError:
+else:
     # it is python
-    IS_JYTHON = False
     SERVER_NAME = 'pycompletionserver'
-    if pydevd_constants.USE_LIB_COPY:
-        from _pydev_threading import Thread
-    else:
-        from threading import Thread
     import _pydev_imports_tipper
 
 
@@ -188,10 +182,9 @@ class Processor:
 class Exit(Exception):
     pass
 
-class T(Thread):
+class CompletionServer:
 
     def __init__(self, port):
-        Thread.__init__(self)
         self.ended = False
         self.port = port
         self.socket = None  # socket to send messages.
@@ -403,8 +396,6 @@ if __name__ == '__main__':
 
     port = int(sys.argv[1])  # this is from where we want to receive messages.
 
-    t = T(port)
+    t = CompletionServer(port)
     dbg(SERVER_NAME + ' will start', INFO1)
-    t.start()
-    time.sleep(5)
-    t.join()
+    t.run()
