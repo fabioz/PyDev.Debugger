@@ -989,6 +989,75 @@ class WriterThreadCase2(AbstractWriterThread):
         self.finishedOk = True
 
 #=======================================================================================================================
+# WriterThreadCaseQThread1
+#=======================================================================================================================
+class WriterThreadCaseQThread1(AbstractWriterThread):
+
+    TEST_FILE = _get_debugger_test_file('_debugger_case_qthread1.py')
+
+    def run(self):
+        self.StartSocket()
+        breakpoint_id = self.WriteAddBreakpoint(16, 'run')
+        self.WriteMakeInitialRun()
+
+        threadId, frameId = self.WaitForBreakpointHit()
+
+        self.WriteRemoveBreakpoint(breakpoint_id)
+        self.WriteRunThread(threadId)
+
+        self.log.append('Checking sequence. Found: %s' % (self._sequence))
+        assert 9 == self._sequence, 'Expected 9. Had: %s' % self._sequence
+
+        self.log.append('Marking finished ok.')
+        self.finishedOk = True
+
+#=======================================================================================================================
+# WriterThreadCaseQThread2
+#=======================================================================================================================
+class WriterThreadCaseQThread2(AbstractWriterThread):
+
+    TEST_FILE = _get_debugger_test_file('_debugger_case_qthread2.py')
+
+    def run(self):
+        self.StartSocket()
+        breakpoint_id = self.WriteAddBreakpoint(18, 'longRunning')
+        self.WriteMakeInitialRun()
+
+        threadId, frameId = self.WaitForBreakpointHit()
+
+        self.WriteRemoveBreakpoint(breakpoint_id)
+        self.WriteRunThread(threadId)
+
+        self.log.append('Checking sequence. Found: %s' % (self._sequence))
+        assert 9 == self._sequence, 'Expected 9. Had: %s' % self._sequence
+
+        self.log.append('Marking finished ok.')
+        self.finishedOk = True
+
+#=======================================================================================================================
+# WriterThreadCaseQThread3
+#=======================================================================================================================
+class WriterThreadCaseQThread3(AbstractWriterThread):
+
+    TEST_FILE = _get_debugger_test_file('_debugger_case_qthread3.py')
+
+    def run(self):
+        self.StartSocket()
+        breakpoint_id = self.WriteAddBreakpoint(19, 'run')
+        self.WriteMakeInitialRun()
+
+        threadId, frameId = self.WaitForBreakpointHit()
+
+        self.WriteRemoveBreakpoint(breakpoint_id)
+        self.WriteRunThread(threadId)
+
+        self.log.append('Checking sequence. Found: %s' % (self._sequence))
+        assert 9 == self._sequence, 'Expected 9. Had: %s' % self._sequence
+
+        self.log.append('Marking finished ok.')
+        self.finishedOk = True
+
+#=======================================================================================================================
 # WriterThreadCase1
 #=======================================================================================================================
 class WriterThreadCase1(AbstractWriterThread):
@@ -1090,45 +1159,41 @@ class DebuggerBase(object):
                     check += 1
                     if check == 20:
                         print('Warning: writer thread exited and process still did not.')
-                    if check == 40:
-                        self.fail(
-                            "The other process should've exited but still didn't (timeout for process to exit)."
-                            "\nstdout:\n" + '\n'.join(stdout)+
-                            '\nstderr:\n' + '\n'.join(stderr)
+                    if check == 100:
+                        self.fail_with_message(
+                            "The other process should've exited but still didn't (timeout for process to exit).", 
+                            stdout, stderr, writerThread
                         )
             time.sleep(.2)
             
             
         poll = process.poll()
         if poll < 0:
-            self.fail(
-                "The other process exited with error code: " + str(poll) + 
-                "\nstdout:" + '\n'.join(stdout)+
-                '\nstderr:'+'\n'.join(stderr)
-            )
+            self.fail_with_message(
+                "The other process exited with error code: " + str(poll), stdout, stderr, writerThread)
 
 
         if stdout is None:
-            log = getattr(writerThread, 'log', [])
-            
-            self.fail("The other process may still be running -- and didn't give any output. Stdout: \n"+
-                str(stdout)+"\nStderr:"+str(stderr)+"\nLog:\n"+
-                '\n'.join(log))
+            self.fail_with_message(
+                "The other process may still be running -- and didn't give any output.", stdout, stderr, writerThread)
 
         if 'TEST SUCEEDED' not in ''.join(stdout):
-            self.fail("Stdout: \n"+'\n'.join(stdout)+"\nStderr:"+'\n'.join(stderr))
+            self.fail_with_message("TEST SUCEEDED not found in stdout.", stdout, stderr, writerThread)
 
         for i in xrange(100):
             if not writerThread.finishedOk:
                 time.sleep(.1)
             
         if not writerThread.finishedOk:
-            log = getattr(writerThread, 'log', [])
+            self.fail_with_message(
+                "The thread that was doing the tests didn't finish successfully.", stdout, stderr, writerThread)
             
-            self.fail("The thread that was doing the tests didn't finish successfully.\n"+
-                " Stdout: \n"+'\n'.join(stdout)+
-                "\nStderr:"+'\n'.join(stderr)+
-                "\nLog:\n"+'\n'.join(log))
+    def fail_with_message(self, msg, stdout, stderr, writerThread):
+        self.fail(msg+
+            "\nStdout: \n"+'\n'.join(stdout)+
+            "\nStderr:"+'\n'.join(stderr)+
+            "\nLog:\n"+'\n'.join(getattr(writerThread, 'log', [])))
+        
 
     def testCase1(self):
         self.CheckCase(WriterThreadCase1)
@@ -1186,6 +1251,30 @@ class DebuggerBase(object):
         
     def testCase19(self):
         self.CheckCase(WriterThreadCase19)
+        
+    def _has_qt(self):
+        try:
+            from PySide import QtCore
+            return True
+        except:
+            try:
+                from PyQt4 import QtCore
+                return True
+            except:
+                pass
+        return False
+
+    def testCaseQthread1(self):
+        if self._has_qt():
+            self.CheckCase(WriterThreadCaseQThread1)
+
+    def testCaseQthread2(self):
+        if self._has_qt():
+            self.CheckCase(WriterThreadCaseQThread2)
+
+    def testCaseQthread3(self):
+        if self._has_qt():
+            self.CheckCase(WriterThreadCaseQThread3)
 
 
 class TestPython(unittest.TestCase, DebuggerBase):
@@ -1300,7 +1389,7 @@ PYTHON_EXE = sys.executable
     
     
 if __name__ == '__main__':
-    if True:
+    if False:
         assert PYTHON_EXE, 'PYTHON_EXE not found in %s' % (test_dependent,)
         assert IRONPYTHON_EXE, 'IRONPYTHON_EXE not found in %s' % (test_dependent,)
         assert JYTHON_JAR_LOCATION, 'JYTHON_JAR_LOCATION not found in %s' % (test_dependent,)
@@ -1331,7 +1420,9 @@ if __name__ == '__main__':
 #         suite.addTest(TestIronPython('testCase3'))
 #         suite.addTest(TestIronPython('testCase7'))
 #         
-        suite.addTest(TestPython('testCase16'))
+        suite.addTest(TestPython('testCaseQthread1'))
+        suite.addTest(TestPython('testCaseQthread2'))
+        suite.addTest(TestPython('testCaseQthread3'))
         
 #         suite.addTest(TestPython('testCase4'))
 

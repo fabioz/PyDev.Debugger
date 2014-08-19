@@ -2,6 +2,9 @@
 from __future__ import nested_scopes # Jython 2.1 support
 from pydevd_constants import * # @UnusedWildImport
 
+import pydev_monkey_qt
+pydev_monkey_qt.patch_qt()
+
 import traceback
 
 from django_debug import DjangoLineBreakpoint
@@ -1610,15 +1613,6 @@ def usage(doExit=0):
     sys.stdout.write('pydevd.py --port=N [(--client hostname) | --server] --file executable [file_options]\n')
     if doExit:
         sys.exit(0)
-
-def SetTraceForParents(frame, dispatch_func):
-    frame = frame.f_back
-    while frame:
-        if frame.f_trace is None:
-            frame.f_trace = dispatch_func
-
-        frame = frame.f_back
-    del frame
 
 
 def initStdoutRedirect():
