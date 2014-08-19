@@ -323,8 +323,8 @@ class AbstractWriterThread(threading.Thread):
         self.Write("105\t%s\t%s" % (self.NextSeq(), threadId,))
 
     def WriteRunThread(self, threadId):
-        self.Write("106\t%s\t%s" % (self.NextSeq(), threadId,))
         self.log.append('WriteRunThread')
+        self.Write("106\t%s\t%s" % (self.NextSeq(), threadId,))
 
     def WriteKillThread(self, threadId):
         self.Write("104\t%s\t%s" % (self.NextSeq(), threadId,))
@@ -1113,7 +1113,7 @@ class DebuggerBase(object):
         if 'TEST SUCEEDED' not in processReadThread.resultStr:
             self.fail("Stdout: \n"+str(processReadThread.resultStr)+"\nStderr:"+str(processReadThread.errStr))
 
-        for i in xrange(10):
+        for i in xrange(100):
             if not writerThread.finishedOk:
                 time.sleep(.1)
             

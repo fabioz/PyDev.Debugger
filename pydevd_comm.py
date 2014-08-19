@@ -254,7 +254,7 @@ class PyDBDaemonThread:
         self.dontTraceMe = True
 
     def setName(self, name):
-        pass
+        self.name = name
 
     def setDaemon(self, daemon):
         pass
