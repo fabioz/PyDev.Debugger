@@ -462,6 +462,9 @@ class PyDB:
                     if isinstance(t, PyDBDaemonThread):
                         pydev_log.error_once('Found PyDBDaemonThread in threading.enumerate.')
                         
+                    elif getattr(t, 'is_pydev_daemon_thread', False):
+                        pass # I.e.: skip the DummyThreads created from pydev daemon threads
+                        
                     elif isThreadAlive(t):
                         program_threads_alive[thread_id] = t
 

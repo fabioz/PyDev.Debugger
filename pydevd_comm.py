@@ -263,6 +263,8 @@ class PyDBDaemonThread:
     def run(self):
         created_pydb_daemon = self.created_pydb_daemon_threads
         created_pydb_daemon[self] = 1
+        dummy_thread = threading.currentThread()
+        dummy_thread.is_pydev_daemon_thread = True
         try:
             try:
                 if IS_JYTHON:
