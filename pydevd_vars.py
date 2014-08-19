@@ -16,10 +16,7 @@ except ImportError:
     from io import StringIO
 import sys #@Reimport
 
-if USE_LIB_COPY:
-    import _pydev_threading as threading
-else:
-    import threading
+import _pydev_threading as threading
 import traceback
 import pydevd_save_locals
 from pydev_imports import Exec, quote, execfile

@@ -84,12 +84,10 @@ import pydevd_traceproperty
 
 from _pydev_imps import _pydev_time as time, _pydev_thread
 
-if USE_LIB_COPY:
-    import _pydev_threading as threading
-else:
-    import threading
+import _pydev_threading as threading
 
 import os
+import atexit
 
 
 threadingEnumerate = threading.enumerate
@@ -220,7 +218,7 @@ class PyDBCommandThread(PyDBDaemonThread):
 
 
 def killAllPydevThreads():
-    threads = threadingEnumerate()
+    threads = DictKeys(PyDBDaemonThread.created_pydb_daemon_threads)
     for t in threads:
         if hasattr(t, 'doKillPydevThread'):
             t.doKillPydevThread()
@@ -345,7 +343,11 @@ class PyDB:
 
     def haveAliveThreads(self):
         for t in threadingEnumerate():
-            if not isinstance(t, PyDBDaemonThread) and isThreadAlive(t) and not t.isDaemon():
+            if isinstance(t, PyDBDaemonThread):
+                pydev_log.error_once(
+                    'Error in debugger: Found PyDBDaemonThread through threading.enumerate().\n')
+                
+            if isThreadAlive(t) and not t.isDaemon():
                 return True
 
         return False
@@ -400,11 +402,9 @@ class PyDB:
         if thread_id == "*":
             threads = threadingEnumerate()
             for t in threads:
-                thread_name = t.getName()
-                if not thread_name.startswith('pydevd.') or thread_name == 'pydevd.CommandThread':
-                    thread_id = GetThreadId(t)
-                    queue = self.getInternalQueue(thread_id)
-                    queue.put(int_cmd)
+                thread_id = GetThreadId(t)
+                queue = self.getInternalQueue(thread_id)
+                queue.put(int_cmd)
 
         else:
             queue = self.getInternalQueue(thread_id)
@@ -455,7 +455,10 @@ class PyDB:
                 for t in all_threads:
                     thread_id = GetThreadId(t)
 
-                    if not isinstance(t, PyDBDaemonThread) and isThreadAlive(t):
+                    if isinstance(t, PyDBDaemonThread):
+                        pydev_log.error_once('Found PyDBDaemonThread in threading.enumerate.')
+                        
+                    elif isThreadAlive(t):
                         program_threads_alive[thread_id] = t
 
                         if not DictContains(self._running_thread_ids, thread_id):
@@ -518,19 +521,18 @@ class PyDB:
         threads = threadingEnumerate()
         try:
             for t in threads:
-                if not t.getName().startswith('pydevd.'):
-                    # TODO: optimize so that we only actually add that tracing if it's in
-                    # the new breakpoint context.
-                    additionalInfo = None
-                    try:
-                        additionalInfo = t.additionalInfo
-                    except AttributeError:
-                        pass  # that's ok, no info currently set
+                # TODO: optimize so that we only actually add that tracing if it's in
+                # the new breakpoint context.
+                additionalInfo = None
+                try:
+                    additionalInfo = t.additionalInfo
+                except AttributeError:
+                    pass  # that's ok, no info currently set
 
-                    if additionalInfo is not None:
-                        for frame in additionalInfo.IterFrames():
-                            if frame is not ignore_frame:
-                                self.SetTraceForFrameAndParents(frame, overwrite_prev_trace=overwrite_prev_trace)
+                if additionalInfo is not None:
+                    for frame in additionalInfo.IterFrames():
+                        if frame is not ignore_frame:
+                            self.SetTraceForFrameAndParents(frame, overwrite_prev_trace=overwrite_prev_trace)
         finally:
             frame = None
             t = None
@@ -1332,7 +1334,7 @@ class PyDB:
             if self._finishDebuggingSession and not self._terminationEventSent:
                 #that was not working very well because jython gave some socket errors
                 try:
-                    threads = threadingEnumerate()
+                    threads = DictKeys(PyDBDaemonThread.created_pydb_daemon_threads)
                     for t in threads:
                         if hasattr(t, 'doKillPydevThread'):
                             t.doKillPydevThread()
@@ -2080,3 +2082,6 @@ if __name__ == '__main__':
         connected = True  # Mark that we're connected when started from inside ide.
 
         debugger.run(setup['file'], None, None)
+        
+    # Stop the tracing as the last thing before the actual shutdown for a clean exit.
+    atexit.register(stoptrace)

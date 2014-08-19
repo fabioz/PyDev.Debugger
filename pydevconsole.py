@@ -11,12 +11,7 @@ from code import InteractiveInterpreter
 import os
 import sys
 
-from pydevd_constants import USE_LIB_COPY
-
-if USE_LIB_COPY:
-    import _pydev_threading as threading
-else:
-    import threading
+import _pydev_threading as threading
 
 import traceback
 import fix_getpass
