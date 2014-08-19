@@ -187,15 +187,17 @@ class AbstractWriterThread(threading.Thread):
         self.log.append('Start: WaitForBreakpointHit')
         i = 0
         # wait for hit breakpoint
-        while not ('stop_reason="%s"' % reason) in self.readerThread.lastReceived:
+        last = self.readerThread.lastReceived
+        while not ('stop_reason="%s"' % reason) in last:
             i += 1
             time.sleep(1)
+            last = self.readerThread.lastReceived
             if i >= 10:
                 raise AssertionError('After %s seconds, a break with reason: %s was not hit. Found: %s' % \
-                    (i, reason, self.readerThread.lastReceived))
+                    (i, reason, last))
 
         # we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" ...
-        splitted = self.readerThread.lastReceived.split('"')
+        splitted = last.split('"')
         threadId = splitted[1]
         frameId = splitted[7]
         if get_line:
@@ -1325,11 +1327,11 @@ if __name__ == '__main__':
 
 
 #         suite.addTest(TestIronPython('testCase18'))
-        suite.addTest(TestIronPython('testCase17'))
+#         suite.addTest(TestIronPython('testCase17'))
 #         suite.addTest(TestIronPython('testCase3'))
 #         suite.addTest(TestIronPython('testCase7'))
 #         
-#         suite.addTest(TestJython('testCase3'))
+        suite.addTest(TestPython('testCase16'))
         
 #         suite.addTest(TestPython('testCase4'))
 
