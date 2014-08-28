@@ -429,12 +429,14 @@ class NdArrayResolver:
         ret['size'] = obj.size
 		# see TupleResolver.getDictionary()
         l = len(obj)
-        if l < MAX_ITEMS_TO_HANDLE:
-            format = '%0' + str(int(len(str(l)))) + 'd'
-            for i, item in izip(xrange(l), obj):
-                ret[format % i ] = item
-        else:
-            ret[TOO_LARGE_ATTR] = TOO_LARGE_MSG
+        format_str = '%0' + str(int(len(str(l)))) + 'd'
+        i = 0
+        for item in obj:
+            ret[format_str % i] = item
+            i += 1
+            if i > MAX_ITEMS_TO_HANDLE:
+                ret[TOO_LARGE_ATTR] = TOO_LARGE_MSG
+                break
         return ret
 
 
