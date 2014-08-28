@@ -351,6 +351,12 @@ class PyDB:
                 pydev_log.error_once(
                     'Error in debugger: Found PyDBDaemonThread through threading.enumerate().\n')
                 
+            if getattr(t, 'is_pydev_daemon_thread', False):
+                #Important: Jython 2.5rc4 has a bug where a thread created with thread.start_new_thread won't be
+                #set as a daemon thread, so, we also have to check for the 'is_pydev_daemon_thread' flag.
+                #See: https://github.com/fabioz/PyDev.Debugger/issues/11
+                continue
+            
             if isThreadAlive(t) and not t.isDaemon():
                 return True
 
