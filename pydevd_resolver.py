@@ -427,7 +427,7 @@ class NdArrayResolver:
         ret['shape'] = obj.shape
         ret['dtype'] = obj.dtype
         ret['size'] = obj.size
-		# see TupleResolver.getDictionary()
+	# see TupleResolver.getDictionary()
         l = len(obj)
         format_str = '%0' + str(int(len(str(l)))) + 'd'
         i = 0
