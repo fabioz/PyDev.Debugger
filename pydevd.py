@@ -1406,9 +1406,14 @@ class PyDB:
 
         except Exception:
             # Log it
-            if traceback is not None:
-                # This can actually happen during the interpreter shutdown in Python 2.7
-                traceback.print_exc()
+            try:
+                if traceback is not None:
+                    # This can actually happen during the interpreter shutdown in Python 2.7
+                    traceback.print_exc()
+            except:
+                # Error logging? We're really in the interpreter shutdown...
+                # (https://github.com/fabioz/PyDev.Debugger/issues/8) 
+                pass
             return None
 
     if USE_PSYCO_OPTIMIZATION:
