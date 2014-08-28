@@ -1455,13 +1455,6 @@ class PyDB:
 
     def prepareToRun(self):
         ''' Shared code to prepare debugging by installing traces and registering threads '''
-
-        # for completeness, we'll register the pydevd.reader & pydevd.writer threads
-        net = NetCommand(str(CMD_THREAD_CREATE), 0, '<xml><thread name="pydevd.reader" id="-1"/></xml>')
-        self.writer.addCommand(net)
-        net = NetCommand(str(CMD_THREAD_CREATE), 0, '<xml><thread name="pydevd.writer" id="-1"/></xml>')
-        self.writer.addCommand(net)
-
         self.patch_threads()
         pydevd_tracing.SetTrace(self.trace_dispatch)
 
@@ -1719,11 +1712,6 @@ def _locked_settrace(
         connected = True
         bufferStdOutToServer = stdoutToServer
         bufferStdErrToServer = stderrToServer
-
-        net = NetCommand(str(CMD_THREAD_CREATE), 0, '<xml><thread name="pydevd.reader" id="-1"/></xml>')
-        debugger.writer.addCommand(net)
-        net = NetCommand(str(CMD_THREAD_CREATE), 0, '<xml><thread name="pydevd.writer" id="-1"/></xml>')
-        debugger.writer.addCommand(net)
 
         if bufferStdOutToServer:
             initStdoutRedirect()
