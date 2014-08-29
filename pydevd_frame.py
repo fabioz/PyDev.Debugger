@@ -294,12 +294,6 @@ class PyDBFrame:
                     can_skip = (step_cmd is None and stop_frame is None)\
                         or (step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and stop_frame is not frame)
 
-                # check_stop_on_django_render_call = False
-                # if hasattr(main_debugger, 'django_breakpoints'):
-                #     check_stop_on_django_render_call = main_debugger.django_breakpoints and self._is_django_render_call(frame)
-                #     if check_stop_on_django_render_call:
-                #         can_skip = False
-
                 if can_skip:
                     can_skip = not main_debugger.can_not_skip_from_plugin(frame)
 
@@ -400,7 +394,7 @@ class PyDBFrame:
 
             #step handling. We stop when we hit the right frame
             try:
-                django_stop = False
+                stop_info = {}
 
                 should_skip = False
                 if pydevd_dont_trace.should_trace_hook is not None:
@@ -413,34 +407,18 @@ class PyDBFrame:
                         should_skip = self.should_skip
 
                 if should_skip:
-                    stop = False
+                    stop_info['stop'] = False
 
                 elif step_cmd == CMD_STEP_INTO:
-                    stop = event in ('line', 'return')
-
-                    if is_django_suspended(thread):
-                        #django_stop = event == 'call' and is_django_render_call(frame)
-                        stop = stop and is_django_resolve_call(frame.f_back) and not is_django_context_get_call(frame)
-                        if stop:
-                            info.pydev_django_resolve_frame = 1 #we remember that we've go into python code from django rendering frame
+                    stop_info['stop'] = event in ('line', 'return')
+                    main_debugger.plugin_function('cmd_step_into', frame, event, self._args, stop_info)
 
                 elif step_cmd == CMD_STEP_OVER:
-                    if is_django_suspended(thread):
-                        django_stop = event == 'call' and self._is_django_render_call(frame)
-
-                        stop = False
-                    else:
-                        if event == 'return' and info.pydev_django_resolve_frame is not None and is_django_resolve_call(frame.f_back):
-                            #we return to Django suspend mode and should not stop before django rendering frame
-                            stop_frame = info.pydev_step_stop = info.pydev_django_resolve_frame
-                            info.pydev_django_resolve_frame = None
-                            thread.additionalInfo.suspend_type = DJANGO_SUSPEND
-
-
-                        stop = stop_frame is frame and event in ('line', 'return')
+                    stop_info['stop'] = info.pydev_step_stop is frame and event in ('line', 'return')
+                    main_debugger.plugin_function('cmd_step_over', frame, event, self._args, stop_info)
 
                 elif step_cmd == CMD_SMART_STEP_INTO:
-                    stop = False
+                    stop_info['stop'] = False
                     if info.pydev_smart_step_stop is frame:
                         info.pydev_func_name = None
                         info.pydev_smart_step_stop = None
@@ -453,13 +431,13 @@ class PyDBFrame:
                             curr_func_name = ''
 
                         if curr_func_name == info.pydev_func_name:
-                            stop = True
+                            stop_info['stop'] = True
 
                 elif step_cmd == CMD_STEP_RETURN:
-                    stop = event == 'return' and stop_frame is frame
+                    stop_info['stop'] = event == 'return' and stop_frame is frame
 
                 elif step_cmd == CMD_RUN_TO_LINE or step_cmd == CMD_SET_NEXT_STATEMENT:
-                    stop = False
+                    stop_info['stop'] = False
 
                     if event == 'line' or event == 'exception':
                         #Yes, we can only act on line events (weird hum?)
@@ -474,25 +452,22 @@ class PyDBFrame:
                         if curr_func_name == info.pydev_func_name:
                             line = info.pydev_next_line
                             if frame.f_lineno == line:
-                                stop = True
+                                stop_info['stop'] = True
                             else:
                                 if frame.f_trace is None:
                                     frame.f_trace = self.trace_dispatch
                                 frame.f_lineno = line
                                 frame.f_trace = None
-                                stop = True
+                                stop_info['stop'] = True
 
                 else:
-                    stop = False
+                    stop_info['stop'] = False
 
-                if django_stop:
-                    frame = suspend_django(self, main_debugger, thread, frame)
-                    if frame:
-                        self.doWaitSuspend(thread, frame, event, arg)
-                elif stop:
-                    #event is always == line or return at this point
-                    if event == 'line':
-                        self.setSuspend(thread, step_cmd)
+                if True in stop_info.values():
+                    stopped_on_plugin = main_debugger.plugin_function('stop', frame, event, self._args, stop_info, arg)
+                    if DictContains(stop_info, 'stop') and stop_info['stop'] and not stopped_on_plugin:
+                        if event == 'line':
+                            self.setSuspend(thread, step_cmd)
                         self.doWaitSuspend(thread, frame, event, arg)
                     else: #return event
                         back = frame.f_back
@@ -518,7 +493,6 @@ class PyDBFrame:
                             info.pydev_step_stop = None
                             info.pydev_step_cmd = None
                             info.pydev_state = STATE_RUN
-
 
             except:
                 traceback.print_exc()
