@@ -293,9 +293,11 @@ class PyDBFrame:
                     can_skip = (step_cmd is None and stop_frame is None)\
                         or (step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and stop_frame is not frame)
 
-                check_stop_on_django_render_call = main_debugger.django_breakpoints and self._is_django_render_call(frame)
-                if check_stop_on_django_render_call:
-                    can_skip = False
+                check_stop_on_django_render_call = False
+                if hasattr(main_debugger, 'django_breakpoints'):
+                    check_stop_on_django_render_call = main_debugger.django_breakpoints and self._is_django_render_call(frame)
+                    if check_stop_on_django_render_call:
+                        can_skip = False
 
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
                 # we will return nothing for the next trace

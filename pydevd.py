@@ -7,7 +7,7 @@ pydev_monkey_qt.patch_qt()
 
 import traceback
 
-from django_debug import DjangoLineBreakpoint
+from pluginbase import PluginBase
 from pydevd_frame import add_exception_to_frame
 import pydev_imports
 from pydevd_breakpoints import * #@UnusedWildImport
@@ -37,8 +37,6 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_ADD_EXCEPTION_BREAK, \
                          CMD_REMOVE_EXCEPTION_BREAK, \
                          CMD_LOAD_SOURCE, \
-                         CMD_ADD_DJANGO_EXCEPTION_BREAK, \
-                         CMD_REMOVE_DJANGO_EXCEPTION_BREAK, \
                          CMD_SMART_STEP_INTO,\
                          InternalChangeVariable, \
                          InternalGetCompletions, \
@@ -301,10 +299,10 @@ class PyDB:
         self._cmd_queue = {}  # the hash of Queues. Key is thread id, value is thread
 
         self.breakpoints = {}
-        self.django_breakpoints = {}
+        #self.django_breakpoints = {}
 
         self.file_to_id_to_line_breakpoint = {}
-        self.file_to_id_to_django_breakpoint = {}
+        self.file_to_id_to_plugin_breakpoint = {}
 
         # Note: breakpoints dict should not be mutated: a copy should be created
         # and later it should be assigned back (to prevent concurrency issues).
@@ -343,6 +341,15 @@ class PyDB:
 
         # This attribute holds the file-> lines which have an @IgnoreException.
         self.filename_to_lines_where_exceptions_are_ignored = {}
+
+        #working with plugins
+        self.usable_plugin = None
+        self.plugins = []
+        #we call this functions very often, so we need cache them
+        self.can_not_skip_cache = None
+        self.has_exception_breaks_cache = None
+
+        self.load_plugins()
 
 
     def haveAliveThreads(self):
@@ -839,16 +846,31 @@ class PyDB:
                     if len(expression) <= 0 or expression is None or expression == "None":
                         expression = None
 
+                    supported_type = False
                     if type == 'python-line':
                         breakpoint = LineBreakpoint(line, condition, func_name, expression)
                         breakpoints = self.breakpoints
                         file_to_id_to_breakpoint = self.file_to_id_to_line_breakpoint
-                    elif type == 'django-line':
-                        breakpoint = DjangoLineBreakpoint(file, line, condition, func_name, expression)
-                        breakpoints = self.django_breakpoints
-                        file_to_id_to_breakpoint = self.file_to_id_to_django_breakpoint
+                        supported_type = True
                     else:
+                        supported_type, result = self.add_plugin_breakpoint('add_line_breakpoint', type, file, line, condition, expression, func_name)
+                        if supported_type:
+                            breakpoint, breakpoints = result
+                            file_to_id_to_breakpoint = self.file_to_id_to_plugin_breakpoint
+
+                    if not supported_type:
                         raise NameError(type)
+
+                    # if type == 'python-line':
+                    #     breakpoint = LineBreakpoint(line, condition, func_name, expression)
+                    #     breakpoints = self.breakpoints
+                    #     file_to_id_to_breakpoint = self.file_to_id_to_line_breakpoint
+                    # elif type == 'django-line':
+                    #     breakpoint = DjangoLineBreakpoint(file, line, condition, func_name, expression)
+                    #     breakpoints = self.django_breakpoints
+                    #     file_to_id_to_breakpoint = self.file_to_id_to_django_breakpoint
+                    # else:
+                    #     raise NameError(type)
 
                     if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
                         pydev_log.debug('Added breakpoint:%s - line:%s - func_name:%s\n' % (file, line, func_name.encode('utf-8')))
@@ -885,7 +907,7 @@ class PyDB:
                             file_to_id_to_breakpoint = self.file_to_id_to_line_breakpoint
                         elif breakpoint_type == 'django-line':
                             breakpoints = self.django_breakpoints
-                            file_to_id_to_breakpoint = self.file_to_id_to_django_breakpoint
+                            file_to_id_to_breakpoint = self.file_to_id_to_plugin_breakpoint
                         else:
                             raise NameError(breakpoint_type)
 
@@ -1014,6 +1036,7 @@ class PyDB:
 
                 elif cmd_id == CMD_ADD_EXCEPTION_BREAK:
                     exception, notify_always, notify_on_terminate = text.split('\t', 2)
+                    #type, exception = exception.split('-') ## FIXME
                     exception_breakpoint = self.add_break_on_exception(
                         exception,
                         notify_always=int(notify_always) > 0,
@@ -1552,6 +1575,84 @@ class PyDB:
         self.checkOutputRedirect()
         cmd = self.cmdFactory.makeExitMessage()
         self.writer.addCommand(cmd)
+
+    def load_plugins(self):
+        plugin_base = PluginBase(package='pydevd_plugins')
+        self.plugin_source = plugin_base.make_plugin_source(searchpath=[os.path.dirname(os.path.realpath(__file__)) + '/pydevd_plugins'])
+        for plugin in self.plugin_source.list_plugins():
+            loaded_plugin = None
+            try:
+                loaded_plugin = self.plugin_source.load_plugin(plugin)
+            except:
+                pydev_log.error("Failed to load plugin %s" % plugin)
+            if loaded_plugin:
+                self.plugins.append(loaded_plugin)
+
+    def add_plugin_breakpoint(self, func_name, *args, **kwargs):
+        #add breakpoint from plugin and remember usable plugin
+        for loaded_plugin in self.plugins:
+            if hasattr(loaded_plugin, func_name):
+                func = getattr(loaded_plugin, func_name)
+                result_exist, result = func(self, *args, **kwargs)
+                if result_exist:
+                    self.usable_plugin = loaded_plugin
+                    return result_exist, result
+        return False, None
+
+    def can_not_skip_from_plugin(self, *args, **kwargs):
+        if not self.usable_plugin:
+            return False
+        if not self.can_not_skip_cache:
+            loaded_plugin = self.usable_plugin
+            can_not_skip_fun = getattr(loaded_plugin, 'can_not_skip', None)
+            if can_not_skip_fun:
+                self.can_not_skip_cache = can_not_skip_fun
+            else:
+                pydev_log.error("Implementation for function 'can_not_skip' is necessary in plugin %s" % loaded_plugin)
+                return False
+        func = self.can_not_skip_cache
+        if func(self, *args, **kwargs):
+            return True
+        return False
+
+    def has_exception_breaks_from_plugin(self, *args, **kwargs):
+        if not self.usable_plugin:
+            return False
+        if not self.has_exception_breaks_cache:
+            loaded_plugin = self.usable_plugin
+            has_exc_b_fun = getattr(loaded_plugin, 'has_exception_breaks', None)
+            if has_exc_b_fun:
+                self.has_exception_breaks_cache = has_exc_b_fun
+            else:
+                pydev_log.error("Implementation for function 'has_exception_breaks' is necessary in plugin %s" % loaded_plugin)
+                return False
+        func = self.has_exception_breaks_cache
+        if func(self, *args, **kwargs):
+            return True
+        return False
+
+    def plugin_function(self, func_name, *args, **kwargs):
+        #call function from plugin
+        if not self.usable_plugin:
+            return False
+        loaded_plugin = self.usable_plugin
+        if hasattr(loaded_plugin, func_name):
+            func = getattr(loaded_plugin, func_name)
+            if func(self, *args, **kwargs):
+                return True
+        return False
+
+    def plugin_func_with_result(self, func_name, *args, **kwargs):
+        #call function from plugin and return its result
+        if not self.usable_plugin:
+            return False, None
+        loaded_plugin = self.usable_plugin
+        if hasattr(loaded_plugin, func_name):
+            func = getattr(loaded_plugin, func_name)
+            result_exist, result = func(self, *args, **kwargs)
+            if result_exist:
+                return result_exist, result
+        return False, None
 
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True
