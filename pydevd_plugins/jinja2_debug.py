@@ -46,18 +46,9 @@ def remove_exception_breakpoint(pydb, type, exception):
             pass
     return False
 
-def find_and_remove_line_break(pydb, type, file, line):
-    if type == 'jinja2-line':
-        del pydb.jinja2_breakpoints[file][line]
-        return True
-    return False
+def get_breakpoints(pydb):
+    return True, pydb.jinja2_breakpoints
 
-def remove_line_break(pydb, file, line):
-    try:
-        del pydb.jinja2_breakpoints[file][line]
-        return True
-    except:
-        return False
 
 def is_jinja2_render_call(frame):
     try:

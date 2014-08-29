@@ -50,19 +50,8 @@ def remove_exception_breakpoint(pydb, type, exception):
             pass
     return False
 
-def find_and_remove_line_break(pydb, type, file, line):
-    if type == 'django-line':
-        del pydb.django_breakpoints[file][line]
-        return True
-    return False
-
-def remove_line_break(pydb, file, line):
-    try:
-        del pydb.django_breakpoints[file][line]
-        return True
-    except:
-        return False
-
+def get_breakpoints(pydb):
+    return True, pydb.django_breakpoints
 
 def inherits(cls, *names):
     if cls.__name__ in names:

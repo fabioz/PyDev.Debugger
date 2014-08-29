@@ -861,17 +861,6 @@ class PyDB:
                     if not supported_type:
                         raise NameError(type)
 
-                    # if type == 'python-line':
-                    #     breakpoint = LineBreakpoint(line, condition, func_name, expression)
-                    #     breakpoints = self.breakpoints
-                    #     file_to_id_to_breakpoint = self.file_to_id_to_line_breakpoint
-                    # elif type == 'django-line':
-                    #     breakpoint = DjangoLineBreakpoint(file, line, condition, func_name, expression)
-                    #     breakpoints = self.django_breakpoints
-                    #     file_to_id_to_breakpoint = self.file_to_id_to_django_breakpoint
-                    # else:
-                    #     raise NameError(type)
-
                     if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
                         pydev_log.debug('Added breakpoint:%s - line:%s - func_name:%s\n' % (file, line, func_name.encode('utf-8')))
                         sys.stderr.flush()
@@ -902,13 +891,17 @@ class PyDB:
                         pydev_log.error('Error removing breakpoint. Expected breakpoint_id to be an int. Found: %s' % (breakpoint_id,))
 
                     else:
+                        supported_type = False
                         if breakpoint_type == 'python-line':
+                            supported_type = True
                             breakpoints = self.breakpoints
                             file_to_id_to_breakpoint = self.file_to_id_to_line_breakpoint
-                        elif breakpoint_type == 'django-line':
-                            breakpoints = self.django_breakpoints
-                            file_to_id_to_breakpoint = self.file_to_id_to_plugin_breakpoint
                         else:
+                            supported_type, result = self.plugin_func_with_result('get_breakpoints')
+                            if supported_type:
+                                file_to_id_to_breakpoint = self.file_to_id_to_plugin_breakpoint
+                                breakpoints = result
+                        if not supported_type:
                             raise NameError(breakpoint_type)
 
                         try:
