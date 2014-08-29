@@ -345,10 +345,8 @@ def get_breakpoint(mainDebugger, frame, event, args):
             if DictContains(django_breakpoints_for_file, template_line):
                 is_result_exist = True
                 django_breakpoint = django_breakpoints_for_file[template_line]
-                if django_breakpoint.is_triggered(frame):
-                    pydev_log.debug("Breakpoint is triggered.\n")
-                    flag = True
-                    new_frame = DjangoTemplateFrame(frame)
+                flag = True
+                new_frame = DjangoTemplateFrame(frame)
     result = flag, django_breakpoint, new_frame
     return is_result_exist, result
 

@@ -298,9 +298,8 @@ def get_breakpoint(mainDebugger, frame, event, args):
             if template_lineno is not None and DictContains(jinja2_breakpoints_for_file, template_lineno):
                 is_result_exist = True
                 jinja2_breakpoint = jinja2_breakpoints_for_file[template_lineno]
-                if jinja2_breakpoint.is_triggered(frame):
-                    flag = True
-                    new_frame = Jinja2TemplateFrame(frame)
+                flag = True
+                new_frame = Jinja2TemplateFrame(frame)
 
     result = flag, jinja2_breakpoint, new_frame
     return is_result_exist, result
