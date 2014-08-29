@@ -18,7 +18,8 @@ from pydevd_constants import DictIterItems, xrange
 
 # Note: 300 is already a lot to see in the outline (after that the user should really use the shell to get things)
 # and this also means we'll pass less information to the client side (which makes debugging faster).
-MAX_ITEMS_TO_HANDLE = 300 
+MAX_ITEMS_TO_HANDLE = 300
+MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 1000 
 
 TOO_LARGE_MSG = 'Too large to show contents. Max items to show: ' + str(MAX_ITEMS_TO_HANDLE)
 TOO_LARGE_ATTR = 'Unable to handle:'
@@ -409,6 +410,19 @@ class NdArrayResolver:
             return obj.dtype
         if attribute == 'size':
             return obj.size
+        if attribute.startswith('['):
+            items = dict()
+            l = len(obj)
+            format_str = '%0' + str(int(len(str(l)))) + 'd'
+            i = 0
+            for item in obj:
+                items[format_str % i] = item
+                i += 1
+                if i > MAX_ITEMS_TO_HANDLE:
+                    items.clear()
+                    items[TOO_LARGE_ATTR] = TOO_LARGE_MSG
+                    break
+            return items
         return None
 
     def getDictionary(self, obj):
@@ -427,16 +441,10 @@ class NdArrayResolver:
         ret['shape'] = obj.shape
         ret['dtype'] = obj.dtype
         ret['size'] = obj.size
-        # see TupleResolver.getDictionary()
-        l = len(obj)
-        format_str = '%0' + str(int(len(str(l)))) + 'd'
-        i = 0
-        for item in obj:
-            ret[format_str % i] = item
-            i += 1
-            if i > MAX_ITEMS_TO_HANDLE:
-                ret[TOO_LARGE_ATTR] = TOO_LARGE_MSG
-                break
+        if len(str(obj)) > MAXIMUM_VARIABLE_REPRESENTATION_SIZE:
+            ret['[0:%s]' % (len(obj))] = {'items' : str(obj)[0:MAXIMUM_VARIABLE_REPRESENTATION_SIZE]}
+        else:
+            ret['[0:%s]' % (len(obj))] = {'items' : str(obj)}
         return ret
 
 
