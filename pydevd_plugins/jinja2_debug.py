@@ -46,8 +46,10 @@ def remove_exception_breakpoint(pydb, type, exception):
             pass
     return False
 
-def get_breakpoints(pydb):
-    return True, pydb.jinja2_breakpoints
+def get_breakpoints(pydb, type):
+    if type == 'jinja2-line':
+        return True, pydb.jinja2_breakpoints
+    return False, None
 
 
 def is_jinja2_render_call(frame):
@@ -205,6 +207,10 @@ def can_not_skip(mainDebugger, frame):
 
 def cmd_step_into(mainDebugger, frame, event, args, stop_info):
     mainDebugger, filename, info, thread = args
+    if not hasattr(info, 'pydev_call_from_jinja2'):
+        info.pydev_call_from_jinja2 = None
+    if not hasattr(info, 'pydev_call_inside_jinja2'):
+        info.pydev_call_inside_jinja2 = None
     if is_jinja2_suspended(thread):
         stop_info['jinja2_stop'] = event in ('call', 'line') and is_jinja2_render_call(frame)
         stop_info['stop'] = False
@@ -234,6 +240,10 @@ def cmd_step_into(mainDebugger, frame, event, args, stop_info):
 
 def cmd_step_over(mainDebugger, frame, event, args, stop_info):
     mainDebugger, filename, info, thread = args
+    if not hasattr(info, 'pydev_call_from_jinja2'):
+        info.pydev_call_from_jinja2 = None
+    if not hasattr(info, 'pydev_call_inside_jinja2'):
+        info.pydev_call_inside_jinja2 = None
     if is_jinja2_suspended(thread):
         stop_info['stop'] = False
 

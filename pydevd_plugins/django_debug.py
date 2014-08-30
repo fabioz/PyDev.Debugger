@@ -51,7 +51,9 @@ def remove_exception_breakpoint(pydb, type, exception):
     return False
 
 def get_breakpoints(pydb):
-    return True, pydb.django_breakpoints
+    if type == 'django-line':
+        return True, pydb.django_breakpoints
+    return False, None
 
 def inherits(cls, *names):
     if cls.__name__ in names:

@@ -897,7 +897,7 @@ class PyDB:
                             breakpoints = self.breakpoints
                             file_to_id_to_breakpoint = self.file_to_id_to_line_breakpoint
                         else:
-                            supported_type, result = self.plugin_func_with_result('get_breakpoints')
+                            supported_type, result = self.plugin_func_with_result('get_breakpoints', breakpoint_type)
                             if supported_type:
                                 file_to_id_to_breakpoint = self.file_to_id_to_plugin_breakpoint
                                 breakpoints = result
