@@ -568,12 +568,16 @@ class PyDB:
         notify_on_terminate,
         notify_on_first_raise_only,
         ):
-        eb = ExceptionBreakpoint(
-            exception,
-            notify_always,
-            notify_on_terminate,
-            notify_on_first_raise_only,
-        )
+        try:
+            eb = ExceptionBreakpoint(
+                exception,
+                notify_always,
+                notify_on_terminate,
+                notify_on_first_raise_only,
+            )
+        except ImportError:
+            pydev_log.error("Error unable to add break on exception for: %s (exception could not be imported)\n" % (exception,))
+            return None
 
         if eb.notify_on_terminate:
             cp = self.break_on_uncaught_exceptions.copy()
@@ -963,6 +967,8 @@ class PyDB:
                                 notify_on_terminate=break_on_uncaught,
                                 notify_on_first_raise_only=False,
                             )
+                            if exception_breakpoint is None:
+                                continue
                             added.append(exception_breakpoint)
 
                         self.update_after_exceptions_added(added)
@@ -1020,7 +1026,8 @@ class PyDB:
                         notify_on_terminate = int(notify_on_terminate) == 1,
                         notify_on_first_raise_only=int(notify_always) == 2
                     )
-                    self.update_after_exceptions_added([exception_breakpoint])
+                    if exception_breakpoint is not None:
+                        self.update_after_exceptions_added([exception_breakpoint])
 
                 elif cmd_id == CMD_REMOVE_EXCEPTION_BREAK:
                     exception = text
