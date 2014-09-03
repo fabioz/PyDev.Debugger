@@ -3,6 +3,8 @@ from __future__ import nested_scopes # Jython 2.1 support
 from pydevd_constants import * # @UnusedWildImport
 
 import pydev_monkey_qt
+from pydevd_utils import save_main_module
+
 pydev_monkey_qt.patch_qt()
 
 import traceback
@@ -1499,22 +1501,7 @@ class PyDB:
                 file = new_target
 
         if globals is None:
-            # patch provided by: Scott Schlesier - when script is run, it does not
-            # use globals from pydevd:
-            # This will prevent the pydevd script from contaminating the namespace for the script to be debugged
-
-            # pretend pydevd is not the main module, and
-            # convince the file to be debugged that it was loaded as main
-            sys.modules['pydevd'] = sys.modules['__main__']
-            sys.modules['pydevd'].__name__ = 'pydevd'
-
-            from imp import new_module
-            m = new_module('__main__')
-            sys.modules['__main__'] = m
-            if hasattr(sys.modules['pydevd'], '__loader__'):
-                setattr(m, '__loader__', getattr(sys.modules['pydevd'], '__loader__'))
-
-            m.__file__ = file
+            m = save_main_module(file, 'pydevd')
             globals = m.__dict__
             try:
                 globals['__builtins__'] = __builtins__
@@ -1560,6 +1547,22 @@ class PyDB:
         cmd = self.cmdFactory.makeExitMessage()
         self.writer.addCommand(cmd)
 
+    def wait_for_commands(self, globals):
+        thread = threading.currentThread()
+        import pydevd_frame_utils
+        frame = pydevd_frame_utils.Frame(None, -1, pydevd_frame_utils.FCode("Console",
+                                                                            os.path.abspath(os.path.dirname(__file__))), globals, globals)
+        thread_id = GetThreadId(thread)
+        import pydevd_vars
+        pydevd_vars.addAdditionalFrameById(thread_id, {id(frame): frame})
+
+        cmd = self.cmdFactory.makeShowConsoleMessage(thread_id, frame)
+        self.writer.addCommand(cmd)
+
+        while True:
+            self.processInternalCommands()
+            time.sleep(0.01)
+
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True
     setup['DEBUG_TRACE_BREAKPOINTS'] = 1
@@ -1578,6 +1581,7 @@ def processCommandLine(argv):
     setup['multiprocess'] = False # Used by PyDev (creates new connection to ide)
     setup['save-signatures'] = False
     setup['print-in-debugger-startup'] = False
+    setup['cmd-line'] = False
     i = 0
     del argv[0]
     while (i < len(argv)):
@@ -1618,6 +1622,9 @@ def processCommandLine(argv):
         elif argv[i] == '--print-in-debugger-startup':
             del argv[i]
             setup['print-in-debugger-startup'] = True
+        elif (argv[i] == '--cmd-line'):
+            del argv[i]
+            setup['cmd-line'] = True
         else:
             raise ValueError("unexpected option " + argv[i])
     return setup
@@ -2044,6 +2051,8 @@ if __name__ == '__main__':
     except:
         pass  # It's ok not having stackless there...
 
+    debugger = PyDB()
+
     if fix_app_engine_debug:
         sys.stderr.write("pydev debugger: google app engine integration enabled\n")
         curr_dir = os.path.dirname(__file__)
@@ -2056,10 +2065,8 @@ if __name__ == '__main__':
         sys.argv.insert(3, '--automatic_restart=no')
         sys.argv.insert(4, '--max_module_instances=1')
 
-        debugger = PyDB()
         # Run the dev_appserver
         debugger.run(setup['file'], None, None, set_trace=False)
-
     else:
         # as to get here all our imports are already resolved, the psyco module can be
         # changed and we'll still get the speedups in the debugger, as those functions
@@ -2074,8 +2081,6 @@ if __name__ == '__main__':
             # if it's available, let's change it for a stub (pydev already made use of it)
             import pydevd_psyco_stub
             sys.modules['psyco'] = pydevd_psyco_stub
-
-        debugger = PyDB()
 
         if setup['save-signatures']:
             if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON:
@@ -2094,5 +2099,9 @@ if __name__ == '__main__':
 
         connected = True  # Mark that we're connected when started from inside ide.
 
-        debugger.run(setup['file'], None, None)
-        
+        globals = debugger.run(setup['file'], None, None)
+
+        if setup['cmd-line']:
+            debugger.wait_for_commands(globals)
+
+
