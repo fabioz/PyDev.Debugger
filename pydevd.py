@@ -2046,10 +2046,6 @@ if __name__ == '__main__':
 
     debugger = PyDB()
 
-    if setup['cmd-line']:
-        debugger.cmd_line = True
-
-
     if fix_app_engine_debug:
         sys.stderr.write("pydev debugger: google app engine integration enabled\n")
         curr_dir = os.path.dirname(__file__)
