@@ -3,6 +3,8 @@ from __future__ import nested_scopes # Jython 2.1 support
 from pydevd_constants import * # @UnusedWildImport
 
 import pydev_monkey_qt
+from pydevd_utils import save_main_module
+
 pydev_monkey_qt.patch_qt()
 
 import traceback
@@ -1492,22 +1494,7 @@ class PyDB:
                 file = new_target
 
         if globals is None:
-            # patch provided by: Scott Schlesier - when script is run, it does not
-            # use globals from pydevd:
-            # This will prevent the pydevd script from contaminating the namespace for the script to be debugged
-
-            # pretend pydevd is not the main module, and
-            # convince the file to be debugged that it was loaded as main
-            sys.modules['pydevd'] = sys.modules['__main__']
-            sys.modules['pydevd'].__name__ = 'pydevd'
-
-            from imp import new_module
-            m = new_module('__main__')
-            sys.modules['__main__'] = m
-            if hasattr(sys.modules['pydevd'], '__loader__'):
-                setattr(m, '__loader__', getattr(sys.modules['pydevd'], '__loader__'))
-
-            m.__file__ = file
+            m = save_main_module(file, 'pydevd')
             globals = m.__dict__
             try:
                 globals['__builtins__'] = __builtins__
