@@ -24,6 +24,23 @@
 extern "C"
 {
     DECLDIR int AttachAndRunPythonCode(const char *command, int *result );
+    
+    
+    /*
+    Could be used with ctypes (note that the threading should be initialized, so, 
+    doing it in a thread as below is recommended):
+    
+    def check():
+        
+        import ctypes
+        lib = ctypes.cdll.LoadLibrary(r'C:\...\attach_x86.dll')
+        print 'result', lib.AttachDebuggerTracing(0)
+        
+    t = threading.Thread(target=check)
+    t.start()
+    t.join()
+    */
+    DECLDIR int AttachDebuggerTracing(bool showDebugInfo);
 }
 
 #endif

@@ -61,6 +61,14 @@ Linux: References if we wanted to use a pure-python debugger:
 Something else (general and not Python related):
 - http://www.codeproject.com/Articles/4610/Three-Ways-to-Inject-Your-Code-into-Another-Proces
 
+Other references:
+- https://github.com/haypo/faulthandler
+- http://nedbatchelder.com/text/trace-function.html
+- https://github.com/python-git/python/blob/master/Python/sysmodule.c (sys_settrace)
+- https://github.com/python-git/python/blob/master/Python/ceval.c (PyEval_SetTrace)
+- https://github.com/python-git/python/blob/master/Python/thread.c (PyThread_get_key_value)
+
+
 To build the dlls needed on windows, visual studio express 13 was used (see compile_dll.bat)
 
 See: attach_pydevd.py to attach the pydev debugger to a running python process.
@@ -261,7 +269,8 @@ def resolve_label(process, label):
 def is_python_64bit():
     return (struct.calcsize('P') == 8)
 
-def run_python_code_windows(pid, python_code):
+def run_python_code_windows(pid, python_code, connect_debugger_tracing=False):
+    assert '\'' not in python_code, 'Having a single quote messes with our command.'
     from winappdbg import compat
     from winappdbg.process import Process
     if not isinstance(python_code, compat.bytes):
@@ -300,7 +309,18 @@ def run_python_code_windows(pid, python_code):
 
     return_code_address = process.malloc(ctypes.sizeof(ctypes.c_int))
     assert return_code_address
-    process.write_int(return_code_address, 99)
+    
+    CONNECT_DEBUGGER = 2
+    
+    startup_info = 0
+    SHOW_DEBUG_INFO = 1
+    # startup_info |= SHOW_DEBUG_INFO
+    
+    if connect_debugger_tracing:
+        startup_info |= CONNECT_DEBUGGER
+        
+    print startup_info
+    process.write_int(return_code_address, startup_info)
 
     helper = GenShellCodeHelper(is_64)
     if is_64:
@@ -367,7 +387,7 @@ def run_python_code_windows(pid, python_code):
     return return_code
 
 
-def run_python_code_linux(pid, python_code):
+def run_python_code_linux(pid, python_code, connect_debugger_tracing=False):
     assert '\'' not in python_code, 'Having a single quote messes with our command.'
     # Note that the space in the beginning of each line in the multi-line is important!
     cmds = """-eval-command='call PyGILState_Ensure()'
@@ -420,7 +440,7 @@ def main(args):
     del args[0]
     python_code = ';'.join(args)
 
-    #Note: on Linux the python code may not have a single quote char: '
+    # Note: on Linux the python code may not have a single quote char: '
     run_python_code(pid, python_code)
 
 if __name__ == '__main__':
@@ -432,3 +452,5 @@ if __name__ == '__main__':
             test()
         else:
             main(args)
+            
+
