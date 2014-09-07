@@ -264,14 +264,14 @@ def is_django_exception_break_context(frame):
 # Django Step Commands
 #=======================================================================================================================
 
-def can_skip(mainDebugger, pydb_frame):
+def can_not_skip(mainDebugger, pydb_frame):
     frame = pydb_frame.frame
     if hasattr(mainDebugger, 'django_breakpoints') and mainDebugger.django_breakpoints and cached_call(pydb_frame, is_django_render_call, frame):
         filename = get_template_file_name(frame)
         django_breakpoints_for_file = mainDebugger.django_breakpoints.get(filename)
         if django_breakpoints_for_file:
-            return False
-    return True
+            return True
+    return False
 
 def has_exception_breaks(mainDebugger):
     return hasattr(mainDebugger, 'django_exception_break') and mainDebugger.django_exception_break

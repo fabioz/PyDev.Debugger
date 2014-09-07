@@ -194,14 +194,14 @@ def get_jinja2_template_filename(frame):
 def has_exception_breaks(mainDebugger):
     return hasattr(mainDebugger, 'jinja2_exception_break') and mainDebugger.jinja2_exception_break
 
-def can_skip(mainDebugger, pydb_frame):
+def can_not_skip(mainDebugger, pydb_frame):
     frame = pydb_frame.frame
     if hasattr(mainDebugger, 'jinja2_breakpoints') and mainDebugger.jinja2_breakpoints and cached_call(pydb_frame, is_jinja2_render_call, frame):
         filename = get_jinja2_template_filename(frame)
         jinja2_breakpoints_for_file = mainDebugger.jinja2_breakpoints.get(filename)
         if jinja2_breakpoints_for_file:
-            return False
-    return True
+            return True
+    return False
 
 
 def cmd_step_into(mainDebugger, frame, event, args, stop_info):
