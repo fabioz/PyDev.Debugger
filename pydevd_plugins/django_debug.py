@@ -264,8 +264,7 @@ def is_django_exception_break_context(frame):
 # Django Step Commands
 #=======================================================================================================================
 
-def can_not_skip(mainDebugger, pydb_frame):
-    frame = pydb_frame.frame
+def can_not_skip(mainDebugger, pydb_frame, frame):
     if hasattr(mainDebugger, 'django_breakpoints') and mainDebugger.django_breakpoints and cached_call(pydb_frame, is_django_render_call, frame):
         filename = get_template_file_name(frame)
         django_breakpoints_for_file = mainDebugger.django_breakpoints.get(filename)
@@ -313,9 +312,8 @@ def stop(mainDebugger, frame, event, args, stop_info, arg, step_cmd):
     return False
 
 
-def get_breakpoint(mainDebugger, pydb_frame, event, args):
+def get_breakpoint(mainDebugger, pydb_frame, frame, event, args):
     mainDebugger, filename, info, thread = args
-    frame = pydb_frame.frame
     flag = False
     django_breakpoint = None
     new_frame = None
@@ -340,9 +338,8 @@ def get_breakpoint(mainDebugger, pydb_frame, event, args):
 def suspend(mainDebugger, thread, frame):
     return suspend_django(mainDebugger, thread, frame)
 
-def exception_break(mainDebugger, pydb_frame, args, arg):
+def exception_break(mainDebugger, pydb_frame, frame, args, arg):
     mainDebugger, filename, info, thread = args
-    frame = pydb_frame.frame
     exception, value, trace = arg
     if hasattr(mainDebugger, 'django_exception_break') and mainDebugger.django_exception_break and \
                     get_exception_name(exception) in ['VariableDoesNotExist', 'TemplateDoesNotExist', 'TemplateSyntaxError'] and \

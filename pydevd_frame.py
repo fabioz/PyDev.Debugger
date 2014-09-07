@@ -44,7 +44,6 @@ class PyDBFrame:
     def __init__(self, args):
         #args = mainDebugger, filename, base, info, t, frame
         #yeap, much faster than putting in self and then getting it from self later on
-        self.frame = args[-1]
         self._args = args[:-1]
 
     def setSuspend(self, *args, **kwargs):
@@ -84,7 +83,7 @@ class PyDBFrame:
                         flag = False
                 else:
                     try:
-                        result = mainDebugger.plugin_exception_break(self, self._args, arg)
+                        result = mainDebugger.plugin_exception_break(self, frame, self._args, arg)
                         if result:
                             (flag, frame) = result
 
@@ -271,7 +270,7 @@ class PyDBFrame:
                         or (step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and stop_frame is not frame)
 
                 if can_skip:
-                    can_skip = not main_debugger.plugin_can_not_skip(self)
+                    can_skip = not main_debugger.plugin_can_not_skip(self, frame)
 
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
                 # we will return nothing for the next trace
@@ -326,7 +325,7 @@ class PyDBFrame:
                     if info.pydev_step_cmd == CMD_STEP_OVER and info.pydev_step_stop is frame and event in ('line', 'return'):
                         stop_info['stop'] = False #we don't stop on breakpoint if we have to stop by step-over (it will be processed later)
                 else:
-                    result = main_debugger.plugin_get_breakpoint(self, event, self._args)
+                    result = main_debugger.plugin_get_breakpoint(self, frame, event, self._args)
                     if result:
                         exist_result = True
                         (flag, breakpoint, new_frame) = result
