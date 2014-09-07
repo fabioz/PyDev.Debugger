@@ -123,7 +123,7 @@ def is_django_suspended(thread):
     return thread.additionalInfo.suspend_type == DJANGO_SUSPEND
 
 
-def suspend_django(py_db_frame, mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
+def suspend_django(mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
     frame = DjangoTemplateFrame(frame)
 
     if frame.f_lineno is None:
@@ -137,7 +137,7 @@ def suspend_django(py_db_frame, mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
 
     pydevd_vars.addAdditionalFrameById(GetThreadId(thread), {id(frame): frame})
 
-    py_db_frame.setSuspend(thread, cmd)
+    mainDebugger.setSuspend(thread, cmd)
     thread.additionalInfo.suspend_type = DJANGO_SUSPEND
 
     thread.additionalInfo.filename = frame.f_code.co_filename
@@ -306,7 +306,7 @@ def cmd_step_over(mainDebugger, frame, event, args, stop_info):
 def stop(mainDebugger, frame, event, args, stop_info, arg, step_cmd):
     mainDebugger, filename, info, thread = args
     if DictContains(stop_info, 'django_stop') and stop_info['django_stop']:
-        frame = suspend_django(mainDebugger, mainDebugger, thread, frame, step_cmd)
+        frame = suspend_django(mainDebugger, thread, frame, step_cmd)
         if frame:
             mainDebugger.doWaitSuspend(thread, frame, event, arg)
             return True
@@ -337,8 +337,8 @@ def get_breakpoint(mainDebugger, pydb_frame, event, args):
     return flag, django_breakpoint, new_frame
 
 
-def suspend(mainDebugger, pydb_frame, thread, frame):
-    return suspend_django(pydb_frame, mainDebugger, thread, frame)
+def suspend(mainDebugger, thread, frame):
+    return suspend_django(mainDebugger, thread, frame)
 
 def exception_break(mainDebugger, pydb_frame, args, arg):
     mainDebugger, filename, info, thread = args
@@ -349,7 +349,7 @@ def exception_break(mainDebugger, pydb_frame, args, arg):
             just_raised(trace) and is_django_exception_break_context(frame):
         render_frame = find_django_render_frame(frame)
         if render_frame:
-            suspend_frame = suspend_django(pydb_frame, mainDebugger, thread, render_frame, CMD_ADD_EXCEPTION_BREAK)
+            suspend_frame = suspend_django(mainDebugger, thread, render_frame, CMD_ADD_EXCEPTION_BREAK)
             if suspend_frame:
                 add_exception_to_frame(suspend_frame, (exception, value, trace))
                 flag = True

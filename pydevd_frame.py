@@ -357,7 +357,7 @@ class PyDBFrame:
                 if stop_info['stop']:
                     self.setSuspend(thread, CMD_SET_BREAK)
                 elif flag:
-                    result = main_debugger.plugin_suspend(self, thread, frame)
+                    result = main_debugger.plugin_suspend(thread, frame)
                     if result:
                         frame = result
 
