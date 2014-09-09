@@ -142,7 +142,7 @@ class Jinja2TemplateFrame:
                 self.back_context.vars[k] = value
 
 def is_missing(item):
-    if item.__class__.__name__ is 'MissingType':
+    if item.__class__.__name__ == 'MissingType':
         return True
     return False
 
@@ -163,7 +163,7 @@ def get_jinja2_template_line(frame):
     debug_info = None
     if DictContains(frame.f_globals,'__jinja_template__'):
         _debug_info = frame.f_globals['__jinja_template__']._debug_info
-        if _debug_info is not '':
+        if _debug_info != '':
             #sometimes template contains only plain text
             debug_info = frame.f_globals['__jinja_template__'].debug_info
 
