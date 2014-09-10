@@ -1,5 +1,6 @@
 import sys
-import os 
+print sys.executable
+import os
 if __name__ == '__main__':
     print('pid:%s' % (os.getpid()))
     i = 0

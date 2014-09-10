@@ -17,31 +17,31 @@ Limitations:
 
     Linux:
     ------
-    
+
         1. It possible that ptrace is disabled: /etc/sysctl.d/10-ptrace.conf
-    
+
         Note that even enabling it in /etc/sysctl.d/10-ptrace.conf (i.e.: making the
         ptrace_scope=0), it's possible that we need to run the application that'll use ptrace (or
         gdb in this case) as root (so, we must sudo the python which'll run this module).
-        
+
         2. It has a simpler approach than the windows one, which may fail if the user hasn't enabled
         threading in its code. So, if the target will want to be attached to and it doesn't use threads,
         the user is advised to add:
-        
+
         from threading import Thread
         Thread(target=str).start()
-        
+
         to the start of its code so that the program can be attached from the outside.
 
 
 
 Other implementations:
-- pyrasite.com: 
+- pyrasite.com:
     GPL
     Windows/linux (in Linux it's approach is actually very similar to ours, in windows the approach here is more complete).
-    
-- https://github.com/google/pyringe: 
-    Apache v2. 
+
+- https://github.com/google/pyringe:
+    Apache v2.
     Only linux/Python 2.
 
 - http://pytools.codeplex.com:
@@ -50,7 +50,7 @@ Other implementations:
     Our own code relies heavily on a part of it: http://pytools.codeplex.com/SourceControl/latest#Python/Product/PyDebugAttach/PyDebugAttach.cpp
     to overcome some limitations of attaching and running code in the target python executable on Python 3.
     See: attach.cpp
-     
+
 Linux: References if we wanted to use a pure-python debugger:
     https://bitbucket.org/haypo/python-ptrace/
     http://stackoverflow.com/questions/7841573/how-to-get-an-error-message-for-errno-value-in-python
@@ -71,7 +71,7 @@ Other references:
 
 To build the dlls needed on windows, visual studio express 13 was used (see compile_dll.bat)
 
-See: attach_pydevd.py to attach the pydev debugger to a running python process.
+See: attach_pydevd.py to attach the pydev debummgger to a running python process.
 '''
 
 # Note: to work with nasm compiling asm to code and decompiling to see asm with shellcode:
@@ -309,16 +309,16 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False):
 
     return_code_address = process.malloc(ctypes.sizeof(ctypes.c_int))
     assert return_code_address
-    
+
     CONNECT_DEBUGGER = 2
-    
+
     startup_info = 0
     SHOW_DEBUG_INFO = 1
     # startup_info |= SHOW_DEBUG_INFO
-    
+
     if connect_debugger_tracing:
         startup_info |= CONNECT_DEBUGGER
-        
+
     print startup_info
     process.write_int(return_code_address, startup_info)
 
@@ -396,9 +396,11 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False):
     cmds = cmds.replace('\r\n', '').replace('\r', '').replace('\n', '')
 
     cmd = 'gdb -p ' + str(pid) + ' -batch ' + cmds
+    print cmd
 
     p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = p.communicate()
+    print out, err
     return out, err
 
 
@@ -452,5 +454,5 @@ if __name__ == '__main__':
             test()
         else:
             main(args)
-            
+
 
