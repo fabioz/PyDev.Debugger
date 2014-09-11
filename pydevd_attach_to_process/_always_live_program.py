@@ -2,9 +2,16 @@ import sys
 import struct
 print('Executable: %s' % sys.executable)
 import os
+def loop_in_thread():
+    while True:
+        import time
+        time.sleep(.5)
+        sys.stdout.write('#')
+        sys.stdout.flush()
 
 import threading
-threading.Thread(target=str).start()
+threading.Thread(target=loop_in_thread).start()
+
 
 def is_python_64bit():
     return (struct.calcsize('P') == 8)

@@ -5,6 +5,7 @@
 #include <dlfcn.h>
 #include <stdbool.h>
 #include "python.h"
+//#include <unistd.h> used for usleep
 
 // Exported function: hello(): Just to print something and check that we've been
 // able to connect.
@@ -33,6 +34,7 @@ int hello()
 // isDebug is pretty important! Must be true on python debug builds (python_d)
 // If this value is passed wrongly the program will crash.
 extern int SetSysTraceFunc(bool showDebugInfo, bool isDebug);
+extern int DoAttach(bool isDebug, const char *command, bool showDebugInfo);
 
 // Internal function to keep on the tracing
 int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug);
@@ -48,7 +50,10 @@ typedef PyObject* (*PyImport_ImportModule) (const char *name);
 typedef PyObject* (*PyObject_HasAttrString)(PyObject *o, const char *attr_name);
 typedef PyObject* (*PyObject_GetAttrString)(PyObject *o, const char *attr_name);
 typedef PyObject* (*PyObject_CallFunctionObjArgs)(PyObject *callable, ...);    // call w/ varargs, last arg should be NULL
-
+typedef int (*PyEval_ThreadsInitialized)();
+typedef unsigned long (*_PyEval_GetSwitchInterval)(void);
+typedef void (*_PyEval_SetSwitchInterval)(unsigned long microseconds);
+typedef int (*PyRun_SimpleString)(const char *command);
 
 // Helper so that we get a PyObject where we can access its fields (in debug or release).
 PyObject* GetPyObjectPointerNoDebugInfo(bool isDebug, PyObject* object) {
@@ -146,8 +151,59 @@ int DoAttach(bool isDebug, const char *command, bool showDebugInfo)
         threadSafeAddPendingCall = true;
     }
 
-    printf("\n\n\n%s\n\n\n", command);
+    PyEval_ThreadsInitialized threadsInited;
+    *(void**)(&threadsInited) = dlsym(0, "PyEval_ThreadsInitialized");
+    CHECK_NULL(threadsInited, "PyEval_ThreadsInitialized not found.\n", 3);
 
+    _PyEval_GetSwitchInterval getSwitchInterval;
+    *(void**)(&getSwitchInterval) = dlsym(0, "_PyEval_GetSwitchInterval");
+    //Don't check this one (could be null)
+
+    _PyEval_SetSwitchInterval setSwitchInterval;
+    *(void**)(&setSwitchInterval) = dlsym(0, "_PyEval_SetSwitchInterval");
+
+    //Don't check this one (could be null)
+    //I.e.: Note: if we have other threads in the system, they'll keep running.
+    //printf("Will sleep");
+    //usleep(2000000);
+//     if (!threadsInited()) {
+//         printf("\n\n\nThreads not inited\n\n\n");
+//
+//         int *intervalCheck;
+//         *(void**)(&intervalCheck) = dlsym(0, "_Py_CheckInterval");
+//         //Don't check this one (could be null)
+//
+//         int saveIntervalCheck;
+//         unsigned long saveLongIntervalCheck;
+//         if (intervalCheck != NULL) {
+//             // not available on 3.2
+//             saveIntervalCheck = *intervalCheck;
+//             *intervalCheck = -1;  // lower the interval check so pending calls are processed faster
+//         } else if (getSwitchInterval != NULL && setSwitchInterval != NULL) {
+//             saveLongIntervalCheck = getSwitchInterval();
+//             setSwitchInterval(0);
+//         }
+//      }else{
+//          printf("Threads already inited");
+//      }
+
+    PyGILState_Ensure pyGilStateEnsureFunc;
+    *(void**)(&pyGilStateEnsureFunc) = dlsym(0, "PyGILState_Ensure");
+    CHECK_NULL(pyGilStateEnsureFunc, "PyGILState_Ensure not found.\n", 5);
+
+    PyGILState_Release pyGilStateReleaseFunc;
+    *(void**)(&pyGilStateReleaseFunc) = dlsym(0, "PyGILState_Release");
+    CHECK_NULL(pyGilStateReleaseFunc, "PyGILState_Release not found.\n", 6);
+
+    PyRun_SimpleString pyRun_SimpleString;
+    *(void**)(&pyRun_SimpleString) = dlsym(0, "PyRun_SimpleString");
+    CHECK_NULL(pyRun_SimpleString, "PyRun_SimpleString not found.\n", 6);
+
+
+    PyGILState_STATE pyGILState = pyGilStateEnsureFunc();
+    pyRun_SimpleString(command);
+    //No matter what happens we have to release it.
+    pyGilStateReleaseFunc(pyGILState);
 }
 
 

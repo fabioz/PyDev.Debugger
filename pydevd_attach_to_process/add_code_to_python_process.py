@@ -71,7 +71,7 @@ Other references:
 
 To build the dlls needed on windows, visual studio express 13 was used (see compile_dll.bat)
 
-See: attach_pydevd.py to attach the pydev debummgger to a running python process.
+See: attach_pydevd.py to attach the pydev debugger to a running python process.
 '''
 
 # Note: to work with nasm compiling asm to code and decompiling to see asm with shellcode:
@@ -394,27 +394,32 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False):
         suffix = 'amd64'
     else:
         suffix = 'x86'
-    target_dll = os.path.join(filedir, 'attach_linux_%s.so' % suffix)
-    target_dll = os.path.normpath(target_dll)
+    target_dll = '/home/fabioz/Desktop/dev/PyDev.Debugger/pydevd_attach_to_process/linux/attach_linux.so'
+#     target_dll = os.path.join(filedir, 'attach_linux_%s.so' % suffix)
+#     target_dll = os.path.normpath(target_dll)
     if not os.path.exists(target_dll):
         raise RuntimeError('Could not find dll file to inject: %s' % target_dll)
 
+    show_debug_info = 0
+    is_debug = 0
     # Note that the space in the beginning of each line in the multi-line is important!
     cmd = [
         'gdb',
-        '-p',
+        '--nw', #no gui interface
+        '--nh', #no ~/.gdbinit
+        '--nx', #no .gdbinit
+        '--quiet', #no version number on startup
+        '--pid',
         str(pid),
-        '-batch',
-        "-eval-command='call dlopen(\"%s\", 2)'" % target_dll,
-# TODO: Do the part below from our dll
-#         "-eval-command='call PyGILState_Ensure()'",
-#         "-eval-command='call PyRun_SimpleString(\"%s\")'" % python_code,
-#         "-eval-command='call PyGILState_Release($1)'",
+        #'-batch',
+        '--batch-silent',
+        "--eval-command='call dlopen(\"%s\", 2)'" % target_dll,
+        "--eval-command='call DoAttach(%s, \"%s\", %s)'" % (is_debug, python_code, show_debug_info)
     ]
 
     if connect_debugger_tracing:
         cmd.extend([
-            "-eval-command='call SetSysTraceFunc(1, 0)'",
+            "--eval-command='call SetSysTraceFunc(1, 0)'",
         ])
 
     print ' '.join(cmd)

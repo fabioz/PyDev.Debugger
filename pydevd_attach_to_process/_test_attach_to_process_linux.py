@@ -50,7 +50,7 @@ if __name__ == '__main__':
         "-eval-command='call SetSysTraceFunc(1, 0)'",
     ]
 
-    print ' '.join(cmd)
+    print(' '.join(cmd))
     time.sleep(.5)
     env = os.environ.copy()
     env.pop('PYTHONIOENCODING', None)

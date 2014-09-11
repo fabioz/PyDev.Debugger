@@ -38,14 +38,15 @@ def main(setup):
 
     setup['pythonpath'] = pydevd_dirname
     python_code = '''import sys;
-sys.path.append(%(pythonpath)r);
+sys.path.append(\\\"%(pythonpath)s\\\");
 import attach_script;
-attach_script.attach(port=%(port)s, host=%(host)r);
+attach_script.attach(port=%(port)s, host=\\\"%(host)s\\\");
 '''.replace('\r\n', '').replace('\r', '').replace('\n', '')
 
     python_code = python_code % setup
+#     python_code = 'print(\\\"check11111check\\\")'
 
-    python_code = python_code.replace('\'', '"')
+    print python_code
     add_code_to_python_process.run_python_code(
         setup['pid'], python_code, connect_debugger_tracing=True)
 
