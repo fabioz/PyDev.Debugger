@@ -505,8 +505,11 @@ class PyDBFrame:
 
 
             except:
-                traceback.print_exc()
-                info.pydev_step_cmd = None
+                try:
+                    traceback.print_exc()
+                    info.pydev_step_cmd = None
+                except:
+                    return None
 
             #if we are quitting, let's stop the tracing
             retVal = None
