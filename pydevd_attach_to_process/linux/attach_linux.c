@@ -60,10 +60,10 @@ PyObject* GetPyObjectPointerNoDebugInfo(bool isDebug, PyObject* object) {
 }
 
 // Helper so that we get a PyObject where we can access its fields (in debug or release).
-struct _typeobject * GetPyObjectPointerNoDebugInfo2(bool isDebug, struct _typeobject * object) {
+PyTypeObject * GetPyObjectPointerNoDebugInfo2(bool isDebug, PyTypeObject * object) {
     if (object != NULL && isDebug) {
         // debug builds have 2 extra pointers at the front that we don't care about
-        return (struct _typeobject *)((size_t*)object + 2);
+        return (PyTypeObject *)((size_t*)object + 2);
     }
     return object;
 }
@@ -74,7 +74,7 @@ struct _typeobject * GetPyObjectPointerNoDebugInfo2(bool isDebug, struct _typeob
      PyObject* noDebug = GetPyObjectPointerNoDebugInfo(isDebug, object);
 
      if (noDebug != NULL && --noDebug->ob_refcnt == 0) {
-        struct _typeobject *temp = GetPyObjectPointerNoDebugInfo2(isDebug, noDebug->ob_type);
+        PyTypeObject *temp = GetPyObjectPointerNoDebugInfo2(isDebug, noDebug->ob_type);
         temp->tp_dealloc(object);
      }
  }
@@ -128,7 +128,7 @@ int SetSysTraceFunc(bool showDebugInfo, bool isDebug)
         return 2;
     }
 
-    int version = GetPythonVersion();
+    PythonVersion version = GetPythonVersion();
 
     PyInterpreterState_Head interpHeadFunc;
     *(void**)(&interpHeadFunc) = dlsym(0, "PyInterpreterState_Head");
