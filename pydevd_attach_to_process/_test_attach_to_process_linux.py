@@ -67,13 +67,11 @@ if __name__ == '__main__':
         str(p.pid),
         '-batch',
         "-eval-command='call dlopen(\"/home/fabioz/Desktop/dev/PyDev.Debugger/pydevd_attach_to_process/linux/attach_linux.so\", 2)'",
-#         "-eval-command='call hello()'",
         "-eval-command='call SetSysTraceFunc(1, 0)'",
     ]
 
     print ' '.join(cmd)
     time.sleep(.5)
-#     run_python_code_linux(p.pid, 'print(10)')
     env = os.environ.copy()
     env.pop('PYTHONIOENCODING', None)
     env.pop('PYTHONPATH', None)

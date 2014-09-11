@@ -389,16 +389,48 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False):
 
 def run_python_code_linux(pid, python_code, connect_debugger_tracing=False):
     assert '\'' not in python_code, 'Having a single quote messes with our command.'
+    filedir = os.path.dirname(__file__)
+    if is_python_64bit():
+        suffix = 'amd64'
+    else:
+        suffix = 'x86'
+    target_dll = os.path.join(filedir, 'attach_linux_%s.so' % suffix)
+    target_dll = os.path.normpath(target_dll)
+    if not os.path.exists(target_dll):
+        raise RuntimeError('Could not find dll file to inject: %s' % target_dll)
+
     # Note that the space in the beginning of each line in the multi-line is important!
-    cmds = """-eval-command='call PyGILState_Ensure()'
- -eval-command='call PyRun_SimpleString("%s")'
- -eval-command='call PyGILState_Release($1)'""" % python_code
-    cmds = cmds.replace('\r\n', '').replace('\r', '').replace('\n', '')
+    cmd = [
+        'gdb',
+        '-p',
+        str(pid),
+        '-batch',
+        "-eval-command='call dlopen(\"%s\", 2)'" % target_dll,
+# TODO: Do the part below from our dll
+#         "-eval-command='call PyGILState_Ensure()'",
+#         "-eval-command='call PyRun_SimpleString(\"%s\")'" % python_code,
+#         "-eval-command='call PyGILState_Release($1)'",
+    ]
 
-    cmd = 'gdb -p ' + str(pid) + ' -batch ' + cmds
-    print cmd
+    if connect_debugger_tracing:
+        cmd.extend([
+            "-eval-command='call SetSysTraceFunc(1, 0)'",
+        ])
 
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print ' '.join(cmd)
+
+    env = os.environ.copy()
+    # Remove the PYTHONPATH (if gdb has a builtin Python it could fail if we
+    # have the PYTHONPATH for a different python version or some forced encoding).
+    env.pop('PYTHONIOENCODING', None)
+    env.pop('PYTHONPATH', None)
+    p = subprocess.Popen(
+        ' '.join(cmd),
+        shell=True,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
     out, err = p.communicate()
     print out, err
     return out, err
