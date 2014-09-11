@@ -22,27 +22,6 @@ import sys
 import os
 import time
 
-
-def run_python_code_linux(pid, python_code, connect_debugger_tracing=False):
-    assert '\'' not in python_code, 'Having a single quote messes with our command.'
-    # Note that the space in the beginning of each line in the multi-line is important!
-    cmds = """-eval-command='call PyGILState_Ensure()'
- -eval-command='call PyRun_SimpleString("%s")'
- -eval-command='call PyGILState_Release($1)'""" % python_code
-    cmds = cmds.replace('\r\n', '').replace('\r', '').replace('\n', '')
-
-    cmd = 'gdb -p ' + str(pid) + ' -batch ' + cmds
-    print cmd
-
-    env = os.environ.copy()
-    env.pop('PYTHONIOENCODING', None)
-    env.pop('PYTHONPATH', None)
-
-    p = subprocess.Popen(cmd, shell=True, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = p.communicate()
-    print out, err
-    return out, err
-
 if __name__ == '__main__':
 
     linux_dir = os.path.join(os.path.dirname(__file__), 'linux')
@@ -67,6 +46,7 @@ if __name__ == '__main__':
         str(p.pid),
         '-batch',
         "-eval-command='call dlopen(\"/home/fabioz/Desktop/dev/PyDev.Debugger/pydevd_attach_to_process/linux/attach_linux.so\", 2)'",
+        "-eval-command='call DoAttach(1, \"print(\\\"check11111check\\\")\", 0)'",
         "-eval-command='call SetSysTraceFunc(1, 0)'",
     ]
 
@@ -77,4 +57,5 @@ if __name__ == '__main__':
     env.pop('PYTHONPATH', None)
     p2 = subprocess.call(' '.join(cmd), env=env, shell=True)
 
-    p.wait()
+    time.sleep(1)
+    p.kill()

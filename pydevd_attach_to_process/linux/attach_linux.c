@@ -112,6 +112,45 @@ public:
 
 # define CHECK_NULL(ptr, msg, returnVal) if(ptr == NULL){if(showDebugInfo){printf(msg);} return returnVal;}
 
+int DoAttach(bool isDebug, const char *command, bool showDebugInfo)
+{
+    Py_IsInitialized isInitFunc;
+    *(void**)(&isInitFunc) = dlsym(0, "Py_IsInitialized");
+    CHECK_NULL(isInitFunc, "Py_IsInitialized not found.\n", 1);
+
+    if(!isInitFunc()){
+        if(showDebugInfo){
+            printf("Py_IsInitialized returned false.\n");
+        }
+        return 2;
+    }
+
+    PythonVersion version = GetPythonVersion();
+
+    PyInterpreterState_Head interpHeadFunc;
+    *(void**)(&interpHeadFunc) = dlsym(0, "PyInterpreterState_Head");
+    CHECK_NULL(interpHeadFunc, "PyInterpreterState_Head not found.\n", 3);
+
+    PyInterpreterState* head = interpHeadFunc();
+    CHECK_NULL(head, "Interpreter not initialized.\n", 4);
+
+    bool threadSafeAddPendingCall = false;
+
+    // check that we're a supported version
+    if (version == PythonVersion_Unknown) {
+        if(showDebugInfo){
+            printf("Python version unknown!\n");
+        }
+        return 5;
+    } else if (version >= PythonVersion_27 && version != PythonVersion_30) {
+        threadSafeAddPendingCall = true;
+    }
+
+    printf("\n\n\n%s\n\n\n", command);
+
+}
+
+
 int SetSysTraceFunc(bool showDebugInfo, bool isDebug)
 {
     if(showDebugInfo){
