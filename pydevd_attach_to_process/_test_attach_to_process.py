@@ -1,6 +1,6 @@
 import subprocess
 import sys
-print sys.executable
+print(sys.executable)
 
 if __name__ == '__main__':
     p = subprocess.Popen([sys.executable, '-u', '_always_live_program.py'])

@@ -1,11 +1,14 @@
-//compile with: gcc -shared -o attach_linux.so -fPIC -nostartfiles attach_linux.c
+// This is much simpler than the windows version because we're using gdb and
+// we assume that gdb will call things in the correct thread already.
+
+//compile with: g++ -shared -o attach_linux.so -fPIC -nostartfiles attach_linux.c
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <stdbool.h>
 #include "python.h"
-//#include <unistd.h> used for usleep
+#include <unistd.h>
 
 // Exported function: hello(): Just to print something and check that we've been
 // able to connect.
@@ -46,7 +49,7 @@ typedef enum { PyGILState_LOCKED, PyGILState_UNLOCKED } PyGILState_STATE;
 typedef PyGILState_STATE(*PyGILState_Ensure)();
 typedef void (*PyGILState_Release)(PyGILState_STATE);
 typedef PyObject* (*PyBool_FromLong)(long v);
-typedef PyObject* (*PyImport_ImportModule) (const char *name);
+typedef PyObject* (*PyImport_ImportModuleNoBlock) (const char *name);
 typedef PyObject* (*PyObject_HasAttrString)(PyObject *o, const char *attr_name);
 typedef PyObject* (*PyObject_GetAttrString)(PyObject *o, const char *attr_name);
 typedef PyObject* (*PyObject_CallFunctionObjArgs)(PyObject *callable, ...);    // call w/ varargs, last arg should be NULL
@@ -139,53 +142,10 @@ int DoAttach(bool isDebug, const char *command, bool showDebugInfo)
     PyInterpreterState* head = interpHeadFunc();
     CHECK_NULL(head, "Interpreter not initialized.\n", 4);
 
-    bool threadSafeAddPendingCall = false;
-
-    // check that we're a supported version
-    if (version == PythonVersion_Unknown) {
-        if(showDebugInfo){
-            printf("Python version unknown!\n");
-        }
-        return 5;
-    } else if (version >= PythonVersion_27 && version != PythonVersion_30) {
-        threadSafeAddPendingCall = true;
-    }
-
-    PyEval_ThreadsInitialized threadsInited;
-    *(void**)(&threadsInited) = dlsym(0, "PyEval_ThreadsInitialized");
-    CHECK_NULL(threadsInited, "PyEval_ThreadsInitialized not found.\n", 3);
-
-    _PyEval_GetSwitchInterval getSwitchInterval;
-    *(void**)(&getSwitchInterval) = dlsym(0, "_PyEval_GetSwitchInterval");
-    //Don't check this one (could be null)
-
-    _PyEval_SetSwitchInterval setSwitchInterval;
-    *(void**)(&setSwitchInterval) = dlsym(0, "_PyEval_SetSwitchInterval");
-
-    //Don't check this one (could be null)
-    //I.e.: Note: if we have other threads in the system, they'll keep running.
-    //printf("Will sleep");
-    //usleep(2000000);
-//     if (!threadsInited()) {
-//         printf("\n\n\nThreads not inited\n\n\n");
-//
-//         int *intervalCheck;
-//         *(void**)(&intervalCheck) = dlsym(0, "_Py_CheckInterval");
-//         //Don't check this one (could be null)
-//
-//         int saveIntervalCheck;
-//         unsigned long saveLongIntervalCheck;
-//         if (intervalCheck != NULL) {
-//             // not available on 3.2
-//             saveIntervalCheck = *intervalCheck;
-//             *intervalCheck = -1;  // lower the interval check so pending calls are processed faster
-//         } else if (getSwitchInterval != NULL && setSwitchInterval != NULL) {
-//             saveLongIntervalCheck = getSwitchInterval();
-//             setSwitchInterval(0);
-//         }
-//      }else{
-//          printf("Threads already inited");
-//      }
+    // Note: unlike windows where we have to do many things to enable threading
+    // to work to get the gil, here we'll be executing in an existing thread,
+    // so, it's mostly a matter of getting the GIL and running it and we shouldn't
+    // have any more problems.
 
     PyGILState_Ensure pyGilStateEnsureFunc;
     *(void**)(&pyGilStateEnsureFunc) = dlsym(0, "PyGILState_Ensure");
@@ -199,7 +159,6 @@ int DoAttach(bool isDebug, const char *command, bool showDebugInfo)
     *(void**)(&pyRun_SimpleString) = dlsym(0, "PyRun_SimpleString");
     CHECK_NULL(pyRun_SimpleString, "PyRun_SimpleString not found.\n", 6);
 
-
     PyGILState_STATE pyGILState = pyGilStateEnsureFunc();
     pyRun_SimpleString(command);
     //No matter what happens we have to release it.
@@ -207,6 +166,10 @@ int DoAttach(bool isDebug, const char *command, bool showDebugInfo)
 }
 
 
+// All of the code below is the same as: 
+// sys.settrace(pydevd.GetGlobalDebugger().trace_dispatch)
+//
+// (with error checking)
 int SetSysTraceFunc(bool showDebugInfo, bool isDebug)
 {
     if(showDebugInfo){
@@ -257,12 +220,12 @@ int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug){
     *(void**)(&pyHasAttrFunc) = dlsym(0, "PyObject_HasAttrString");
     CHECK_NULL(pyHasAttrFunc, "PyObject_HasAttrString not found.\n", 7);
 
-    auto PyObjectHolder pyTrue = PyObjectHolder(isDebug, boolFromLongFunc(1));
-    auto PyObjectHolder pyFalse = PyObjectHolder(isDebug, boolFromLongFunc(0));
+    //Important: we need a non-blocking import here: PyImport_ImportModule
+    //could end up crashing (this makes us work only from 2.6 onwards).
+    PyImport_ImportModuleNoBlock pyImportModFunc;
+    *(void**)(&pyImportModFunc) = dlsym(0, "PyImport_ImportModuleNoBlock");
+    CHECK_NULL(pyImportModFunc, "PyImport_ImportModuleNoBlock not found.\n", 8);
 
-    PyImport_ImportModule pyImportModFunc;
-    *(void**)(&pyImportModFunc) = dlsym(0, "PyImport_ImportModule");
-    CHECK_NULL(pyImportModFunc, "PyImport_ImportModule not found.\n", 8);
 
     auto PyObjectHolder pydevdTracingMod = PyObjectHolder(isDebug, pyImportModFunc("pydevd_tracing"));
     CHECK_NULL(pydevdTracingMod.ToPython(), "pydevd_tracing module null.\n", 9);
@@ -275,12 +238,15 @@ int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug){
     }
 
 
-    auto PyObjectHolder pydevdMod = PyObjectHolder(isDebug, pyImportModFunc("pydevd"));
-    CHECK_NULL(pydevdMod.ToPython(), "pydevd module null.\n", 10);
-
     PyObject_GetAttrString pyGetAttr;
     *(void**)(&pyGetAttr) = dlsym(0, "PyObject_GetAttrString");
     CHECK_NULL(pyGetAttr, "PyObject_GetAttrString not found.\n", 8);
+
+    auto PyObjectHolder settrace = PyObjectHolder(isDebug, pyGetAttr(pydevdTracingMod.ToPython(), "_original_settrace"));
+    CHECK_NULL(settrace.ToPython(), "pydevd_tracing._original_settrace null!\n", 10);
+
+    auto PyObjectHolder pydevdMod = PyObjectHolder(isDebug, pyImportModFunc("pydevd"));
+    CHECK_NULL(pydevdMod.ToPython(), "pydevd module null.\n", 10);
 
     auto PyObjectHolder getGlobalDebugger = PyObjectHolder(isDebug, pyGetAttr(pydevdMod.ToPython(), "GetGlobalDebugger"));
     CHECK_NULL(getGlobalDebugger.ToPython(), "pydevd.GetGlobalDebugger null.\n", 11);
@@ -297,6 +263,14 @@ int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug){
             printf("pydevd.GetGlobalDebugger() has no attribute trace_dispatch!\n");
         }
         return 13;
+    }
+    
+    auto PyObjectHolder traceFunc = PyObjectHolder(isDebug, pyGetAttr(globalDbg.ToPython(), "trace_dispatch"));
+    CHECK_NULL(traceFunc.ToPython(), "pydevd.GetGlobalDebugger().trace_dispatch returned null!\n", 14);
+    
+    DecRef(call(settrace.ToPython(), traceFunc.ToPython(), NULL), isDebug);
+    if(showDebugInfo){
+        printf("sys.settrace(pydevd.GetGlobalDebugger().trace_dispatch) worked.");
     }
 
     return 0;

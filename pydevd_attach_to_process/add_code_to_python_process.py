@@ -24,15 +24,7 @@ Limitations:
         ptrace_scope=0), it's possible that we need to run the application that'll use ptrace (or
         gdb in this case) as root (so, we must sudo the python which'll run this module).
 
-        2. It has a simpler approach than the windows one, which may fail if the user hasn't enabled
-        threading in its code. So, if the target will want to be attached to and it doesn't use threads,
-        the user is advised to add:
-
-        from threading import Thread
-        Thread(target=str).start()
-
-        to the start of its code so that the program can be attached from the outside.
-
+        2. It currently doesn't work in debug builds (i.e.: python_d)
 
 
 Other implementations:
@@ -313,13 +305,12 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False):
     CONNECT_DEBUGGER = 2
 
     startup_info = 0
-    SHOW_DEBUG_INFO = 1
-    # startup_info |= SHOW_DEBUG_INFO
+    # SHOW_DEBUG_INFO = 1
+    # startup_info |= SHOW_DEBUG_INFO # Uncomment to show debug info
 
     if connect_debugger_tracing:
         startup_info |= CONNECT_DEBUGGER
 
-    print startup_info
     process.write_int(return_code_address, startup_info)
 
     helper = GenShellCodeHelper(is_64)
@@ -390,39 +381,61 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False):
 def run_python_code_linux(pid, python_code, connect_debugger_tracing=False):
     assert '\'' not in python_code, 'Having a single quote messes with our command.'
     filedir = os.path.dirname(__file__)
+    
+    # Valid arguments for arch are i386, i386:x86-64, i386:x64-32, i8086,
+    #   i386:intel, i386:x86-64:intel, i386:x64-32:intel, i386:nacl,
+    #   i386:x86-64:nacl, i386:x64-32:nacl, auto.
+    
     if is_python_64bit():
         suffix = 'amd64'
+        arch = 'i386:x86-64'
     else:
         suffix = 'x86'
-    target_dll = '/home/fabioz/Desktop/dev/PyDev.Debugger/pydevd_attach_to_process/linux/attach_linux.so'
-#     target_dll = os.path.join(filedir, 'attach_linux_%s.so' % suffix)
-#     target_dll = os.path.normpath(target_dll)
+        arch = 'i386'
+        
+    target_dll = os.path.join(filedir, 'attach_linux_%s.so' % suffix)
+    target_dll = os.path.normpath(target_dll)
     if not os.path.exists(target_dll):
         raise RuntimeError('Could not find dll file to inject: %s' % target_dll)
 
+    gdb_threads_settrace_file = os.path.join(filedir, 'linux', 'gdb_threads_settrace.py')
+    gdb_threads_settrace_file = os.path.normpath(gdb_threads_settrace_file)
+    if not os.path.exists(gdb_threads_settrace_file):
+        raise RuntimeError('Could not find file to settrace: %s' % gdb_threads_settrace_file)
+
+    # Note: we currently don't support debug builds 
     show_debug_info = 0
     is_debug = 0
     # Note that the space in the beginning of each line in the multi-line is important!
     cmd = [
         'gdb',
-        '--nw', #no gui interface
-        '--nh', #no ~/.gdbinit
-        '--nx', #no .gdbinit
-        '--quiet', #no version number on startup
+        '--nw',  # no gui interface
+        '--nh',  # no ~/.gdbinit
+        '--nx',  # no .gdbinit
+        '--quiet',  # no version number on startup
         '--pid',
         str(pid),
-        #'-batch',
+#         '--batch',
         '--batch-silent',
-        "--eval-command='call dlopen(\"%s\", 2)'" % target_dll,
-        "--eval-command='call DoAttach(%s, \"%s\", %s)'" % (is_debug, python_code, show_debug_info)
     ]
+
+    cmd.extend(["--eval-command='set scheduler-locking off'"])  # If on we'll deadlock.
+
+    cmd.extend(["--eval-command='set architecture %s'" % arch])
+
+    cmd.extend([
+        "--eval-command='call dlopen(\"%s\", 2)'" % target_dll,
+        "--eval-command='call DoAttach(%s, \"%s\", %s)'" % (
+            is_debug, python_code, show_debug_info)
+    ])
+    
 
     if connect_debugger_tracing:
         cmd.extend([
-            "--eval-command='call SetSysTraceFunc(1, 0)'",
+            "--command='%s'" % (gdb_threads_settrace_file,),
         ])
 
-    print ' '.join(cmd)
+    #print ' '.join(cmd)
 
     env = os.environ.copy()
     # Remove the PYTHONPATH (if gdb has a builtin Python it could fail if we
@@ -437,7 +450,7 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False):
         stderr=subprocess.PIPE,
     )
     out, err = p.communicate()
-    print out, err
+    #print out, err
     return out, err
 
 

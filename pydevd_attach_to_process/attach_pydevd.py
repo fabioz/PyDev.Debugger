@@ -44,9 +44,6 @@ attach_script.attach(port=%(port)s, host=\\\"%(host)s\\\");
 '''.replace('\r\n', '').replace('\r', '').replace('\n', '')
 
     python_code = python_code % setup
-#     python_code = 'print(\\\"check11111check\\\")'
-
-    print python_code
     add_code_to_python_process.run_python_code(
         setup['pid'], python_code, connect_debugger_tracing=True)
 
