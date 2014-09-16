@@ -352,6 +352,9 @@ class PyDB:
 
         #working with plugins
         self.plugin = PluginManager(self)
+        self.num_of_plugin_line_breaks = 0
+        self.num_of_plugin_exception_breaks = 0
+
 
     def haveAliveThreads(self):
         for t in threadingEnumerate():
@@ -861,6 +864,7 @@ class PyDB:
                         result = self.plugin.add_breakpoint('add_line_breakpoint', self, type, file, line, condition, expression, func_name)
                         if result is not None:
                             supported_type = True
+                            self.num_of_plugin_line_breaks += 1
                             breakpoint, breakpoints = result
                             file_to_id_to_breakpoint = self.file_to_id_to_plugin_breakpoint
                         else:
@@ -921,6 +925,7 @@ class PyDB:
 
                                 del id_to_pybreakpoint[breakpoint_id]
                                 self.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
+                                self.num_of_plugin_line_breaks -= 1
                             except KeyError:
                                 pydev_log.error("Error removing breakpoint: Breakpoint id not found: %s id: %s. Available ids: %s\n" % (
                                     file, breakpoint_id, DictKeys(id_to_pybreakpoint)))
@@ -1063,6 +1068,8 @@ class PyDB:
 
                         if not supported_type:
                             raise NameError(type)
+                        else:
+                            self.num_of_plugin_exception_breaks += 1
 
 
 
@@ -1090,6 +1097,8 @@ class PyDB:
 
                         if not supported_type:
                             raise NameError(type)
+                        else:
+                            self.num_of_plugin_exception_breaks -= 1
 
                 elif cmd_id == CMD_LOAD_SOURCE:
                     path = text
@@ -1104,12 +1113,14 @@ class PyDB:
                     exception = text
 
                     self.plugin.add_breakpoint('add_exception_breakpoint', self, 'django', exception)
+                    self.num_of_plugin_exception_breaks += 1
 
 
                 elif cmd_id == CMD_REMOVE_DJANGO_EXCEPTION_BREAK:
                     exception = text
 
                     self.plugin.remove_exception_breakpoint(self, 'django', exception)
+                    self.num_of_plugin_exception_breaks -= 1
 
                 elif cmd_id == CMD_EVALUATE_CONSOLE_EXPRESSION:
                     # Command which takes care for the debug console communication
