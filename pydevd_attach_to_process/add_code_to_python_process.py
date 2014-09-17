@@ -30,7 +30,9 @@ Limitations:
 Other implementations:
 - pyrasite.com:
     GPL
-    Windows/linux (in Linux it's approach is actually very similar to ours, in windows the approach here is more complete).
+    Windows/linux (in Linux it also uses gdb to connect -- although specifics are different as we use a dll to execute
+    code with other threads stopped). It's Windows approach is more limited because it doesn't seem to deal properly with 
+    Python 3 if threading is disabled. 
 
 - https://github.com/google/pyringe:
     Apache v2.
