@@ -30,7 +30,9 @@ Limitations:
 Other implementations:
 - pyrasite.com:
     GPL
-    Windows/linux (in Linux it's approach is actually very similar to ours, in windows the approach here is more complete).
+    Windows/linux (in Linux it also uses gdb to connect -- although specifics are different as we use a dll to execute
+    code with other threads stopped). It's Windows approach is more limited because it doesn't seem to deal properly with 
+    Python 3 if threading is disabled. 
 
 - https://github.com/google/pyringe:
     Apache v2.
@@ -261,7 +263,7 @@ def resolve_label(process, label):
 def is_python_64bit():
     return (struct.calcsize('P') == 8)
 
-def run_python_code_windows(pid, python_code, connect_debugger_tracing=False):
+def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
     assert '\'' not in python_code, 'Having a single quote messes with our command.'
     from winappdbg import compat
     from winappdbg.process import Process
@@ -277,7 +279,7 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False):
         "Target 64 bits: %s\n"
         "Current Python 64 bits: %s" % (is_64, is_python_64bit()))
 
-
+    print('Connecting to %s bits target' % (bits,))
     assert resolve_label(process, compat.b('PyGILState_Ensure'))
 
 
@@ -289,24 +291,30 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False):
     target_dll = os.path.join(filedir, 'attach_%s.dll' % suffix)
     if not os.path.exists(target_dll):
         raise RuntimeError('Could not find dll file to inject: %s' % target_dll)
+    print('Injecting dll')
     process.inject_dll(target_dll.encode('mbcs'))
+    print('Dll injected')
 
     process.scan_modules()
     attach_func = resolve_label(process, compat.b('AttachAndRunPythonCode'))
     assert attach_func
 
+    print('Allocating code in target process')
     code_address = process.malloc(len(python_code))
     assert code_address
+    print('Writing code in target process')
     process.write(code_address, python_code)
 
+    print('Allocating return value memory in target process')
     return_code_address = process.malloc(ctypes.sizeof(ctypes.c_int))
     assert return_code_address
 
     CONNECT_DEBUGGER = 2
 
     startup_info = 0
-    # SHOW_DEBUG_INFO = 1
-    # startup_info |= SHOW_DEBUG_INFO # Uncomment to show debug info
+    if show_debug_info:
+        SHOW_DEBUG_INFO = 1
+        startup_info |= SHOW_DEBUG_INFO # Uncomment to show debug info
 
     if connect_debugger_tracing:
         startup_info |= CONNECT_DEBUGGER
@@ -365,12 +373,18 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False):
 #
 #     subprocess.call((exe + ' -b %s f.asm' % arch).split())
 
+    print('Injecting code to target process')
     thread, _thread_address = process.inject_code(code, 0)
 
     timeout = None  # Could receive timeout in millis.
+    print('Waiting for code to complete')
     thread.wait(timeout)
 
     return_code = process.read_int(return_code_address)
+    if return_code == 0:
+        print('Attach finished successfully.')
+    else:
+        print('Error when injecting code in target process. Error code: %s (on windows)' % (return_code,))
 
     process.free(thread.pInjectedMemory)
     process.free(code_address)
@@ -378,7 +392,7 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False):
     return return_code
 
 
-def run_python_code_linux(pid, python_code, connect_debugger_tracing=False):
+def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
     assert '\'' not in python_code, 'Having a single quote messes with our command.'
     filedir = os.path.dirname(__file__)
     
@@ -404,7 +418,6 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False):
         raise RuntimeError('Could not find file to settrace: %s' % gdb_threads_settrace_file)
 
     # Note: we currently don't support debug builds 
-    show_debug_info = 0
     is_debug = 0
     # Note that the space in the beginning of each line in the multi-line is important!
     cmd = [
@@ -449,8 +462,10 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
+    print('Running gdb in target process.')
     out, err = p.communicate()
-    #print out, err
+    print('stdout: %s' % (out,))
+    print('stderr: %s' % (err,))
     return out, err
 
 
