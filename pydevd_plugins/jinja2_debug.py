@@ -203,22 +203,25 @@ def can_not_skip(plugin, pydb, pydb_frame, frame):
     return False
 
 
-def cmd_step_into(plugin, pydb, frame, event, args, stop_info):
+def cmd_step_into(plugin, pydb, frame, event, args, stop_info, stop):
     pydb, filename, info, thread = args
+    plugin_stop = False
+    stop_info['jinja2_stop'] = False
     if not hasattr(info, 'pydev_call_from_jinja2'):
         info.pydev_call_from_jinja2 = None
     if not hasattr(info, 'pydev_call_inside_jinja2'):
         info.pydev_call_inside_jinja2 = None
     if is_jinja2_suspended(thread):
         stop_info['jinja2_stop'] = event in ('call', 'line') and is_jinja2_render_call(frame)
-        stop_info['stop'] = False
+        plugin_stop = stop_info['jinja2_stop']
+        stop = False
         if info.pydev_call_from_jinja2 is not None:
             if is_jinja2_internal_function(frame):
                 #if internal Jinja2 function was called, we sould continue debugging inside template
                 info.pydev_call_from_jinja2 = None
             else:
                 #we go into python code from Jinja2 rendering frame
-                stop_info['stop'] = True
+                stop = True
 
         if event == 'call' and is_jinja2_context_call(frame.f_back):
             #we called function from context, the next step will be in function
@@ -229,21 +232,24 @@ def cmd_step_into(plugin, pydb, frame, event, args, stop_info):
         info.pydev_step_stop = info.pydev_call_from_jinja2
         info.pydev_call_from_jinja2 = None
         thread.additionalInfo.suspend_type = JINJA2_SUSPEND
-        stop_info['stop'] = False
+        stop = False
 
         #print "info.pydev_call_from_jinja2", info.pydev_call_from_jinja2, "stop_info", stop_info, \
         #    "thread.additionalInfo.suspend_type", thread.additionalInfo.suspend_type
         #print "event", event, "farme.locals", frame.f_locals
+    return stop, plugin_stop
 
 
-def cmd_step_over(plugin, pydb, frame, event, args, stop_info):
+def cmd_step_over(plugin, pydb, frame, event, args, stop_info, stop):
     pydb, filename, info, thread = args
+    plugin_stop = False
+    stop_info['jinja2_stop'] = False
     if not hasattr(info, 'pydev_call_from_jinja2'):
         info.pydev_call_from_jinja2 = None
     if not hasattr(info, 'pydev_call_inside_jinja2'):
         info.pydev_call_inside_jinja2 = None
     if is_jinja2_suspended(thread):
-        stop_info['stop'] = False
+        stop = False
 
         if info.pydev_call_inside_jinja2 is None:
             if is_jinja2_render_call(frame):
@@ -255,18 +261,19 @@ def cmd_step_over(plugin, pydb, frame, event, args, stop_info):
             if event == 'line':
                 if is_jinja2_render_call(frame) and info.pydev_call_inside_jinja2 is frame:
                     stop_info['jinja2_stop'] = True
+                    plugin_stop = stop_info['jinja2_stop']
             if event == 'return':
                 if frame is info.pydev_call_inside_jinja2 and not DictContains(frame.f_back.f_locals,'event'):
                     info.pydev_call_inside_jinja2 = find_jinja2_render_frame(frame.f_back)
-        return True
+        return True, stop, plugin_stop
     else:
         if event == 'return' and is_jinja2_context_call(frame.f_back):
             #we return from python code to Jinja2 rendering frame
             info.pydev_call_from_jinja2 = None
             info.pydev_call_inside_jinja2 = find_jinja2_render_frame(frame)
             thread.additionalInfo.suspend_type = JINJA2_SUSPEND
-            stop_info['stop'] = False
-            return True
+            stop = False
+            return True, stop, plugin_stop
     #print "info.pydev_call_from_jinja2", info.pydev_call_from_jinja2, "stop", stop, "jinja_stop", jinja2_stop, \
     #    "thread.additionalInfo.suspend_type", thread.additionalInfo.suspend_type
     #print "event", event, "info.pydev_call_inside_jinja2", info.pydev_call_inside_jinja2
@@ -274,7 +281,7 @@ def cmd_step_over(plugin, pydb, frame, event, args, stop_info):
     #print "is_context_call", is_jinja2_context_call(frame)
     #print "render", is_jinja2_render_call(frame)
     #print "-------------"
-    return False
+    return False, stop, plugin_stop
 
 
 def stop(plugin, pydb, frame, event, args, stop_info, arg, step_cmd):

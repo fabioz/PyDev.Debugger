@@ -276,30 +276,33 @@ def has_exception_breaks(plugin, mainDebugger):
     return hasattr(mainDebugger, 'django_exception_break') and mainDebugger.django_exception_break
 
 
-def cmd_step_into(plugin, mainDebugger, frame, event, args, stop_info):
+def cmd_step_into(plugin, mainDebugger, frame, event, args, stop_info, stop):
     mainDebugger, filename, info, thread = args
+    plugin_stop = False
     if _is_django_suspended(thread):
         #stop_info['django_stop'] = event == 'call' and cached_call(frame, is_django_render_call)
-        stop_info['stop'] = stop_info['stop'] and _is_django_resolve_call(frame.f_back) and not _is_django_context_get_call(frame)
-        if stop_info['stop']:
+        stop = stop and _is_django_resolve_call(frame.f_back) and not _is_django_context_get_call(frame)
+        if stop:
             info.pydev_django_resolve_frame = 1 #we remember that we've go into python code from django rendering frame
+    return stop, plugin_stop
 
 
-def cmd_step_over(plugin, mainDebugger, frame, event, args, stop_info):
+def cmd_step_over(plugin, mainDebugger, frame, event, args, stop_info, stop):
     mainDebugger, filename, info, thread = args
+    plugin_stop = False
     if _is_django_suspended(thread):
         stop_info['django_stop'] = event == 'call' and _is_django_render_call(frame)
-        stop_info['stop'] = False
-        return True
+        plugin_stop = stop_info['django_stop']
+        stop = False
+        return True, stop, plugin_stop
     else:
         if event == 'return' and info.pydev_django_resolve_frame is not None and _is_django_resolve_call(frame.f_back):
             #we return to Django suspend mode and should not stop before django rendering frame
             info.pydev_step_stop = info.pydev_django_resolve_frame
             info.pydev_django_resolve_frame = None
             thread.additionalInfo.suspend_type = DJANGO_SUSPEND
-        stop_info['stop'] = info.pydev_step_stop is frame and event in ('line', 'return')
-
-    return False
+        stop = info.pydev_step_stop is frame and event in ('line', 'return')
+    return False, stop, plugin_stop
 
 
 def stop(plugin, mainDebugger, frame, event, args, stop_info, arg, step_cmd):
