@@ -8,7 +8,7 @@
 #include <dlfcn.h>
 #include <stdbool.h>
 #include "python.h"
-#include <unistd.h>
+//#include <unistd.h> used for usleep
 
 // Exported function: hello(): Just to print something and check that we've been
 // able to connect.
