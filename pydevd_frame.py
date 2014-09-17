@@ -318,6 +318,7 @@ class PyDBFrame:
                 breakpoint = None
                 exist_result = False
                 stop_info['stop'] = False
+                bp_type = None
                 if not flag and event != 'return' and info.pydev_state != STATE_SUSPEND and breakpoints_for_file is not None \
                         and DictContains(breakpoints_for_file, line):
                     breakpoint = breakpoints_for_file[line]
@@ -329,7 +330,7 @@ class PyDBFrame:
                     result = plugin_manager.get_breakpoint(main_debugger, self, frame, event, self._args)
                     if result:
                         exist_result = True
-                        (flag, breakpoint, new_frame) = result
+                        (flag, breakpoint, new_frame, bp_type) = result
 
                 if breakpoint:
                     #ok, hit breakpoint, now, we have to discover if it is a conditional breakpoint
@@ -389,7 +390,7 @@ class PyDBFrame:
                 if stop_info['stop']:
                     self.setSuspend(thread, CMD_SET_BREAK)
                 elif flag:
-                    result = plugin_manager.suspend(main_debugger, thread, frame)
+                    result = plugin_manager.suspend(main_debugger, thread, frame, bp_type)
                     if result:
                         frame = result
 

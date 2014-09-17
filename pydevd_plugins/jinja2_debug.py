@@ -292,6 +292,7 @@ def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
     new_frame = None
     jinja2_breakpoint = None
     flag = False
+    type = 'jinja2'
     if event in ('line', 'call') and info.pydev_state != STATE_SUSPEND and hasattr(pydb, 'jinja2_breakpoints') and \
             pydb.jinja2_breakpoints and cached_call(pydb_frame, is_jinja2_render_call, frame):
         filename = get_jinja2_template_filename(frame)
@@ -306,11 +307,13 @@ def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
                 flag = True
                 new_frame = Jinja2TemplateFrame(frame)
 
-    return flag, jinja2_breakpoint, new_frame
+    return flag, jinja2_breakpoint, new_frame, type
 
 
-def suspend(plugin, pydb, thread, frame):
-    return suspend_jinja2(pydb, thread, frame)
+def suspend(plugin, pydb, thread, frame, bp_type):
+    if bp_type == 'jinja2':
+        return suspend_jinja2(pydb, thread, frame)
+    return None
 
 
 def exception_break(plugin, pydb, pydb_frame, frame, args, arg):

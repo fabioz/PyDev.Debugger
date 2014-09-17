@@ -317,6 +317,7 @@ def get_breakpoint(plugin, mainDebugger, pydb_frame, frame, event, args):
     flag = False
     django_breakpoint = None
     new_frame = None
+    type = 'django'
 
     if event == 'call' and info.pydev_state != STATE_SUSPEND and hasattr(mainDebugger, 'django_breakpoints') and \
             mainDebugger.django_breakpoints and cached_call(pydb_frame, _is_django_render_call, frame):
@@ -332,11 +333,13 @@ def get_breakpoint(plugin, mainDebugger, pydb_frame, frame, event, args):
                 django_breakpoint = django_breakpoints_for_file[template_line]
                 flag = True
                 new_frame = DjangoTemplateFrame(frame)
-    return flag, django_breakpoint, new_frame
+    return flag, django_breakpoint, new_frame, type
 
 
-def suspend(plugin, mainDebugger, thread, frame):
-    return suspend_django(mainDebugger, thread, frame)
+def suspend(plugin, mainDebugger, thread, frame, bp_type):
+    if bp_type == 'django':
+        return suspend_django(mainDebugger, thread, frame)
+    return None
 
 def exception_break(plugin, mainDebugger, pydb_frame, frame, args, arg):
     mainDebugger, filename, info, thread = args
