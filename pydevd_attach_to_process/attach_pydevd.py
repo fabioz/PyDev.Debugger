@@ -38,16 +38,20 @@ def main(setup):
 
     if sys.platform == 'win32':
         setup['pythonpath'] = pydevd_dirname.replace('\\', '/')
+        setup['pythonpath2'] = os.path.dirname(__file__).replace('\\', '/')
         python_code = '''import sys;
 sys.path.append("%(pythonpath)s");
+sys.path.append("%(pythonpath2)s");
 import attach_script;
 attach_script.attach(port=%(port)s, host="%(host)s");
 '''.replace('\r\n', '').replace('\r', '').replace('\n', '')
     else:
         setup['pythonpath'] = pydevd_dirname
+        setup['pythonpath2'] = os.path.dirname(__file__)
         # We have to pass it a bit differently for gdb
         python_code = '''import sys;
 sys.path.append(\\\"%(pythonpath)s\\\");
+sys.path.append(\\\"%(pythonpath2)s\\\");
 import attach_script;
 attach_script.attach(port=%(port)s, host=\\\"%(host)s\\\");
 '''.replace('\r\n', '').replace('\r', '').replace('\n', '')

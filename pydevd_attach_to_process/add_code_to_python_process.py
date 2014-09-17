@@ -30,9 +30,7 @@ Limitations:
 Other implementations:
 - pyrasite.com:
     GPL
-    Windows/linux (in Linux it also uses gdb to connect -- although specifics are different as we use a dll to execute
-    code with other threads stopped). It's Windows approach is more limited because it doesn't seem to deal properly with 
-    Python 3 if threading is disabled. 
+    Windows/linux (in Linux it's approach is actually very similar to ours, in windows the approach here is more complete).
 
 - https://github.com/google/pyringe:
     Apache v2.
@@ -406,6 +404,8 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
     else:
         suffix = 'x86'
         arch = 'i386'
+
+    print('Attaching with arch: %s'% (arch,))
         
     target_dll = os.path.join(filedir, 'attach_linux_%s.so' % suffix)
     target_dll = os.path.normpath(target_dll)
@@ -455,6 +455,7 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
     # have the PYTHONPATH for a different python version or some forced encoding).
     env.pop('PYTHONIOENCODING', None)
     env.pop('PYTHONPATH', None)
+    print('Running: %s' % (' '.join(cmd)))
     p = subprocess.Popen(
         ' '.join(cmd),
         shell=True,
