@@ -21,7 +21,7 @@ class Jinja2LineBreakpoint(LineBreakpoint):
         return "Jinja2LineBreakpoint: %s-%d" %(self.file, self.line)
 
 
-def add_line_breakpoint(plugin, pydb, type, file, line, condition, func_name, expression):
+def add_line_breakpoint(plugin, pydb, type, file, line, condition, expression, func_name):
     result = None
     if type == 'jinja2-line':
         breakpoint = Jinja2LineBreakpoint(file, line, condition, func_name, expression)
