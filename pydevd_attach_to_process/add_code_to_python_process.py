@@ -427,11 +427,11 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
         '--nw',  # no gui interface
         '--nh',  # no ~/.gdbinit
         '--nx',  # no .gdbinit
-        '--quiet',  # no version number on startup
+#         '--quiet',  # no version number on startup
         '--pid',
         str(pid),
-#         '--batch',
-        '--batch-silent',
+        '--batch',
+#         '--batch-silent',
     ]
 
     cmd.extend(["--eval-command='set scheduler-locking off'"])  # If on we'll deadlock.
