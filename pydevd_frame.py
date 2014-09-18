@@ -426,7 +426,7 @@ class PyDBFrame:
 
                 elif step_cmd == CMD_STEP_OVER:
                     stop = stop_frame is frame and event in ('line', 'return')
-                    stopped, stop, plugin_stop = plugin_manager.cmd_step_over(main_debugger, frame, event, self._args, stop_info, stop)
+                    stop, plugin_stop = plugin_manager.cmd_step_over(main_debugger, frame, event, self._args, stop_info, stop)
 
                 elif step_cmd == CMD_SMART_STEP_INTO:
                     stop = False

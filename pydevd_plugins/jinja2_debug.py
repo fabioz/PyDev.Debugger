@@ -269,7 +269,7 @@ def cmd_step_over(plugin, pydb, frame, event, args, stop_info, stop):
             if event == 'return':
                 if frame is info.pydev_call_inside_jinja2 and not DictContains(frame.f_back.f_locals,'event'):
                     info.pydev_call_inside_jinja2 = _find_jinja2_render_frame(frame.f_back)
-        return True, stop, plugin_stop
+        return stop, plugin_stop
     else:
         if event == 'return' and _is_jinja2_context_call(frame.f_back):
             #we return from python code to Jinja2 rendering frame
@@ -277,7 +277,7 @@ def cmd_step_over(plugin, pydb, frame, event, args, stop_info, stop):
             info.pydev_call_inside_jinja2 = _find_jinja2_render_frame(frame)
             thread.additionalInfo.suspend_type = JINJA2_SUSPEND
             stop = False
-            return True, stop, plugin_stop
+            return stop, plugin_stop
     #print "info.pydev_call_from_jinja2", info.pydev_call_from_jinja2, "stop", stop, "jinja_stop", jinja2_stop, \
     #    "thread.additionalInfo.suspend_type", thread.additionalInfo.suspend_type
     #print "event", event, "info.pydev_call_inside_jinja2", info.pydev_call_inside_jinja2
@@ -285,7 +285,7 @@ def cmd_step_over(plugin, pydb, frame, event, args, stop_info, stop):
     #print "is_context_call", _is_jinja2_context_call(frame)
     #print "render", _is_jinja2_render_call(frame)
     #print "-------------"
-    return False, stop, plugin_stop
+    return stop, plugin_stop
 
 
 def stop(plugin, pydb, frame, event, args, stop_info, arg, step_cmd):
