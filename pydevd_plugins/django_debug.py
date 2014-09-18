@@ -280,7 +280,8 @@ def cmd_step_into(plugin, mainDebugger, frame, event, args, stop_info, stop):
     mainDebugger, filename, info, thread = args
     plugin_stop = False
     if _is_django_suspended(thread):
-        #stop_info['django_stop'] = event == 'call' and cached_call(frame, is_django_render_call)
+        stop_info['django_stop'] = event == 'call' and _is_django_render_call(frame)
+        plugin_stop = stop_info['django_stop']
         stop = stop and _is_django_resolve_call(frame.f_back) and not _is_django_context_get_call(frame)
         if stop:
             info.pydev_django_resolve_frame = 1 #we remember that we've go into python code from django rendering frame
