@@ -4,7 +4,7 @@ from pydevd_constants import GetThreadId, STATE_SUSPEND, DictContains
 from pydevd_comm import CMD_SET_BREAK, CMD_STEP_OVER, CMD_ADD_EXCEPTION_BREAK
 import pydevd_vars
 from pydevd_file_utils import GetFileNameAndBaseFromFile
-from pydevd_frame_utils import add_exception_to_frame, FCode, cached_call
+from pydevd_frame_utils import add_exception_to_frame, FCode
 
 JINJA2_SUSPEND = 3
 
@@ -199,7 +199,7 @@ def has_exception_breaks(plugin, pydb):
     return pydb.jinja2_exception_break
 
 def can_not_skip(plugin, pydb, pydb_frame, frame):
-    if pydb.jinja2_breakpoints and cached_call(pydb_frame, _is_jinja2_render_call, frame):
+    if pydb.jinja2_breakpoints and _is_jinja2_render_call(frame):
         filename = _get_jinja2_template_filename(frame)
         jinja2_breakpoints_for_file = pydb.jinja2_breakpoints.get(filename)
         if jinja2_breakpoints_for_file:
@@ -305,7 +305,7 @@ def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
     flag = False
     type = 'jinja2'
     if event in ('line', 'call') and info.pydev_state != STATE_SUSPEND and \
-            pydb.jinja2_breakpoints and cached_call(pydb_frame, _is_jinja2_render_call, frame):
+            pydb.jinja2_breakpoints and _is_jinja2_render_call(frame):
         filename = _get_jinja2_template_filename(frame)
         jinja2_breakpoints_for_file = pydb.jinja2_breakpoints.get(filename)
         new_frame = Jinja2TemplateFrame(frame)
