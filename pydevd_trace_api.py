@@ -16,10 +16,10 @@ def can_not_skip(plugin, pydb, pydb_frame, frame):
 def has_exception_breaks(plugin, pydb):
     return False
 
-def cmd_step_into(plugin, pydb, frame, event, args, stop_info):
+def cmd_step_into(plugin, pydb, frame, event, args, stop_info, stop):
     return False
 
-def cmd_step_over(plugin, pydb, frame, event, args, stop_info):
+def cmd_step_over(plugin, pydb, frame, event, args, stop_info, stop):
     return False
 
 def stop(plugin, pydb, frame, event, args, stop_info, arg, step_cmd):
