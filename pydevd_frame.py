@@ -83,7 +83,7 @@ class PyDBFrame:
                         flag = False
                 else:
                     try:
-                        if mainDebugger.plugin:
+                        if mainDebugger.plugin is not None:
                             result = mainDebugger.plugin.exception_break(mainDebugger, self, frame, self._args, arg)
                             if result:
                                 (flag, frame) = result
@@ -231,8 +231,7 @@ class PyDBFrame:
             plugin_manager = main_debugger.plugin
 
             is_exception_event = event == 'exception'
-            has_exception_breakpoints = main_debugger.break_on_caught_exceptions \
-                                        or main_debugger.num_of_plugin_exception_breaks != 0
+            has_exception_breakpoints = main_debugger.break_on_caught_exceptions or main_debugger.num_of_plugin_exception_breaks
 
             if is_exception_event:
                 if has_exception_breakpoints:
@@ -272,8 +271,8 @@ class PyDBFrame:
                     can_skip = (step_cmd is None and stop_frame is None)\
                         or (step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and stop_frame is not frame)
 
-                if can_skip and plugin_manager:
-                    can_skip = main_debugger.num_of_plugin_line_breaks == 0 or not plugin_manager.can_not_skip(main_debugger, self, frame)
+                if can_skip and plugin_manager is not None and main_debugger.num_of_plugin_line_breaks:
+                    can_skip = not plugin_manager.can_not_skip(main_debugger, self, frame)
 
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
                 # we will return nothing for the next trace
@@ -328,7 +327,7 @@ class PyDBFrame:
                     stop = True
                     if step_cmd == CMD_STEP_OVER and stop_frame is frame and event in ('line', 'return'):
                         stop = False #we don't stop on breakpoint if we have to stop by step-over (it will be processed later)
-                elif plugin_manager:
+                elif plugin_manager is not None and main_debugger.num_of_plugin_line_breaks:
                     result = plugin_manager.get_breakpoint(main_debugger, self, frame, event, self._args)
                     if result:
                         exist_result = True
@@ -391,7 +390,7 @@ class PyDBFrame:
                                     thread.additionalInfo.message = val
                 if stop:
                     self.setSuspend(thread, CMD_SET_BREAK)
-                elif flag and plugin_manager:
+                elif flag and plugin_manager is not None:
                     result = plugin_manager.suspend(main_debugger, thread, frame, bp_type)
                     if result:
                         frame = result
@@ -423,14 +422,14 @@ class PyDBFrame:
 
                 elif step_cmd == CMD_STEP_INTO:
                     stop = event in ('line', 'return')
-                    if plugin_manager:
+                    if plugin_manager is not None:
                         result = plugin_manager.cmd_step_into(main_debugger, frame, event, self._args, stop_info, stop)
                         if result:
                             stop, plugin_stop = result
 
                 elif step_cmd == CMD_STEP_OVER:
                     stop = stop_frame is frame and event in ('line', 'return')
-                    if plugin_manager:
+                    if plugin_manager is not None:
                         result = plugin_manager.cmd_step_over(main_debugger, frame, event, self._args, stop_info, stop)
                         if result:
                             stop, plugin_stop = result

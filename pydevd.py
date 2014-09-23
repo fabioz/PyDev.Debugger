@@ -352,13 +352,15 @@ class PyDB:
         # This attribute holds the file-> lines which have an @IgnoreException.
         self.filename_to_lines_where_exceptions_are_ignored = {}
 
-        #working with plugins
-        if SUPPORT_PLUGINS:
-            self.plugin = PluginManager(self)
-        else:
-            self.plugin = None
+        #working with plugins (lazily initialized)
+        self.plugin = None
         self.num_of_plugin_line_breaks = 0
         self.num_of_plugin_exception_breaks = 0
+        
+    def get_plugin_lazy_init(self):
+        if self.plugin is None and SUPPORT_PLUGINS:
+            self.plugin = PluginManager(self)
+        return self.plugin
 
 
     def haveAliveThreads(self):
@@ -867,8 +869,9 @@ class PyDB:
                         supported_type = True
                     else:
                         result = None
-                        if self.plugin:
-                            result = self.plugin.add_breakpoint('add_line_breakpoint', self, type, file, line, condition, expression, func_name)
+                        plugin = self.get_plugin_lazy_init()
+                        if plugin is not None:
+                            result = plugin.add_breakpoint('add_line_breakpoint', self, type, file, line, condition, expression, func_name)
                         if result is not None:
                             supported_type = True
                             self.num_of_plugin_line_breaks += 1
@@ -914,7 +917,7 @@ class PyDB:
                         if breakpoint_type == 'python-line':
                             breakpoints = self.breakpoints
                             file_to_id_to_breakpoint = self.file_to_id_to_line_breakpoint
-                        elif self.plugin:
+                        elif self.get_plugin_lazy_init() is not None:
                             result = self.plugin.get_breakpoints(self, breakpoint_type)
                             if result is not None:
                                 file_to_id_to_breakpoint = self.file_to_id_to_plugin_breakpoint
@@ -1072,8 +1075,9 @@ class PyDB:
                             self.update_after_exceptions_added([exception_breakpoint])
                     else:
                         supported_type = False
-                        if self.plugin:
-                            supported_type = self.plugin.add_breakpoint('add_exception_breakpoint', self, type, exception)
+                        plugin = self.get_plugin_lazy_init()
+                        if plugin is not None:
+                            supported_type = plugin.add_breakpoint('add_exception_breakpoint', self, type, exception)
 
                         if not supported_type:
                             raise NameError(type)
@@ -1103,8 +1107,12 @@ class PyDB:
                         update_exception_hook(self)
                     else:
                         supported_type = False
-                        if self.plugin:
-                            supported_type = self.plugin.remove_exception_breakpoint(self, type, exception)
+                        
+                        # I.e.: no need to initialize lazy (if we didn't have it in the first place, we can't remove
+                        # anything from it anyways).
+                        plugin = self.plugin 
+                        if plugin is not None:
+                            supported_type = plugin.remove_exception_breakpoint(self, type, exception)
 
                         if not supported_type:
                             raise NameError(type)
@@ -1122,16 +1130,21 @@ class PyDB:
 
                 elif cmd_id == CMD_ADD_DJANGO_EXCEPTION_BREAK:
                     exception = text
-                    if self.plugin:
-                        self.plugin.add_breakpoint('add_exception_breakpoint', self, 'django', exception)
-                    self.num_of_plugin_exception_breaks += 1
+                    plugin = self.get_plugin_lazy_init()
+                    if plugin is not None:
+                        plugin.add_breakpoint('add_exception_breakpoint', self, 'django', exception)
+                        self.num_of_plugin_exception_breaks += 1
 
 
                 elif cmd_id == CMD_REMOVE_DJANGO_EXCEPTION_BREAK:
                     exception = text
-                    if self.plugin:
-                        self.plugin.remove_exception_breakpoint(self, 'django', exception)
-                    self.num_of_plugin_exception_breaks -= 1
+
+                    # I.e.: no need to initialize lazy (if we didn't have it in the first place, we can't remove
+                    # anything from it anyways).
+                    plugin = self.plugin
+                    if plugin is not None:
+                        plugin.remove_exception_breakpoint(self, 'django', exception)
+                        self.num_of_plugin_exception_breaks -= 1
 
                 elif cmd_id == CMD_EVALUATE_CONSOLE_EXPRESSION:
                     # Command which takes care for the debug console communication
