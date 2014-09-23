@@ -121,6 +121,7 @@ DONT_TRACE = {
               'django_frame.py':1,
               'pydev_log.py':1,
               'pydev_monkey.py':1 ,
+              'pydev_monkey_qt.py':1 ,
               'pydevd.py':1 ,
               'pydevd_additional_thread_info.py':1,
               'pydevd_comm.py':1,
