@@ -5,7 +5,6 @@ STATE_RUN = 1
 STATE_SUSPEND = 2
 
 PYTHON_SUSPEND = 1
-DJANGO_SUSPEND = 2
 
 try:
     __setFalse = False
@@ -43,6 +42,11 @@ import os
 import pydevd_vm_type
 
 IS_JYTHON = pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON
+
+IS_JYTH_LESS25 = False
+if IS_JYTHON:
+    if sys.version_info[0] == 2 and sys.version_info[1] < 5:
+        IS_JYTH_LESS25 = True
 
 #=======================================================================================================================
 # Python 3?

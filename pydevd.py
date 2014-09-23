@@ -9,8 +9,7 @@ pydev_monkey_qt.patch_qt()
 
 import traceback
 
-from django_debug import DjangoLineBreakpoint
-from pydevd_frame import add_exception_to_frame
+from pydevd_frame_utils import add_exception_to_frame
 import pydev_imports
 from pydevd_breakpoints import * #@UnusedWildImport
 import fix_getpass
@@ -94,6 +93,10 @@ import _pydev_threading as threading
 import os
 import atexit
 
+SUPPORT_PLUGINS = not IS_JYTH_LESS25
+PluginManager = None
+if SUPPORT_PLUGINS:
+    from pydevd_plugin_utils import PluginManager
 
 threadingEnumerate = threading.enumerate
 threadingCurrentThread = threading.currentThread
@@ -112,13 +115,18 @@ DONT_TRACE = {
               'linecache.py':1,
               'threading.py':1,
 
+              # thirs party libs that we don't want to trace
+              'pluginbase.py':1,
+              'pkgutil_old.py':1,
+              'uuid_old.py':1,
+
               #things from pydev that we don't want to trace
               '_pydev_execfile.py':1,
               '_pydev_jython_execfile.py':1,
               '_pydev_threading':1,
               '_pydev_Queue':1,
               'django_debug.py':1,
-              'django_frame.py':1,
+              'jinja2_debug.py':1,
               'pydev_log.py':1,
               'pydev_monkey.py':1 ,
               'pydev_monkey_qt.py':1 ,
@@ -304,17 +312,15 @@ class PyDB:
         self._cmd_queue = {}  # the hash of Queues. Key is thread id, value is thread
 
         self.breakpoints = {}
-        self.django_breakpoints = {}
 
         self.file_to_id_to_line_breakpoint = {}
-        self.file_to_id_to_django_breakpoint = {}
+        self.file_to_id_to_plugin_breakpoint = {}
 
         # Note: breakpoints dict should not be mutated: a copy should be created
         # and later it should be assigned back (to prevent concurrency issues).
         self.break_on_uncaught_exceptions = {}
         self.break_on_caught_exceptions = {}
 
-        self.django_exception_break = {}
         self.readyToRun = False
         self._main_lock = _pydev_thread.allocate_lock()
         self._lock_running_thread_ids = _pydev_thread.allocate_lock()
@@ -346,6 +352,16 @@ class PyDB:
 
         # This attribute holds the file-> lines which have an @IgnoreException.
         self.filename_to_lines_where_exceptions_are_ignored = {}
+
+        #working with plugins (lazily initialized)
+        self.plugin = None
+        self.has_plugin_line_breaks = False
+        self.has_plugin_exception_breaks = False
+        
+    def get_plugin_lazy_init(self):
+        if self.plugin is None and SUPPORT_PLUGINS:
+            self.plugin = PluginManager(self)
+        return self.plugin
 
 
     def haveAliveThreads(self):
@@ -562,7 +578,6 @@ class PyDB:
             break_dict[pybreakpoint.line] = pybreakpoint
 
         breakpoints[file] = break_dict
-
 
     def add_break_on_exception(
         self,
@@ -846,15 +861,25 @@ class PyDB:
                     if len(expression) <= 0 or expression is None or expression == "None":
                         expression = None
 
+                    supported_type = False
                     if type == 'python-line':
                         breakpoint = LineBreakpoint(line, condition, func_name, expression)
                         breakpoints = self.breakpoints
                         file_to_id_to_breakpoint = self.file_to_id_to_line_breakpoint
-                    elif type == 'django-line':
-                        breakpoint = DjangoLineBreakpoint(file, line, condition, func_name, expression)
-                        breakpoints = self.django_breakpoints
-                        file_to_id_to_breakpoint = self.file_to_id_to_django_breakpoint
+                        supported_type = True
                     else:
+                        result = None
+                        plugin = self.get_plugin_lazy_init()
+                        if plugin is not None:
+                            result = plugin.add_breakpoint('add_line_breakpoint', self, type, file, line, condition, expression, func_name)
+                        if result is not None:
+                            supported_type = True
+                            breakpoint, breakpoints = result
+                            file_to_id_to_breakpoint = self.file_to_id_to_plugin_breakpoint
+                        else:
+                            supported_type = False
+
+                    if not supported_type:
                         raise NameError(type)
 
                     if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
@@ -868,6 +893,8 @@ class PyDB:
 
                     id_to_pybreakpoint[breakpoint_id] = breakpoint
                     self.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
+                    if self.plugin is not None:
+                        self.has_plugin_line_breaks = self.plugin.has_line_breaks()
 
                     self.setTracingForUntracedContexts(overwrite_prev_trace=True)
 
@@ -887,27 +914,34 @@ class PyDB:
                         pydev_log.error('Error removing breakpoint. Expected breakpoint_id to be an int. Found: %s' % (breakpoint_id,))
 
                     else:
+                        file_to_id_to_breakpoint = None
                         if breakpoint_type == 'python-line':
                             breakpoints = self.breakpoints
                             file_to_id_to_breakpoint = self.file_to_id_to_line_breakpoint
-                        elif breakpoint_type == 'django-line':
-                            breakpoints = self.django_breakpoints
-                            file_to_id_to_breakpoint = self.file_to_id_to_django_breakpoint
+                        elif self.get_plugin_lazy_init() is not None:
+                            result = self.plugin.get_breakpoints(self, breakpoint_type)
+                            if result is not None:
+                                file_to_id_to_breakpoint = self.file_to_id_to_plugin_breakpoint
+                                breakpoints = result
+
+                        if file_to_id_to_breakpoint is None:
+                            pydev_log.error('Error removing breakpoint. Cant handle breakpoint of type %s' % breakpoint_type)
                         else:
-                            raise NameError(breakpoint_type)
+                            try:
+                                id_to_pybreakpoint = file_to_id_to_breakpoint.get(file, {})
+                                if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
+                                    existing = id_to_pybreakpoint[breakpoint_id]
+                                    sys.stderr.write('Removed breakpoint:%s - line:%s - func_name:%s (id: %s)\n' % (
+                                        file, existing.line, existing.func_name.encode('utf-8'), breakpoint_id))
 
-                        try:
-                            id_to_pybreakpoint = file_to_id_to_breakpoint.get(file, {})
-                            if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
-                                existing = id_to_pybreakpoint[breakpoint_id]
-                                sys.stderr.write('Removed breakpoint:%s - line:%s - func_name:%s (id: %s)\n' % (
-                                    file, existing.line, existing.func_name.encode('utf-8'), breakpoint_id))
+                                del id_to_pybreakpoint[breakpoint_id]
+                                self.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
+                                if self.plugin is not None:
+                                    self.has_plugin_line_breaks = self.plugin.has_line_breaks()
 
-                            del id_to_pybreakpoint[breakpoint_id]
-                            self.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
-                        except KeyError:
-                            pydev_log.error("Error removing breakpoint: Breakpoint id not found: %s id: %s. Available ids: %s\n" % (
-                                file, breakpoint_id, DictKeys(id_to_pybreakpoint)))
+                            except KeyError:
+                                pydev_log.error("Error removing breakpoint: Breakpoint id not found: %s id: %s. Available ids: %s\n" % (
+                                    file, breakpoint_id, DictKeys(id_to_pybreakpoint)))
 
 
                 elif cmd_id == CMD_EVALUATE_EXPRESSION or cmd_id == CMD_EXEC_EXPRESSION:
@@ -1022,29 +1056,71 @@ class PyDB:
                         pass
 
                 elif cmd_id == CMD_ADD_EXCEPTION_BREAK:
-                    exception, notify_always, notify_on_terminate = text.split('\t', 2)
-                    exception_breakpoint = self.add_break_on_exception(
-                        exception,
-                        notify_always=int(notify_always) > 0,
-                        notify_on_terminate = int(notify_on_terminate) == 1,
-                        notify_on_first_raise_only=int(notify_always) == 2
-                    )
-                    if exception_breakpoint is not None:
-                        self.update_after_exceptions_added([exception_breakpoint])
+                    if text.find('\t') != -1:
+                        exception, notify_always, notify_on_terminate = text.split('\t', 2)
+                    else:
+                        exception, notify_always, notify_on_terminate = text, 0, 0
+
+                    if exception.find('-') != -1:
+                        type, exception = exception.split('-')
+                    else:
+                        type = 'python'
+
+                    if type == 'python':
+                        exception_breakpoint = self.add_break_on_exception(
+                            exception,
+                            notify_always=int(notify_always) > 0,
+                            notify_on_terminate = int(notify_on_terminate) == 1,
+                            notify_on_first_raise_only=int(notify_always) == 2
+                        )
+
+                        if exception_breakpoint is not None:
+                            self.update_after_exceptions_added([exception_breakpoint])
+                    else:
+                        supported_type = False
+                        plugin = self.get_plugin_lazy_init()
+                        if plugin is not None:
+                            supported_type = plugin.add_breakpoint('add_exception_breakpoint', self, type, exception)
+
+                        if supported_type:
+                            self.has_plugin_exception_breaks = self.plugin.has_exception_breaks()
+                        else:
+                            raise NameError(type)
+
+
 
                 elif cmd_id == CMD_REMOVE_EXCEPTION_BREAK:
                     exception = text
-                    try:
-                        cp = self.break_on_uncaught_exceptions.copy()
-                        DictPop(cp, exception, None)
-                        self.break_on_uncaught_exceptions = cp
+                    if exception.find('-') != -1:
+                        type, exception = exception.split('-')
+                    else:
+                        type = 'python'
 
-                        cp = self.break_on_caught_exceptions.copy()
-                        DictPop(cp, exception, None)
-                        self.break_on_caught_exceptions = cp
-                    except:
-                        pydev_log.debug("Error while removing exception %s"%sys.exc_info()[0]);
-                    update_exception_hook(self)
+                    if type == 'python':
+                        try:
+                            cp = self.break_on_uncaught_exceptions.copy()
+                            DictPop(cp, exception, None)
+                            self.break_on_uncaught_exceptions = cp
+
+                            cp = self.break_on_caught_exceptions.copy()
+                            DictPop(cp, exception, None)
+                            self.break_on_caught_exceptions = cp
+                        except:
+                            pydev_log.debug("Error while removing exception %s"%sys.exc_info()[0])
+                        update_exception_hook(self)
+                    else:
+                        supported_type = False
+                        
+                        # I.e.: no need to initialize lazy (if we didn't have it in the first place, we can't remove
+                        # anything from it anyways).
+                        plugin = self.plugin 
+                        if plugin is not None:
+                            supported_type = plugin.remove_exception_breakpoint(self, type, exception)
+
+                        if supported_type:
+                            self.has_plugin_exception_breaks = self.plugin.has_exception_breaks()
+                        else:
+                            raise NameError(type)
 
                 elif cmd_id == CMD_LOAD_SOURCE:
                     path = text
@@ -1057,17 +1133,21 @@ class PyDB:
 
                 elif cmd_id == CMD_ADD_DJANGO_EXCEPTION_BREAK:
                     exception = text
+                    plugin = self.get_plugin_lazy_init()
+                    if plugin is not None:
+                        plugin.add_breakpoint('add_exception_breakpoint', self, 'django', exception)
+                        self.has_plugin_exception_breaks = self.plugin.has_exception_breaks()
 
-                    self.django_exception_break[exception] = True
-                    self.setTracingForUntracedContexts()
 
                 elif cmd_id == CMD_REMOVE_DJANGO_EXCEPTION_BREAK:
                     exception = text
 
-                    try:
-                        del self.django_exception_break[exception]
-                    except :
-                        pass
+                    # I.e.: no need to initialize lazy (if we didn't have it in the first place, we can't remove
+                    # anything from it anyways).
+                    plugin = self.plugin
+                    if plugin is not None:
+                        plugin.remove_exception_breakpoint(self, 'django', exception)
+                        self.has_plugin_exception_breaks = self.plugin.has_exception_breaks()
 
                 elif cmd_id == CMD_EVALUATE_CONSOLE_EXPRESSION:
                     # Command which takes care for the debug console communication
@@ -1997,6 +2077,7 @@ if __name__ == '__main__':
             finally:
                 dispatcher.close()
         else:
+            pydev_log.info("pydev debugger: starting\n")
             pydev_log.info("pydev debugger: starting\n")
 
             try:
