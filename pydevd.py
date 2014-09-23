@@ -9,8 +9,6 @@ pydev_monkey_qt.patch_qt()
 
 import traceback
 
-from pydevd_plugin_utils import PluginManager
-
 from pydevd_frame_utils import add_exception_to_frame
 import pydev_imports
 from pydevd_breakpoints import * #@UnusedWildImport
@@ -95,6 +93,10 @@ import _pydev_threading as threading
 import os
 import atexit
 
+SUPPORT_PLUGINS = not IS_JYTH_LESS25
+PluginManager = None
+if SUPPORT_PLUGINS:
+    from pydevd_plugin_utils import PluginManager
 
 threadingEnumerate = threading.enumerate
 threadingCurrentThread = threading.currentThread
@@ -351,7 +353,13 @@ class PyDB:
         self.filename_to_lines_where_exceptions_are_ignored = {}
 
         #working with plugins
-        self.plugin = PluginManager(self)
+        if SUPPORT_PLUGINS:
+            self.plugin = PluginManager(self)
+        else:
+            self.plugin = None
+        self.num_of_plugin_line_breaks = 0
+        self.num_of_plugin_exception_breaks = 0
+
 
     def haveAliveThreads(self):
         for t in threadingEnumerate():
@@ -858,9 +866,12 @@ class PyDB:
                         file_to_id_to_breakpoint = self.file_to_id_to_line_breakpoint
                         supported_type = True
                     else:
-                        result = self.plugin.add_breakpoint('add_line_breakpoint', self, type, file, line, condition, expression, func_name)
+                        result = None
+                        if self.plugin:
+                            result = self.plugin.add_breakpoint('add_line_breakpoint', self, type, file, line, condition, expression, func_name)
                         if result is not None:
                             supported_type = True
+                            self.num_of_plugin_line_breaks += 1
                             breakpoint, breakpoints = result
                             file_to_id_to_breakpoint = self.file_to_id_to_plugin_breakpoint
                         else:
@@ -903,7 +914,7 @@ class PyDB:
                         if breakpoint_type == 'python-line':
                             breakpoints = self.breakpoints
                             file_to_id_to_breakpoint = self.file_to_id_to_line_breakpoint
-                        else:
+                        elif self.plugin:
                             result = self.plugin.get_breakpoints(self, breakpoint_type)
                             if result is not None:
                                 file_to_id_to_breakpoint = self.file_to_id_to_plugin_breakpoint
@@ -921,6 +932,7 @@ class PyDB:
 
                                 del id_to_pybreakpoint[breakpoint_id]
                                 self.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
+                                self.num_of_plugin_line_breaks -= 1
                             except KeyError:
                                 pydev_log.error("Error removing breakpoint: Breakpoint id not found: %s id: %s. Available ids: %s\n" % (
                                     file, breakpoint_id, DictKeys(id_to_pybreakpoint)))
@@ -1059,10 +1071,14 @@ class PyDB:
                         if exception_breakpoint is not None:
                             self.update_after_exceptions_added([exception_breakpoint])
                     else:
-                        supported_type = self.plugin.add_breakpoint('add_exception_breakpoint', self, type, exception)
+                        supported_type = False
+                        if self.plugin:
+                            supported_type = self.plugin.add_breakpoint('add_exception_breakpoint', self, type, exception)
 
                         if not supported_type:
                             raise NameError(type)
+                        else:
+                            self.num_of_plugin_exception_breaks += 1
 
 
 
@@ -1086,10 +1102,14 @@ class PyDB:
                             pydev_log.debug("Error while removing exception %s"%sys.exc_info()[0])
                         update_exception_hook(self)
                     else:
-                        supported_type = self.plugin.remove_exception_breakpoint(self, type, exception)
+                        supported_type = False
+                        if self.plugin:
+                            supported_type = self.plugin.remove_exception_breakpoint(self, type, exception)
 
                         if not supported_type:
                             raise NameError(type)
+                        else:
+                            self.num_of_plugin_exception_breaks -= 1
 
                 elif cmd_id == CMD_LOAD_SOURCE:
                     path = text
@@ -1102,14 +1122,16 @@ class PyDB:
 
                 elif cmd_id == CMD_ADD_DJANGO_EXCEPTION_BREAK:
                     exception = text
-
-                    self.plugin.add_breakpoint('add_exception_breakpoint', self, 'django', exception)
+                    if self.plugin:
+                        self.plugin.add_breakpoint('add_exception_breakpoint', self, 'django', exception)
+                    self.num_of_plugin_exception_breaks += 1
 
 
                 elif cmd_id == CMD_REMOVE_DJANGO_EXCEPTION_BREAK:
                     exception = text
-
-                    self.plugin.remove_exception_breakpoint(self, 'django', exception)
+                    if self.plugin:
+                        self.plugin.remove_exception_breakpoint(self, 'django', exception)
+                    self.num_of_plugin_exception_breaks -= 1
 
                 elif cmd_id == CMD_EVALUATE_CONSOLE_EXPRESSION:
                     # Command which takes care for the debug console communication
@@ -2039,6 +2061,7 @@ if __name__ == '__main__':
             finally:
                 dispatcher.close()
         else:
+            pydev_log.info("pydev debugger: starting\n")
             pydev_log.info("pydev debugger: starting\n")
 
             try:
