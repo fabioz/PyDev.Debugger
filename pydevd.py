@@ -93,7 +93,7 @@ import _pydev_threading as threading
 import os
 import atexit
 
-SUPPORT_PLUGINS = not IS_JYTHON
+SUPPORT_PLUGINS = not IS_JYTH_LESS25
 PluginManager = None
 if SUPPORT_PLUGINS:
     from pydevd_plugin_utils import PluginManager
