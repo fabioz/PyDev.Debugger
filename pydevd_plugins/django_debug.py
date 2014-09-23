@@ -1,6 +1,6 @@
 from pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
 import inspect
-from pydevd_constants import STATE_SUSPEND, GetThreadId, DictContains
+from pydevd_constants import STATE_SUSPEND, GetThreadId, DictContains, DictIterItems
 from pydevd_file_utils import NormFileToServer, GetFileNameAndBaseFromFile
 from pydevd_breakpoints import LineBreakpoint, get_exception_name
 import pydevd_vars
@@ -255,6 +255,7 @@ class DjangoTemplateFrame:
                 if k == name:
                     d[k] = value
 
+
 def _is_django_exception_break_context(frame):
     try:
         name = frame.f_code.co_name
@@ -275,8 +276,16 @@ def can_not_skip(plugin, mainDebugger, pydb_frame, frame):
             return True
     return False
 
-def has_exception_breaks(plugin, mainDebugger):
-    return mainDebugger.django_exception_break
+def has_exception_breaks(plugin):
+    if len(plugin.main_debugger.django_exception_break) > 0:
+        return True
+    return False
+
+def has_line_breaks(plugin):
+    for file, breakpoints in DictIterItems(plugin.main_debugger.django_breakpoints):
+        if len(breakpoints) > 0:
+            return True
+    return False
 
 
 def cmd_step_into(plugin, mainDebugger, frame, event, args, stop_info, stop):

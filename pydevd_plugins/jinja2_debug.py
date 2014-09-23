@@ -1,6 +1,6 @@
 import traceback
 from pydevd_breakpoints import LineBreakpoint, get_exception_name
-from pydevd_constants import GetThreadId, STATE_SUSPEND, DictContains
+from pydevd_constants import GetThreadId, STATE_SUSPEND, DictContains, DictIterItems
 from pydevd_comm import CMD_SET_BREAK, CMD_STEP_OVER, CMD_ADD_EXCEPTION_BREAK
 import pydevd_vars
 from pydevd_file_utils import GetFileNameAndBaseFromFile
@@ -144,6 +144,8 @@ class Jinja2TemplateFrame:
         for k, v in self.back_context.items():
             if k == name:
                 self.back_context.vars[k] = value
+        print(self.back_context.vars)
+
 
 def _is_missing(item):
     if item.__class__.__name__ == 'MissingType':
@@ -195,8 +197,16 @@ def _get_jinja2_template_filename(frame):
 #=======================================================================================================================
 
 
-def has_exception_breaks(plugin, pydb):
-    return pydb.jinja2_exception_break
+def has_exception_breaks(plugin):
+    if len(plugin.main_debugger.jinja2_exception_break) > 0:
+        return True
+    return False
+
+def has_line_breaks(plugin):
+    for file, breakpoints in DictIterItems(plugin.main_debugger.jinja2_breakpoints):
+        if len(breakpoints) > 0:
+            return True
+    return False
 
 def can_not_skip(plugin, pydb, pydb_frame, frame):
     if pydb.jinja2_breakpoints and _is_jinja2_render_call(frame):

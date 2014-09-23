@@ -231,7 +231,7 @@ class PyDBFrame:
             plugin_manager = main_debugger.plugin
 
             is_exception_event = event == 'exception'
-            has_exception_breakpoints = main_debugger.break_on_caught_exceptions or main_debugger.num_of_plugin_exception_breaks
+            has_exception_breakpoints = main_debugger.break_on_caught_exceptions or main_debugger.has_plugin_exception_breaks
 
             if is_exception_event:
                 if has_exception_breakpoints:
@@ -271,7 +271,7 @@ class PyDBFrame:
                     can_skip = (step_cmd is None and stop_frame is None)\
                         or (step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and stop_frame is not frame)
 
-                if can_skip and plugin_manager is not None and main_debugger.num_of_plugin_line_breaks:
+                if can_skip and plugin_manager is not None and main_debugger.has_plugin_line_breaks:
                     can_skip = not plugin_manager.can_not_skip(main_debugger, self, frame)
 
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
@@ -327,7 +327,7 @@ class PyDBFrame:
                     stop = True
                     if step_cmd == CMD_STEP_OVER and stop_frame is frame and event in ('line', 'return'):
                         stop = False #we don't stop on breakpoint if we have to stop by step-over (it will be processed later)
-                elif plugin_manager is not None and main_debugger.num_of_plugin_line_breaks:
+                elif plugin_manager is not None and main_debugger.has_plugin_line_breaks:
                     result = plugin_manager.get_breakpoint(main_debugger, self, frame, event, self._args)
                     if result:
                         exist_result = True
