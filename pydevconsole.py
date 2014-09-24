@@ -80,9 +80,17 @@ try:
         from pydev_imports import execfile
 
         __builtin__.execfile = execfile
-
 except:
     pass
+
+# Pull in runfile, the interface to UMD that wraps execfile
+from pydev_umd import runfile, _set_globals_function
+try:
+    import builtins
+    builtins.runfile = runfile
+except:
+    import __builtin__
+    __builtin__.runfile = runfile
 
 
 #=======================================================================================================================
@@ -226,7 +234,7 @@ except:
 #=======================================================================================================================
 # _DoExit
 #=======================================================================================================================
-def _DoExit(*args):
+def DoExit(*args):
     '''
         We have to override the exit because calling sys.exit will only actually exit the main thread,
         and as we're in a Xml-rpc server, that won't work.
@@ -264,6 +272,9 @@ def start_server(host, port, interpreter):
         sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, client_port))
         raise
 
+    # Tell UMD the proper default namespace
+    _set_globals_function(interpreter.getNamespace)
+
     server.register_function(interpreter.execLine)
     server.register_function(interpreter.execMultipleLines)
     server.register_function(interpreter.getCompletions)
@@ -298,7 +309,7 @@ def start_server(host, port, interpreter):
 def StartServer(host, port, client_port):
     #replace exit (see comments on method)
     #note that this does not work in jython!!! (sys method can't be replaced).
-    sys.exit = _DoExit
+    sys.exit = DoExit
 
     interpreter = InterpreterInterface(host, client_port, threading.currentThread())
 
@@ -444,7 +455,13 @@ def consoleExec(thread_id, frame_id, expression):
 # main
 #=======================================================================================================================
 if __name__ == '__main__':
-    sys.stdin = BaseStdIn()
+    #Important: don't use this module directly as the __main__ module, rather, import itself as pydevconsole
+    #so that we don't get multiple pydevconsole modules if it's executed directly (otherwise we'd have multiple
+    #representations of its classes).
+    #See: https://sw-brainwy.rhcloud.com/tracker/PyDev/446: 
+    #'Variables' and 'Expressions' views stopped working when debugging interactive console
+    import pydevconsole
+    sys.stdin = pydevconsole.BaseStdIn()
     port, client_port = sys.argv[1:3]
     import pydev_localhost
 
@@ -453,4 +470,4 @@ if __name__ == '__main__':
 
         client_port = p
 
-    StartServer(pydev_localhost.get_localhost(), int(port), int(client_port))
+    pydevconsole.StartServer(pydev_localhost.get_localhost(), int(port), int(client_port))
