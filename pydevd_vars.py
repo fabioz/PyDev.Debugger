@@ -266,7 +266,7 @@ def customOperation(thread_id, frame_id, scope, attrs, style, code_or_file, oper
         namespace = {'__name__': '<customOperation>'}
         if style == "EXECFILE":
             namespace['__file__'] = code_or_file
-            execfile(code_or_file, namespace, namespace
+            execfile(code_or_file, namespace, namespace)
         else:  # style == EXEC
             namespace['__file__'] = '<customOperationCode>'
             Exec(code_or_file, namespace, namespace)
