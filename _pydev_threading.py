@@ -1,4 +1,11 @@
-from threading import *
+from threading import * # Make up for things we may forget @UnusedWildImport
+
+# Force what we know we need
+from threading import enumerate, currentThread, Condition, Event, Timer, Thread, Lock
+try:
+    from threading import settrace
+except:
+    pass
 
 
 try:
