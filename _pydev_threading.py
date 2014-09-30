@@ -1,8 +1,4 @@
-from threading import enumerate, currentThread, Condition, Event, Timer, Thread
-try:
-    from threading import settrace
-except:
-    pass
+from threading import *
 
 
 try:
