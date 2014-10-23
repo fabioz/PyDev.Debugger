@@ -1410,7 +1410,7 @@ if __name__ == '__main__':
 #           
 #         suite.addTests(unittest.makeSuite(TestIronPython))
 #         
-#         suite.addTests(unittest.makeSuite(TestPython))
+        suite.addTests(unittest.makeSuite(TestPython))
 
 
 
@@ -1420,9 +1420,9 @@ if __name__ == '__main__':
 #         suite.addTest(TestIronPython('testCase3'))
 #         suite.addTest(TestIronPython('testCase7'))
 #         
-        suite.addTest(TestPython('testCaseQthread1'))
-        suite.addTest(TestPython('testCaseQthread2'))
-        suite.addTest(TestPython('testCaseQthread3'))
+#         suite.addTest(TestPython('testCaseQthread1'))
+#         suite.addTest(TestPython('testCaseQthread2'))
+#         suite.addTest(TestPython('testCaseQthread3'))
         
 #         suite.addTest(TestPython('testCase4'))
 

@@ -28,69 +28,74 @@ class ExceptionOnEvaluate:
 
 #------------------------------------------------------------------------------------------------------ resolvers in map
 
-if not sys.platform.startswith("java"):
-    typeMap = [
-            #None means that it should not be treated as a compound variable
-
-            #isintance does not accept a tuple on some versions of python, so, we must declare it expanded
-            (type(None), None,),
-            (int, None),
-            (float, None),
-            (complex, None),
-            (str, None),
-            (tuple, pydevd_resolver.tupleResolver),
-            (list, pydevd_resolver.tupleResolver),
-            (dict, pydevd_resolver.dictResolver),
-    ]
-
-    try:
-        typeMap.append((long, None))
-    except:
-        pass #not available on all python versions
-
-    try:
-        typeMap.append((unicode, None))
-    except:
-        pass #not available on all python versions
-
-    try:
-        typeMap.append((set, pydevd_resolver.setResolver))
-    except:
-        pass #not available on all python versions
-
-    try:
-        typeMap.append((frozenset, pydevd_resolver.setResolver))
-    except:
-        pass #not available on all python versions
-
-    try:
-        import numpy
-        typeMap.append((numpy.ndarray, pydevd_resolver.ndarrayResolver))
-    except:
-        pass  #numpy may not be installed
-
-    if frame_type is not None:
-        typeMap.append((frame_type, pydevd_resolver.frameResolver))
+_TYPE_MAP = None
 
 
-else: #platform is java
-    from org.python import core #@UnresolvedImport
-    typeMap = [
-            (core.PyNone, None),
-            (core.PyInteger, None),
-            (core.PyLong, None),
-            (core.PyFloat, None),
-            (core.PyComplex, None),
-            (core.PyString, None),
-            (core.PyTuple, pydevd_resolver.tupleResolver),
-            (core.PyList, pydevd_resolver.tupleResolver),
-            (core.PyDictionary, pydevd_resolver.dictResolver),
-            (core.PyStringMap, pydevd_resolver.dictResolver),
-    ]
-
-    if hasattr(core, 'PyJavaInstance'):
-        #Jython 2.5b3 removed it.
-        typeMap.append((core.PyJavaInstance, pydevd_resolver.instanceResolver))
+def _update_type_map():
+    global _TYPE_MAP
+    if not sys.platform.startswith("java"):
+        _TYPE_MAP = [
+                #None means that it should not be treated as a compound variable
+    
+                #isintance does not accept a tuple on some versions of python, so, we must declare it expanded
+                (type(None), None,),
+                (int, None),
+                (float, None),
+                (complex, None),
+                (str, None),
+                (tuple, pydevd_resolver.tupleResolver),
+                (list, pydevd_resolver.tupleResolver),
+                (dict, pydevd_resolver.dictResolver),
+        ]
+    
+        try:
+            _TYPE_MAP.append((long, None))
+        except:
+            pass #not available on all python versions
+    
+        try:
+            _TYPE_MAP.append((unicode, None))
+        except:
+            pass #not available on all python versions
+    
+        try:
+            _TYPE_MAP.append((set, pydevd_resolver.setResolver))
+        except:
+            pass #not available on all python versions
+    
+        try:
+            _TYPE_MAP.append((frozenset, pydevd_resolver.setResolver))
+        except:
+            pass #not available on all python versions
+    
+        try:
+            import numpy
+            _TYPE_MAP.append((numpy.ndarray, pydevd_resolver.ndarrayResolver))
+        except:
+            pass  #numpy may not be installed
+    
+        if frame_type is not None:
+            _TYPE_MAP.append((frame_type, pydevd_resolver.frameResolver))
+    
+    
+    else: #platform is java
+        from org.python import core #@UnresolvedImport
+        _TYPE_MAP = [
+                (core.PyNone, None),
+                (core.PyInteger, None),
+                (core.PyLong, None),
+                (core.PyFloat, None),
+                (core.PyComplex, None),
+                (core.PyString, None),
+                (core.PyTuple, pydevd_resolver.tupleResolver),
+                (core.PyList, pydevd_resolver.tupleResolver),
+                (core.PyDictionary, pydevd_resolver.dictResolver),
+                (core.PyStringMap, pydevd_resolver.dictResolver),
+        ]
+    
+        if hasattr(core, 'PyJavaInstance'):
+            #Jython 2.5b3 removed it.
+            _TYPE_MAP.append((core.PyJavaInstance, pydevd_resolver.instanceResolver))
 
 
 def getType(o):
@@ -117,7 +122,9 @@ def getType(o):
         if type_name == 'org.python.core.PyArray':
             return (type_object, type_name, pydevd_resolver.jyArrayResolver)
 
-        for t in typeMap:
+        if _TYPE_MAP is None:
+            _update_type_map()
+        for t in _TYPE_MAP:
             if isinstance(o, t[0]):
                 return (type_object, type_name, t[1])
     except:
