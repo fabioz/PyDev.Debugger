@@ -300,14 +300,15 @@ class _PyDevFrontEnd:
 
     version = release.__version__
 
-    def __init__(self, *args, **kwarg):
+    def __init__(self, show_banner=True):
 
         # Create and initialize our IPython instance.
         self.ipython = PyDevTerminalInteractiveShell.instance()
 
-        # Display the IPython banner, this has version info and
-        # help info
-        self.ipython.show_banner()
+        if show_banner:
+            # Display the IPython banner, this has version info and
+            # help info
+            self.ipython.show_banner()
 
 
         self._curr_exec_line = 0
@@ -470,9 +471,9 @@ class _PyDevFrontEndContainer:
     _instance = None
     _last_host_port = None
     
-def get_pydev_frontend(pydev_host, pydev_client_port):
+def get_pydev_frontend(pydev_host, pydev_client_port, show_banner=True):
     if _PyDevFrontEndContainer._instance is None:
-        _PyDevFrontEndContainer._instance = _PyDevFrontEnd()
+        _PyDevFrontEndContainer._instance = _PyDevFrontEnd(show_banner=show_banner)
         
     if _PyDevFrontEndContainer._last_host_port != (pydev_host, pydev_client_port):
         _PyDevFrontEndContainer._last_host_port = pydev_host, pydev_client_port

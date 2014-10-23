@@ -322,7 +322,7 @@ def get_interpreter():
     try:
         interpreterInterface = getattr(__builtin__, 'interpreter')
     except AttributeError:
-        interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
+        interpreterInterface = InterpreterInterface(None, None, threading.currentThread(), show_banner=False)
         setattr(__builtin__, 'interpreter', interpreterInterface)
 
     return interpreterInterface
