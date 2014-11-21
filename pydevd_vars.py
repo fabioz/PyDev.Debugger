@@ -278,39 +278,39 @@ def customOperation(thread_id, frame_id, scope, attrs, style, code_or_file, oper
 
 
 def evalInContext(expression, globals, locals):
-            result = None
-            try:
+    result = None
+    try:
         result = eval(expression, globals, locals)
-            except Exception:
-                s = StringIO()
-                traceback.print_exc(file=s)
-                result = s.getvalue()
+    except Exception:
+        s = StringIO()
+        traceback.print_exc(file=s)
+        result = s.getvalue()
 
-                try:
-                    try:
-                        etype, value, tb = sys.exc_info()
-                        result = value
-                    finally:
-                        etype = value = tb = None
-                except:
-                    pass
+        try:
+            try:
+                etype, value, tb = sys.exc_info()
+                result = value
+            finally:
+                etype = value = tb = None
+        except:
+            pass
 
-                result = ExceptionOnEvaluate(result)
+        result = ExceptionOnEvaluate(result)
 
-                # Ok, we have the initial error message, but let's see if we're dealing with a name mangling error...
-                try:
-                    if '__' in expression:
-                        # Try to handle '__' name mangling...
-                        split = expression.split('.')
+        # Ok, we have the initial error message, but let's see if we're dealing with a name mangling error...
+        try:
+            if '__' in expression:
+                # Try to handle '__' name mangling...
+                split = expression.split('.')
                 curr = locals.get(split[0])
-                        for entry in split[1:]:
-                            if entry.startswith('__') and not hasattr(curr, entry):
-                                entry = '_%s%s' % (curr.__class__.__name__, entry)
-                            curr = getattr(curr, entry)
+                for entry in split[1:]:
+                    if entry.startswith('__') and not hasattr(curr, entry):
+                        entry = '_%s%s' % (curr.__class__.__name__, entry)
+                    curr = getattr(curr, entry)
 
-                        result = curr
-                except:
-                    pass
+                result = curr
+        except:
+            pass
     return result
 
 
