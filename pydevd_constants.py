@@ -1,6 +1,7 @@
 '''
 This module holds the constants used for specifying the states of the debugger.
 '''
+from __future__ import nested_scopes
 STATE_RUN = 1
 STATE_SUSPEND = 2
 
@@ -73,7 +74,11 @@ except AttributeError:
     except:
         IS_64_BITS = False
 
-SUPPORT_GEVENT = os.getenv('GEVENT_SUPPORT', 'False') == 'True'
+try:
+    SUPPORT_GEVENT = os.getenv('GEVENT_SUPPORT', 'False') == 'True'
+except:
+    # Jython 2.1 doesn't accept that construct
+    SUPPORT_GEVENT = False
 
 USE_LIB_COPY = SUPPORT_GEVENT and not IS_PY3K and sys.version_info[1] >= 6
 import _pydev_threading as threading
@@ -96,12 +101,12 @@ except:
         except NameError:
             def DictContains(d, key):
                 return d.has_key(key)
-#=======================================================================================================================
-# Jython?
-#=======================================================================================================================
 try:
     DictPop = dict.pop
 except:
+    #=======================================================================================================================
+    # Jython 2.1
+    #=======================================================================================================================
     def DictPop(d, key, default=None):
         try:
             ret = d[key]
@@ -127,16 +132,32 @@ if IS_PY3K:
         return list(d.items())
 
 else:
-    DictKeys = dict.keys
+    try:
+        DictKeys = dict.keys
+    except:
+        def DictKeys(d):
+            return d.keys()
+    
     try:
         DictIterValues = dict.itervalues
     except:
-        DictIterValues = dict.values #Older versions don't have the itervalues
+        try:
+            DictIterValues = dict.values #Older versions don't have the itervalues
+        except:
+            def DictIterValues(d):
+                return d.values()
 
-    DictValues = dict.values
+    try:
+        DictValues = dict.values
+    except:
+        def DictValues(d):
+            return d.values()
 
     def DictIterItems(d):
-        return d.iteritems()
+        try:
+            return d.iteritems()
+        except:
+            return d.items()
 
     def DictItems(d):
         return d.items()

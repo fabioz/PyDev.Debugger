@@ -1,11 +1,15 @@
 from threading import * # Make up for things we may forget @UnusedWildImport
 
 # Force what we know we need
-from threading import enumerate, currentThread, Condition, Event, Timer, Thread, Lock
+from threading import enumerate, currentThread, Condition, Event, Thread, Lock
 try:
     from threading import settrace
 except:
     pass
+try:
+    from threading import Timer
+except:
+    pass # Jython 2.1
 
 
 try:
