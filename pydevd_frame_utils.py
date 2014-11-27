@@ -1,5 +1,3 @@
-from pydevd_constants import object
-
 class Frame(object):
     def __init__(
             self,

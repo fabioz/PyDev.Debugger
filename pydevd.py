@@ -2052,7 +2052,7 @@ if __name__ == '__main__':
 
     pydevd_vm_type.SetupType(setup.get('vm_type', None))
 
-    if os.getenv('PYCHARM_DEBUG'):
+    if os.getenv('PYCHARM_DEBUG') or os.getenv('PYDEV_DEBUG'):
         set_debug(setup)
 
     DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = setup.get('DEBUG_RECORD_SOCKET_READS', False)

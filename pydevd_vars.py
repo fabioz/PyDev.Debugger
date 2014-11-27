@@ -398,7 +398,10 @@ def array_to_xml(array, roffset, coffset, rows, cols, format):
         rows = 1
         cols = 1
     elif rows == 1 or cols == 1:
-        is_row = True if (rows == 1) else False
+        if rows == 1:
+            is_row = True
+        else:
+            is_row = False
         if is_row:
             array = array[roffset:]
         else:
@@ -424,7 +427,10 @@ def array_to_xml(array, roffset, coffset, rows, cols, format):
                 if rows == 1 and cols == 1:
                     value = array
                 else:
-                    dim = col if (rows == 1) else row
+                    if rows == 1:
+                        dim = col
+                    else:
+                        dim = row
                     value = array[dim]
             else:
                 value = array[row][col]
