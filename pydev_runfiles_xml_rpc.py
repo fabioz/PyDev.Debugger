@@ -80,6 +80,10 @@ class ServerFacade(object):
 
 
     def notifyTest(self, *args):
+        new_args = []
+        for arg in args:
+            new_args.append(_encode_if_needed(arg))
+        args = tuple(new_args)
         self.notifications_queue.put_nowait(ParallelNotification('notifyTest', args))
 
 

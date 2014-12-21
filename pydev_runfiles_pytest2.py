@@ -32,6 +32,8 @@ def connect_to_server_for_communication_to_xml_rpc_on_xdist():
         else:
             pydev_runfiles_xml_rpc.InitializeServer(int(port), daemon=True)
 
+PY2 = sys.version_info[0] <= 2
+PY3 = not PY2
 
 #===================================================================================================
 # Mocking to get clickable file representations
@@ -47,7 +49,18 @@ def _MockFileRepresentation():
         if i != -1:
             msg = msg[:i]
 
-        tw.line('File "%s", line %s\n%s' %(os.path.abspath(self.path), self.lineno, msg))
+        path = os.path.abspath(self.path)
+        
+        if PY2:
+            if not isinstance(path, unicode):  # Note: it usually is NOT unicode...
+                path = path.decode(sys.getfilesystemencoding(), 'replace')
+                
+            if not isinstance(msg, unicode):  # Note: it usually is unicode...
+                msg = msg.decode('utf-8', 'replace')
+            unicode_line = unicode('File "%s", line %s\n%s') % (path, self.lineno, msg)
+            tw.line(unicode_line)
+        else:
+            tw.line('File "%s", line %s\n%s' % (path, self.lineno, msg))
 
     code.ReprFileLocation.toterminal = toterminal
 
@@ -209,6 +222,10 @@ def pytest_runtest_setup(item):
     else:
         class_name = None
     for test in accept_tests:
+        # This happens when parameterizing pytest tests.
+        i = name.find('[')
+        if i > 0:
+            name = name[:i]
         if test == name:
             #Direct match of the test (just go on with the default loading)
             return
