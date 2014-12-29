@@ -74,6 +74,13 @@ def _update_type_map():
         except:
             pass  #numpy may not be installed
     
+        try:
+            from django.utils.datastructures import MultiValueDict
+            _TYPE_MAP.insert(0, (MultiValueDict, pydevd_resolver.multiValueDictResolver))
+            #we should put it before dict
+        except:
+            pass  #django may not be installed
+
         if frame_type is not None:
             _TYPE_MAP.append((frame_type, pydevd_resolver.frameResolver))
     
