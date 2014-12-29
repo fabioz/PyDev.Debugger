@@ -138,7 +138,6 @@ CMD_SHOW_CONSOLE = 142
 
 CMD_GET_ARRAY = 143
 
-
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901
@@ -455,6 +454,8 @@ class WriterThread(PyDBDaemonThread):
             if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 0:
                 traceback.print_exc()
 
+    def empty(self):
+        return self.cmdQueue.empty()
 
 
 
@@ -967,8 +968,6 @@ class InternalGetVariable(InternalThreadCommand):
 #=======================================================================================================================
 # InternalGetArray
 #=======================================================================================================================
-from pydevd_vars import getVariable
-
 class InternalGetArray(InternalThreadCommand):
     def __init__(self, seq, roffset, coffset, rows, cols, format, thread_id, frame_id, scope, attrs):
         self.sequence = seq
