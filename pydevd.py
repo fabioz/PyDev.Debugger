@@ -1900,7 +1900,7 @@ def _locked_settrace(
         
         #Suspend as the last thing after all tracing is in place.
         if suspend:
-            debugger.setSuspend(t, CMD_SET_BREAK)
+            debugger.setSuspend(t, CMD_THREAD_SUSPEND)
 
         PyDBCommandThread(debugger).start()
         CheckOutputThread(debugger).start()
@@ -1926,7 +1926,7 @@ def _locked_settrace(
 
 
         if suspend:
-            debugger.setSuspend(t, CMD_SET_BREAK)
+            debugger.setSuspend(t, CMD_THREAD_SUSPEND)
 
 
 def stoptrace():
