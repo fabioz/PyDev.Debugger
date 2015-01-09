@@ -187,14 +187,14 @@ if hasattr(_temp, '_is_stopped'): # Python 3.4 has this
             return not t._is_stopped
         except:
             return t.isAlive()
-    
+
 elif hasattr(_temp, '_Thread__stopped'): # Python 2.7 has this
     def isThreadAlive(t):
         try:
             return not t._Thread__stopped
         except:
             return t.isAlive()
-    
+
 else: # Haven't checked all other versions, so, let's use the regular isAlive call in this case.
     def isThreadAlive(t):
         return t.isAlive()
@@ -261,35 +261,36 @@ class CheckOutputThread(PyDBDaemonThread):
         thread.start()
 
     def OnRun(self):
-            if self.dontTraceMe:
+        if self.dontTraceMe:
 
-                disable_tracing = True
-        
-                if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON and sys.hexversion <= 0x020201f0:
-                    # don't run untraced threads if we're in jython 2.2.1 or lower
-                    # jython bug: if we start a thread and another thread changes the tracing facility
-                    # it affects other threads (it's not set only for the thread but globally)
-                    # Bug: http://sourceforge.net/tracker/index.php?func=detail&aid=1870039&group_id=12867&atid=112867
-                    disable_tracing = False
-        
-                if disable_tracing:
-                    pydevd_tracing.SetTrace(None)  # no debugging on this thread
-                    
-            while not self.killReceived:
-                if not self.pyDb.haveAliveThreads() and self.pyDb.writer.empty() \
-                        and not has_data_to_redirect():
-                    try:
-                        pydev_log.debug("No alive threads, finishing debug session")
-                        self.pyDb.FinishDebuggingSession()
-                        killAllPydevThreads()
-                    except:
-                        traceback.print_exc()
+            disable_tracing = True
 
-                    self.killReceived = True
+            if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON and sys.hexversion <= 0x020201f0:
+                # don't run untraced threads if we're in jython 2.2.1 or lower
+                # jython bug: if we start a thread and another thread changes the tracing facility
+                # it affects other threads (it's not set only for the thread but globally)
+                # Bug: http://sourceforge.net/tracker/index.php?func=detail&aid=1870039&group_id=12867&atid=112867
+                disable_tracing = False
 
-                self.pyDb.checkOutputRedirect()
+            if disable_tracing:
+                pydevd_tracing.SetTrace(None)  # no debugging on this thread
 
-                time.sleep(0.3)
+        while not self.killReceived:
+            if not self.pyDb.haveAliveThreads() and self.pyDb.writer.empty() \
+                    and not has_data_to_redirect():
+                try:
+                    pydev_log.debug("No alive threads, finishing debug session")
+                    self.pyDb.is_exiting = True
+                    self.pyDb.FinishDebuggingSession()
+                    killAllPydevThreads()
+                except:
+                    traceback.print_exc()
+
+                self.killReceived = True
+
+            self.pyDb.checkOutputRedirect()
+
+            time.sleep(0.3)
 
     def doKillPydevThread(self):
         self.killReceived = True
@@ -370,7 +371,7 @@ class PyDB:
         self.plugin = None
         self.has_plugin_line_breaks = False
         self.has_plugin_exception_breaks = False
-        
+
     def get_plugin_lazy_init(self):
         if self.plugin is None and SUPPORT_PLUGINS:
             self.plugin = PluginManager(self)
@@ -382,13 +383,13 @@ class PyDB:
             if isinstance(t, PyDBDaemonThread):
                 pydev_log.error_once(
                     'Error in debugger: Found PyDBDaemonThread through threading.enumerate().\n')
-                
+
             if getattr(t, 'is_pydev_daemon_thread', False):
                 #Important: Jython 2.5rc4 has a bug where a thread created with thread.start_new_thread won't be
                 #set as a daemon thread, so, we also have to check for the 'is_pydev_daemon_thread' flag.
                 #See: https://github.com/fabioz/PyDev.Debugger/issues/11
                 continue
-            
+
             if isThreadAlive(t) and not t.isDaemon():
                 return True
 
@@ -499,10 +500,10 @@ class PyDB:
 
                     if isinstance(t, PyDBDaemonThread):
                         pydev_log.error_once('Found PyDBDaemonThread in threading.enumerate.')
-                        
+
                     elif getattr(t, 'is_pydev_daemon_thread', False):
                         pass # I.e.: skip the DummyThreads created from pydev daemon threads
-                        
+
                     elif isThreadAlive(t):
                         program_threads_alive[thread_id] = t
 
@@ -1135,10 +1136,10 @@ class PyDB:
                         update_exception_hook(self)
                     else:
                         supported_type = False
-                        
+
                         # I.e.: no need to initialize lazy (if we didn't have it in the first place, we can't remove
                         # anything from it anyways).
-                        plugin = self.plugin 
+                        plugin = self.plugin
                         if plugin is not None:
                             supported_type = plugin.remove_exception_breakpoint(self, type, exception)
 
@@ -1518,6 +1519,8 @@ class PyDB:
             return None
 
         except Exception:
+            if self._finishDebuggingSession:
+                return None # Don't log errors when we're shutting down.
             # Log it
             try:
                 if traceback is not None:
@@ -1525,7 +1528,7 @@ class PyDB:
                     traceback.print_exc()
             except:
                 # Error logging? We're really in the interpreter shutdown...
-                # (https://github.com/fabioz/PyDev.Debugger/issues/8) 
+                # (https://github.com/fabioz/PyDev.Debugger/issues/8)
                 pass
             return None
 
@@ -1897,7 +1900,7 @@ def _locked_settrace(
 
         # Stop the tracing as the last thing before the actual shutdown for a clean exit.
         atexit.register(stoptrace)
-        
+
         #Suspend as the last thing after all tracing is in place.
         if suspend:
             debugger.setSuspend(t, CMD_THREAD_SUSPEND)
@@ -1942,15 +1945,15 @@ def stoptrace():
 
         from pydev_monkey import undo_patch_thread_modules
         undo_patch_thread_modules()
- 
+
         debugger = GetGlobalDebugger()
- 
+
         if debugger:
-  
+
             debugger.SetTraceForFrameAndParents(
                 GetFrame(), also_add_to_passed_frame=True, overwrite_prev_trace=True, dispatch_func=lambda *args:None)
             debugger.exiting()
-  
+
             killAllPydevThreads()
 
         connected = False
@@ -1982,7 +1985,7 @@ class DispatchReader(ReaderThread):
         dummy_thread = threading.currentThread()
         dummy_thread.is_pydev_daemon_thread = False
         return ReaderThread.OnRun(self)
-        
+
     def handleExcept(self):
         ReaderThread.handleExcept(self)
 
@@ -2046,7 +2049,7 @@ class SetupHolder:
 # main
 #=======================================================================================================================
 if __name__ == '__main__':
-    
+
     # parse the command line. --file is our last argument that is required
     try:
         sys.original_argv = sys.argv[:]
