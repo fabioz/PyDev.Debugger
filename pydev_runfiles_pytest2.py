@@ -136,6 +136,10 @@ def pytest_runtest_makereport(item, call):
             report_outcome = "failed"
             report_longrepr = excinfo
 
+        elif excinfo.errisinstance(pytest.xfail.Exception):
+            report_outcome = "passed"
+            report_longrepr = None
+            
         elif excinfo.errisinstance(py.test.skip.Exception):
             report_outcome = "skipped"
             r = excinfo._getreprcrash()
