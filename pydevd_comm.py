@@ -138,7 +138,6 @@ CMD_SHOW_CONSOLE = 142
 
 CMD_GET_ARRAY = 143
 
-
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901
@@ -455,6 +454,8 @@ class WriterThread(PyDBDaemonThread):
             if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 0:
                 traceback.print_exc()
 
+    def empty(self):
+        return self.cmdQueue.empty()
 
 
 
@@ -967,35 +968,39 @@ class InternalGetVariable(InternalThreadCommand):
 #=======================================================================================================================
 # InternalGetArray
 #=======================================================================================================================
-from pydevd_vars import getVariable
-
 class InternalGetArray(InternalThreadCommand):
     def __init__(self, seq, roffset, coffset, rows, cols, format, thread_id, frame_id, scope, attrs):
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
         self.scope = scope
-        self.name = attrs[-1]
-        self.attrs = attrs;
+        self.name = attrs.split("\t")[-1]
+        self.attrs = attrs
         self.roffset = int(roffset)
         self.coffset = int(coffset)
         self.rows = int(rows)
         self.cols = int(cols)
-        self.format = '\'' + format + '\''
+        self.format = format
 
     def doIt(self, dbg):
         try:
-            var = getVariable(self.thread_id, self.frame_id, 'EXPRESSION', self.attrs)
+            frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
+            var = pydevd_vars.evalInContext(self.name, frame.f_globals, frame.f_locals)
 
             xml = "<xml>"
 
+            var, metaxml, rows, cols, format = pydevd_vars.array_to_meta_xml(var, self.name, self.format)
+            xml += metaxml
+            self.format = '%' + format
+            if self.rows == -1 and self.cols == -1:
+                self.rows = rows
+                self.cols = cols
             xml += pydevd_vars.array_to_xml(var, self.roffset, self.coffset, self.rows, self.cols, self.format)
-
             xml += "</xml>"
             cmd = dbg.cmdFactory.makeGetArrayMessage(self.sequence, xml)
             dbg.writer.addCommand(cmd)
         except:
-            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error resolving array " + GetExceptionTracebackStr())
+            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error resolving array: " + GetExceptionTracebackStr())
             dbg.writer.addCommand(cmd)
 
 #=======================================================================================================================
