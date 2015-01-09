@@ -1,9 +1,13 @@
 import sys
 import threading
 import time
-
+import os
 import unittest
-import pydevd_referrers
+try:
+    import pydevd_referrers
+except:
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+    import pydevd_referrers
 from pydev_imports import StringIO
 
 #=======================================================================================================================

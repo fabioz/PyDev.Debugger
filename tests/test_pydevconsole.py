@@ -1,7 +1,13 @@
 import threading
 import unittest
 import sys
-import pydevconsole
+import os
+
+try:
+    import pydevconsole
+except:
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+    import pydevconsole
 from pydev_imports import xmlrpclib, SimpleXMLRPCServer, StringIO
 
 try:
@@ -18,16 +24,16 @@ class Test(unittest.TestCase):
     def testConsoleHello(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
-        
+
         try:
             client_port, _server_port = self.getFreeAddresses()
             client_thread = self.startClientThread(client_port)  #@UnusedVariable
             import time
             time.sleep(.3)  #let's give it some time to start the threads
-    
+
             import pydev_localhost
             interpreter = pydevconsole.InterpreterInterface(pydev_localhost.get_localhost(), client_port, threading.currentThread())
-    
+
             (result,) = interpreter.hello("Hello pydevconsole")
             self.assertEqual(result, "Hello eclipse")
         finally:
@@ -37,21 +43,19 @@ class Test(unittest.TestCase):
     def testConsoleRequests(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
-        
+
         try:
             client_port, _server_port = self.getFreeAddresses()
             client_thread = self.startClientThread(client_port)  #@UnusedVariable
             import time
             time.sleep(.3)  #let's give it some time to start the threads
-    
+
             import pydev_localhost
             from pydev_console_utils import CodeFragment
-            
+
             interpreter = pydevconsole.InterpreterInterface(pydev_localhost.get_localhost(), client_port, threading.currentThread())
             sys.stdout = StringIO()
-            interpreter.addExec(CodeFragment('class Foo:'))
-            interpreter.addExec(CodeFragment('   CONSTANT=1'))
-            interpreter.addExec(CodeFragment(''))
+            interpreter.addExec(CodeFragment('class Foo:\n    CONSTANT=1\n'))
             interpreter.addExec(CodeFragment('foo=Foo()'))
             interpreter.addExec(CodeFragment('foo.__doc__=None'))
             interpreter.addExec(CodeFragment('val = %s()' % (raw_input_name,)))
@@ -62,13 +66,13 @@ class Test(unittest.TestCase):
                 self.assertEqual(['50', 'input_request'], found)
             except:
                 self.assertEqual(['input_request'], found)  #IPython
-    
+
             comps = interpreter.getCompletions('foo.', 'foo.')
             self.assert_(
                 ('CONSTANT', '', '', '3') in comps or ('CONSTANT', '', '', '4') in comps, \
                 'Found: %s' % comps
             )
-    
+
             comps = interpreter.getCompletions('"".', '"".')
             self.assert_(
                 ('__add__', 'x.__add__(y) <==> x+y', '', '3') in comps or
@@ -77,27 +81,27 @@ class Test(unittest.TestCase):
                 ('__add__', 'x.\n__add__(y) <==> x+yx.\n__add__(y) <==> x+y', '()', '2'),
                 'Did not find __add__ in : %s' % (comps,)
             )
-    
-    
+
+
             completions = interpreter.getCompletions('', '')
             for c in completions:
                 if c[0] == 'AssertionError':
                     break
             else:
                 self.fail('Could not find AssertionError')
-    
+
             completions = interpreter.getCompletions('Assert', 'Assert')
             for c in completions:
                 if c[0] == 'RuntimeError':
                     self.fail('Did not expect to find RuntimeError there')
-    
+
             self.assert_(('__doc__', None, '', '3') not in interpreter.getCompletions('foo.CO', 'foo.'))
-    
+
             comps = interpreter.getCompletions('va', 'va')
             self.assert_(('val', '', '', '3') in comps or ('val', '', '', '4') in comps)
-    
+
             interpreter.addExec(CodeFragment('s = "mystring"'))
-    
+
             desc = interpreter.getDescription('val')
             self.assert_(desc.find('str(object) -> string') >= 0 or
                          desc == "'input_request'" or
@@ -108,7 +112,7 @@ class Test(unittest.TestCase):
                          desc.find('str(object=\'\') -> str') >= 0
                          ,
                          'Could not find what was needed in %s' % desc)
-    
+
             desc = interpreter.getDescription('val.join')
             self.assert_(desc.find('S.join(sequence) -> string') >= 0 or
                          desc.find('S.join(sequence) -> str') >= 0 or
@@ -128,25 +132,25 @@ class Test(unittest.TestCase):
             def __init__(self, client_port):
                 threading.Thread.__init__(self)
                 self.client_port = client_port
-                
+
             def run(self):
                 class HandleRequestInput:
                     def RequestInput(self):
                         client_thread.requested_input = True
                         return 'input_request'
-                    
+
                     def NotifyFinished(self, *args, **kwargs):
                         client_thread.notified_finished += 1
                         return 1
-                
+
                 handle_request_input = HandleRequestInput()
-                
+
                 import pydev_localhost
                 client_server = SimpleXMLRPCServer((pydev_localhost.get_localhost(), self.client_port), logRequests=False)
                 client_server.register_function(handle_request_input.RequestInput)
                 client_server.register_function(handle_request_input.NotifyFinished)
                 client_server.serve_forever()
-                
+
         client_thread = ClientThread(client_port)
         client_thread.requested_input = False
         client_thread.notified_finished = 0
@@ -216,20 +220,20 @@ class Test(unittest.TestCase):
                     threading.Thread.__init__(self)
                     self.client_port = client_port
                     self.server_port = server_port
-    
+
                 def run(self):
                     import pydev_localhost
                     pydevconsole.StartServer(pydev_localhost.get_localhost(), self.server_port, self.client_port)
             server_thread = ServerThread(client_port, server_port)
             server_thread.setDaemon(True)
             server_thread.start()
-    
+
             client_thread = self.startClientThread(client_port)  #@UnusedVariable
-    
+
             import time
             time.sleep(.3)  #let's give it some time to start the threads
             sys.stdout = StringIO()
-    
+
             import pydev_localhost
             server = xmlrpclib.Server('http://%s:%s' % (pydev_localhost.get_localhost(), server_port))
             server.execLine('class Foo:')
@@ -243,7 +247,7 @@ class Test(unittest.TestCase):
                 if time.time() - initial > 2:
                     raise AssertionError('Did not get the return asked before the timeout.')
                 time.sleep(.1)
-                
+
             while ['input_request'] != sys.stdout.getvalue().split():
                 if time.time() - initial > 2:
                     break
