@@ -93,17 +93,30 @@ connect(\\"127.0.0.1\\")
             check=['C:\\bin\\python.exe', 'target.py', 'connect(\\"127.0.0.1\\")', 'bar']
             sys.original_argv = ['pydevd.py', '--a=1', 'b', '--c=2', '--file', 'ignore_this.py']
 
-            self.assertEqual(pydev_monkey.patch_args(check), [
-                'C:\\bin\\python.exe',
-                '"pydevd.py"',
-                '"--a=1"',
-                '"b"',
-                '"--c=2"',
-                '"--file"',
-                'target.py',
-                'connect(\\"127.0.0.1\\")',
-                'bar',
-            ])
+            if sys.platform == 'win32':
+                self.assertEqual(pydev_monkey.patch_args(check), [
+                    'C:\\bin\\python.exe',
+                    '"pydevd.py"',
+                    '"--a=1"',
+                    '"b"',
+                    '"--c=2"',
+                    '"--file"',
+                    'target.py',
+                    'connect(\\"127.0.0.1\\")',
+                    'bar',
+                ])
+            else:
+                self.assertEqual(pydev_monkey.patch_args(check), [
+                    'C:\\bin\\python.exe',
+                    'pydevd.py',
+                    '--a=1',
+                    'b',
+                    '--c=2',
+                    '--file',
+                    'target.py',
+                    'connect(\\"127.0.0.1\\")',
+                    'bar',
+                ])
         finally:
             SetupHolder.setup = original
 
