@@ -47,7 +47,7 @@ def _get_debugger_test_file(filename):
         # jython does not support os.path.realpath
         # realpath is a no-op on systems without islink support
         rPath = os.path.abspath
-        
+
     return os.path.normcase(rPath(os.path.join(os.path.dirname(__file__), filename)))
 
 import pydevd
@@ -117,7 +117,7 @@ class AbstractWriterThread(threading.Thread):
         self.sock.close()
 
     def Write(self, s):
-        
+
         last = self.readerThread.lastReceived
         if SHOW_WRITES_AND_READS:
             print('Test Writer Thread Written %s' % (s,))
@@ -215,7 +215,7 @@ class AbstractWriterThread(threading.Thread):
             i += 1
             time.sleep(1)
             if i >= 10:
-                raise AssertionError('After %s seconds, the custom operation not received. Last found:\n%s\nExpected (encoded)\n%s' % 
+                raise AssertionError('After %s seconds, the custom operation not received. Last found:\n%s\nExpected (encoded)\n%s' %
                     (i, self.readerThread.lastReceived, expectedEncoded))
 
         return True
@@ -231,14 +231,14 @@ class AbstractWriterThread(threading.Thread):
             i += 1
             time.sleep(1)
             if i >= 10:
-                raise AssertionError('After %s seconds, the vars were not found. Last found:\n%s' % 
+                raise AssertionError('After %s seconds, the vars were not found. Last found:\n%s' %
                     (i, self.readerThread.lastReceived))
 
         return True
 
     def WaitForVar(self, expected):
         self._WaitFor(expected, 'the var was not found')
-        
+
     def _WaitFor(self, expected, error_msg):
         '''
         :param expected:
@@ -246,7 +246,7 @@ class AbstractWriterThread(threading.Thread):
         '''
         if not isinstance(expected, (list, tuple)):
             expected = [expected]
-            
+
         i = 0
         found = False
         while not found:
@@ -255,7 +255,7 @@ class AbstractWriterThread(threading.Thread):
                 if e in last:
                     found = True
                     break
-                
+
             last = unquote_plus(last)
             for e in expected:
                 if e in last:
@@ -264,11 +264,11 @@ class AbstractWriterThread(threading.Thread):
 
             if found:
                 break
-                        
+
             i += 1
             time.sleep(1)
             if i >= 10:
-                raise AssertionError('After %s seconds, %s. Last found:\n%s' % 
+                raise AssertionError('After %s seconds, %s. Last found:\n%s' %
                     (i, error_msg, last))
 
         return True
@@ -286,7 +286,7 @@ class AbstractWriterThread(threading.Thread):
             i += 1
             time.sleep(1)
             if i >= 10:
-                raise AssertionError('After %s seconds, the vars were not found. Last found:\n%s' % 
+                raise AssertionError('After %s seconds, the vars were not found. Last found:\n%s' %
                     (i, self.readerThread.lastReceived))
 
         return True
@@ -344,7 +344,7 @@ class AbstractWriterThread(threading.Thread):
 
     def WriteCustomOperation(self, locator, style, codeOrFile, operation_fn_name):
         self.Write("%s\t%s\t%s||%s\t%s\t%s" % (CMD_RUN_CUSTOM_OPERATION, self.NextSeq(), locator, style, codeOrFile, operation_fn_name))
-        
+
     def WriteEvaluateExpression(self, locator, expression):
         self.Write("113\t%s\t%s\t%s\t1" % (self.NextSeq(), locator, expression))
 
@@ -371,12 +371,12 @@ class WriterThreadCase19(AbstractWriterThread):
         threadId, frameId, line = self.WaitForBreakpointHit('111', True)
 
         assert line == 8, 'Expected return to be in line 8, was: %s' % line
-        
+
         self.WriteEvaluateExpression('%s\t%s\t%s' % (threadId, frameId, 'LOCAL'), 'a.__var')
         self.WaitForEvaluation('<var name="a.__var" type="int" value="int')
         self.WriteRunThread(threadId)
 
-        
+
         self.finishedOk = True
 
 
@@ -397,7 +397,7 @@ class WriterThreadCase18(AbstractWriterThread):
 
         self.WriteChangeVariable(thread_id, frame_id, 'a', '40')
         self.WriteRunThread(thread_id)
-        
+
         self.finishedOk = True
 
 #=======================================================================================================================
@@ -418,14 +418,38 @@ class WriterThreadCase17(AbstractWriterThread):
 
         for i in range(4):
             threadId, frameId, line = self.WaitForBreakpointHit('111', True)
-    
+
             self.WriteStepIn(threadId)
             threadId, frameId, line = self.WaitForBreakpointHit('107', True)
             # Should Skip step into properties setter
             assert line == 2, 'Expected return to be in line 2, was: %s' % line
             self.WriteRunThread(threadId)
 
-        
+
+        self.finishedOk = True
+
+#=======================================================================================================================
+# WriterThreadCase17a - [Test Case]: dont trace return
+#======================================================================================================================
+class WriterThreadCase17a(AbstractWriterThread):
+
+    TEST_FILE = _get_debugger_test_file('_debugger_case17a.py')
+
+    def run(self):
+        self.StartSocket()
+        self.WriteEnableDontTrace(True)
+        self.WriteAddBreakpoint(2, 'm1')
+        self.WriteMakeInitialRun()
+
+        threadId, frameId, line = self.WaitForBreakpointHit('111', True)
+
+        self.WriteStepIn(threadId)
+        threadId, frameId, line = self.WaitForBreakpointHit('107', True)
+        # Should Skip step into properties setter
+        assert line == 10, 'Expected return to be in line 10, was: %s' % line
+        self.WriteRunThread(threadId)
+
+
         self.finishedOk = True
 
 #=======================================================================================================================
@@ -464,12 +488,12 @@ class WriterThreadCase16(AbstractWriterThread):
 
         self.WriteGetVariable(threadId, frameId, 'bigarray')
         self.WaitForVar([
-            '<var name="min" type="int64" value="int64%253A 0" />', 
-            '<var name="min" type="int64" value="int64%3A 0" />', 
+            '<var name="min" type="int64" value="int64%253A 0" />',
+            '<var name="min" type="int64" value="int64%3A 0" />',
             '<var name="size" type="int" value="int%3A 100000" />',
         ])
         self.WaitForVar([
-            '<var name="max" type="int64" value="int64%253A 99999" />', 
+            '<var name="max" type="int64" value="int64%253A 99999" />',
             '<var name="max" type="int32" value="int32%253A 99999" />',
             '<var name="max" type="int64" value="int64%3A 99999"'
         ])
@@ -1066,10 +1090,10 @@ class WriterThreadCase1(AbstractWriterThread):
 
     def run(self):
         self.StartSocket()
-        
+
         self.log.append('writing add breakpoint')
         self.WriteAddBreakpoint(6, 'SetUp')
-        
+
         self.log.append('making initial run')
         self.WriteMakeInitialRun()
 
@@ -1141,10 +1165,10 @@ class DebuggerBase(object):
                 if SHOW_STDOUT:
                     print(line)
                 buffer.append(line)
-            
+
         start_new_thread(read, (process.stdout, stdout))
-        
-        
+
+
         if SHOW_OTHER_DEBUG_INFO:
             print('Both processes started')
 
@@ -1161,12 +1185,12 @@ class DebuggerBase(object):
                         print('Warning: writer thread exited and process still did not.')
                     if check == 100:
                         self.fail_with_message(
-                            "The other process should've exited but still didn't (timeout for process to exit).", 
+                            "The other process should've exited but still didn't (timeout for process to exit).",
                             stdout, stderr, writerThread
                         )
             time.sleep(.2)
-            
-            
+
+
         poll = process.poll()
         if poll < 0:
             self.fail_with_message(
@@ -1183,17 +1207,17 @@ class DebuggerBase(object):
         for i in xrange(100):
             if not writerThread.finishedOk:
                 time.sleep(.1)
-            
+
         if not writerThread.finishedOk:
             self.fail_with_message(
                 "The thread that was doing the tests didn't finish successfully.", stdout, stderr, writerThread)
-            
+
     def fail_with_message(self, msg, stdout, stderr, writerThread):
         self.fail(msg+
             "\nStdout: \n"+'\n'.join(stdout)+
             "\nStderr:"+'\n'.join(stderr)+
             "\nLog:\n"+'\n'.join(getattr(writerThread, 'log', [])))
-        
+
 
     def testCase1(self):
         self.CheckCase(WriterThreadCase1)
@@ -1245,13 +1269,16 @@ class DebuggerBase(object):
 
     def testCase17(self):
         self.CheckCase(WriterThreadCase17)
-        
+
+    def testCase17a(self):
+        self.CheckCase(WriterThreadCase17a)
+
     def testCase18(self):
         self.CheckCase(WriterThreadCase18)
-        
+
     def testCase19(self):
         self.CheckCase(WriterThreadCase19)
-        
+
     def _has_qt(self):
         try:
             from PySide import QtCore
@@ -1312,19 +1339,19 @@ class TestIronPython(unittest.TestCase, DebuggerBase):
             ]
 
     def testCase3(self):
-        self.skipTest("Timing issues") # This test fails once in a while due to timing issues on IronPython, so, skipping it. 
-        
+        self.skipTest("Timing issues") # This test fails once in a while due to timing issues on IronPython, so, skipping it.
+
     def testCase7(self):
         # This test checks that we start without variables and at each step a new var is created, but on ironpython,
         # the variables exist all at once (with None values), so, we can't test it properly.
-        self.skipTest("Different behavior on IronPython") 
-        
+        self.skipTest("Different behavior on IronPython")
+
     def testCase13(self):
         self.skipTest("Unsupported Decorators") # Not sure why it doesn't work on IronPython, but it's not so common, so, leave it be.
-        
+
     def testCase16(self):
         self.skipTest("Unsupported numpy")
-        
+
     def testCase18(self):
         self.skipTest("Unsupported assign to local")
 
@@ -1360,13 +1387,13 @@ if os.path.exists(test_dependent):
             var, loc = SplitLine(line)
             if 'PYTHON_EXE' == var:
                 PYTHON_EXE = loc
-    
+
             if 'IRONPYTHON_EXE' == var:
                 IRONPYTHON_EXE = loc
-    
+
             if 'JYTHON_JAR_LOCATION' == var:
                 JYTHON_JAR_LOCATION = loc
-    
+
             if 'JAVA_LOCATION' == var:
                 JAVA_LOCATION = loc
     finally:
@@ -1378,16 +1405,16 @@ if IRONPYTHON_EXE is None:
     sys.stderr.write('Warning: not running IronPython tests.\n')
     class TestIronPython(unittest.TestCase):
         pass
-    
+
 if JAVA_LOCATION is None:
     sys.stderr.write('Warning: not running Jython tests.\n')
     class TestJython(unittest.TestCase):
         pass
-    
+
 # if PYTHON_EXE is None:
 PYTHON_EXE = sys.executable
-    
-    
+
+
 if __name__ == '__main__':
     if False:
         assert PYTHON_EXE, 'PYTHON_EXE not found in %s' % (test_dependent,)
@@ -1398,18 +1425,18 @@ if __name__ == '__main__':
         assert os.path.exists(IRONPYTHON_EXE), 'The location: %s is not valid' % (IRONPYTHON_EXE,)
         assert os.path.exists(JYTHON_JAR_LOCATION), 'The location: %s is not valid' % (JYTHON_JAR_LOCATION,)
         assert os.path.exists(JAVA_LOCATION), 'The location: %s is not valid' % (JAVA_LOCATION,)
-    
+
     if True:
         #try:
         #    os.remove(r'X:\pydev\plugins\org.python.pydev\pysrc\pydevd.pyc')
         #except:
         #    pass
         suite = unittest.TestSuite()
-        
+
 #         suite.addTests(unittest.makeSuite(TestJython)) # Note: Jython should be 2.2.1
-#           
+#
 #         suite.addTests(unittest.makeSuite(TestIronPython))
-#         
+#
         suite.addTests(unittest.makeSuite(TestPython))
 
 
@@ -1419,12 +1446,12 @@ if __name__ == '__main__':
 #         suite.addTest(TestIronPython('testCase17'))
 #         suite.addTest(TestIronPython('testCase3'))
 #         suite.addTest(TestIronPython('testCase7'))
-#         
+#
 #         suite.addTest(TestPython('testCaseQthread1'))
 #         suite.addTest(TestPython('testCaseQthread2'))
 #         suite.addTest(TestPython('testCaseQthread3'))
-        
-#         suite.addTest(TestPython('testCase4'))
+
+#         suite.addTest(TestPython('testCase17a'))
 
 
 #         suite.addTest(TestJython('testCase1'))
@@ -1433,5 +1460,5 @@ if __name__ == '__main__':
     #     suite.addTest(TestPython('testCase17'))
     #     suite.addTest(TestPython('testCase18'))
     #     suite.addTest(TestPython('testCase19'))
-        
+
         unittest.TextTestRunner(verbosity=3).run(suite)
