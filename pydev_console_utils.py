@@ -129,6 +129,13 @@ class BaseInterpreterInterface:
         self.buffer = None
 
     def needMoreForCode(self, source):
+        # PyDev-502: PyDev 3.9 F2 doesn't support backslash continuations
+
+        # Strangely even the IPython console is_complete said it was complete
+        # even with a continuation char at the end.
+        if source.endswith('\\'):
+            return True
+
         if hasattr(self.interpreter, 'is_complete'):
             return not self.interpreter.is_complete(source)
         try:
