@@ -61,14 +61,14 @@ class Command:
         self.code_fragment = code_fragment
         self.more = None
 
-
+    
     def symbol_for_fragment(code_fragment):
         if code_fragment.is_single_line:
             symbol = 'single'
         else:
             symbol = 'exec' # Jython doesn't support this
         return symbol
-    symbol_for_fragment = staticmethod(symbol_for_fragment)
+    symbol_for_fragment = staticmethod(symbol_for_fragment) 
 
     def run(self):
         text = self.code_fragment.text
@@ -350,12 +350,7 @@ def get_interpreter():
     try:
         interpreterInterface = getattr(__builtin__, 'interpreter')
     except AttributeError:
-        # fake return_controll_callback function just to prevent exception in PyCharm debug console
-        from pydev_ipython.inputhook import set_return_control_callback
-        set_return_control_callback(lambda x: True)
-
-        interpreterInterface = InterpreterInterface(
-            None, None, threading.currentThread(), show_banner=False)
+        interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
         setattr(__builtin__, 'interpreter', interpreterInterface)
 
     return interpreterInterface
@@ -374,7 +369,6 @@ def get_completions(text, token, globals, locals):
 
 def exec_code(code, globals, locals):
     interpreterInterface = get_interpreter()
-
     interpreterInterface.interpreter.update(globals, locals)
 
     res = interpreterInterface.needMore(code)
@@ -491,7 +485,7 @@ if __name__ == '__main__':
     #Important: don't use this module directly as the __main__ module, rather, import itself as pydevconsole
     #so that we don't get multiple pydevconsole modules if it's executed directly (otherwise we'd have multiple
     #representations of its classes).
-    #See: https://sw-brainwy.rhcloud.com/tracker/PyDev/446:
+    #See: https://sw-brainwy.rhcloud.com/tracker/PyDev/446: 
     #'Variables' and 'Expressions' views stopped working when debugging interactive console
     import pydevconsole
     sys.stdin = pydevconsole.BaseStdIn()
