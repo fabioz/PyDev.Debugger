@@ -315,8 +315,22 @@ def start_server(host, port, interpreter):
     sys.stderr.write(interpreter.get_greeting_msg())
     sys.stderr.flush()
 
-    server.serve_forever()
-
+    while True:
+        try:
+            server.serve_forever()
+        except:
+            # Ugly code to be py2/3 compatible
+            # https://sw-brainwy.rhcloud.com/tracker/PyDev/534:
+            # Unhandled "interrupted system call" error in the pydevconsol.py
+            e = sys.exc_info()[1]
+            retry = False
+            try:
+                retry = e.args[0] == 4 #errno.EINTR
+            except:
+                pass
+            if not retry:
+                raise
+            # Otherwise, keep on going
     return server
 
 
