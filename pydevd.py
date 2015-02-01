@@ -1180,10 +1180,21 @@ class PyDB:
                     if text != "":
                         thread_id, frame_id, console_command = text.split('\t', 2)
                         console_command, line = console_command.split('\t')
+
                         if console_command == 'EVALUATE':
-                            int_cmd = InternalEvaluateConsoleExpression(seq, thread_id, frame_id, line)
+                            int_cmd = InternalEvaluateConsoleExpression(
+                                seq, thread_id, frame_id, line, buffer_output=True)
+
+                        elif console_command == 'EVALUATE_UNBUFFERED':
+                            int_cmd = InternalEvaluateConsoleExpression(
+                                seq, thread_id, frame_id, line, buffer_output=False)
+
                         elif console_command == 'GET_COMPLETIONS':
                             int_cmd = InternalConsoleGetCompletions(seq, thread_id, frame_id, line)
+
+                        else:
+                            raise ValueError('Unrecognized command: %s' % (console_command,))
+
                         self.postInternalCommand(int_cmd, thread_id)
 
                 elif cmd_id == CMD_RUN_CUSTOM_OPERATION:

@@ -247,7 +247,7 @@ def SetGlobalDebugger(dbg):
 # PyDBDaemonThread
 #=======================================================================================================================
 class PyDBDaemonThread:
-    
+
     created_pydb_daemon_threads = {}
 
     def __init__(self):
@@ -275,7 +275,7 @@ class PyDBDaemonThread:
                     ss = PyCore.PySystemState()
                     # Note: Py.setSystemState() affects only the current thread.
                     PyCore.Py.setSystemState(ss)
-        
+
                 self.OnRun()
             except:
                 if sys is not None and traceback is not None:
@@ -292,16 +292,16 @@ class PyDBDaemonThread:
 
     def stopTrace(self):
         if self.dontTraceMe:
-            
+
             disable_tracing = True
-    
+
             if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON and sys.hexversion <= 0x020201f0:
                 # don't run untraced threads if we're in jython 2.2.1 or lower
                 # jython bug: if we start a thread and another thread changes the tracing facility
                 # it affects other threads (it's not set only for the thread but globally)
                 # Bug: http://sourceforge.net/tracker/index.php?func=detail&aid=1870039&group_id=12867&atid=112867
                 disable_tracing = False
-    
+
             if disable_tracing:
                 pydevd_tracing.SetTrace(None)  # no debugging on this thread
 
@@ -1220,11 +1220,12 @@ class InternalSendCurrExceptionTraceProceeded(InternalThreadCommand):
 class InternalEvaluateConsoleExpression(InternalThreadCommand):
     """ Execute the given command in the debug console """
 
-    def __init__(self, seq, thread_id, frame_id, line):
+    def __init__(self, seq, thread_id, frame_id, line, buffer_output=True):
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
         self.line = line
+        self.buffer_output = buffer_output
 
     def doIt(self, dbg):
         """ Create an XML for console output, error and more (true/false)
@@ -1237,7 +1238,9 @@ class InternalEvaluateConsoleExpression(InternalThreadCommand):
         try:
             frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
             if frame is not None:
-                console_message = pydevd_console.execute_console_command(frame, self.thread_id, self.frame_id, self.line)
+                console_message = pydevd_console.execute_console_command(
+                    frame, self.thread_id, self.frame_id, self.line, self.buffer_output)
+
                 cmd = dbg.cmdFactory.makeSendConsoleMessage(self.sequence, console_message.toXML())
             else:
                 from pydevd_console import ConsoleMessage

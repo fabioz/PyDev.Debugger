@@ -104,7 +104,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         The methods in this class should be registered in the xml-rpc server.
     '''
 
-    def __init__(self, host, client_port, mainThread):
+    def __init__(self, host, client_port, mainThread, show_banner=True):
         BaseInterpreterInterface.__init__(self, mainThread)
         self.client_port = client_port
         self.host = host
@@ -340,7 +340,8 @@ def get_interpreter():
         from pydev_ipython.inputhook import set_return_control_callback
         set_return_control_callback(lambda x: True)
 
-        interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
+        interpreterInterface = InterpreterInterface(
+            None, None, threading.currentThread(), show_banner=False)
         setattr(__builtin__, 'interpreter', interpreterInterface)
 
     return interpreterInterface

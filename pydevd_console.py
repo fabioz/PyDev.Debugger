@@ -81,39 +81,57 @@ class DebugConsole(InteractiveConsole, BaseInterpreterInterface):
 
     overrides(BaseInterpreterInterface.createStdIn)
     def createStdIn(self):
-        return DebugConsoleStdIn() #For now, raw_input is not supported in this console.
+        try:
+            if not self.__buffer_output:
+                return sys.stdin
+        except:
+            pass
+
+        return DebugConsoleStdIn() #If buffered, raw_input is not supported in this console.
 
 
     overrides(InteractiveConsole.push)
-    def push(self, line, frame):
+    def push(self, line, frame, buffer_output=True):
         """Change built-in stdout and stderr methods by the
         new custom StdMessage.
         execute the InteractiveConsole.push.
         Change the stdout and stderr back be the original built-ins
 
+        :param buffer_output: if False won't redirect the output.
+
         Return boolean (True if more input is required else False),
         output_messages and input_messages
         """
+        self.__buffer_output = buffer_output
         more = False
-        original_stdout = sys.stdout
-        original_stderr = sys.stderr
+        if buffer_output:
+            original_stdout = sys.stdout
+            original_stderr = sys.stderr
         try:
             try:
                 self.frame = frame
-                out = sys.stdout = IOBuf()
-                err = sys.stderr = IOBuf()
+                if buffer_output:
+                    out = sys.stdout = IOBuf()
+                    err = sys.stderr = IOBuf()
                 more = self.addExec(line)
             except Exception:
                 exc = GetExceptionTracebackStr()
-                err.buflist.append("Internal Error: %s" % (exc,))
+                if buffer_output:
+                    err.buflist.append("Internal Error: %s" % (exc,))
+                else:
+                    sys.stderr.write("Internal Error: %s\n" % (exc,))
         finally:
             #Remove frame references.
             self.frame = None
             frame = None
-            sys.stdout = original_stdout
-            sys.stderr = original_stderr
+            if buffer_output:
+                sys.stdout = original_stdout
+                sys.stderr = original_stderr
 
-        return more, out.buflist, err.buflist
+        if buffer_output:
+            return more, out.buflist, err.buflist
+        else:
+            return more, [], []
 
 
     overrides(BaseInterpreterInterface.doAddExec)
@@ -179,7 +197,7 @@ def clear_interactive_console():
     InteractiveConsoleCache.interactive_console_instance = None
 
 
-def execute_console_command(frame, thread_id, frame_id, line):
+def execute_console_command(frame, thread_id, frame_id, line, buffer_output=True):
     """fetch an interactive console instance from the cache and
     push the received command to the console.
 
@@ -188,7 +206,7 @@ def execute_console_command(frame, thread_id, frame_id, line):
     console_message = ConsoleMessage()
 
     interpreter = get_interactive_console(thread_id, frame_id, frame, console_message)
-    more, output_messages, error_messages = interpreter.push(line, frame)
+    more, output_messages, error_messages = interpreter.push(line, frame, buffer_output)
     console_message.update_more(more)
 
     for message in output_messages:
