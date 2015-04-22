@@ -258,18 +258,8 @@ class CheckOutputThread(PyDBDaemonThread):
         PyDBDaemonThread.__init__(self)
         self.pyDb = pyDb
         self.setName('pydevd.CheckAliveThread')
+        self.daemon = False
         pyDb.output_checker = self
-
-    def start(self):
-        # it should be non daemon
-        thread = threading.Thread(target=self.run)
-        thread.daemon = False
-        
-        #Important: it's marked as non-daemon, but it still needs to enable 
-        #programs to finish. See: https://sw-brainwy.rhcloud.com/tracker/PyDev/574
-        thread.is_pydev_daemon_thread = True 
-        
-        thread.start()
 
     def OnRun(self):
             if self.dontTraceMe:
