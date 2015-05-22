@@ -173,12 +173,18 @@ def varToXML(val, name, doTrim=True, additionalInXml=''):
     else:
         v = val
 
-    type, typeName, resolver = getType(v)
+    _type, typeName, resolver = getType(v)
 
     try:
         if hasattr(v, '__class__'):
             if v.__class__ == frame_type:
                 value = pydevd_resolver.frameResolver.getFrameName(v)
+                
+            elif v.__class__ in (list, tuple):
+                if len(v) > 300:
+                    value = '%s: %s' % (str(v.__class__), '<Too big to print. Len: %s>' % (len(v),))
+                else:
+                    value = '%s: %s' % (str(v.__class__), v)
             else:
                 try:
                     cName = str(v.__class__)
