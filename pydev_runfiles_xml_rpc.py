@@ -80,6 +80,10 @@ class ServerFacade(object):
 
 
     def notifyTest(self, *args):
+        new_args = []
+        for arg in args:
+            new_args.append(_encode_if_needed(arg))
+        args = tuple(new_args)
         self.notifications_queue.put_nowait(ParallelNotification('notifyTest', args))
 
 
@@ -208,10 +212,11 @@ def notifyStartTest(file, test):
 
 
 def _encode_if_needed(obj):
+    # In the java side we expect strings to be ISO-8859-1 (org.python.pydev.debug.pyunit.PyUnitServer.initializeDispatches().new Dispatch() {...}.getAsStr(Object))
     if not IS_PY3K:
         if isinstance(obj, str):
             try:
-                return xmlrpclib.Binary(obj.encode('ISO-8859-1', 'xmlcharrefreplace'))
+                return xmlrpclib.Binary(obj.decode(sys.stdin.encoding).encode('ISO-8859-1', 'xmlcharrefreplace'))
             except:
                 return xmlrpclib.Binary(obj)
 
@@ -219,9 +224,15 @@ def _encode_if_needed(obj):
             return xmlrpclib.Binary(obj.encode('ISO-8859-1', 'xmlcharrefreplace'))
 
     else:
-        if isinstance(obj, str):
-            return obj.encode('ISO-8859-1', 'xmlcharrefreplace')
-
+        if isinstance(obj, str): # Unicode in py3
+            return xmlrpclib.Binary(obj.encode('ISO-8859-1', 'xmlcharrefreplace'))
+        
+        elif isinstance(obj, bytes):
+            try:
+                return xmlrpclib.Binary(obj.decode(sys.stdin.encoding).encode('ISO-8859-1', 'xmlcharrefreplace'))
+            except:
+                return xmlrpclib.Binary(obj) #bytes already
+            
     return obj
 
 

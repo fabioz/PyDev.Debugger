@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2010-2011 Hideo Hattori
 # Copyright (C) 2011-2013 Hideo Hattori, Steven Myint
-# Copyright (C) 2013-2014 Hideo Hattori, Steven Myint, Bill Wendling
+# Copyright (C) 2013-2015 Hideo Hattori, Steven Myint, Bill Wendling
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -60,6 +60,14 @@ import tokenize
 
 import pep8
 
+def check_lib2to3():
+    try:
+        import lib2to3
+    except ImportError:
+        sys.path.append(os.path.join(os.path.dirname(__file__), 'lib2to3'))
+        import lib2to3
+
+
 
 try:
     unicode
@@ -67,7 +75,7 @@ except NameError:
     unicode = str
 
 
-__version__ = '1.0.3'
+__version__ = '1.1.2a0'
 
 
 CR = '\r'
@@ -95,6 +103,7 @@ DEFAULT_INDENT_SIZE = 4
 
 # W602 is handled separately due to the need to avoid "with_traceback".
 CODE_TO_2TO3 = {
+    'E231': ['ws_comma'],
     'E721': ['idioms'],
     'W601': ['has_key'],
     'W603': ['ne'],
@@ -102,7 +111,6 @@ CODE_TO_2TO3 = {
     'W690': ['apply',
              'except',
              'exitfunc',
-             'import',
              'numliterals',
              'operator',
              'paren',
@@ -115,12 +123,12 @@ CODE_TO_2TO3 = {
              'xreadlines']}
 
 
-def check_lib2to3():
-    try:
-        import lib2to3
-    except ImportError:
-        sys.path.append(os.path.join(os.path.dirname(__file__), 'lib2to3'))
-        import lib2to3
+if sys.platform == 'win32':  # pragma: no cover
+    DEFAULT_CONFIG = os.path.expanduser(r'~\.pep8')
+else:
+    DEFAULT_CONFIG = os.path.join(os.getenv('XDG_CONFIG_HOME') or
+                                  os.path.expanduser('~/.config'), 'pep8')
+PROJECT_CONFIG = ('setup.cfg', 'tox.ini', '.pep8')
 
 
 def open_with_encoding(filename, encoding=None, mode='r'):
@@ -157,15 +165,13 @@ def readlines_from_file(filename):
 
 def extended_blank_lines(logical_line,
                          blank_lines,
+                         blank_before,
                          indent_level,
                          previous_logical):
     """Check for missing blank lines after class declaration."""
     if previous_logical.startswith('class '):
-        if (
-            logical_line.startswith(('def ', 'class ', '@')) or
-            pep8.DOCSTRING_REGEX.match(logical_line)
-        ):
-            if indent_level and not blank_lines:
+        if logical_line.startswith(('def ', 'class ', '@')):
+            if indent_level and not blank_lines and not blank_before:
                 yield (0, 'E309 expected 1 blank line after class declaration')
     elif previous_logical.startswith('def '):
         if blank_lines and pep8.DOCSTRING_REGEX.match(logical_line):
@@ -175,6 +181,7 @@ def extended_blank_lines(logical_line,
         if (
             indent_level and
             not blank_lines and
+            not blank_before and
             logical_line.startswith(('def ')) and
             '(self' in logical_line
         ):
@@ -294,8 +301,11 @@ def continued_indentation(logical_line, tokens, indent_level, indent_char,
                 yield (start, '{0} {1}'.format(*error))
 
         # Look for visual indenting.
-        if (parens[row] and token_type not in (tokenize.NL, tokenize.COMMENT)
-                and not indent[depth]):
+        if (
+            parens[row] and
+            token_type not in (tokenize.NL, tokenize.COMMENT) and
+            not indent[depth]
+        ):
             indent[depth] = start[1]
             indent_chances[start[1]] = True
         # Deal with implicit string concatenation.
@@ -450,8 +460,7 @@ class FixPEP8(object):
             options and (options.aggressive >= 2 or options.experimental) else
             self.fix_long_line_physically)
         self.fix_e703 = self.fix_e702
-
-        self._ws_comma_done = False
+        self.fix_w293 = self.fix_w291
 
     def _fix_source(self, results):
         try:
@@ -650,17 +659,6 @@ class FixPEP8(object):
 
     def fix_e231(self, result):
         """Add missing whitespace."""
-        # Optimize for comma case. This will fix all commas in the full source
-        # code in one pass. Don't do this more than once. If it fails the first
-        # time, there is no point in trying again.
-        if ',' in result['info'] and not self._ws_comma_done:
-            self._ws_comma_done = True
-            original = ''.join(self.source)
-            new = refactor(original, ['ws_comma'])
-            if original.strip() != new.strip():
-                self.source = [new]
-                return range(1, 1 + len(original))
-
         line_index = result['line'] - 1
         target = self.source[line_index]
         offset = result['column']
@@ -903,7 +901,15 @@ class FixPEP8(object):
         second = (_get_indentation(logical_lines[0]) +
                   target[offset:].lstrip(';').lstrip())
 
-        self.source[line_index] = first + '\n' + second
+        # find inline commnet
+        inline_comment = None
+        if '# ' == target[offset:].lstrip(';').lstrip()[:2]:
+            inline_comment = target[offset:].lstrip(';')
+
+        if inline_comment:
+            self.source[line_index] = first + inline_comment
+        else:
+            self.source[line_index] = first + '\n' + second
         return [line_index + 1]
 
     def fix_e711(self, result):
@@ -1023,10 +1029,7 @@ def get_fixed_long_line(target, previous_line, original,
 
     if verbose >= 4:
         print(('-' * 79 + '\n').join([''] + candidates + ['']),
-              file=codecs.getwriter('utf-8')(sys.stderr.buffer
-                                             if hasattr(sys.stderr,
-                                                        'buffer')
-                                             else sys.stderr))
+              file=wrap_output(sys.stderr, 'utf-8'))
 
     if candidates:
         return candidates[0]
@@ -1170,9 +1173,7 @@ def fix_e265(source, aggressive=False):  # pylint: disable=unused-argument
 
     fixed_lines = []
     sio = io.StringIO(source)
-    line_number = 0
-    for line in sio.readlines():
-        line_number += 1
+    for (line_number, line) in enumerate(sio.readlines(), start=1):
         if (
             line.lstrip().startswith('#') and
             line_number not in ignored_line_numbers
@@ -1182,11 +1183,13 @@ def fix_e265(source, aggressive=False):  # pylint: disable=unused-argument
 
             # Normalize beginning if not a shebang.
             if len(line) > 1:
+                pos = next((index for index, c in enumerate(line)
+                            if c != '#'))
                 if (
                     # Leave multiple spaces like '#    ' alone.
-                    (line.count('#') > 1 or line[1].isalnum())
+                    (line[:pos].count('#') > 1 or line[1].isalnum()) and
                     # Leave stylistic outlined blocks alone.
-                    and not line.rstrip().endswith('#')
+                    not line.rstrip().endswith('#')
                 ):
                     line = '# ' + line.lstrip('# \t')
 
@@ -1197,7 +1200,7 @@ def fix_e265(source, aggressive=False):  # pylint: disable=unused-argument
     return ''.join(fixed_lines)
 
 
-def refactor(source, fixer_names, ignore=None):
+def refactor(source, fixer_names, ignore=None, filename=''):
     """Return refactored code using lib2to3.
 
     Skip if ignore string is produced in the refactored code.
@@ -1207,7 +1210,8 @@ def refactor(source, fixer_names, ignore=None):
     from lib2to3 import pgen2
     try:
         new_text = refactor_with_2to3(source,
-                                      fixer_names=fixer_names)
+                                      fixer_names=fixer_names,
+                                      filename=filename)
     except (pgen2.parse.ParseError,
             SyntaxError,
             UnicodeDecodeError,
@@ -1229,7 +1233,8 @@ def code_to_2to3(select, ignore):
     return fixes
 
 
-def fix_2to3(source, aggressive=True, select=None, ignore=None):
+def fix_2to3(source,
+             aggressive=True, select=None, ignore=None, filename=''):
     """Fix various deprecated code (via lib2to3)."""
     if not aggressive:
         return source
@@ -1239,7 +1244,8 @@ def fix_2to3(source, aggressive=True, select=None, ignore=None):
 
     return refactor(source,
                     code_to_2to3(select=select,
-                                 ignore=ignore))
+                                 ignore=ignore),
+                    filename=filename)
 
 
 def fix_w602(source, aggressive=True):
@@ -1592,7 +1598,7 @@ class ReformattedLines(object):
                  (self._prev_prev_item.is_name or
                   self._prev_prev_item.is_number or
                   self._prev_prev_item.is_string)) and
-                prev_text in ('+', '-', '%', '*', '/', '//', '**')))))
+                prev_text in ('+', '-', '%', '*', '/', '//', '**', 'in')))))
         ):
             self._lines.append(self._Space())
 
@@ -2384,7 +2390,7 @@ def normalize_multiline(line):
         return line + 'def _(): pass'
     elif line.startswith('class '):
         return line + ' pass'
-    elif line.startswith('if '):
+    elif line.startswith(('if ', 'elif ', 'for ', 'while ')):
         return line + ' pass'
     else:
         return line
@@ -2458,9 +2464,7 @@ class Reindenter(object):
         # that we can use tokenize's 1-based line numbering easily.
         # Note that a line is all-blank iff it is a newline.
         self.lines = []
-        line_number = 0
-        for line in source_lines:
-            line_number += 1
+        for line_number, line in enumerate(source_lines, start=1):
             # Do not modify if inside a multiline string.
             if line_number in self.string_content_line_numbers:
                 self.lines.append(line)
@@ -2542,9 +2546,8 @@ class Reindenter(object):
             if diff == 0 or have == 0:
                 after.extend(lines[thisstmt:nextstmt])
             else:
-                line_number = thisstmt - 1
-                for line in lines[thisstmt:nextstmt]:
-                    line_number += 1
+                for line_number, line in enumerate(lines[thisstmt:nextstmt],
+                                                   start=thisstmt):
                     if line_number in self.string_content_line_numbers:
                         after.append(line)
                     elif diff > 0:
@@ -2627,7 +2630,7 @@ def _leading_space_count(line):
     return i
 
 
-def refactor_with_2to3(source_text, fixer_names):
+def refactor_with_2to3(source_text, fixer_names, filename=''):
     """Use lib2to3 to refactor the source.
 
     Return the refactored source code.
@@ -2640,7 +2643,8 @@ def refactor_with_2to3(source_text, fixer_names):
 
     from lib2to3.pgen2 import tokenize as lib2to3_tokenize
     try:
-        return unicode(tool.refactor_string(source_text, name=''))
+        # The name parameter is necessary particularly for the "import" fixer.
+        return unicode(tool.refactor_string(source_text, name=filename))
     except lib2to3_tokenize.TokenError:
         return source_text
 
@@ -2665,6 +2669,8 @@ def filter_results(source, results, aggressive):
         source, include_docstrings=True)
 
     commented_out_code_line_numbers = commented_out_code_lines(source)
+
+    has_e901 = any(result['id'].lower() == 'e901' for result in results)
 
     for r in results:
         issue_id = r['id'].lower()
@@ -2695,6 +2701,13 @@ def filter_results(source, results, aggressive):
 
         if r['line'] in commented_out_code_line_numbers:
             if issue_id.startswith(('e26', 'e501')):
+                continue
+
+        # Do not touch indentation if there is a token error caused by
+        # incomplete multi-line statement. Otherwise, we risk screwing up the
+        # indentation.
+        if has_e901:
+            if issue_id.startswith(('e1', 'e7')):
                 continue
 
         yield r
@@ -2831,13 +2844,17 @@ def code_match(code, select, ignore):
     return True
 
 
-def fix_code(source, options=None, encoding=None):
-    """Return fixed source code."""
+def fix_code(source, options=None, encoding=None, apply_config=False):
+    """Return fixed source code.
+
+    "encoding" will be used to decode "source" if it is a byte string.
+
+    """
     if not options:
-        options = parse_args([''])
+        options = parse_args([''], apply_config=apply_config)
 
     if not isinstance(source, unicode):
-        source = source.decode(encoding or locale.getpreferredencoding())
+        source = source.decode(encoding or get_encoding())
 
     sio = io.StringIO(source)
     return fix_lines(sio.readlines(), options=options)
@@ -2857,7 +2874,9 @@ def fix_lines(source_lines, options, filename=''):
         fixed_source = apply_local_fixes(tmp_source, options)
     else:
         # Apply global fixes only once (for efficiency).
-        fixed_source = apply_global_fixes(tmp_source, options)
+        fixed_source = apply_global_fixes(tmp_source,
+                                          options,
+                                          filename=filename)
 
     passes = 0
     long_line_ignore_cache = set()
@@ -2882,9 +2901,9 @@ def fix_lines(source_lines, options, filename=''):
     return ''.join(normalize_line_endings(sio.readlines(), original_newline))
 
 
-def fix_file(filename, options=None, output=None):
+def fix_file(filename, options=None, output=None, apply_config=False):
     if not options:
-        options = parse_args([filename])
+        options = parse_args([filename], apply_config=apply_config)
 
     original_source = readlines_from_file(filename)
 
@@ -2894,11 +2913,7 @@ def fix_file(filename, options=None, output=None):
         encoding = detect_encoding(filename)
 
     if output:
-        output = codecs.getwriter(encoding)(output.buffer
-                                            if hasattr(output, 'buffer')
-                                            else output)
-
-        output = LineEndingWrapper(output)
+        output = LineEndingWrapper(wrap_output(output, encoding=encoding))
 
     fixed_source = fix_lines(fixed_source, options, filename=filename)
 
@@ -2926,7 +2941,7 @@ def fix_file(filename, options=None, output=None):
 
 def global_fixes():
     """Yield multiple (code, function) tuples."""
-    for function in globals().values():
+    for function in list(globals().values()):
         if inspect.isfunction(function):
             arguments = inspect.getargspec(function)[0]
             if arguments[:1] != ['source']:
@@ -2937,14 +2952,15 @@ def global_fixes():
                 yield (code, function)
 
 
-def apply_global_fixes(source, options, where='global'):
+def apply_global_fixes(source, options, where='global', filename=''):
     """Run global fixes on source code.
 
     These are fixes that only need be done once (unlike those in
     FixPEP8, which are dependent on pep8).
 
     """
-    if code_match('E101', select=options.select, ignore=options.ignore):
+    if any(code_match(code, select=options.select, ignore=options.ignore)
+           for code in ['E101', 'E111']):
         source = reindent(source,
                           indent_size=options.indent_size)
 
@@ -2960,7 +2976,8 @@ def apply_global_fixes(source, options, where='global'):
     source = fix_2to3(source,
                       aggressive=options.aggressive,
                       select=options.select,
-                      ignore=options.ignore)
+                      ignore=options.ignore,
+                      filename=filename)
 
     return source
 
@@ -2976,15 +2993,15 @@ def apply_local_fixes(source, options):
         """Find leftmost item greater than or equal to x."""
         i = bisect.bisect_left(a, x)
         if i != len(a):
-            return i, a[i]
-        return len(a) - 1, a[-1]
+            return (i, a[i])
+        return (len(a) - 1, a[-1])
 
     def find_le(a, x):
         """Find rightmost value less than or equal to x."""
         i = bisect.bisect_right(a, x)
         if i:
-            return i - 1, a[i - 1]
-        return 0, a[0]
+            return (i - 1, a[i - 1])
+        return (0, a[0])
 
     def local_fix(source, start_log, end_log,
                   start_lines, end_lines, indents, last_line):
@@ -3008,11 +3025,19 @@ def apply_local_fixes(source, options):
         sl = slice(start_lines[start_log], end_lines[end_log] + 1)
 
         subsource = source[sl]
+        msl = multiline_string_lines(''.join(subsource),
+                                     include_docstrings=False)
         # Remove indent from subsource.
         if ind:
             for line_no in start_lines[start_log:end_log + 1]:
                 pos = line_no - start_lines[start_log]
                 subsource[pos] = subsource[pos][ind:]
+
+            # Remove indent from comments.
+            for (i, line) in enumerate(subsource):
+                if i + 1 not in msl and re.match(r'\s*#', line):
+                    if line.index('#') >= ind:
+                        subsource[i] = line[ind:]
 
         # Fix indentation of subsource.
         fixed_subsource = apply_global_fixes(''.join(subsource),
@@ -3023,7 +3048,7 @@ def apply_local_fixes(source, options):
         # Add back indent for non multi-line strings lines.
         msl = multiline_string_lines(''.join(fixed_subsource),
                                      include_docstrings=False)
-        for i, line in enumerate(fixed_subsource):
+        for (i, line) in enumerate(fixed_subsource):
             if not i + 1 in msl:
                 fixed_subsource[i] = indent + line if line != '\n' else line
 
@@ -3032,8 +3057,10 @@ def apply_local_fixes(source, options):
         # subset up until last_line, this assumes that the number of lines
         # does not change in this multiline line.
         changed_lines = len(fixed_subsource)
-        if (start_lines[end_log] != end_lines[end_log]
-                and end_lines[end_log] > last_line):
+        if (
+            start_lines[end_log] != end_lines[end_log] and
+            end_lines[end_log] > last_line
+        ):
             after_end = end_lines[end_log] - last_line
             fixed_subsource = (fixed_subsource[:-after_end] +
                                source[sl][-after_end:])
@@ -3052,7 +3079,7 @@ def apply_local_fixes(source, options):
         return re.split('[ :]', line.strip(), 1)[0] in continued_stmts
 
     assert options.line_range
-    start, end = options.line_range
+    (start, end) = options.line_range
     start -= 1
     end -= 1
     last_line = end  # We shouldn't modify lines after this cut-off.
@@ -3066,20 +3093,22 @@ def apply_local_fixes(source, options):
         # Just blank lines, this should imply that it will become '\n' ?
         return apply_global_fixes(source, options)
 
-    start_lines, indents = zip(*logical[0])
-    end_lines, _ = zip(*logical[1])
+    (start_lines, indents) = zip(*logical[0])
+    (end_lines, _) = zip(*logical[1])
 
     source = source.splitlines(True)
 
-    start_log, start = find_ge(start_lines, start)
-    end_log, end = find_le(start_lines, end)
+    (start_log, start) = find_ge(start_lines, start)
+    (end_log, end) = find_le(start_lines, end)
 
     # Look behind one line, if it's indented less than current indent
     # then we can move to this previous line knowing that its
     # indentation level will not be changed.
-    if (start_log > 0
-            and indents[start_log - 1] < indents[start_log]
-            and not is_continued_stmt(source[start_log - 1])):
+    if (
+        start_log > 0 and
+        indents[start_log - 1] < indents[start_log] and
+        not is_continued_stmt(source[start_log - 1])
+    ):
         start_log -= 1
         start = start_lines[start_log]
 
@@ -3093,9 +3122,9 @@ def apply_local_fixes(source, options):
         ind = indents[start_log]
         for t in itertools.takewhile(lambda t: t[1][1] >= ind,
                                      enumerate(logical[0][start_log:])):
-            n_log, n = start_log + t[0], t[1][0]
-        # start shares indent up to n.
+            (n_log, n) = start_log + t[0], t[1][0]
 
+        # Start shares indent up to n.
         if n <= end:
             source = local_fix(source, start_log, n_log,
                                start_lines, end_lines,
@@ -3106,15 +3135,17 @@ def apply_local_fixes(source, options):
 
         else:
             # Look at the line after end and see if allows us to reindent.
-            after_end_log, after_end = find_ge(start_lines, end + 1)
+            (after_end_log, after_end) = find_ge(start_lines, end + 1)
 
             if indents[after_end_log] > indents[start_log]:
-                start_log, start = find_ge(start_lines, start + 1)
+                (start_log, start) = find_ge(start_lines, start + 1)
                 continue
 
-            if (indents[after_end_log] == indents[start_log]
-                    and is_continued_stmt(source[after_end])):
-                # find n, the beginning of the last continued statement
+            if (
+                indents[after_end_log] == indents[start_log] and
+                is_continued_stmt(source[after_end])
+            ):
+                # Find n, the beginning of the last continued statement.
                 # Apply fix to previous block if there is one.
                 only_block = True
                 for n, n_ind in logical[0][start_log:end_log + 1][::-1]:
@@ -3128,7 +3159,7 @@ def apply_local_fixes(source, options):
                         only_block = False
                         break
                 if only_block:
-                    end_log, end = find_le(start_lines, end - 1)
+                    (end_log, end) = find_le(start_lines, end - 1)
                 continue
 
             source = local_fix(source, start_log, end_log,
@@ -3169,45 +3200,54 @@ def create_parser():
     parser.add_argument('-v', '--verbose', action='count', dest='verbose',
                         default=0,
                         help='print verbose messages; '
-                        'multiple -v result in more verbose messages')
+                             'multiple -v result in more verbose messages')
     parser.add_argument('-d', '--diff', action='store_true', dest='diff',
                         help='print the diff for the fixed source')
     parser.add_argument('-i', '--in-place', action='store_true',
                         help='make changes to files in place')
+    parser.add_argument('--global-config', metavar='filename',
+                        default=DEFAULT_CONFIG,
+                        help='path to a global pep8 config file; if this file '
+                             'does not exist then this is ignored '
+                             '(default: {0})'.format(DEFAULT_CONFIG))
+    parser.add_argument('--ignore-local-config', action='store_true',
+                        help="don't look for and apply local config files; "
+                             'if not passed, defaults are updated with any '
+                             "config files in the project's root directory")
     parser.add_argument('-r', '--recursive', action='store_true',
                         help='run recursively over directories; '
-                        'must be used with --in-place or --diff')
+                             'must be used with --in-place or --diff')
     parser.add_argument('-j', '--jobs', type=int, metavar='n', default=1,
                         help='number of parallel jobs; '
-                        'match CPU count if value is less than 1')
+                             'match CPU count if value is less than 1')
     parser.add_argument('-p', '--pep8-passes', metavar='n',
                         default=-1, type=int,
                         help='maximum number of additional pep8 passes '
-                        '(default: infinite)')
+                             '(default: infinite)')
     parser.add_argument('-a', '--aggressive', action='count', default=0,
                         help='enable non-whitespace changes; '
-                        'multiple -a result in more aggressive changes')
+                             'multiple -a result in more aggressive changes')
     parser.add_argument('--experimental', action='store_true',
                         help='enable experimental fixes')
     parser.add_argument('--exclude', metavar='globs',
                         help='exclude file/directory names that match these '
-                        'comma-separated globs')
+                             'comma-separated globs')
     parser.add_argument('--list-fixes', action='store_true',
                         help='list codes for fixes; '
                         'used by --ignore and --select')
     parser.add_argument('--ignore', metavar='errors', default='',
                         help='do not fix these errors/warnings '
-                        '(default: {0})'.format(DEFAULT_IGNORE))
+                             '(default: {0})'.format(DEFAULT_IGNORE))
     parser.add_argument('--select', metavar='errors', default='',
                         help='fix only these errors/warnings (e.g. E4,W)')
     parser.add_argument('--max-line-length', metavar='n', default=79, type=int,
                         help='set maximum allowed line length '
-                        '(default: %(default)s)')
+                             '(default: %(default)s)')
     parser.add_argument('--range', metavar='line', dest='line_range',
                         default=None, type=int, nargs=2,
                         help='only fix errors found within this inclusive '
-                        'range of line numbers (e.g. 1 99); '
-                        'line numbers are indexed at 1')
+                             'range of line numbers (e.g. 1 99); '
+                             'line numbers are indexed at 1')
     parser.add_argument('--indent-size', default=DEFAULT_INDENT_SIZE,
                         type=int, metavar='n',
                         help='number of spaces per indent level '
@@ -3218,7 +3258,7 @@ def create_parser():
     return parser
 
 
-def parse_args(arguments):
+def parse_args(arguments, apply_config=False):
     """Parse command-line options."""
     parser = create_parser()
     args = parser.parse_args(arguments)
@@ -3227,6 +3267,11 @@ def parse_args(arguments):
         parser.error('incorrect number of arguments')
 
     args.files = [decode_filename(name) for name in args.files]
+
+    if apply_config:
+        parser = read_config(args, parser)
+        args = parser.parse_args(arguments)
+        args.files = [decode_filename(name) for name in args.files]
 
     if '-' in args.files:
         if len(args.files) > 1:
@@ -3259,19 +3304,19 @@ def parse_args(arguments):
         parser.error('--max-line-length must be greater than 0')
 
     if args.select:
-        args.select = args.select.split(',')
+        args.select = _split_comma_separated(args.select)
 
     if args.ignore:
-        args.ignore = args.ignore.split(',')
+        args.ignore = _split_comma_separated(args.ignore)
     elif not args.select:
         if args.aggressive:
             # Enable everything by default if aggressive.
             args.select = ['E', 'W']
         else:
-            args.ignore = DEFAULT_IGNORE.split(',')
+            args.ignore = _split_comma_separated(DEFAULT_IGNORE)
 
     if args.exclude:
-        args.exclude = args.exclude.split(',')
+        args.exclude = _split_comma_separated(args.exclude)
     else:
         args.exclude = []
 
@@ -3292,6 +3337,44 @@ def parse_args(arguments):
                          'to the second')
 
     return args
+
+
+def read_config(args, parser):
+    """Read both user configuration and local configuration."""
+    try:
+        from configparser import ConfigParser as SafeConfigParser
+        from configparser import Error
+    except ImportError:
+        from ConfigParser import SafeConfigParser
+        from ConfigParser import Error
+
+    config = SafeConfigParser()
+
+    try:
+        config.read(args.global_config)
+
+        if not args.ignore_local_config:
+            parent = tail = args.files and os.path.abspath(
+                os.path.commonprefix(args.files))
+            while tail:
+                if config.read([os.path.join(parent, fn)
+                                for fn in PROJECT_CONFIG]):
+                    break
+                (parent, tail) = os.path.split(parent)
+
+        defaults = dict((k.lstrip('-').replace('-', '_'), v)
+                        for k, v in config.items('pep8'))
+        parser.set_defaults(**defaults)
+    except Error:
+        # Ignore for now.
+        pass
+
+    return parser
+
+
+def _split_comma_separated(string):
+    """Return a set of strings."""
+    return set(filter(None, string.split(',')))
 
 
 def decode_filename(filename):
@@ -3535,6 +3618,8 @@ def match_file(filename, exclude):
     for pattern in exclude:
         if fnmatch.fnmatch(base_name, pattern):
             return False
+        if fnmatch.fnmatch(filename, pattern):
+            return False
 
     if not os.path.isdir(filename) and not is_python_file(filename):
         return False
@@ -3616,7 +3701,19 @@ def is_probably_part_of_multiline(line):
     )
 
 
-def main():
+def wrap_output(output, encoding):
+    """Return output with specified encoding."""
+    return codecs.getwriter(encoding)(output.buffer
+                                      if hasattr(output, 'buffer')
+                                      else output)
+
+
+def get_encoding():
+    """Return preferred encoding."""
+    return locale.getpreferredencoding() or sys.getdefaultencoding()
+
+
+def main(apply_config=True):
     """Tool main."""
     try:
         # Exit on broken pipe.
@@ -3626,7 +3723,7 @@ def main():
         pass
 
     try:
-        args = parse_args(sys.argv[1:])
+        args = parse_args(sys.argv[1:], apply_config=apply_config)
 
         if args.list_fixes:
             for code, description in sorted(supported_fixes()):
@@ -3637,14 +3734,12 @@ def main():
         if args.files == ['-']:
             assert not args.in_place
 
+            encoding = sys.stdin.encoding or get_encoding()
+
             # LineEndingWrapper is unnecessary here due to the symmetry between
             # standard in and standard out.
-
-            sys.stdout.write(
-                fix_code(
-                    sys.stdin.read(),
-                    args,
-                    encoding=sys.stdin.encoding))
+            wrap_output(sys.stdout, encoding=encoding).write(
+                fix_code(sys.stdin.read(), args, encoding=encoding))
         else:
             if args.in_place or args.diff:
                 args.files = list(set(args.files))

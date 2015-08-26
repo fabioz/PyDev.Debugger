@@ -227,7 +227,7 @@ class PyDBFrame:
 
             if event == 'call' and main_debugger.signature_factory:
                 sendSignatureCallTrace(main_debugger, frame, filename)
-                
+
             plugin_manager = main_debugger.plugin
 
             is_exception_event = event == 'exception'
@@ -492,14 +492,25 @@ class PyDBFrame:
                             #When we get to the pydevd run function, the debugging has actually finished for the main thread
                             #(note that it can still go on for other threads, but for this one, we just make it finish)
                             #So, just setting it to None should be OK
-                            base = basename(back.f_code.co_filename)
+                            #I.e.: when setting to note we'll set the state to STATE_RUN and clear any stepping flags.
+                            back_filename, base = GetFilenameAndBase(back)
                             if base == 'pydevd.py' and back.f_code.co_name == 'run':
                                 back = None
 
                             elif base == 'pydevd_traceproperty.py':
-                                # We dont want to trace the return event of pydevd_traceproperty (custom property for debugging)
+                                #We dont want to trace the return event of pydevd_traceproperty (custom property for debugging)
                                 #if we're in a return, we want it to appear to the user in the previous frame!
                                 return None
+
+                            elif pydevd_dont_trace.should_trace_hook is not None:
+                                if not pydevd_dont_trace.should_trace_hook(back, back_filename):
+                                    # In this case, we'll have to skip the previous one because it shouldn't be traced.
+                                    # Also, we have to reset the tracing, because if the parent's parent (or some
+                                    # other parent) has to be traced and it's not currently, we wouldn't stop where
+                                    # we should anymore (so, a step in/over/return may not stop anywhere if no parent is traced).
+                                    # Related test: _debugger_case17a.py
+                                    main_debugger.SetTraceForFrameAndParents(back, overwrite_prev_trace=True)
+                                    return None
 
                         if back is not None:
                             #if we're in a return, we want it to appear to the user in the previous frame!

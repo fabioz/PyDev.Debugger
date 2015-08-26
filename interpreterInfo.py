@@ -63,6 +63,7 @@ if sys.platform == "cygwin":
 
         retval = ctypes.create_string_buffer(MAX_PATH)
         path = fullyNormalizePath(path)
+        path = tobytes(path)
         CCP_POSIX_TO_WIN_A = 0
         ctypes.cdll.cygwin1.cygwin_conv_path(CCP_POSIX_TO_WIN_A, path, retval, MAX_PATH)
         
@@ -115,15 +116,26 @@ def getfilesystemencoding():
     
 file_system_encoding = getfilesystemencoding()
 
+if IS_PYTHON_3K:
+    unicode_type = str
+    bytes_type = bytes
+    
+else:
+    unicode_type = unicode
+    bytes_type = str
+    
+
 def tounicode(s):
     if hasattr(s, 'decode'):
-        # Depending on the platform variant we may have decode on string or not.
-        return s.decode(file_system_encoding)
+        if not isinstance(s, unicode_type):
+            # Depending on the platform variant we may have decode on string or not.
+            return s.decode(file_system_encoding)
     return s
 
-def toutf8(s):
+def tobytes(s):
     if hasattr(s, 'encode'):
-        return s.encode('utf-8')
+        if not isinstance(s, bytes_type):
+            return s.encode(file_system_encoding)
     return s
 
 def toasciimxl(s):
@@ -160,12 +172,12 @@ if __name__ == '__main__':
         pass
 
     try:
-        executable = nativePath(sys.executable)
+        executable = tounicode(nativePath(sys.executable))
     except:
-        executable = sys.executable
+        executable = tounicode(sys.executable)
 
-    if sys.platform == "cygwin" and not executable.endswith('.exe'):
-        executable += '.exe'
+    if sys.platform == "cygwin" and not executable.endswith(tounicode('.exe')):
+        executable += tounicode('.exe')
 
 
     try:

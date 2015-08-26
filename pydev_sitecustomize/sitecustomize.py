@@ -177,15 +177,22 @@ try:
     #The original getpass doesn't work from the eclipse console, so, let's put a replacement
     #here (note that it'll not go into echo mode in the console, so, what' the user writes
     #will actually be seen)
-    import getpass #@UnresolvedImport
-    if IS_PYTHON_3K:
-        def pydev_getpass(msg='Password: '):
-            return input(msg)
-    else:
-        def pydev_getpass(msg='Password: '):
-            return raw_input(msg)
+    #Note: same thing from the fix_getpass module -- but we don't want to import it in this
+    #custom sitecustomize.
+    def fix_get_pass():
+        try:
+            import getpass
+        except ImportError:
+            return #If we can't import it, we can't fix it
+        import warnings
+        fallback = getattr(getpass, 'fallback_getpass', None) # >= 2.6
+        if not fallback:
+            fallback = getpass.default_getpass # <= 2.5
+        getpass.getpass = fallback
+        if hasattr(getpass, 'GetPassWarning'):
+            warnings.simplefilter("ignore", category=getpass.GetPassWarning)
+    fix_get_pass()
     
-    getpass.getpass = pydev_getpass
 except:
     #Don't report errors at this stage
     if DEBUG:

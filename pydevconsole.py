@@ -39,10 +39,13 @@ from pydev_console_utils import BaseInterpreterInterface, BaseStdIn
 from pydev_console_utils import CodeFragment
 
 IS_PYTHON_3K = False
+IS_PY24 = False
 
 try:
     if sys.version_info[0] == 3:
         IS_PYTHON_3K = True
+    elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
+        IS_PY24 = True
 except:
     #That's OK, not all versions of python have sys.version_info
     pass
@@ -101,7 +104,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         The methods in this class should be registered in the xml-rpc server.
     '''
 
-    def __init__(self, host, client_port, mainThread):
+    def __init__(self, host, client_port, mainThread, show_banner=True):
         BaseInterpreterInterface.__init__(self, mainThread)
         self.client_port = client_port
         self.host = host
@@ -170,6 +173,14 @@ def process_exec_queue(interpreter):
         return False
 
     set_return_control_callback(return_control)
+
+    from pydev_import_hook import import_hook_manager
+    from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot
+    import_hook_manager.add_module_name("matplotlib", lambda: activate_matplotlib(interpreter.enableGui))
+    # enable_gui_function in activate_matplotlib should be called in main thread. That's why we call
+    # interpreter.enableGui which put it into the interpreter's exec_queue and executes it in the main thread.
+    import_hook_manager.add_module_name("pylab", activate_pylab)
+    import_hook_manager.add_module_name("pyplot", activate_pyplot)
 
     while 1:
         # Running the request may have changed the inputhook in use
@@ -266,10 +277,13 @@ def start_server(host, port, interpreter):
     from pydev_imports import SimpleXMLRPCServer as XMLRPCServer  #@Reimport
 
     try:
-        server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
+        if IS_PY24:
+            server = XMLRPCServer((host, port), logRequests=False)
+        else:
+            server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
 
     except:
-        sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, client_port))
+        sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, interpreter.client_port))
         raise
 
     # Tell UMD the proper default namespace
@@ -287,6 +301,8 @@ def start_server(host, port, interpreter):
     server.register_function(handshake)
     server.register_function(interpreter.connectToDebugger)
     server.register_function(interpreter.hello)
+    server.register_function(interpreter.getArray)
+    server.register_function(interpreter.evaluate)
 
     # Functions for GUI main loop integration
     server.register_function(interpreter.enableGui)
@@ -295,14 +311,28 @@ def start_server(host, port, interpreter):
         (h, port) = server.socket.getsockname()
 
         print(port)
-        print(client_port)
+        print(interpreter.client_port)
 
 
     sys.stderr.write(interpreter.get_greeting_msg())
     sys.stderr.flush()
 
-    server.serve_forever()
-
+    while True:
+        try:
+            server.serve_forever()
+        except:
+            # Ugly code to be py2/3 compatible
+            # https://sw-brainwy.rhcloud.com/tracker/PyDev/534:
+            # Unhandled "interrupted system call" error in the pydevconsol.py
+            e = sys.exc_info()[1]
+            retry = False
+            try:
+                retry = e.args[0] == 4 #errno.EINTR
+            except:
+                pass
+            if not retry:
+                raise
+            # Otherwise, keep on going
     return server
 
 
@@ -341,7 +371,6 @@ def get_completions(text, token, globals, locals):
 
 def exec_code(code, globals, locals):
     interpreterInterface = get_interpreter()
-
     interpreterInterface.interpreter.update(globals, locals)
 
     res = interpreterInterface.needMore(code)

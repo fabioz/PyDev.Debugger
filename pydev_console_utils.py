@@ -129,6 +129,13 @@ class BaseInterpreterInterface:
         self.buffer = None
 
     def needMoreForCode(self, source):
+        # PyDev-502: PyDev 3.9 F2 doesn't support backslash continuations
+
+        # Strangely even the IPython console is_complete said it was complete
+        # even with a continuation char at the end.
+        if source.endswith('\\'):
+            return True
+
         if hasattr(self.interpreter, 'is_complete'):
             return not self.interpreter.is_complete(source)
         try:
@@ -330,10 +337,45 @@ class BaseInterpreterInterface:
         self.buffer = None # Also clear the buffer when it's interrupted.
         try:
             if self.interruptable:
-                if hasattr(thread, 'interrupt_main'): #Jython doesn't have it
-                    thread.interrupt_main()
-                else:
-                    self.mainThread._thread.interrupt() #Jython
+                called = False
+                try:
+                    # Fix for #PyDev-500: Console interrupt can't interrupt on sleep
+                    import os
+                    import signal
+                    if os.name == 'posix':
+                        # On Linux we can't interrupt 0 as in Windows because it's
+                        # actually owned by a process -- on the good side, signals
+                        # work much better on Linux!
+                        os.kill(os.getpid(), signal.SIGINT)
+                        called = True
+
+                    elif os.name == 'nt':
+                        # Stupid windows: sending a Ctrl+C to a process given its pid
+                        # is absurdly difficult.
+                        # There are utilities to make it work such as
+                        # http://www.latenighthacking.com/projects/2003/sendSignal/
+                        # but fortunately for us, it seems Python does allow a CTRL_C_EVENT
+                        # for the current process in Windows if pid 0 is passed... if we needed
+                        # to send a signal to another process the approach would be
+                        # much more difficult.
+                        # Still, note that CTRL_C_EVENT is only Python 2.7 onwards...
+                        # Also, this doesn't seem to be documented anywhere!? (stumbled
+                        # upon it by chance after digging quite a lot).
+                        os.kill(0, signal.CTRL_C_EVENT)
+                        called = True
+                except:
+                    # Many things to go wrong (from CTRL_C_EVENT not being there
+                    # to failing import signal)... if that's the case, ask for
+                    # forgiveness and go on to the approach which will interrupt
+                    # the main thread (but it'll only work when it's executing some Python
+                    # code -- not on sleep() for instance).
+                    pass
+
+                if not called:
+                    if hasattr(thread, 'interrupt_main'): #Jython doesn't have it
+                        thread.interrupt_main()
+                    else:
+                        self.mainThread._thread.interrupt() #Jython
             return True
         except:
             traceback.print_exc()
@@ -380,6 +422,32 @@ class BaseInterpreterInterface:
 
         for k in keys:
             xml += pydevd_vars.varToXML(valDict[k], to_string(k))
+
+        xml += "</xml>"
+
+        return xml
+
+    def getArray(self, attr, roffset, coffset, rows, cols, format):
+        xml = "<xml>"
+        name = attr.split("\t")[-1]
+        array = pydevd_vars.evalInContext(name, self.getNamespace(), self.getNamespace())
+
+        array, metaxml, r, c, f = pydevd_vars.array_to_meta_xml(array, name, format)
+        xml += metaxml
+        format = '%' + f
+        if rows == -1 and cols == -1:
+            rows = r
+            cols = c
+        xml += pydevd_vars.array_to_xml(array, roffset, coffset, rows, cols, format)
+        xml += "</xml>"
+
+        return xml
+
+    def evaluate(self, expression):
+        xml = "<xml>"
+        result = pydevd_vars.evalInContext(expression, self.getNamespace(), self.getNamespace())
+
+        xml += pydevd_vars.varToXML(result, expression)
 
         xml += "</xml>"
 

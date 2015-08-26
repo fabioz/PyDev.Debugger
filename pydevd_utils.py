@@ -1,3 +1,4 @@
+from __future__ import nested_scopes
 import traceback
 
 try:
@@ -89,10 +90,12 @@ def cmp_to_key(mycmp):
             return mycmp(self.obj, other.obj) != 0
     return K
 
-def is_string(x):
-    if pydevd_constants.IS_PY3K:
+if pydevd_constants.IS_PY3K:
+    def is_string(x):
         return isinstance(x, str)
-    else:
+    
+else:
+    def is_string(x):
         return isinstance(x, basestring)
 
 def to_string(x):
@@ -105,10 +108,11 @@ def print_exc():
     if traceback:
         traceback.print_exc()
 
-def quote_smart(s, safe='/'):
-    if pydevd_constants.IS_PY3K:
+if pydevd_constants.IS_PY3K:
+    def quote_smart(s, safe='/'):
         return quote(s, safe)
-    else:
+else:
+    def quote_smart(s, safe='/'):
         if isinstance(s, unicode):
             s =  s.encode('utf-8')
 

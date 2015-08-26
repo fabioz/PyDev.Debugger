@@ -3,7 +3,12 @@
 '''
 import sys
 import os
-from _pydev_imps._pydev_thread import start_new_thread
+try:
+    from _pydev_imps._pydev_thread import start_new_thread
+except:
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+    from _pydev_imps._pydev_thread import start_new_thread
+
 
 #make it as if we were executing from the directory above this one (so that we can use pycompletionserver
 #without the need for it being in the pythonpath)

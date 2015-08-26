@@ -34,17 +34,11 @@ from IPython.core import release
 
 from pydev_imports import xmlrpclib
 
-pydev_banner_parts = [
-    '\n',
-    'PyDev -- Python IDE for Eclipse\n',  # TODO can we get a version number in here?
-    'For help on using PyDev\'s Console see http://pydev.org/manual_adv_interactive_console.html\n',
-]
-
-default_pydev_banner_parts = default_banner_parts + pydev_banner_parts
+default_pydev_banner_parts = default_banner_parts
 
 default_pydev_banner = ''.join(default_pydev_banner_parts)
 
-def show_in_pager(self, strng):
+def show_in_pager(self, strng, *args, **kwargs):
     """ Run a string through pager """
     # On PyDev we just output the string, there are scroll bars in the console
     # to handle "paging". This is the same behaviour as when TERM==dump (see
@@ -52,7 +46,7 @@ def show_in_pager(self, strng):
     print(strng)
 
 def create_editor_hook(pydev_host, pydev_client_port):
-    
+
     def call_editor(filename, line=0, wait=True):
         """ Open an editor in PyDev """
         if line is None:
@@ -64,7 +58,7 @@ def create_editor_hook(pydev_host, pydev_client_port):
 
         # import sys
         # sys.__stderr__.write('Calling editor at: %s:%s\n' % (pydev_host, pydev_client_port))
-        
+
         # Tell PyDev to open the editor
         server = xmlrpclib.Server('http://%s:%s' % (pydev_host, pydev_client_port))
         server.IPythonEditor(filename, str(line))
@@ -300,14 +294,15 @@ class _PyDevFrontEnd:
 
     version = release.__version__
 
-    def __init__(self, *args, **kwarg):
+    def __init__(self, show_banner=True):
 
         # Create and initialize our IPython instance.
         self.ipython = PyDevTerminalInteractiveShell.instance()
 
-        # Display the IPython banner, this has version info and
-        # help info
-        self.ipython.show_banner()
+        if show_banner:
+            # Display the IPython banner, this has version info and
+            # help info
+            self.ipython.show_banner()
 
 
         self._curr_exec_line = 0
@@ -410,9 +405,9 @@ class _PyDevFrontEnd:
 
     def getNamespace(self):
         return self.ipython.user_ns
-    
+
     def clearBuffer(self):
-        del self._curr_exec_lines[:] 
+        del self._curr_exec_lines[:]
 
     def addExec(self, line):
         if self._curr_exec_lines:
@@ -469,14 +464,14 @@ for name in pydev_ipython.inputhook.__all__:
 class _PyDevFrontEndContainer:
     _instance = None
     _last_host_port = None
-    
-def get_pydev_frontend(pydev_host, pydev_client_port):
+
+def get_pydev_frontend(pydev_host, pydev_client_port, show_banner=True):
     if _PyDevFrontEndContainer._instance is None:
-        _PyDevFrontEndContainer._instance = _PyDevFrontEnd()
-        
+        _PyDevFrontEndContainer._instance = _PyDevFrontEnd(show_banner=show_banner)
+
     if _PyDevFrontEndContainer._last_host_port != (pydev_host, pydev_client_port):
         _PyDevFrontEndContainer._last_host_port = pydev_host, pydev_client_port
-        
+
         # Back channel to PyDev to open editors (in the future other
         # info may go back this way. This is the same channel that is
         # used to get stdin, see StdIn in pydev_console_utils)
@@ -485,7 +480,7 @@ def get_pydev_frontend(pydev_host, pydev_client_port):
         # Note: setting the callback directly because setting it with set_hook would actually create a chain instead
         # of ovewriting at each new call).
         # _PyDevFrontEndContainer._instance.ipython.set_hook('editor', create_editor_hook(pydev_host, pydev_client_port))
-        
+
     return _PyDevFrontEndContainer._instance
-        
+
     
