@@ -1,5 +1,6 @@
 from __future__ import nested_scopes
 import traceback
+import os
 
 try:
     from urllib import quote
@@ -8,7 +9,7 @@ except:
 
 import pydevd_constants
 import sys
-
+import pydev_log
 
 def save_main_module(file, module_name):
     # patch provided by: Scott Schlesier - when script is run, it does not
@@ -93,7 +94,7 @@ def cmp_to_key(mycmp):
 if pydevd_constants.IS_PY3K:
     def is_string(x):
         return isinstance(x, str)
-    
+
 else:
     def is_string(x):
         return isinstance(x, basestring)
@@ -117,7 +118,34 @@ else:
             s =  s.encode('utf-8')
 
         return quote(s, safe)
-        
-        
 
+
+def _get_project_roots(project_roots_cache=[]):
+    # Note: the project_roots_cache is the same instance among the many calls to the method
+    if not project_roots_cache:
+        roots = os.getenv('IDE_PROJECT_ROOTS', '').split(os.pathsep)
+        pydev_log.debug("IDE_PROJECT_ROOTS %s\n" % roots)
+        new_roots = []
+        for root in roots:
+            new_roots.append(os.path.normcase(root))
+        project_roots_cache.append(new_roots)
+    return project_roots_cache[-1] # returns the project roots with case normalized
+
+
+def is_in_project_roots(filename, filename_to_not_in_scope_cache={}):
+    # Note: the filename_to_not_in_scope_cache is the same instance among the many calls to the method
+    try:
+        return filename_to_not_in_scope_cache[filename]
+    except:
+        project_roots = _get_project_roots()
+        filename = os.path.normcase(filename)
+        for root in project_roots:
+            if filename.startswith(root):
+                filename_to_not_in_scope_cache[filename] = False
+                break
+        else: # for else (only called if the break wasn't reached).
+            filename_to_not_in_scope_cache[filename] = True
+
+        # at this point it must be loaded.
+        return filename_to_not_in_scope_cache[filename]
 
