@@ -81,6 +81,12 @@ def _update_type_map():
         except:
             pass  #django may not be installed
 
+        try:
+            from collections import deque
+            _TYPE_MAP.append((deque, pydevd_resolver.dequeResolver))
+        except:
+            pass
+
         if frame_type is not None:
             _TYPE_MAP.append((frame_type, pydevd_resolver.frameResolver))
     

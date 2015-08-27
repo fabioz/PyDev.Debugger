@@ -42,6 +42,7 @@ def _is_managed_arg(arg):
 
 def _on_forked_process():
     import pydevd
+    pydevd.threadingCurrentThread().__pydevd_main_thread = True
     pydevd.settrace_forked()
 
 def _on_set_trace_for_new_thread():
