@@ -1,6 +1,7 @@
 # License: EPL
 import os
 import sys
+import pydev_log
 import traceback
 
 try:
@@ -66,7 +67,7 @@ def is_python(path):
 
 def patch_args(args):
     try:
-        log_debug("Patching args: %s" % str(args))
+        pydev_log.debug("Patching args: %s"% str(args))
 
         import sys
         new_args = []
@@ -90,7 +91,7 @@ def patch_args(args):
             else:
                 new_args.append(args[0])
         else:
-            log_debug("Process is not python, returning.")
+            pydev_log.debug("Process is not python, returning.")
             return args
 
         i = 1
@@ -224,9 +225,8 @@ def patch_arg_str_win(arg_str):
     if not is_python(args[0]):
         return arg_str
     arg_str = args_to_str(patch_args(args))
-    log_debug("New args: %s" % arg_str)
+    pydev_log.debug("New args: %s" % arg_str)
     return arg_str
-
 
 def monkey_patch_module(module, funcname, create_func):
     if hasattr(module, funcname):
@@ -241,7 +241,9 @@ def monkey_patch_os(funcname, create_func):
 
 
 def warn_multiproc():
-    log_error_once(
+    import pydev_log
+
+    pydev_log.error_once(
         "pydev debugger: New process is launching (breakpoints won't work in the new process).\n"
         "pydev debugger: To debug that process please enable 'Attach to subprocess automatically while debugging?' option in the debugger settings.\n")
 
@@ -370,7 +372,10 @@ def create_fork(original_name):
         import os
         child_process = getattr(os, original_name)()  # fork
         if not child_process:
-            _on_forked_process()
+            import pydevd
+            pydevd.threadingCurrentThread().__pydevd_main_thread = True
+
+            pydevd.settrace_forked()
         return child_process
     return new_fork
 
@@ -469,7 +474,19 @@ class _NewThreadStartupWithTrace:
         self.kwargs = kwargs
 
     def __call__(self):
-        _on_set_trace_for_new_thread()
+        from pydevd_comm import GetGlobalDebugger
+        global_debugger = GetGlobalDebugger()
+        if global_debugger is not None:
+            global_debugger.SetTrace(global_debugger.trace_dispatch)
+
+        if global_debugger.thread_analyser is not None:
+            # we can detect start_new_thread only here
+            try:
+                from pydevd_concurrency_analyser.pydevd_concurrency_logger import log_new_thread
+                log_new_thread(global_debugger)
+            except:
+                sys.stderr.write("Failed to detect new thread for visualization")
+
         return self.original_func(*self.args, **self.kwargs)
 
 
