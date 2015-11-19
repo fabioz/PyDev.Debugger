@@ -1,7 +1,6 @@
 # License: EPL
 import os
 import sys
-import pydev_log
 import traceback
 
 try:
@@ -257,7 +256,6 @@ def create_warn_multiproc(original_name):
 
         return getattr(os, original_name)(*args)
     return new_warn_multiproc
-
 
 def create_execl(original_name):
     def new_execl(path, *args):
