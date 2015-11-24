@@ -491,7 +491,7 @@ class _NewThreadStartupWithTrace:
         from pydevd_comm import GetGlobalDebugger
         global_debugger = GetGlobalDebugger()
 
-        if global_debugger.thread_analyser is not None:
+        if global_debugger is not None and global_debugger.thread_analyser is not None:
             # we can detect start_new_thread only here
             try:
                 from pydevd_concurrency_analyser.pydevd_concurrency_logger import log_new_thread
