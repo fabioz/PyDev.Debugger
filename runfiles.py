@@ -24,7 +24,7 @@ def main():
 
     # Here we'll run either with nose or with the pydev_runfiles.
     import pydev_runfiles
-    import pydev_runfiles_xml_rpc
+    from _pydev_runfiles import pydev_runfiles_xml_rpc
     import pydevd_constants
     from pydevd_file_utils import _NormFile
 
@@ -141,8 +141,8 @@ def main():
             if DEBUG:
                 sys.stdout.write('Final test framework args: %s\n' % (argv[1:],))
 
-            import pydev_runfiles_nose
-            PYDEV_NOSE_PLUGIN_SINGLETON = pydev_runfiles_nose.StartPydevNosePluginSingleton(configuration)
+            from _pydev_runfiles import pydev_runfiles_nose
+            PYDEV_NOSE_PLUGIN_SINGLETON = _pydev_runfiles.pydev_runfiles_nose.StartPydevNosePluginSingleton(configuration)
             argv.append('--with-pydevplugin')
             # Return 'not' because it will return 'success' (so, exit == 0 if success)
             return not nose.run(argv=argv, addplugins=[PYDEV_NOSE_PLUGIN_SINGLETON])
@@ -220,7 +220,7 @@ def main():
             os.environ['PYDEV_PYTEST_SERVER'] = str(configuration.port)
 
             argv.append('-p')
-            argv.append('pydev_runfiles_pytest2')
+            argv.append('_pydev_runfiles.pydev_runfiles_pytest2')
             if 'unittest' in sys.modules or 'unittest2' in sys.modules:
                 sys.stderr.write('pydev test runner error: imported unittest before running pytest.main\n')
             return pytest.main(argv)
@@ -235,7 +235,7 @@ if __name__ == '__main__':
     finally:
         try:
             # The server is not a daemon thread, so, we have to ask for it to be killed!
-            import pydev_runfiles_xml_rpc
+            from _pydev_runfiles import pydev_runfiles_xml_rpc
             pydev_runfiles_xml_rpc.forceServerKill()
         except:
             pass  # Ignore any errors here

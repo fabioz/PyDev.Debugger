@@ -14,8 +14,8 @@ except NameError:
 desired_runfiles_path = os.path.normpath(os.path.dirname(this_file_name) + "/..")
 sys.path.insert(0, desired_runfiles_path)
 
-import pydev_runfiles_unittest
-import pydev_runfiles_xml_rpc
+from _pydev_runfiles import pydev_runfiles_unittest
+from _pydev_runfiles import pydev_runfiles_xml_rpc
 import pydevd_io
 
 #remove existing pydev_runfiles from modules (if any), so that we can be sure we have the correct version
@@ -109,8 +109,8 @@ class RunfilesTest(unittest.TestCase):
         self.assertEquals([sys.argv[-1]], configuration.files_or_dirs)
         self.assertEquals(sys.argv[2].split(','), configuration.include_tests)
 
-        sys.argv = ('C:\\eclipse-SDK-3.2-win32\\eclipse\\plugins\\org.python.pydev.debug_1.2.2\\pysrc\\pydev_runfiles.py ' + 
-                    '--verbosity 1 ' + 
+        sys.argv = ('C:\\eclipse-SDK-3.2-win32\\eclipse\\plugins\\org.python.pydev.debug_1.2.2\\pysrc\\pydev_runfiles.py ' +
+                    '--verbosity 1 ' +
                     'C:\\workspace_eclipse\\fronttpa\\tests\\gui_tests\\calendar_popup_control_test.py ').split()
         configuration = pydev_runfiles.parse_cmdline()
         self.assertEquals([sys.argv[-1]], configuration.files_or_dirs)
@@ -363,7 +363,7 @@ class RunfilesTest(unittest.TestCase):
                     ('notifyTest', 'ok', '', '', simple_test, 'SampleTest.test_xxxxxx2'),
                     ('notifyTest', 'ok', '', '', simple_test2, 'YetAnotherSampleTest.test_abc'),
                 ]
-            
+
             if not IS_JYTHON:
                 if 'samples.simpleClass_test' in str(notifications):
                     expected.append(('notifyTest', 'error', '', 'ValueError: This is an INTENTIONAL value error in setUpClass.',
@@ -387,19 +387,19 @@ class RunfilesTest(unittest.TestCase):
                     if len(notification) == 6:
                         # Some are binary on Py3.
                         new_notifications.append((
-                            notification[0], 
-                            notification[1], 
-                            notification[2].encode('latin1'), 
-                            notification[3].encode('latin1'), 
-                            notification[4], 
-                            notification[5], 
+                            notification[0],
+                            notification[1],
+                            notification[2].encode('latin1'),
+                            notification[3].encode('latin1'),
+                            notification[4],
+                            notification[5],
                         ))
                     else:
                         new_notifications.append(notification)
                 except:
                     raise
             expected = new_notifications
-                    
+
             notifications.sort()
             self.assertEqual(
                 expected,

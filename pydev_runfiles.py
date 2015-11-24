@@ -2,7 +2,7 @@ from __future__ import nested_scopes
 
 import fnmatch
 import os.path
-from pydev_runfiles_coverage import StartCoverageSupport
+from _pydev_runfiles.pydev_runfiles_coverage import StartCoverageSupport
 from pydevd_constants import * #@UnusedWildImport
 import re
 import time
@@ -471,7 +471,7 @@ class PydevTestRunner(object):
             return mod
         except:
             if print_exception:
-                import pydev_runfiles_xml_rpc
+                from _pydev_runfiles import pydev_runfiles_xml_rpc
                 import pydevd_io
                 buf_err = pydevd_io.StartRedirect(keep_original_redirection=True, std='stderr')
                 buf_out = pydevd_io.StartRedirect(keep_original_redirection=True, std='stdout')
@@ -581,7 +581,7 @@ class PydevTestRunner(object):
     def find_tests_from_modules(self, file_and_modules_and_module_name):
         """ returns the unittests given a list of modules """
         #Use our own suite!
-        import pydev_runfiles_unittest
+        from _pydev_runfiles import pydev_runfiles_unittest
         import unittest
         unittest.TestLoader.suiteClass = pydev_runfiles_unittest.PydevTestSuite
         loader = unittest.TestLoader()
@@ -765,9 +765,9 @@ class PydevTestRunner(object):
         all_tests = self.find_tests_from_modules(file_and_modules_and_module_name)
         all_tests = self.filter_tests(all_tests)
 
-        import pydev_runfiles_unittest
+        from _pydev_runfiles import pydev_runfiles_unittest
         test_suite = pydev_runfiles_unittest.PydevTestSuite(all_tests)
-        import pydev_runfiles_xml_rpc
+        from _pydev_runfiles import pydev_runfiles_xml_rpc
         pydev_runfiles_xml_rpc.notifyTestsCollected(test_suite.countTestCases())
 
         start_time = time.time()
@@ -775,7 +775,7 @@ class PydevTestRunner(object):
         def run_tests():
             executed_in_parallel = False
             if self.jobs > 1:
-                import pydev_runfiles_parallel
+                from _pydev_runfiles import pydev_runfiles_parallel
 
                 #What may happen is that the number of jobs needed is lower than the number of jobs requested
                 #(e.g.: 2 jobs were requested for running 1 test) -- in which case ExecuteTestsInParallel will

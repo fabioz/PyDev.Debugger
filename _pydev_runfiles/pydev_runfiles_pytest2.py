@@ -1,7 +1,7 @@
 import pickle, zlib, base64, os
 import py
 from py._code import code  # @UnresolvedImport
-import pydev_runfiles_xml_rpc
+from _pydev_runfiles import pydev_runfiles_xml_rpc
 from pydevd_file_utils import _NormFile
 import pytest
 import sys
@@ -133,15 +133,15 @@ def pytest_runtest_makereport(item, call):
             # I.e.: a method marked with xfail passed... let the user know.
             report_outcome = "failed"
             report_longrepr = "XFAIL: Unexpected pass"
-            
+
         else:
             report_outcome = "passed"
             report_longrepr = None
     else:
         excinfo = call.excinfo
-        
+
         handled = False
-            
+
         if not (call.excinfo and
             call.excinfo.errisinstance(pytest.xfail.Exception)):
             evalxfail = getattr(item, '_evalxfail', None)
@@ -150,10 +150,10 @@ def pytest_runtest_makereport(item, call):
                 report_outcome = "passed"
                 report_longrepr = None
                 handled = True
-                
+
         if handled:
             pass
-        
+
         elif not isinstance(excinfo, py.code.ExceptionInfo):
             report_outcome = "failed"
             report_longrepr = excinfo
