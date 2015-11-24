@@ -5,7 +5,7 @@
 #   - 3.2
 #   - 3.3
 #   - "pypy"
-# 
+#
 # # Setup anaconda
 # before_install:
 #   # Fix issue with testGui
@@ -17,13 +17,13 @@
 #   - pip install nose
 #   - pip install ipython
 #   - pip install django
-#  
+#
 # # Run test
 # script:
 #   - nosetests --verbosity=3
 
 
-# IPython only works with 2.7/3.3, so, test only on those. 
+# IPython only works with 2.7/3.3, so, test only on those.
 language: python
 python:
   - 2.7
@@ -34,7 +34,7 @@ before_install:
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda/bin:$PATH
+  - export PATH=/home/travis/miniconda2/bin:$PATH
   - conda update --yes conda
   # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
   - sudo rm -rf /dev/shm
@@ -46,8 +46,7 @@ before_install:
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy nose ipython
   - pip install django
- 
+
 # Run test
 script:
   - nosetests --verbosity=3
- 
