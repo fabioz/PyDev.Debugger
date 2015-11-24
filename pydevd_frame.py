@@ -23,6 +23,9 @@ import pydevd_dont_trace
 basename = os.path.basename
 
 IGNORE_EXCEPTION_TAG = re.compile('[^#]*#.*@IgnoreException')
+DEBUG_START = ('pydevd.py', 'run')
+DEBUG_START_PY3K = ('_pydev_execfile.py', 'execfile')
+TRACE_PROPERTY = 'pydevd_traceproperty.py'
 
 
 #=======================================================================================================================
@@ -235,7 +238,7 @@ class PyDBFrame:
 
             if event == 'call' and main_debugger.signature_factory:
                 sendSignatureCallTrace(main_debugger, frame, filename)
-
+                
             plugin_manager = main_debugger.plugin
 
             is_exception_event = event == 'exception'
@@ -396,6 +399,19 @@ class PyDBFrame:
                             finally:
                                 if val is not None:
                                     thread.additionalInfo.message = val
+
+                        if not main_debugger.first_breakpoint_reached:
+                            if event == 'call':
+                                if hasattr(frame, 'f_back'):
+                                    back = frame.f_back
+                                    if back is not None:
+                                        # When we start debug session, we call execfile in pydevd run function. It produces an additional
+                                        # 'call' event for tracing and we stop on the first line of code twice.
+                                        back_filename, base = GetFilenameAndBase(back)
+                                        if (base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]) or \
+                                                (base == DEBUG_START_PY3K[0] and back.f_code.co_name == DEBUG_START_PY3K[1]):
+                                            stop = False
+                                            main_debugger.first_breakpoint_reached = True
                 if stop:
                     self.setSuspend(thread, CMD_SET_BREAK)
                 elif flag and plugin_manager is not None:
@@ -504,13 +520,12 @@ class PyDBFrame:
                             #When we get to the pydevd run function, the debugging has actually finished for the main thread
                             #(note that it can still go on for other threads, but for this one, we just make it finish)
                             #So, just setting it to None should be OK
-                            #I.e.: when setting to note we'll set the state to STATE_RUN and clear any stepping flags.
                             back_filename, base = GetFilenameAndBase(back)
-                            if base == 'pydevd.py' and back.f_code.co_name == 'run':
+                            if base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]:
                                 back = None
 
-                            elif base == 'pydevd_traceproperty.py':
-                                #We dont want to trace the return event of pydevd_traceproperty (custom property for debugging)
+                            elif base == TRACE_PROPERTY:
+                                # We dont want to trace the return event of pydevd_traceproperty (custom property for debugging)
                                 #if we're in a return, we want it to appear to the user in the previous frame!
                                 return None
 
@@ -534,6 +549,8 @@ class PyDBFrame:
                             info.pydev_step_cmd = None
                             info.pydev_state = STATE_RUN
 
+            except KeyboardInterrupt:
+                raise
             except:
                 try:
                     traceback.print_exc()
