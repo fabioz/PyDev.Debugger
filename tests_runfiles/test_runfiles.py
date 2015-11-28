@@ -16,7 +16,7 @@ sys.path.insert(0, desired_runfiles_path)
 
 from _pydev_runfiles import pydev_runfiles_unittest
 from _pydev_runfiles import pydev_runfiles_xml_rpc
-import pydevd_io
+from _pydevd_bundle import pydevd_io
 
 #remove existing pydev_runfiles from modules (if any), so that we can be sure we have the correct version
 if 'pydev_runfiles' in sys.modules:

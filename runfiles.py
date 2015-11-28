@@ -1,3 +1,10 @@
+'''
+Entry point module (keep at root):
+
+Used to run with tests with unittest/pytest/nose.
+'''
+
+
 import os
 
 def main():
@@ -25,7 +32,7 @@ def main():
     # Here we'll run either with nose or with the pydev_runfiles.
     from _pydev_runfiles import pydev_runfiles
     from _pydev_runfiles import pydev_runfiles_xml_rpc
-    import pydevd_constants
+    from _pydevd_bundle import pydevd_constants
     from pydevd_file_utils import _NormFile
 
     DEBUG = 0

@@ -1,6 +1,6 @@
 
 import sys
-from pydevd_constants import DictContains
+from _pydevd_bundle.pydevd_constants import DictContains
 from types import ModuleType
 
 

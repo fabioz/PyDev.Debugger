@@ -1,4 +1,4 @@
-from pydevd_constants import * #@UnusedWildImport
+from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
 from _pydev_bundle.pydev_imports import xmlrpclib, _queue
 Queue = _queue.Queue
 import traceback

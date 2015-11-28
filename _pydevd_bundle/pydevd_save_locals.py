@@ -2,7 +2,6 @@
 Utility for saving locals.
 """
 import sys
-import pydevd_vars
 
 def is_save_locals_available():
     try:
@@ -33,6 +32,7 @@ def save_locals(frame):
     Note: the 'save_locals' branch had a different approach wrapping the frame (much more code, but it gives ideas
     on how to save things partially, not the 'whole' locals).
     """
+    from _pydevd_bundle import pydevd_vars
     if not isinstance(frame, pydevd_vars.frame_type):
         # Fix exception when changing Django variable (receiving DjangoTemplateFrame)
         return

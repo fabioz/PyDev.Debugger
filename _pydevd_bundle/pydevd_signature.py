@@ -1,6 +1,4 @@
 import inspect
-import os
-import pydevd_utils
 
 try:
     import trace
@@ -10,10 +8,10 @@ else:
     trace._warn = lambda *args: None   # workaround for http://bugs.python.org/issue17143 (PY-8706)
 
 import gc
-from pydevd_comm import CMD_SIGNATURE_CALL_TRACE, NetCommand
-import pydevd_vars
-from pydevd_constants import xrange
-import pydevd_utils
+from _pydevd_bundle.pydevd_comm import CMD_SIGNATURE_CALL_TRACE, NetCommand
+from _pydevd_bundle import pydevd_vars
+from _pydevd_bundle.pydevd_constants import xrange
+from _pydevd_bundle import pydevd_utils
 
 class Signature(object):
     def __init__(self, file, name):

@@ -3,7 +3,7 @@ from __future__ import nested_scopes
 import fnmatch
 import os.path
 from _pydev_runfiles.pydev_runfiles_coverage import StartCoverageSupport
-from pydevd_constants import * #@UnusedWildImport
+from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
 import re
 import time
 
@@ -472,7 +472,7 @@ class PydevTestRunner(object):
         except:
             if print_exception:
                 from _pydev_runfiles import pydev_runfiles_xml_rpc
-                import pydevd_io
+                from _pydevd_bundle import pydevd_io
                 buf_err = pydevd_io.StartRedirect(keep_original_redirection=True, std='stderr')
                 buf_out = pydevd_io.StartRedirect(keep_original_redirection=True, std='stdout')
                 try:

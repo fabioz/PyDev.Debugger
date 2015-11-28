@@ -1,10 +1,10 @@
 import traceback
-from pydevd_breakpoints import LineBreakpoint, get_exception_name
-from pydevd_constants import GetThreadId, STATE_SUSPEND, DictContains, DictIterItems, DictKeys
-from pydevd_comm import CMD_SET_BREAK, CMD_STEP_OVER, CMD_ADD_EXCEPTION_BREAK
-import pydevd_vars
+from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_name
+from _pydevd_bundle.pydevd_constants import GetThreadId, STATE_SUSPEND, DictContains, DictIterItems, DictKeys
+from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_STEP_OVER, CMD_ADD_EXCEPTION_BREAK
+from _pydevd_bundle import pydevd_vars
 from pydevd_file_utils import GetFileNameAndBaseFromFile
-from pydevd_frame_utils import add_exception_to_frame, FCode
+from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, FCode
 
 JINJA2_SUSPEND = 3
 

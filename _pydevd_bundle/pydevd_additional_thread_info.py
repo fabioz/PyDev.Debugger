@@ -1,7 +1,7 @@
 import sys
-from pydevd_constants import * #@UnusedWildImport
+from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
 from _pydev_imps import _pydev_thread
-from pydevd_frame import PyDBFrame
+from _pydevd_bundle.pydevd_frame import PyDBFrame
 import weakref
 
 #=======================================================================================================================

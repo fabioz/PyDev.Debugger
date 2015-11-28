@@ -1,8 +1,10 @@
-
+'''
+Entry point module to run a file in the interactive console.
+'''
 from pydevconsole import *
 
 from _pydev_bundle import pydev_imports
-from pydevd_utils import save_main_module
+from _pydevd_bundle.pydevd_utils import save_main_module
 
 
 def run_file(file, globals=None, locals=None):

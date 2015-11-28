@@ -1,8 +1,8 @@
-from pydevd_constants import *
-import pydevd_tracing
+from _pydevd_bundle.pydevd_constants import *
+from _pydevd_bundle import pydevd_tracing
 import sys
 from _pydev_bundle import pydev_log
-import pydevd_import_class
+from _pydevd_bundle import pydevd_import_class
 
 _original_excepthook = None
 _handle_exceptions = None
@@ -12,7 +12,7 @@ from _pydev_imps import _pydev_threading as threading
 
 threadingCurrentThread = threading.currentThread
 
-from pydevd_comm import GetGlobalDebugger
+from _pydevd_bundle.pydevd_comm import GetGlobalDebugger
 
 class ExceptionBreakpoint:
 

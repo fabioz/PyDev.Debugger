@@ -11,7 +11,7 @@ SHOW_STDOUT = False
 
 
 
-from pydevd_constants import IS_PY3K
+from _pydevd_bundle.pydevd_constants import IS_PY3K
 try:
     from thread import start_new_thread
 except:

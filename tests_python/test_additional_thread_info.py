@@ -3,7 +3,7 @@ import os
 from _pydev_bundle import pydev_monkey
 sys.path.insert(0, os.path.split(os.path.split(__file__)[0])[0])
 
-from pydevd_constants import Null
+from _pydevd_bundle.pydevd_constants import Null
 import unittest
 
 try:
@@ -25,7 +25,7 @@ class TestCase(unittest.TestCase):
     '''
 
     def testMetNoFramesSupport(self):
-        from pydevd_additional_thread_info import PyDBAdditionalThreadInfoWithoutCurrentFramesSupport
+        from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfoWithoutCurrentFramesSupport
         info = PyDBAdditionalThreadInfoWithoutCurrentFramesSupport()
 
         mainDebugger = Null()

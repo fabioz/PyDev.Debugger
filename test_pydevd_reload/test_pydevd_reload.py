@@ -2,7 +2,7 @@ import os  # @NoMove
 import sys  # @NoMove
 sys.path.insert(0, os.path.realpath(os.path.abspath('..')))
 
-import pydevd_reload
+from _pydevd_bundle import pydevd_reload
 import tempfile
 import unittest
 

@@ -41,7 +41,7 @@
 
 
 
-from pydevd_constants import *  #@UnusedWildImport
+from _pydevd_bundle.pydevd_constants import *  #@UnusedWildImport
 import os.path
 import sys
 import traceback

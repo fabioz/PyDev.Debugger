@@ -1,4 +1,4 @@
-import pydevd_constants #@UnusedImport -- defines False and True if not there.
+from _pydevd_bundle import pydevd_constants
 
 IS_PY3K = pydevd_constants.IS_PY3K
 

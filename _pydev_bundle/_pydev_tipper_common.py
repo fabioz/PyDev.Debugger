@@ -15,7 +15,7 @@ except:
         import traceback;traceback.print_exc() #Ok, no inspect available (search will not work)
 
 
-from pydevd_constants import xrange
+from _pydevd_bundle.pydevd_constants import xrange
 
 def DoFind(f, mod):
     import linecache

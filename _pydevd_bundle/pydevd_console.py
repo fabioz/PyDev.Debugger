@@ -5,13 +5,13 @@ import sys
 import traceback
 
 from _pydev_bundle import _pydev_completer
-from pydevd_tracing import GetExceptionTracebackStr
-from pydevd_vars import makeValidXmlValue
+from _pydevd_bundle.pydevd_tracing import GetExceptionTracebackStr
+from _pydevd_bundle.pydevd_vars import makeValidXmlValue
 from _pydev_bundle.pydev_imports import Exec
-from pydevd_io import IOBuf
+from _pydevd_bundle.pydevd_io import IOBuf
 from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn
 from _pydev_bundle.pydev_override import overrides
-import pydevd_save_locals
+from _pydevd_bundle import pydevd_save_locals
 
 CONSOLE_OUTPUT = "output"
 CONSOLE_ERROR = "error"

@@ -100,7 +100,7 @@ target namespace.
 
 import imp
 from _pydev_bundle.pydev_imports import Exec
-import pydevd_dont_trace
+from _pydevd_bundle import pydevd_dont_trace
 import sys
 import traceback
 import types

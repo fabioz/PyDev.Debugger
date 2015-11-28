@@ -1,10 +1,10 @@
 from _pydev_bundle.pydev_imports import xmlrpclib, _queue, Exec
 import sys
-from pydevd_constants import IS_JYTHON
+from _pydevd_bundle.pydevd_constants import IS_JYTHON
 from _pydev_imps import _pydev_thread as thread
-import pydevd_xml
-import pydevd_vars
-from pydevd_utils import *  # @UnusedWildImport
+from _pydevd_bundle import pydevd_xml
+from _pydevd_bundle import pydevd_vars
+from _pydevd_bundle.pydevd_utils import *  # @UnusedWildImport
 import traceback
 
 #=======================================================================================================================
@@ -202,13 +202,13 @@ class BaseInterpreterInterface:
                 try:
                     self.startExec()
                     if hasattr(self, 'debugger'):
-                        import pydevd_tracing
+                        from _pydevd_bundle import pydevd_tracing
                         pydevd_tracing.SetTrace(self.debugger.trace_dispatch)
 
                     more = self.doAddExec(code_fragment)
 
                     if hasattr(self, 'debugger'):
-                        import pydevd_tracing
+                        from _pydevd_bundle import pydevd_tracing
                         pydevd_tracing.SetTrace(None)
 
                     self.finishExec(more)
@@ -505,7 +505,7 @@ class BaseInterpreterInterface:
             try:
                 self.debugger.connect(pydev_localhost.get_localhost(), debuggerPort)
                 self.debugger.prepareToRun()
-                import pydevd_tracing
+                from _pydevd_bundle import pydevd_tracing
                 pydevd_tracing.SetTrace(None)
             except:
                 traceback.print_exc()

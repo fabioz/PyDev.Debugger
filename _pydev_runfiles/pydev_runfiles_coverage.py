@@ -1,6 +1,6 @@
 import os.path
 import sys
-from pydevd_constants import Null
+from _pydevd_bundle.pydevd_constants import Null
 
 
 #=======================================================================================================================

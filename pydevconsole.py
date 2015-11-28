@@ -1,9 +1,12 @@
+'''
+Entry point module to start the interactive console.
+'''
 from _pydev_imps._pydev_thread import start_new_thread
 
 try:
     from code import InteractiveConsole
 except ImportError:
-    from pydevconsole_code_for_ironpython import InteractiveConsole
+    from _pydevd_bundle.pydevconsole_code_for_ironpython import InteractiveConsole
 
 from code import compile_command
 from code import InteractiveInterpreter
@@ -17,7 +20,7 @@ import traceback
 from _pydev_bundle import fix_getpass
 fix_getpass.fixGetpass()
 
-import pydevd_vars
+from _pydevd_bundle import pydevd_vars
 
 from _pydev_bundle.pydev_imports import Exec, _queue
 

@@ -1,6 +1,6 @@
-from pydevd_constants import DictContains
+from _pydevd_bundle.pydevd_constants import DictContains
 import sys
-import pydevd_vars
+from _pydevd_bundle import pydevd_vars
 from os.path import basename
 import traceback
 try:

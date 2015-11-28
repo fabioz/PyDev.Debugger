@@ -4,7 +4,7 @@ try:
     import Queue
 except:
     import queue as Queue #@UnresolvedImport
-from pydevd_constants import * #@UnusedWildImport
+from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
 from _pydev_runfiles import pydev_runfiles_xml_rpc
 import time
 import os
@@ -47,7 +47,7 @@ def ExecuteTestsInParallel(tests, jobs, split, verbosity, coverage_files, covera
         It may also return False if in debug mode (in which case, multi-processes are not accepted)
     '''
     try:
-        from pydevd_comm import GetGlobalDebugger
+        from _pydevd_bundle.pydevd_comm import GetGlobalDebugger
         if GetGlobalDebugger() is not None:
             return False
     except:

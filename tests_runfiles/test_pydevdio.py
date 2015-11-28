@@ -5,7 +5,7 @@ import os
 import unittest
 
 class Test(unittest.TestCase):
-    
+
     def testIt(self):
         #make it as if we were executing from the directory above this one (so that we can use jycompletionserver
         #without the need for it being in the pythonpath)
@@ -13,18 +13,18 @@ class Test(unittest.TestCase):
         import test_pydevdio #@UnresolvedImport - importing itself
         ADD_TO_PYTHONPATH = os.path.join(os.path.dirname(os.path.dirname(test_pydevdio.__file__)))
         sys.path.insert(0, ADD_TO_PYTHONPATH)
-        
+
         try:
-            import pydevd_io
+            from _pydevd_bundle import pydevd_io
             original = sys.stdout
-            
+
             try:
                 sys.stdout = pydevd_io.IOBuf()
                 print('foo')
                 print('bar')
-                
+
                 self.assertEquals('foo\nbar\n', sys.stdout.getvalue()) #@UndefinedVariable
-                
+
                 print('ww')
                 print('xx')
                 self.assertEquals('ww\nxx\n', sys.stdout.getvalue()) #@UndefinedVariable
@@ -33,7 +33,7 @@ class Test(unittest.TestCase):
         finally:
             #remove it to leave it ok for other tests
             sys.path.remove(ADD_TO_PYTHONPATH)
-        
+
 if __name__ == '__main__':
     #this is so that we can run it frem the jython tests -- because we don't actually have an __main__ module
     #(so, it won't try importing the __main__ module)

@@ -40,7 +40,7 @@ MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 1000
 
 import os
 
-import pydevd_vm_type
+from _pydevd_bundle import pydevd_vm_type
 
 IS_JYTHON = pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON
 

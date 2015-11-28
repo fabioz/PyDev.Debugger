@@ -1,4 +1,4 @@
-from pydevd_constants import IS_PY3K
+from _pydevd_bundle.pydevd_constants import IS_PY3K
 
 class Frame(object):
     def __init__(

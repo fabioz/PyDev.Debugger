@@ -5,7 +5,7 @@ import warnings
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 from _pydev_bundle.pydev_imports import xmlrpclib, _queue
 Queue = _queue.Queue
-from pydevd_constants import *
+from _pydevd_bundle.pydevd_constants import *
 
 #This may happen in IronPython (in Python it shouldn't happen as there are
 #'fast' replacements that are used in xmlrpclib.py)

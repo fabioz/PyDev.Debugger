@@ -7,7 +7,7 @@ try:
 except:
     from urllib.parse import quote  # @UnresolvedImport
 
-import pydevd_constants
+from _pydevd_bundle import pydevd_constants
 import sys
 from _pydev_bundle import pydev_log
 

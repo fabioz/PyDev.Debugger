@@ -1,4 +1,4 @@
-from pydevd_constants import USE_LIB_COPY, izip
+from _pydevd_bundle.pydevd_constants import USE_LIB_COPY, izip
 
 
 try:
@@ -48,9 +48,9 @@ except:
 
 
 try:
-    from pydevd_exec import Exec
+    from _pydevd_bundle.pydevd_exec import Exec
 except:
-    from pydevd_exec2 import Exec
+    from _pydevd_bundle.pydevd_exec2 import Exec
 
 try:
     from urllib import quote, quote_plus, unquote_plus

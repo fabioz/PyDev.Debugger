@@ -62,24 +62,24 @@ from _pydev_imps import _pydev_threading as threading
 from _pydev_imps import _pydev_time as time, _pydev_thread
 from _pydev_imps._pydev_socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
 from _pydev_bundle.pydev_imports import _queue
-from pydevd_constants import * #@UnusedWildImport
+from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
 
 try:
     from urllib import quote, quote_plus, unquote, unquote_plus
 except:
     from urllib.parse import quote, quote_plus, unquote, unquote_plus  #@Reimport @UnresolvedImport
 import pydevconsole
-import pydevd_vars
-import pydevd_tracing
-import pydevd_vm_type
+from _pydevd_bundle import pydevd_vars
+from _pydevd_bundle import pydevd_tracing
+from _pydevd_bundle import pydevd_vm_type
 import pydevd_file_utils
 import traceback
-from pydevd_utils import quote_smart as quote, compare_object_attrs, cmp_to_key, to_string
+from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs, cmp_to_key, to_string
 from _pydev_bundle import pydev_log
 from _pydev_bundle import _pydev_completer
 
-from pydevd_tracing import GetExceptionTracebackStr
-import pydevd_console
+from _pydevd_bundle.pydevd_tracing import GetExceptionTracebackStr
+from _pydevd_bundle import pydevd_console
 from _pydev_bundle.pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
 
 
@@ -850,7 +850,7 @@ class ReloadCodeCommand(InternalThreadCommand):
 
         else:
             sys.stderr.write('pydev debugger: Start reloading module: "' + module_name + '" ... \n')
-            import pydevd_reload
+            from _pydevd_bundle import pydevd_reload
             if pydevd_reload.xreload(sys.modules[module_name]):
                 sys.stderr.write('pydev debugger: reload finished\n')
             else:
@@ -1236,7 +1236,7 @@ class InternalEvaluateConsoleExpression(InternalThreadCommand):
 
                 cmd = dbg.cmdFactory.makeSendConsoleMessage(self.sequence, console_message.toXML())
             else:
-                from pydevd_console import ConsoleMessage
+                from _pydevd_bundle.pydevd_console import ConsoleMessage
                 console_message = ConsoleMessage()
                 console_message.add_console_message(
                     pydevd_console.CONSOLE_ERROR,

@@ -4,21 +4,21 @@ import re
 import traceback  # @Reimport
 
 from _pydev_bundle import pydev_log
-from pydevd_breakpoints import get_exception_breakpoint, get_exception_name
-from pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
+from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint, get_exception_name
+from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
-from pydevd_constants import *  # @UnusedWildImport
+from _pydevd_bundle.pydevd_constants import *  # @UnusedWildImport
 from pydevd_file_utils import GetFilenameAndBase
 
-from pydevd_frame_utils import add_exception_to_frame, just_raised
+from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised
 
 try:
-    from pydevd_signature import sendSignatureCallTrace
+    from _pydevd_bundle.pydevd_signature import sendSignatureCallTrace
 except ImportError:
     def sendSignatureCallTrace(*args, **kwargs):
         pass
-import pydevd_vars
-import pydevd_dont_trace
+from _pydevd_bundle import pydevd_vars
+from _pydevd_bundle import pydevd_dont_trace
 
 basename = os.path.basename
 

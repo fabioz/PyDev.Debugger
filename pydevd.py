@@ -1,16 +1,22 @@
+'''
+Entry point module (keep at root):
+
+This module starts the debugger.
+'''
+
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
 from __future__ import nested_scopes # Jython 2.1 support
 
-import pydevd_utils
-from pydevd_utils import save_main_module
+from _pydevd_bundle import pydevd_utils
+from _pydevd_bundle.pydevd_utils import save_main_module
 
 import traceback
 
-from pydevd_frame_utils import add_exception_to_frame
+from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydev_bundle import pydev_imports
-from pydevd_breakpoints import * #@UnusedWildImport
+from _pydevd_bundle.pydevd_breakpoints import * #@UnusedWildImport
 from _pydev_bundle import fix_getpass
-from pydevd_comm import  CMD_CHANGE_VARIABLE, \
+from _pydevd_bundle.pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_EVALUATE_EXPRESSION, \
                          CMD_EXEC_EXPRESSION, \
                          CMD_GET_COMPLETIONS, \
@@ -77,14 +83,14 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
 
 from pydevd_file_utils import NormFileToServer, GetFilenameAndBase
 import pydevd_file_utils
-import pydevd_vars
-import pydevd_vm_type
-import pydevd_tracing
-import pydevd_io
-from pydevd_additional_thread_info import PyDBAdditionalThreadInfo
-from pydevd_custom_frames import CustomFramesContainer, CustomFramesContainerInit
-import pydevd_dont_trace
-import pydevd_traceproperty
+from _pydevd_bundle import pydevd_vars
+from _pydevd_bundle import pydevd_vm_type
+from _pydevd_bundle import pydevd_tracing
+from _pydevd_bundle import pydevd_io
+from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
+from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, CustomFramesContainerInit
+from _pydevd_bundle import pydevd_dont_trace
+from _pydevd_bundle import pydevd_traceproperty
 
 from _pydev_imps import _pydev_time as time, _pydev_thread
 
@@ -98,7 +104,7 @@ import atexit
 SUPPORT_PLUGINS = not IS_JYTH_LESS25
 PluginManager = None
 if SUPPORT_PLUGINS:
-    from pydevd_plugin_utils import PluginManager
+    from _pydevd_bundle.pydevd_plugin_utils import PluginManager
 
 if IS_PY3K:
     import pkgutil
@@ -1799,11 +1805,11 @@ class PyDB:
 
     def wait_for_commands(self, globals):
         thread = threading.currentThread()
-        import pydevd_frame_utils
+        from _pydevd_bundle import pydevd_frame_utils
         frame = pydevd_frame_utils.Frame(None, -1, pydevd_frame_utils.FCode("Console",
                                                                             os.path.abspath(os.path.dirname(__file__))), globals, globals)
         thread_id = GetThreadId(thread)
-        import pydevd_vars
+        from _pydevd_bundle import pydevd_vars
         pydevd_vars.addAdditionalFrameById(thread_id, {id(frame): frame})
 
         cmd = self.cmdFactory.makeShowConsoleMessage(thread_id, frame)
@@ -2183,7 +2189,7 @@ def settrace_forked():
     '''
     host, port = dispatch()
 
-    import pydevd_tracing
+    from _pydevd_bundle import pydevd_tracing
     pydevd_tracing.RestoreSysSetTraceFunc()
 
     if port is not None:
@@ -2333,7 +2339,7 @@ if __name__ == '__main__':
         # pydevd_stackless.patch_stackless()
         #
         # itself to be able to benefit from seeing the tasklets created before the remote debugger is attached.
-        import pydevd_stackless
+        from _pydevd_bundle import pydevd_stackless
         pydevd_stackless.patch_stackless()
     except:
         pass  # It's ok not having stackless there...
@@ -2366,7 +2372,7 @@ if __name__ == '__main__':
             pass  # that's ok, no need to mock psyco if it's not available anyways
         else:
             # if it's available, let's change it for a stub (pydev already made use of it)
-            import pydevd_psyco_stub
+            from _pydevd_bundle import pydevd_psyco_stub
             sys.modules['psyco'] = pydevd_psyco_stub
 
         if setup['save-signatures']:
@@ -2374,7 +2380,7 @@ if __name__ == '__main__':
                 sys.stderr.write("Collecting run-time type information is not supported for Jython\n")
             else:
                 # Only import it if we're going to use it!
-                from pydevd_signature import SignatureFactory
+                from _pydevd_bundle.pydevd_signature import SignatureFactory
                 debugger.signature_factory = SignatureFactory()
         if setup['qt-support']:
             enable_qt_support()

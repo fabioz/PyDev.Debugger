@@ -4,10 +4,10 @@ import time
 import os
 import unittest
 try:
-    import pydevd_referrers
+    from _pydevd_bundle import pydevd_referrers
 except:
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-    import pydevd_referrers
+    from _pydevd_bundle import pydevd_referrers
 from _pydev_bundle.pydev_imports import StringIO
 
 #=======================================================================================================================

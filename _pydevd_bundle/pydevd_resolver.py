@@ -12,8 +12,8 @@ except:
     setattr(__builtin__, 'True', 1)
     setattr(__builtin__, 'False', 0)
 
-import pydevd_constants
-from pydevd_constants import DictIterItems, DictKeys, xrange
+from _pydevd_bundle import pydevd_constants
+from _pydevd_bundle.pydevd_constants import DictIterItems, DictKeys, xrange
 
 
 # Note: 300 is already a lot to see in the outline (after that the user should really use the shell to get things)

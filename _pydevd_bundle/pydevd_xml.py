@@ -1,8 +1,8 @@
 from _pydev_bundle import pydev_log
 import traceback
-import pydevd_resolver
+from _pydevd_bundle import pydevd_resolver
 import sys
-from pydevd_constants import * #@UnusedWildImport
+from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
 
 from _pydev_bundle.pydev_imports import quote
 

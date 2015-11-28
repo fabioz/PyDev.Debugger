@@ -1,4 +1,4 @@
-from pydevd_constants import *  #@UnusedWildImport
+from _pydevd_bundle.pydevd_constants import *  #@UnusedWildImport
 from pydevd_file_utils import GetFilenameAndBase
 from _pydev_imps import _pydev_thread
 threadingCurrentThread = threading.currentThread

@@ -2,11 +2,11 @@
     resolution/conversion to XML.
 """
 import pickle
-from pydevd_constants import * #@UnusedWildImport
+from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
 from types import * #@UnusedWildImport
 
-from pydevd_custom_frames import getCustomFrame
-from pydevd_xml import *
+from _pydevd_bundle.pydevd_custom_frames import getCustomFrame
+from _pydevd_bundle.pydevd_xml import *
 from _pydev_imps import _pydev_thread
 
 try:
@@ -17,9 +17,9 @@ import sys #@Reimport
 
 from _pydev_imps import _pydev_threading as threading
 import traceback
-import pydevd_save_locals
+from _pydevd_bundle import pydevd_save_locals
 from _pydev_bundle.pydev_imports import Exec, quote, execfile
-from pydevd_utils import to_string
+from _pydevd_bundle.pydevd_utils import to_string
 
 try:
     import types

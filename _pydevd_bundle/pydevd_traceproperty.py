@@ -1,8 +1,8 @@
 '''For debug purpose we are replacing actual builtin property by the debug property
 '''
-from pydevd_comm import GetGlobalDebugger
-from pydevd_constants import * #@UnusedWildImport
-import pydevd_tracing
+from _pydevd_bundle.pydevd_comm import GetGlobalDebugger
+from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
+from _pydevd_bundle import pydevd_tracing
 
 #=======================================================================================================================
 # replace_builtin_property

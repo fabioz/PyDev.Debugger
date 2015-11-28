@@ -20,7 +20,7 @@ except ImportError:
     IS_JYTHON = False
     from _pydev_bundle import _pydev_imports_tipper
 
-import pydevd_vars
+from _pydevd_bundle import pydevd_vars
 dir2 = _pydev_imports_tipper.GenerateImportsTipForModule
 
 

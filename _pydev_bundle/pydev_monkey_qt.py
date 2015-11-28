@@ -1,8 +1,8 @@
 from __future__ import nested_scopes
 
 def set_trace_in_qt():
-    import pydevd_tracing
-    from pydevd_comm import GetGlobalDebugger
+    from _pydevd_bundle import pydevd_tracing
+    from _pydevd_bundle.pydevd_comm import GetGlobalDebugger
     debugger = GetGlobalDebugger()
     if debugger is not None:
         pydevd_tracing.SetTrace(debugger.trace_dispatch)

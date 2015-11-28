@@ -3,7 +3,7 @@ Support for a tag that allows skipping over functions while debugging.
 '''
 import linecache
 import re
-from pydevd_constants import DictContains
+from _pydevd_bundle.pydevd_constants import DictContains
 
 # To suppress tracing a method, add the tag @DontTrace
 # to a comment either preceding or on the same line as

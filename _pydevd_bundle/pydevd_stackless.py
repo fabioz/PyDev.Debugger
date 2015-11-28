@@ -1,13 +1,13 @@
 from __future__ import nested_scopes
-from pydevd_constants import *  # @UnusedWildImport
+from _pydevd_bundle.pydevd_constants import *  # @UnusedWildImport
 import stackless  # @UnresolvedImport
 from pydevd_tracing import SetTrace
-from pydevd_custom_frames import updateCustomFrame, removeCustomFrame, addCustomFrame
-from pydevd_comm import GetGlobalDebugger
+from _pydevd_bundle.pydevd_custom_frames import updateCustomFrame, removeCustomFrame, addCustomFrame
+from _pydevd_bundle.pydevd_comm import GetGlobalDebugger
 import weakref
 from pydevd_file_utils import GetFilenameAndBase
 from pydevd import DONT_TRACE
-from pydevd_constants import DictItems
+from _pydevd_bundle.pydevd_constants import DictItems
 
 
 # Used so that we don't loose the id (because we'll remove when it's not alive and would generate a new id for the

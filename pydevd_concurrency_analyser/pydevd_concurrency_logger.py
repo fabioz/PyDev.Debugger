@@ -2,9 +2,9 @@ import time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import ObjectWrapper, wrap_attr
 
 import pydevd_file_utils
-import pydevd_vars
+from _pydevd_bundle import pydevd_vars
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
-from pydevd_constants import DictContains, GetThreadId, IS_PY3K
+from _pydevd_bundle.pydevd_constants import DictContains, GetThreadId, IS_PY3K
 
 file_system_encoding = getfilesystemencoding()
 
@@ -24,7 +24,7 @@ THREAD_METHODS = ['start', '_stop', 'join']
 LOCK_METHODS = ['__init__', 'acquire', 'release', '__enter__', '__exit__']
 QUEUE_METHODS = ['put', 'get']
 
-from pydevd_comm import GlobalDebuggerHolder, NetCommand
+from _pydevd_bundle.pydevd_comm import GlobalDebuggerHolder, NetCommand
 import traceback
 
 import time

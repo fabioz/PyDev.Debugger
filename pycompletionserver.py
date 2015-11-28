@@ -1,4 +1,6 @@
 '''
+Entry-point module to start the code-completion server for PyDev.
+
 @author Fabio Zadrozny
 '''
 IS_PYTHON3K = 0
@@ -16,7 +18,7 @@ except NameError:
     setattr(__builtin__, 'True', 1)  # Python 3.0 does not accept __builtin__.True = 1 in its syntax
     setattr(__builtin__, 'False', 0)
 
-from pydevd_constants import IS_JYTHON
+from _pydevd_bundle.pydevd_constants import IS_JYTHON
 
 if IS_JYTHON:
     import java.lang  # @UnresolvedImport
