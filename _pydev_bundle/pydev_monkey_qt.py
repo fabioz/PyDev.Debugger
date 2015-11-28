@@ -136,7 +136,8 @@ def _internal_patch_qt():
 
         def _exec_run(self):
             set_trace_in_qt()
-            return self.exec_()
+            self.exec_()
+            return None
 
         def _new_run(self):
             set_trace_in_qt()

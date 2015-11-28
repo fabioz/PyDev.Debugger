@@ -10,7 +10,10 @@ except:
 # http://labs.qt.nokia.com/2007/07/05/qthreads-no-longer-abstract/
 class SomeObject(QtCore.QObject):
 
-    finished = QtCore.Signal()  # @UndefinedVariable
+    try:
+        finished = QtCore.Signal()  # @UndefinedVariable
+    except:
+        finished = QtCore.pyqtSignal()  # @UndefinedVariable
 
     def longRunning(self):
         count = 0
