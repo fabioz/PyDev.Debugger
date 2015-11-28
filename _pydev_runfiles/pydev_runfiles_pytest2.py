@@ -154,7 +154,7 @@ def pytest_runtest_makereport(item, call):
         if handled:
             pass
 
-        elif not isinstance(excinfo, py.code.ExceptionInfo):
+        elif not isinstance(excinfo, py.code.ExceptionInfo):  # @UndefinedVariable
             report_outcome = "failed"
             report_longrepr = excinfo
 
@@ -164,7 +164,7 @@ def pytest_runtest_makereport(item, call):
             report_outcome = "passed"
             report_longrepr = None
 
-        elif excinfo.errisinstance(py.test.skip.Exception):
+        elif excinfo.errisinstance(py.test.skip.Exception):  # @UndefinedVariable
             report_outcome = "skipped"
             r = excinfo._getreprcrash()
             report_longrepr = None #(str(r.path), r.lineno, r.message)
@@ -232,7 +232,7 @@ def pytest_runtest_makereport(item, call):
 
 
 @pytest.mark.tryfirst
-def pytest_runtest_setup(item):
+def pytest_runtest_setup(item):  # @DuplicatedSignature
     '''
     Skips tests. With xdist will be on a secondary process.
     '''

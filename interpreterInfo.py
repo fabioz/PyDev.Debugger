@@ -66,7 +66,7 @@ if sys.platform == "cygwin":
         path = tobytes(path)
         CCP_POSIX_TO_WIN_A = 0
         ctypes.cdll.cygwin1.cygwin_conv_path(CCP_POSIX_TO_WIN_A, path, retval, MAX_PATH)
-        
+
         return retval.value
 
 else:
@@ -87,7 +87,7 @@ def __getfilesystemencoding():
     except:
         try:
             # Handle Jython
-            from java.lang import System
+            from java.lang import System  # @UnresolvedImport
             env = System.getProperty("os.name").lower()
             if env.find('win') != -1:
                 return 'ISO-8859-1'  # mbcs does not work on Jython, so, use a (hopefully) suitable replacement
@@ -103,27 +103,27 @@ def __getfilesystemencoding():
 def getfilesystemencoding():
     try:
         ret = __getfilesystemencoding()
-        
+
         #Check if the encoding is actually there to be used!
         if hasattr('', 'encode'):
             ''.encode(ret)
         if hasattr('', 'decode'):
             ''.decode(ret)
-            
+
         return ret
     except:
         return 'utf-8'
-    
+
 file_system_encoding = getfilesystemencoding()
 
 if IS_PYTHON_3K:
     unicode_type = str
     bytes_type = bytes
-    
+
 else:
     unicode_type = unicode
     bytes_type = str
-    
+
 
 def tounicode(s):
     if hasattr(s, 'decode'):

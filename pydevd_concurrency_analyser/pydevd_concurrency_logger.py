@@ -11,7 +11,7 @@ file_system_encoding = getfilesystemencoding()
 try:
     from urllib import quote
 except:
-    from urllib.parse import quote
+    from urllib.parse import quote  # @UnresolvedImport
 
 import _pydev_threading as threading
 threadingCurrentThread = threading.currentThread
@@ -33,7 +33,7 @@ cur_time = lambda: int(round(time.time() * 1000000))
 
 
 try:
-    import asyncio
+    import asyncio  # @UnresolvedImport
 except:
     pass
 

@@ -191,7 +191,7 @@ def ismethod(func):
                 step = 0
 
                 if not hasattr(func_code, 'CO_VARARGS'):
-                    from org.python.core import CodeFlag
+                    from org.python.core import CodeFlag  # @UnresolvedImport
                     co_varargs_flag = CodeFlag.CO_VARARGS.flag
                     co_varkeywords_flag = CodeFlag.CO_VARKEYWORDS.flag
                 else:

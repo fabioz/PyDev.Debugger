@@ -72,7 +72,7 @@ def wrap_threads():
 
     # queue patching
     try:
-        import queue
+        import queue  # @UnresolvedImport
         queue.Queue = factory_wrapper(queue.Queue)
     except:
         import Queue

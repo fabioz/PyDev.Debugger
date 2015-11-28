@@ -7,7 +7,7 @@ import pydevd_vars
 def is_save_locals_available():
     try:
         if '__pypy__' in sys.builtin_module_names:
-            import __pypy__
+            import __pypy__  # @UnresolvedImport
             save_locals = __pypy__.locals_to_fast
             return True
     except:
@@ -39,7 +39,7 @@ def save_locals(frame):
 
     try:
         if '__pypy__' in sys.builtin_module_names:
-            import __pypy__
+            import __pypy__  # @UnresolvedImport
             save_locals = __pypy__.locals_to_fast
             save_locals(frame)
             return

@@ -427,15 +427,6 @@ class PyDB:
     def FinishDebuggingSession(self):
         self._finishDebuggingSession = True
 
-    def acquire(self):
-        if PyDBUseLocks:
-            self.lock.acquire()
-        return True
-
-    def release(self):
-        if PyDBUseLocks:
-            self.lock.release()
-        return True
 
     def initializeNetwork(self, sock):
         try:
@@ -1424,7 +1415,7 @@ class PyDB:
         cmd = self.cmdFactory.makeThreadSuspendMessage(GetThreadId(thread), frame, thread.stop_reason, message)
         self.writer.addCommand(cmd)
 
-        CustomFramesContainer.custom_frames_lock.acquire()
+        CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
         try:
             from_this_thread = []
 
@@ -1437,7 +1428,7 @@ class PyDB:
                 from_this_thread.append(frame_id)
 
         finally:
-            CustomFramesContainer.custom_frames_lock.release()
+            CustomFramesContainer.custom_frames_lock.release()  # @UndefinedVariable
 
         imported = False
         info = thread.additionalInfo
@@ -1530,7 +1521,7 @@ class PyDB:
         cmd = self.cmdFactory.makeThreadRunMessage(GetThreadId(thread), info.pydev_step_cmd)
         self.writer.addCommand(cmd)
 
-        CustomFramesContainer.custom_frames_lock.acquire()
+        CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
         try:
             # The ones that remained on last_running must now be removed.
             for frame_id in from_this_thread:
@@ -1538,7 +1529,7 @@ class PyDB:
                 self.writer.addCommand(self.cmdFactory.makeThreadKilledMessage(frame_id))
 
         finally:
-            CustomFramesContainer.custom_frames_lock.release()
+            CustomFramesContainer.custom_frames_lock.release()  # @UndefinedVariable
 
     def handle_post_mortem_stop(self, additionalInfo, t):
         pydev_log.debug("We are stopping in post-mortem\n")
@@ -2042,12 +2033,12 @@ def _locked_settrace(
         debugger.SetTraceForFrameAndParents(GetFrame(), False, overwrite_prev_trace=overwrite_prev_trace)
 
 
-        CustomFramesContainer.custom_frames_lock.acquire()
+        CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
         try:
             for _frameId, custom_frame in DictIterItems(CustomFramesContainer.custom_frames):
                 debugger.SetTraceForFrameAndParents(custom_frame.frame, False)
         finally:
-            CustomFramesContainer.custom_frames_lock.release()
+            CustomFramesContainer.custom_frames_lock.release()  # @UndefinedVariable
 
 
         t = threadingCurrentThread()

@@ -1,5 +1,5 @@
 try:
-    import unittest2 as python_unittest
+    import unittest2 as python_unittest  # @UnresolvedImport
 except:
     import unittest as python_unittest
 

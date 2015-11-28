@@ -104,7 +104,7 @@ def patch_args(args):
                         continue
 
                     if arg.rsplit('.')[-1] in ['zip', 'pyz', 'pyzw']:
-                        pydev_log.debug('Executing a PyZip, returning')
+                        log_debug('Executing a PyZip, returning')
                         return args
                     break
 
@@ -124,7 +124,7 @@ def patch_args(args):
         if i < len(args) and _is_managed_arg(args[i]):  # no need to add pydevd twice
             return args
 
-        for x in sys.original_argv:
+        for x in sys.original_argv:  # @UndefinedVariable
             if sys.platform == "win32" and not x.endswith('"'):
                 arg = '"%s"' % x
             else:
@@ -350,7 +350,7 @@ def create_fork_exec(original_name):
 _posixsubprocess.fork_exec(args, executable_list, close_fds, ... (13 more))
     """
     def new_fork_exec(args, *other_args):
-        import _posixsubprocess
+        import _posixsubprocess  # @UnresolvedImport
         args = patch_args(args)
         return getattr(_posixsubprocess, original_name)(args, *other_args)
     return new_fork_exec
@@ -521,7 +521,7 @@ def _get_threading_modules_to_patch():
         import thread as _thread
         threading_modules_to_patch.append(_thread)
     except:
-        import _thread
+        import _thread  # @UnresolvedImport @Reimport
         threading_modules_to_patch.append(_thread)
     return threading_modules_to_patch
 

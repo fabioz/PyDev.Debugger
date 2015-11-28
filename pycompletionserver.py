@@ -1,4 +1,3 @@
-#@PydevCodeAnalysisIgnore
 '''
 @author Fabio Zadrozny
 '''
@@ -20,7 +19,7 @@ except NameError:
 from pydevd_constants import IS_JYTHON
 
 if IS_JYTHON:
-    import java.lang
+    import java.lang  # @UnresolvedImport
     SERVER_NAME = 'jycompletionserver'
     import _pydev_jy_imports_tipper  # as _pydev_imports_tipper #changed to be backward compatible with 1.5
     _pydev_imports_tipper = _pydev_jy_imports_tipper
