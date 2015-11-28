@@ -8,10 +8,6 @@
 
 
 
-try:
-    from thread import start_new_thread
-except ImportError:
-    from _thread import start_new_thread  # @UnresolvedImport
 CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION, CMD_ENABLE_DONT_TRACE = 133, 134, 135, 141
 PYTHON_EXE = None
 IRONPYTHON_EXE = None
@@ -20,25 +16,9 @@ JAVA_LOCATION = None
 
 
 import unittest
-from _pydev_bundle import pydev_localhost
-
-try:
-    xrange
-except:
-    xrange = range
-
 import os
-
-import pydevd
-PYDEVD_FILE = pydevd.__file__
-
 import sys
-
-import subprocess
-import socket
-import threading
 import time
-
 import debugger_unittest
 
 #=======================================================================================================================
@@ -62,7 +42,7 @@ class WriterThreadCase19(debugger_unittest.AbstractWriterThread):
         self.WriteRunThread(thread_id)
 
 
-        self.finishedOk = True
+        self.finished_ok = True
 
 
 #=======================================================================================================================
@@ -83,7 +63,7 @@ class WriterThreadCase18(debugger_unittest.AbstractWriterThread):
         self.WriteChangeVariable(thread_id, frame_id, 'a', '40')
         self.WriteRunThread(thread_id)
 
-        self.finishedOk = True
+        self.finished_ok = True
 
 #=======================================================================================================================
 # WriterThreadCase17 - [Test Case]: dont trace
@@ -111,7 +91,7 @@ class WriterThreadCase17(debugger_unittest.AbstractWriterThread):
             self.WriteRunThread(thread_id)
 
 
-        self.finishedOk = True
+        self.finished_ok = True
 
 #=======================================================================================================================
 # WriterThreadCase17a - [Test Case]: dont trace return
@@ -135,7 +115,7 @@ class WriterThreadCase17a(debugger_unittest.AbstractWriterThread):
         self.WriteRunThread(thread_id)
 
 
-        self.finishedOk = True
+        self.finished_ok = True
 
 #=======================================================================================================================
 # WriterThreadCase16 - [Test Case]: numpy.ndarray resolver
@@ -206,7 +186,7 @@ class WriterThreadCase16(debugger_unittest.AbstractWriterThread):
         self.WaitForVar('<var name="%27size%27')
 
         self.WriteRunThread(thread_id)
-        self.finishedOk = True
+        self.finished_ok = True
 
 
 #=======================================================================================================================
@@ -233,7 +213,7 @@ class WriterThreadCase15(debugger_unittest.AbstractWriterThread):
         assert 9 == self._sequence, 'Expected 9. Had: %s' % self._sequence
 
         self.WriteRunThread(thread_id)
-        self.finishedOk = True
+        self.finished_ok = True
 
 
 
@@ -278,7 +258,7 @@ class WriterThreadCase14(debugger_unittest.AbstractWriterThread):
         assert 17 == self._sequence, 'Expected 19. Had: %s' % self._sequence
 
         self.WriteRunThread(thread_id)
-        self.finishedOk = True
+        self.finished_ok = True
 
 
 #=======================================================================================================================
@@ -329,7 +309,7 @@ class WriterThreadCase13(debugger_unittest.AbstractWriterThread):
 
         self.WriteRunThread(thread_id)
 
-        self.finishedOk = True
+        self.finished_ok = True
 
 #=======================================================================================================================
 # WriterThreadCase12
@@ -359,7 +339,7 @@ class WriterThreadCase12(debugger_unittest.AbstractWriterThread):
 
         assert 13 == self._sequence, 'Expected 13. Had: %s' % self._sequence
 
-        self.finishedOk = True
+        self.finished_ok = True
 
 
 
@@ -399,7 +379,7 @@ class WriterThreadCase11(debugger_unittest.AbstractWriterThread):
 
         assert 13 == self._sequence, 'Expected 13. Had: %s' % self._sequence
 
-        self.finishedOk = True
+        self.finished_ok = True
 
 
 
@@ -433,7 +413,7 @@ class WriterThreadCase10(debugger_unittest.AbstractWriterThread):
 
         assert 11 == self._sequence, 'Expected 11. Had: %s' % self._sequence
 
-        self.finishedOk = True
+        self.finished_ok = True
 
 
 
@@ -467,7 +447,7 @@ class WriterThreadCase9(debugger_unittest.AbstractWriterThread):
 
         assert 11 == self._sequence, 'Expected 11. Had: %s' % self._sequence
 
-        self.finishedOk = True
+        self.finished_ok = True
 
 
 #=======================================================================================================================
@@ -494,7 +474,7 @@ class WriterThreadCase8(debugger_unittest.AbstractWriterThread):
 
         assert 9 == self._sequence, 'Expected 9. Had: %s' % self._sequence
 
-        self.finishedOk = True
+        self.finished_ok = True
 
 
 
@@ -533,7 +513,7 @@ class WriterThreadCase7(debugger_unittest.AbstractWriterThread):
 
         assert 17 == self._sequence, 'Expected 17. Had: %s' % self._sequence
 
-        self.finishedOk = True
+        self.finished_ok = True
 
 
 
@@ -570,7 +550,7 @@ class WriterThreadCase6(debugger_unittest.AbstractWriterThread):
 
         assert 13 == self._sequence, 'Expected 15. Had: %s' % self._sequence
 
-        self.finishedOk = True
+        self.finished_ok = True
 
 #=======================================================================================================================
 # WriterThreadCase5
@@ -607,7 +587,7 @@ class WriterThreadCase5(debugger_unittest.AbstractWriterThread):
 
         assert 15 == self._sequence, 'Expected 15. Had: %s' % self._sequence
 
-        self.finishedOk = True
+        self.finished_ok = True
 
 
 #=======================================================================================================================
@@ -629,7 +609,7 @@ class WriterThreadCase4(debugger_unittest.AbstractWriterThread):
 
         self.WriteRunThread(thread_id)
 
-        self.finishedOk = True
+        self.finished_ok = True
 
 
 #=======================================================================================================================
@@ -662,7 +642,7 @@ class WriterThreadCase3(debugger_unittest.AbstractWriterThread):
 
         assert 17 == self._sequence, 'Expected 17. Had: %s' % self._sequence
 
-        self.finishedOk = True
+        self.finished_ok = True
 
 #=======================================================================================================================
 # WriterThreadCase2
@@ -694,7 +674,7 @@ class WriterThreadCase2(debugger_unittest.AbstractWriterThread):
         assert 15 == self._sequence, 'Expected 15. Had: %s' % self._sequence
 
         self.log.append('Marking finished ok.')
-        self.finishedOk = True
+        self.finished_ok = True
 
 #=======================================================================================================================
 # WriterThreadCaseQThread1
@@ -717,7 +697,7 @@ class WriterThreadCaseQThread1(debugger_unittest.AbstractWriterThread):
         assert 9 == self._sequence, 'Expected 9. Had: %s' % self._sequence
 
         self.log.append('Marking finished ok.')
-        self.finishedOk = True
+        self.finished_ok = True
 
 #=======================================================================================================================
 # WriterThreadCaseQThread2
@@ -740,7 +720,7 @@ class WriterThreadCaseQThread2(debugger_unittest.AbstractWriterThread):
         assert 9 == self._sequence, 'Expected 9. Had: %s' % self._sequence
 
         self.log.append('Marking finished ok.')
-        self.finishedOk = True
+        self.finished_ok = True
 
 #=======================================================================================================================
 # WriterThreadCaseQThread3
@@ -763,7 +743,7 @@ class WriterThreadCaseQThread3(debugger_unittest.AbstractWriterThread):
         assert 9 == self._sequence, 'Expected 9. Had: %s' % self._sequence
 
         self.log.append('Marking finished ok.')
-        self.finishedOk = True
+        self.finished_ok = True
 
 #=======================================================================================================================
 # WriterThreadCase1
@@ -804,165 +784,72 @@ class WriterThreadCase1(debugger_unittest.AbstractWriterThread):
             raise
         self.log.append('asserted')
 
-        self.finishedOk = True
+        self.finished_ok = True
 
 #=======================================================================================================================
 # DebuggerBase
 #=======================================================================================================================
-class DebuggerBase(object):
+class DebuggerBase(debugger_unittest.DebuggerRunner):
 
-    def getCommandLine(self):
-        raise NotImplementedError
+    def test_case_1(self):
+        self.check_case(WriterThreadCase1)
 
-    def CheckCase(self, writer_thread_class):
-        port = debugger_unittest.get_free_port()
-        writer_thread = writer_thread_class(port)
-        writer_thread.start()
-        time.sleep(1)
+    def test_case_2(self):
+        self.check_case(WriterThreadCase2)
 
-        localhost = pydev_localhost.get_localhost()
-        args = self.getCommandLine()
-        args += [
-            PYDEVD_FILE,
-            '--DEBUG_RECORD_SOCKET_READS',
-            '--qt-support',
-            '--client',
-            localhost,
-            '--port',
-            str(port),
-            '--file',
-            writer_thread.TEST_FILE,
-        ]
+    def test_case_3(self):
+        self.check_case(WriterThreadCase3)
 
-        if debugger_unittest.SHOW_OTHER_DEBUG_INFO:
-            print('executing', ' '.join(args))
+    def test_case_4(self):
+        self.check_case(WriterThreadCase4)
 
-        process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=os.path.dirname(PYDEVD_FILE))
+    def test_case_5(self):
+        self.check_case(WriterThreadCase5)
 
-        stdout = []
-        stderr = []
+    def test_case_6(self):
+        self.check_case(WriterThreadCase6)
 
-        def read(stream, buffer):
-            for line in stream.readlines():
-                if debugger_unittest.IS_PY3K:
-                    line = line.decode('utf-8')
+    def test_case_7(self):
+        self.check_case(WriterThreadCase7)
 
-                if debugger_unittest.SHOW_STDOUT:
-                    print(line)
-                buffer.append(line)
+    def test_case_8(self):
+        self.check_case(WriterThreadCase8)
 
-        start_new_thread(read, (process.stdout, stdout))
+    def test_case_9(self):
+        self.check_case(WriterThreadCase9)
 
+    def test_case_10(self):
+        self.check_case(WriterThreadCase10)
 
-        if debugger_unittest.SHOW_OTHER_DEBUG_INFO:
-            print('Both processes started')
+    def test_case_11(self):
+        self.check_case(WriterThreadCase11)
 
-        # polls can fail (because the process may finish and the thread still not -- so, we give it some more chances to
-        # finish successfully).
-        check = 0
-        while True:
-            if process.poll() is not None:
-                break
-            else:
-                if not writer_thread.isAlive():
-                    check += 1
-                    if check == 20:
-                        print('Warning: writer thread exited and process still did not.')
-                    if check == 100:
-                        self.fail_with_message(
-                            "The other process should've exited but still didn't (timeout for process to exit).",
-                            stdout, stderr, writer_thread
-                        )
-            time.sleep(.2)
+    def test_case_12(self):
+        self.check_case(WriterThreadCase12)
 
+    def test_case_13(self):
+        self.check_case(WriterThreadCase13)
 
-        poll = process.poll()
-        if poll < 0:
-            self.fail_with_message(
-                "The other process exited with error code: " + str(poll), stdout, stderr, writer_thread)
+    def test_case_14(self):
+        self.check_case(WriterThreadCase14)
 
+    def test_case_15(self):
+        self.check_case(WriterThreadCase15)
 
-        if stdout is None:
-            self.fail_with_message(
-                "The other process may still be running -- and didn't give any output.", stdout, stderr, writer_thread)
+    def test_case_16(self):
+        self.check_case(WriterThreadCase16)
 
-        if 'TEST SUCEEDED' not in ''.join(stdout):
-            self.fail_with_message("TEST SUCEEDED not found in stdout.", stdout, stderr, writer_thread)
+    def test_case_17(self):
+        self.check_case(WriterThreadCase17)
 
-        for i in xrange(100):
-            if not writer_thread.finishedOk:
-                time.sleep(.1)
+    def test_case_17a(self):
+        self.check_case(WriterThreadCase17a)
 
-        if not writer_thread.finishedOk:
-            self.fail_with_message(
-                "The thread that was doing the tests didn't finish successfully.", stdout, stderr, writer_thread)
+    def test_case_18(self):
+        self.check_case(WriterThreadCase18)
 
-    def fail_with_message(self, msg, stdout, stderr, writerThread):
-        self.fail(msg+
-            "\nStdout: \n"+'\n'.join(stdout)+
-            "\nStderr:"+'\n'.join(stderr)+
-            "\nLog:\n"+'\n'.join(getattr(writerThread, 'log', [])))
-
-
-    def testCase1(self):
-        self.CheckCase(WriterThreadCase1)
-
-    def testCase2(self):
-        self.CheckCase(WriterThreadCase2)
-
-    def testCase3(self):
-        self.CheckCase(WriterThreadCase3)
-
-    def testCase4(self):
-        self.CheckCase(WriterThreadCase4)
-
-    def testCase5(self):
-        self.CheckCase(WriterThreadCase5)
-
-    def testCase6(self):
-        self.CheckCase(WriterThreadCase6)
-
-    def testCase7(self):
-        self.CheckCase(WriterThreadCase7)
-
-    def testCase8(self):
-        self.CheckCase(WriterThreadCase8)
-
-    def testCase9(self):
-        self.CheckCase(WriterThreadCase9)
-
-    def testCase10(self):
-        self.CheckCase(WriterThreadCase10)
-
-    def testCase11(self):
-        self.CheckCase(WriterThreadCase11)
-
-    def testCase12(self):
-        self.CheckCase(WriterThreadCase12)
-
-    def testCase13(self):
-        self.CheckCase(WriterThreadCase13)
-
-    def testCase14(self):
-        self.CheckCase(WriterThreadCase14)
-
-    def testCase15(self):
-        self.CheckCase(WriterThreadCase15)
-
-    def testCase16(self):
-        self.CheckCase(WriterThreadCase16)
-
-    def testCase17(self):
-        self.CheckCase(WriterThreadCase17)
-
-    def testCase17a(self):
-        self.CheckCase(WriterThreadCase17a)
-
-    def testCase18(self):
-        self.CheckCase(WriterThreadCase18)
-
-    def testCase19(self):
-        self.CheckCase(WriterThreadCase19)
+    def test_case_19(self):
+        self.check_case(WriterThreadCase19)
 
     def _has_qt(self):
         try:
@@ -976,25 +863,25 @@ class DebuggerBase(object):
                 pass
         return False
 
-    def testCaseQthread1(self):
+    def test_case_qthread1(self):
         if self._has_qt():
-            self.CheckCase(WriterThreadCaseQThread1)
+            self.check_case(WriterThreadCaseQThread1)
 
-    def testCaseQthread2(self):
+    def test_case_qthread2(self):
         if self._has_qt():
-            self.CheckCase(WriterThreadCaseQThread2)
+            self.check_case(WriterThreadCaseQThread2)
 
-    def testCaseQthread3(self):
+    def test_case_qthread3(self):
         if self._has_qt():
-            self.CheckCase(WriterThreadCaseQThread3)
+            self.check_case(WriterThreadCaseQThread3)
 
 
 class TestPython(unittest.TestCase, DebuggerBase):
-    def getCommandLine(self):
+    def get_command_line(self):
         return [PYTHON_EXE]
 
 class TestJython(unittest.TestCase, DebuggerBase):
-    def getCommandLine(self):
+    def get_command_line(self):
         return [
                 JAVA_LOCATION,
                 '-classpath',
@@ -1003,45 +890,45 @@ class TestJython(unittest.TestCase, DebuggerBase):
             ]
 
     # This case requires decorators to work (which are not present on Jython 2.1), so, this test is just removed from the jython run.
-    def testCase13(self):
+    def test_case_13(self):
         self.skipTest("Unsupported Decorators")
 
     # This case requires decorators to work (which are not present on Jython 2.1), so, this test is just removed from the jython run.
-    def testCase17(self):
+    def test_case_17(self):
         self.skipTest("Unsupported Decorators")
 
-    def testCase18(self):
+    def test_case_18(self):
         self.skipTest("Unsupported assign to local")
 
-    def testCase16(self):
+    def test_case_16(self):
         self.skipTest("Unsupported numpy")
 
 class TestIronPython(unittest.TestCase, DebuggerBase):
-    def getCommandLine(self):
+    def get_command_line(self):
         return [
                 IRONPYTHON_EXE,
                 '-X:Frames'
             ]
 
-    def testCase3(self):
+    def test_case_3(self):
         self.skipTest("Timing issues") # This test fails once in a while due to timing issues on IronPython, so, skipping it.
 
-    def testCase7(self):
+    def test_case_7(self):
         # This test checks that we start without variables and at each step a new var is created, but on ironpython,
         # the variables exist all at once (with None values), so, we can't test it properly.
         self.skipTest("Different behavior on IronPython")
 
-    def testCase13(self):
+    def test_case_13(self):
         self.skipTest("Unsupported Decorators") # Not sure why it doesn't work on IronPython, but it's not so common, so, leave it be.
 
-    def testCase16(self):
+    def test_case_16(self):
         self.skipTest("Unsupported numpy")
 
-    def testCase18(self):
+    def test_case_18(self):
         self.skipTest("Unsupported assign to local")
 
 
-def GetLocationFromLine(line):
+def get_location_from_line(line):
     loc = line.split('=')[1].strip()
     if loc.endswith(';'):
         loc = loc[:-1]
@@ -1052,11 +939,11 @@ def GetLocationFromLine(line):
     return loc
 
 
-def SplitLine(line):
+def split_line(line):
     if '=' not in line:
         return None, None
     var = line.split('=')[0].strip()
-    return var, GetLocationFromLine(line)
+    return var, get_location_from_line(line)
 
 
 
@@ -1069,7 +956,7 @@ if os.path.exists(test_dependent):
     f = open(test_dependent)
     try:
         for line in f.readlines():
-            var, loc = SplitLine(line)
+            var, loc = split_line(line)
             if 'PYTHON_EXE' == var:
                 PYTHON_EXE = loc
 
@@ -1127,23 +1014,23 @@ if __name__ == '__main__':
 
 
 
-#         suite.addTest(TestIronPython('testCase18'))
-#         suite.addTest(TestIronPython('testCase17'))
-#         suite.addTest(TestIronPython('testCase3'))
-#         suite.addTest(TestIronPython('testCase7'))
+#         suite.addTest(TestIronPython('test_case_18'))
+#         suite.addTest(TestIronPython('test_case_17'))
+#         suite.addTest(TestIronPython('test_case_3'))
+#         suite.addTest(TestIronPython('test_case_7'))
 #
-#         suite.addTest(TestPython('testCaseQthread1'))
-#         suite.addTest(TestPython('testCaseQthread2'))
-#         suite.addTest(TestPython('testCaseQthread3'))
+#         suite.addTest(TestPython('test_case_qthread1'))
+#         suite.addTest(TestPython('test_case_qthread2'))
+#         suite.addTest(TestPython('test_case_qthread3'))
 
-#         suite.addTest(TestPython('testCase17a'))
+#         suite.addTest(TestPython('test_case_17a'))
 
 
-#         suite.addTest(TestJython('testCase1'))
-#         suite.addTest(TestPython('testCase2'))
+#         suite.addTest(TestJython('test_case_1'))
+#         suite.addTest(TestPython('test_case_2'))
 #         unittest.TextTestRunner(verbosity=3).run(suite)
-    #     suite.addTest(TestPython('testCase17'))
-    #     suite.addTest(TestPython('testCase18'))
-    #     suite.addTest(TestPython('testCase19'))
+    #     suite.addTest(TestPython('test_case_17'))
+    #     suite.addTest(TestPython('test_case_18'))
+    #     suite.addTest(TestPython('test_case_19'))
 
         unittest.TextTestRunner(verbosity=3).run(suite)

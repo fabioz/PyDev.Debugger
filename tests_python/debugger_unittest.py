@@ -6,12 +6,26 @@ import os
 import threading
 import time
 from _pydev_bundle import pydev_localhost
+import subprocess
 
 CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION, CMD_ENABLE_DONT_TRACE = 133, 134, 135, 141
 
 SHOW_WRITES_AND_READS = False
 SHOW_OTHER_DEBUG_INFO = False
 SHOW_STDOUT = False
+
+import pydevd
+PYDEVD_FILE = pydevd.__file__
+
+try:
+    from thread import start_new_thread
+except ImportError:
+    from _thread import start_new_thread  # @UnresolvedImport
+
+try:
+    xrange
+except:
+    xrange = range
 
 
 #=======================================================================================================================
@@ -50,6 +64,108 @@ class ReaderThread(threading.Thread):
         self.sock.close()
 
 
+class DebuggerRunner(object):
+
+    def get_command_line(self):
+        raise NotImplementedError
+
+    def check_case(self, writer_thread_class):
+        port = get_free_port()
+        writer_thread = writer_thread_class(port)
+        writer_thread.start()
+        time.sleep(1)
+
+        localhost = pydev_localhost.get_localhost()
+        args = self.get_command_line()
+        args += [
+            PYDEVD_FILE,
+            '--DEBUG_RECORD_SOCKET_READS',
+            '--qt-support',
+            '--client',
+            localhost,
+            '--port',
+            str(port),
+            '--file',
+            writer_thread.TEST_FILE,
+        ]
+
+        if SHOW_OTHER_DEBUG_INFO:
+            print('executing', ' '.join(args))
+
+        return self.run_process(args, writer_thread)
+
+    def run_process(self, args, writer_thread):
+        process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=os.path.dirname(PYDEVD_FILE))
+
+        stdout = []
+        stderr = []
+
+        def read(stream, buffer):
+            for line in stream.readlines():
+                if IS_PY3K:
+                    line = line.decode('utf-8')
+
+                if SHOW_STDOUT:
+                    print(line)
+                buffer.append(line)
+
+        start_new_thread(read, (process.stdout, stdout))
+
+
+        if SHOW_OTHER_DEBUG_INFO:
+            print('Both processes started')
+
+        # polls can fail (because the process may finish and the thread still not -- so, we give it some more chances to
+        # finish successfully).
+        check = 0
+        while True:
+            if process.poll() is not None:
+                break
+            else:
+                if writer_thread is not None:
+                    if not writer_thread.isAlive():
+                        check += 1
+                        if check == 20:
+                            print('Warning: writer thread exited and process still did not.')
+                        if check == 100:
+                            self.fail_with_message(
+                                "The other process should've exited but still didn't (timeout for process to exit).",
+                                stdout, stderr, writer_thread
+                            )
+            time.sleep(.2)
+
+
+        poll = process.poll()
+        if poll < 0:
+            self.fail_with_message(
+                "The other process exited with error code: " + str(poll), stdout, stderr, writer_thread)
+
+
+        if stdout is None:
+            self.fail_with_message(
+                "The other process may still be running -- and didn't give any output.", stdout, stderr, writer_thread)
+
+        if 'TEST SUCEEDED' not in ''.join(stdout):
+            self.fail_with_message("TEST SUCEEDED not found in stdout.", stdout, stderr, writer_thread)
+
+        if writer_thread is not None:
+            for i in xrange(100):
+                if not writer_thread.finished_ok:
+                    time.sleep(.1)
+
+            if not writer_thread.finished_ok:
+                self.fail_with_message(
+                    "The thread that was doing the tests didn't finish successfully.", stdout, stderr, writer_thread)
+
+        return {'stdout':stdout, 'stderr':stderr}
+
+    def fail_with_message(self, msg, stdout, stderr, writerThread):
+        raise AssertionError(msg+
+            "\nStdout: \n"+'\n'.join(stdout)+
+            "\nStderr:"+'\n'.join(stderr)+
+            "\nLog:\n"+'\n'.join(getattr(writerThread, 'log', [])))
+
+
 
 #=======================================================================================================================
 # AbstractWriterThread
@@ -59,7 +175,7 @@ class AbstractWriterThread(threading.Thread):
     def __init__(self, port):
         threading.Thread.__init__(self)
         self.setDaemon(True)
-        self.finishedOk = False
+        self.finished_ok = False
         self._next_breakpoint_id = 0
         self.log = []
         self.port = port
