@@ -141,7 +141,7 @@ def parse_cmdline(argv=None):
     include_files = None
     django = False
 
-    from _pydev_getopt import gnu_getopt
+    from _pydev_bundle._pydev_getopt import gnu_getopt
     optlist, dirs = gnu_getopt(
         argv[1:], "",
         [

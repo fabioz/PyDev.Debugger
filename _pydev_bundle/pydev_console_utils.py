@@ -1,4 +1,4 @@
-from pydev_imports import xmlrpclib, _queue, Exec
+from _pydev_bundle.pydev_imports import xmlrpclib, _queue, Exec
 import sys
 from pydevd_constants import IS_JYTHON
 from _pydev_imps import _pydev_thread as thread
@@ -276,7 +276,7 @@ class BaseInterpreterInterface:
                         if doc is not None:
                             return doc
 
-                        import _pydev_jy_imports_tipper
+                        from _pydev_bundle import _pydev_jy_imports_tipper
 
                         is_method, infos = _pydev_jy_imports_tipper.ismethod(obj)
                         ret = ''
@@ -488,14 +488,14 @@ class BaseInterpreterInterface:
             try:
                 # Try to import the packages needed to attach the debugger
                 import pydevd
-                import _pydev_threading as threading
+                from _pydev_imps import _pydev_threading as threading
 
             except:
                 # This happens on Jython embedded in host eclipse
                 traceback.print_exc()
                 sys.stderr.write('pydevd is not available, cannot connect\n',)
 
-            import pydev_localhost
+            from _pydev_bundle import pydev_localhost
             threading.currentThread().__pydevd_id__ = "console_main"
 
             self.orig_findFrame = pydevd_vars.findFrame
@@ -536,7 +536,7 @@ class BaseInterpreterInterface:
             only the last one's main loop runs and it may not work
         '''
         def do_enable_gui():
-            from pydev_versioncheck import versionok_for_gui
+            from _pydev_bundle.pydev_versioncheck import versionok_for_gui
             if versionok_for_gui():
                 try:
                     from pydev_ipython.inputhook import enable_gui

@@ -134,7 +134,7 @@ from _pydev_imps import _pydev_select as select
 import sys
 import os
 try:
-    import _pydev_threading as threading
+    from _pydev_imps import _pydev_threading as threading
 except ImportError:
     import dummy_threading as threading
 

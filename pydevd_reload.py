@@ -99,7 +99,7 @@ target namespace.
 """
 
 import imp
-from pydev_imports import Exec
+from _pydev_bundle.pydev_imports import Exec
 import pydevd_dont_trace
 import sys
 import traceback

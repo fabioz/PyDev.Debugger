@@ -11,15 +11,15 @@ from code import InteractiveInterpreter
 import os
 import sys
 
-import _pydev_threading as threading
+from _pydev_imps import _pydev_threading as threading
 
 import traceback
-import fix_getpass
+from _pydev_bundle import fix_getpass
 fix_getpass.fixGetpass()
 
 import pydevd_vars
 
-from pydev_imports import Exec, _queue
+from _pydev_bundle.pydev_imports import Exec, _queue
 
 try:
     import __builtin__
@@ -35,8 +35,8 @@ except NameError: # version < 2.3 -- didn't have the True/False builtins
     setattr(__builtin__, 'True', 1) #Python 3.0 does not accept __builtin__.True = 1 in its syntax
     setattr(__builtin__, 'False', 0)
 
-from pydev_console_utils import BaseInterpreterInterface, BaseStdIn
-from pydev_console_utils import CodeFragment
+from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn
+from _pydev_bundle.pydev_console_utils import CodeFragment
 
 IS_PYTHON_3K = False
 IS_PY24 = False
@@ -80,14 +80,14 @@ try:
     try:
         execfile #Not in Py3k
     except NameError:
-        from pydev_imports import execfile
+        from _pydev_bundle.pydev_imports import execfile
 
         __builtin__.execfile = execfile
 except:
     pass
 
 # Pull in runfile, the interface to UMD that wraps execfile
-from pydev_umd import runfile, _set_globals_function
+from _pydev_bundle.pydev_umd import runfile, _set_globals_function
 try:
     import builtins  # @UnresolvedImport
     builtins.runfile = runfile
@@ -125,7 +125,7 @@ class InterpreterInterface(BaseInterpreterInterface):
 
     def getCompletions(self, text, act_tok):
         try:
-            from _pydev_completer import Completer
+            from _pydev_bundle._pydev_completer import Completer
 
             completer = Completer(self.namespace, None)
             return completer.complete(act_tok)
@@ -174,7 +174,7 @@ def process_exec_queue(interpreter):
 
     set_return_control_callback(return_control)
 
-    from pydev_import_hook import import_hook_manager
+    from _pydev_bundle.pydev_import_hook import import_hook_manager
     from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot
     import_hook_manager.add_module_name("matplotlib", lambda: activate_matplotlib(interpreter.enableGui))
     # enable_gui_function in activate_matplotlib should be called in main thread. That's why we call
@@ -230,7 +230,7 @@ try:
         exitfunc = None
 
     if IPYTHON:
-        from pydev_ipython_console import InterpreterInterface
+        from _pydev_bundle.pydev_ipython_console import InterpreterInterface
         if exitfunc is not None:
             sys.exitfunc = exitfunc
         else:
@@ -274,7 +274,7 @@ def start_server(host, port, interpreter):
         host = ''
 
     #I.e.: supporting the internal Jython version in PyDev to create a Jython interactive console inside Eclipse.
-    from pydev_imports import SimpleXMLRPCServer as XMLRPCServer  #@Reimport
+    from _pydev_bundle.pydev_imports import SimpleXMLRPCServer as XMLRPCServer  #@Reimport
 
     try:
         if IS_PY24:
@@ -492,7 +492,7 @@ if __name__ == '__main__':
     import pydevconsole
     sys.stdin = pydevconsole.BaseStdIn()
     port, client_port = sys.argv[1:3]
-    import pydev_localhost
+    from _pydev_bundle import pydev_localhost
 
     if int(port) == 0 and int(client_port) == 0:
         (h, p) = pydev_localhost.get_socket_name()

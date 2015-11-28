@@ -58,10 +58,10 @@ each command has a format:
     * PYDB - pydevd, the python end
 '''
 
-import _pydev_threading as threading
+from _pydev_imps import _pydev_threading as threading
 from _pydev_imps import _pydev_time as time, _pydev_thread
 from _pydev_imps._pydev_socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
-from pydev_imports import _queue
+from _pydev_bundle.pydev_imports import _queue
 from pydevd_constants import * #@UnusedWildImport
 
 try:
@@ -75,12 +75,12 @@ import pydevd_vm_type
 import pydevd_file_utils
 import traceback
 from pydevd_utils import quote_smart as quote, compare_object_attrs, cmp_to_key, to_string
-import pydev_log
-import _pydev_completer
+from _pydev_bundle import pydev_log
+from _pydev_bundle import _pydev_completer
 
 from pydevd_tracing import GetExceptionTracebackStr
 import pydevd_console
-from pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
+from _pydev_bundle.pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
 
 
 
@@ -199,7 +199,7 @@ MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make th
 
 VERSION_STRING = "@@BUILD_NUMBER@@"
 
-from _pydev_filesystem_encoding import getfilesystemencoding
+from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 file_system_encoding = getfilesystemencoding()
 
 #--------------------------------------------------------------------------------------------------- UTILITIES

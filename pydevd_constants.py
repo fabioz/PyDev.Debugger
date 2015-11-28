@@ -81,7 +81,7 @@ except:
     SUPPORT_GEVENT = False
 
 USE_LIB_COPY = SUPPORT_GEVENT and not IS_PY3K and sys.version_info[1] >= 6
-import _pydev_threading as threading
+from _pydev_imps import _pydev_threading as threading
 
 from _pydev_imps import _pydev_thread
 _nextThreadIdLock = _pydev_thread.allocate_lock()

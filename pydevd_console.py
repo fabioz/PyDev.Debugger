@@ -4,13 +4,13 @@ from code import InteractiveConsole
 import sys
 import traceback
 
-import _pydev_completer
+from _pydev_bundle import _pydev_completer
 from pydevd_tracing import GetExceptionTracebackStr
 from pydevd_vars import makeValidXmlValue
-from pydev_imports import Exec
+from _pydev_bundle.pydev_imports import Exec
 from pydevd_io import IOBuf
-from pydev_console_utils import BaseInterpreterInterface, BaseStdIn
-from pydev_override import overrides
+from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn
+from _pydev_bundle.pydev_override import overrides
 import pydevd_save_locals
 
 CONSOLE_OUTPUT = "output"

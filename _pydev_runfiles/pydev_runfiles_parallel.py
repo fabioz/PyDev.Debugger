@@ -157,7 +157,7 @@ class CommunicationThread(threading.Thread):
         self.setDaemon(True)
         self.queue = tests_queue
         self.finished = False
-        from pydev_imports import SimpleXMLRPCServer
+        from _pydev_bundle.pydev_imports import SimpleXMLRPCServer
 
 
         # This is a hack to patch slow socket.getfqdn calls that
@@ -178,7 +178,7 @@ class CommunicationThread(threading.Thread):
 
         # Create server
 
-        import pydev_localhost
+        from _pydev_bundle import pydev_localhost
         server = SimpleXMLRPCServer((pydev_localhost.get_localhost(), 0), logRequests=False)
         server.register_function(self.GetTestsToRun)
         server.register_function(self.notifyStartTest)

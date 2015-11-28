@@ -15,7 +15,7 @@ from pydevd_constants import IS_PY3K
 try:
     from thread import start_new_thread
 except:
-    from _thread import start_new_thread
+    from _thread import start_new_thread  # @UnresolvedImport
 CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION, CMD_ENABLE_DONT_TRACE = 133, 134, 135, 141
 PYTHON_EXE = None
 IRONPYTHON_EXE = None
@@ -24,7 +24,7 @@ JAVA_LOCATION = None
 
 
 import unittest
-import pydev_localhost
+from _pydev_bundle import pydev_localhost
 port = None
 
 try:
@@ -59,7 +59,7 @@ import subprocess
 import socket
 import threading
 import time
-from pydev_imports import quote_plus, quote, unquote_plus
+from _pydev_bundle.pydev_imports import quote_plus, quote, unquote_plus
 
 
 #=======================================================================================================================
@@ -1281,7 +1281,7 @@ class DebuggerBase(object):
 
     def _has_qt(self):
         try:
-            from PySide import QtCore
+            from PySide import QtCore  # @UnresolvedImport
             return True
         except:
             try:

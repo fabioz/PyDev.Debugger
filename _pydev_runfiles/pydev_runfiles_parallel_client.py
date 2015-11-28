@@ -1,5 +1,5 @@
 from pydevd_constants import * #@UnusedWildImport
-from pydev_imports import xmlrpclib, _queue
+from _pydev_bundle.pydev_imports import xmlrpclib, _queue
 Queue = _queue.Queue
 import traceback
 from _pydev_runfiles.pydev_runfiles_coverage import StartCoverageSupportFromParams
@@ -120,7 +120,7 @@ class ServerFacade(object):
 def run_client(job_id, port, verbosity, coverage_output_file, coverage_include):
     job_id = int(job_id)
 
-    import pydev_localhost
+    from _pydev_bundle import pydev_localhost
     server = xmlrpclib.Server('http://%s:%s' % (pydev_localhost.get_localhost(), port))
     server.lock = threading.Lock()
 
@@ -130,7 +130,7 @@ def run_client(job_id, port, verbosity, coverage_output_file, coverage_include):
 
     try:
         server_facade = ServerFacade(server_comm.notifications_queue)
-        import pydev_runfiles
+        from _pydev_runfiles import pydev_runfiles
         from _pydev_runfiles import pydev_runfiles_xml_rpc
         pydev_runfiles_xml_rpc.SetServer(server_facade)
 

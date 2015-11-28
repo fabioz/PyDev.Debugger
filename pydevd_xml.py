@@ -1,10 +1,10 @@
-import pydev_log
+from _pydev_bundle import pydev_log
 import traceback
 import pydevd_resolver
 import sys
 from pydevd_constants import * #@UnusedWildImport
 
-from pydev_imports import quote
+from _pydev_bundle.pydev_imports import quote
 
 try:
     import types

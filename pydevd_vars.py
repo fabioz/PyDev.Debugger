@@ -15,10 +15,10 @@ except ImportError:
     from io import StringIO
 import sys #@Reimport
 
-import _pydev_threading as threading
+from _pydev_imps import _pydev_threading as threading
 import traceback
 import pydevd_save_locals
-from pydev_imports import Exec, quote, execfile
+from _pydev_bundle.pydev_imports import Exec, quote, execfile
 from pydevd_utils import to_string
 
 try:

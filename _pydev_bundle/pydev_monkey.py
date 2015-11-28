@@ -12,11 +12,11 @@ except:
 # Things that are dependent on having the pydevd debugger
 #===============================================================================
 def log_debug(msg):
-    import pydev_log
+    from _pydev_bundle import pydev_log
     pydev_log.debug(msg)
 
 def log_error_once(msg):
-    import pydev_log
+    from _pydev_bundle import pydev_log
     pydev_log.error_once(msg)
 
 pydev_src_dir = os.path.dirname(__file__)

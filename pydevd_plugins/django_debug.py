@@ -5,7 +5,7 @@ from pydevd_file_utils import NormFileToServer, GetFileNameAndBaseFromFile
 from pydevd_breakpoints import LineBreakpoint, get_exception_name
 import pydevd_vars
 import traceback
-import pydev_log
+from _pydev_bundle import pydev_log
 from pydevd_frame_utils import add_exception_to_frame, FCode, cached_call, just_raised
 
 DJANGO_SUSPEND = 2

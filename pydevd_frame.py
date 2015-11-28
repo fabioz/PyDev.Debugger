@@ -3,7 +3,7 @@ import os.path
 import re
 import traceback  # @Reimport
 
-import pydev_log
+from _pydev_bundle import pydev_log
 from pydevd_breakpoints import get_exception_breakpoint, get_exception_name
 from pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE

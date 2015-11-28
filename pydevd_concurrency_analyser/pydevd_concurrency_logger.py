@@ -3,7 +3,7 @@ from pydevd_concurrency_analyser.pydevd_thread_wrappers import ObjectWrapper, wr
 
 import pydevd_file_utils
 import pydevd_vars
-from _pydev_filesystem_encoding import getfilesystemencoding
+from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 from pydevd_constants import DictContains, GetThreadId, IS_PY3K
 
 file_system_encoding = getfilesystemencoding()
@@ -13,7 +13,7 @@ try:
 except:
     from urllib.parse import quote  # @UnresolvedImport
 
-import _pydev_threading as threading
+from _pydev_imps import _pydev_threading as threading
 threadingCurrentThread = threading.currentThread
 
 

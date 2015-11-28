@@ -3,11 +3,11 @@ import unittest
 import threading
 import os
 from nose.tools import eq_
-from pydev_imports import StringIO, SimpleXMLRPCServer
-from pydev_localhost import get_localhost
-from pydev_console_utils import StdIn
+from _pydev_bundle.pydev_imports import StringIO, SimpleXMLRPCServer
+from _pydev_bundle.pydev_localhost import get_localhost
+from _pydev_bundle.pydev_console_utils import StdIn
 import socket
-from pydev_ipython_console_011 import get_pydev_frontend
+from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
 import time
 
 try:
@@ -188,7 +188,7 @@ class TestRunningCode(TestBase):
 
                     handle_request_input = HandleRequestInput()
 
-                    import pydev_localhost
+                    from _pydev_bundle import pydev_localhost
                     self.client_server = client_server = SimpleXMLRPCServer(
                         (pydev_localhost.get_localhost(), self.client_port), logRequests=False)
                     client_server.register_function(handle_request_input.RequestInput)

@@ -7,9 +7,9 @@ from pydevd_utils import save_main_module
 import traceback
 
 from pydevd_frame_utils import add_exception_to_frame
-import pydev_imports
+from _pydev_bundle import pydev_imports
 from pydevd_breakpoints import * #@UnusedWildImport
-import fix_getpass
+from _pydev_bundle import fix_getpass
 from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_EVALUATE_EXPRESSION, \
                          CMD_EXEC_EXPRESSION, \
@@ -88,7 +88,7 @@ import pydevd_traceproperty
 
 from _pydev_imps import _pydev_time as time, _pydev_thread
 
-import _pydev_threading as threading
+from _pydev_imps import _pydev_threading as threading
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 
@@ -133,7 +133,6 @@ DONT_TRACE = {
 
               #things from pydev that we don't want to trace
               '_pydev_execfile.py':PYDEV_FILE,
-              '_pydev_jython_execfile.py':PYDEV_FILE,
               '_pydev_threading':PYDEV_FILE,
               '_pydev_Queue':PYDEV_FILE,
               'django_debug.py':PYDEV_FILE,
@@ -184,7 +183,7 @@ bufferStdOutToServer = False
 bufferStdErrToServer = False
 remote = False
 
-from _pydev_filesystem_encoding import getfilesystemencoding
+from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 file_system_encoding = getfilesystemencoding()
 
 
@@ -503,7 +502,7 @@ class PyDB:
 
     def init_matplotlib_in_debug_console(self):
         # import hook and patches for matplotlib support in debug console
-        from pydev_import_hook import import_hook_manager
+        from _pydev_bundle.pydev_import_hook import import_hook_manager
         for module in DictKeys(self.mpl_modules_for_patching):
             import_hook_manager.add_module_name(module, DictPop(self.mpl_modules_for_patching, module))
 
@@ -1707,7 +1706,7 @@ class PyDB:
         except:
             pass
 
-        from pydev_monkey import patch_thread_modules
+        from _pydev_bundle.pydev_monkey import patch_thread_modules
         patch_thread_modules()
 
     def get_fullname(self, mod_name):
@@ -1821,7 +1820,7 @@ def set_debug(setup):
 
 
 def enable_qt_support():
-    import pydev_monkey_qt
+    from _pydev_bundle import pydev_monkey_qt
     pydev_monkey_qt.patch_qt()
 
 
@@ -1999,14 +1998,14 @@ def _locked_settrace(
     ):
     if patch_multiprocessing:
         try:
-            import pydev_monkey #Jython 2.1 can't use it...
+            from _pydev_bundle import pydev_monkey
         except:
             pass
         else:
             pydev_monkey.patch_new_process_functions()
 
     if host is None:
-        import pydev_localhost
+        from _pydev_bundle import pydev_localhost
         host = pydev_localhost.get_localhost()
 
     global connected
@@ -2108,7 +2107,7 @@ def stoptrace():
         except:
             pass
 
-        from pydev_monkey import undo_patch_thread_modules
+        from _pydev_bundle.pydev_monkey import undo_patch_thread_modules
         undo_patch_thread_modules()
 
         debugger = GetGlobalDebugger()
@@ -2254,7 +2253,7 @@ if __name__ == '__main__':
     debugger = PyDB()
 
     try:
-        import pydev_monkey
+        from _pydev_bundle import pydev_monkey
     except:
         pass #Not usable on jython 2.1
     else:

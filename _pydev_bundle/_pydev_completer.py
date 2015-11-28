@@ -14,11 +14,11 @@ except NameError: # version < 2.3 -- didn't have the True/False builtins
     
 try:
     import java.lang #@UnusedImport
-    import _pydev_jy_imports_tipper #as _pydev_imports_tipper #changed to be backward compatible with 1.5
+    from _pydev_bundle import _pydev_jy_imports_tipper
     _pydev_imports_tipper = _pydev_jy_imports_tipper
 except ImportError:
     IS_JYTHON = False
-    import _pydev_imports_tipper
+    from _pydev_bundle import _pydev_imports_tipper
 
 import pydevd_vars
 dir2 = _pydev_imports_tipper.GenerateImportsTipForModule

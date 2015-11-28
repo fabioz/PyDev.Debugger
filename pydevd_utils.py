@@ -9,7 +9,7 @@ except:
 
 import pydevd_constants
 import sys
-import pydev_log
+from _pydev_bundle import pydev_log
 
 def save_main_module(file, module_name):
     # patch provided by: Scott Schlesier - when script is run, it does not

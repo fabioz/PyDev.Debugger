@@ -3,7 +3,7 @@
 from _pydev_imps._pydev_time import time as _time
 from _pydev_imps import _pydev_thread
 try:
-    import _pydev_threading as _threading
+    from _pydev_imps import _pydev_threading as _threading
 except ImportError:
     import dummy_threading as _threading
 from collections import deque

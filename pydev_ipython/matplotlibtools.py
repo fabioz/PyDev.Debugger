@@ -22,7 +22,7 @@ backend2gui['CocoaAgg'] = 'osx'
 
 
 def do_enable_gui(guiname):
-    from pydev_versioncheck import versionok_for_gui
+    from _pydev_bundle.pydev_versioncheck import versionok_for_gui
     if versionok_for_gui():
         try:
             from pydev_ipython.inputhook import enable_gui

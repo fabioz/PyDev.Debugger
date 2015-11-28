@@ -8,8 +8,8 @@ try:
 except:
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
     import pydevconsole
-from pydev_imports import xmlrpclib, SimpleXMLRPCServer
-from pydev_localhost import get_localhost
+from _pydev_bundle.pydev_imports import xmlrpclib, SimpleXMLRPCServer
+from _pydev_bundle.pydev_localhost import get_localhost
 
 try:
     raw_input
@@ -41,7 +41,7 @@ class Test(unittest.TestCase):
 
                 handle_request_input = HandleRequestInput()
 
-                import pydev_localhost
+                from _pydev_bundle import pydev_localhost
                 self.client_server = client_server = SimpleXMLRPCServer((pydev_localhost.get_localhost(), self.client_port), logRequests=False)
                 client_server.register_function(handle_request_input.RequestInput)
                 client_server.register_function(handle_request_input.NotifyFinished)
@@ -76,7 +76,7 @@ class Test(unittest.TestCase):
     def testServer(self):
         # Just making sure that the singleton is created in this thread.
         try:
-            from pydev_ipython_console_011 import get_pydev_frontend
+            from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
         except:
             sys.stderr.write('Skipped test because IPython could not be imported.')
             return
@@ -90,7 +90,7 @@ class Test(unittest.TestCase):
                 self.server_port = server_port
 
             def run(self):
-                import pydev_localhost
+                from _pydev_bundle import pydev_localhost
                 print('Starting server with:', pydev_localhost.get_localhost(), self.server_port, self.client_port)
                 pydevconsole.StartServer(pydev_localhost.get_localhost(), self.server_port, self.client_port)
         server_thread = ServerThread(client_port, server_port)
@@ -103,7 +103,7 @@ class Test(unittest.TestCase):
             import time
             time.sleep(.3) #let's give it some time to start the threads
 
-            import pydev_localhost
+            from _pydev_bundle import pydev_localhost
             server = xmlrpclib.Server('http://%s:%s' % (pydev_localhost.get_localhost(), server_port))
             server.execLine("import sys; print('Running with: %s %s' % (sys.executable or sys.platform, sys.version))")
             server.execLine('class Foo:')

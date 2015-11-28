@@ -2,7 +2,7 @@ import time
 import sys
 
 try:
-    from PySide import QtCore
+    from PySide import QtCore  # @UnresolvedImport
 except:
     from PyQt4 import QtCore
 
@@ -10,7 +10,7 @@ except:
 # http://labs.qt.nokia.com/2007/07/05/qthreads-no-longer-abstract/
 class SomeObject(QtCore.QObject):
 
-    finished = QtCore.Signal()
+    finished = QtCore.Signal()  # @UndefinedVariable
 
     def longRunning(self):
         count = 0

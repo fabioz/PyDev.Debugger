@@ -35,7 +35,7 @@ except ImportError:
     from IPython.utils.traitlets import CBool, Unicode
 from IPython.core import release
 
-from pydev_imports import xmlrpclib
+from _pydev_bundle.pydev_imports import xmlrpclib
 
 default_pydev_banner_parts = default_banner_parts
 
@@ -375,7 +375,7 @@ class _PyDevFrontEnd:
             TYPE_IPYTHON_MAGIC = '12'
             _line, ipython_completions = self.complete(text)
 
-            from _pydev_completer import Completer
+            from _pydev_bundle._pydev_completer import Completer
             completer = Completer(self.getNamespace(), None)
             ret = completer.complete(act_tok)
             append = ret.append

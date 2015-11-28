@@ -17,10 +17,10 @@ if sys.platform.find('java') == -1:
 
     import unittest
     try:
-        import _pydev_imports_tipper
+        from _pydev_bundle import _pydev_imports_tipper
     except:
         sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-        import _pydev_imports_tipper
+        from _pydev_bundle import _pydev_imports_tipper
     import inspect
 
     class Test(unittest.TestCase):

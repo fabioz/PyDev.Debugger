@@ -2,7 +2,7 @@
 '''
 @author Radim Kubacki
 '''
-import _pydev_imports_tipper
+from _pydev_bundle import _pydev_imports_tipper
 import traceback
 import StringIO
 import sys

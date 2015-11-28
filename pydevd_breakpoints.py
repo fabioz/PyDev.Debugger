@@ -1,14 +1,14 @@
 from pydevd_constants import *
 import pydevd_tracing
 import sys
-import pydev_log
+from _pydev_bundle import pydev_log
 import pydevd_import_class
 
 _original_excepthook = None
 _handle_exceptions = None
 
 
-import _pydev_threading as threading
+from _pydev_imps import _pydev_threading as threading
 
 threadingCurrentThread = threading.currentThread
 

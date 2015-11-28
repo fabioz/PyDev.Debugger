@@ -4,7 +4,7 @@ from java.lang import StringBuffer #@UnresolvedImport
 from java.lang import String #@UnresolvedImport
 import java.lang #@UnresolvedImport
 import sys
-from _pydev_tipper_common import DoFind
+from _pydev_bundle._pydev_tipper_common import DoFind
 
 
 try:

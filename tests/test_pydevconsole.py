@@ -8,7 +8,7 @@ try:
 except:
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
     import pydevconsole
-from pydev_imports import xmlrpclib, SimpleXMLRPCServer, StringIO
+from _pydev_bundle.pydev_imports import xmlrpclib, SimpleXMLRPCServer, StringIO
 
 try:
     raw_input
@@ -31,7 +31,7 @@ class Test(unittest.TestCase):
             import time
             time.sleep(.3)  #let's give it some time to start the threads
 
-            import pydev_localhost
+            from _pydev_bundle import pydev_localhost
             interpreter = pydevconsole.InterpreterInterface(pydev_localhost.get_localhost(), client_port, threading.currentThread())
 
             (result,) = interpreter.hello("Hello pydevconsole")
@@ -50,8 +50,8 @@ class Test(unittest.TestCase):
             import time
             time.sleep(.3)  #let's give it some time to start the threads
 
-            import pydev_localhost
-            from pydev_console_utils import CodeFragment
+            from _pydev_bundle import pydev_localhost
+            from _pydev_bundle.pydev_console_utils import CodeFragment
 
             interpreter = pydevconsole.InterpreterInterface(pydev_localhost.get_localhost(), client_port, threading.currentThread())
             sys.stdout = StringIO()
@@ -145,7 +145,7 @@ class Test(unittest.TestCase):
 
                 handle_request_input = HandleRequestInput()
 
-                import pydev_localhost
+                from _pydev_bundle import pydev_localhost
                 client_server = SimpleXMLRPCServer((pydev_localhost.get_localhost(), self.client_port), logRequests=False)
                 client_server.register_function(handle_request_input.RequestInput)
                 client_server.register_function(handle_request_input.NotifyFinished)
@@ -193,7 +193,7 @@ class Test(unittest.TestCase):
 
         if port0 <= 0 or port1 <= 0:
             #This happens in Jython...
-            from java.net import ServerSocket
+            from java.net import ServerSocket  # @UnresolvedImport
             s0 = ServerSocket(0)
             port0 = s0.getLocalPort()
 
@@ -222,7 +222,7 @@ class Test(unittest.TestCase):
                     self.server_port = server_port
 
                 def run(self):
-                    import pydev_localhost
+                    from _pydev_bundle import pydev_localhost
                     pydevconsole.StartServer(pydev_localhost.get_localhost(), self.server_port, self.client_port)
             server_thread = ServerThread(client_port, server_port)
             server_thread.setDaemon(True)
@@ -234,7 +234,7 @@ class Test(unittest.TestCase):
             time.sleep(.3)  #let's give it some time to start the threads
             sys.stdout = StringIO()
 
-            import pydev_localhost
+            from _pydev_bundle import pydev_localhost
             server = xmlrpclib.Server('http://%s:%s' % (pydev_localhost.get_localhost(), server_port))
             server.execLine('class Foo:')
             server.execLine('    pass')

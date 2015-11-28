@@ -1,6 +1,6 @@
 import types
 
-import pydev_log
+from _pydev_bundle import pydev_log
 import pydevd_trace_api
 from _pydev_imps._pydev_pluginbase import PluginBase
 from pydevd_constants import *  # @UnusedWildImport
