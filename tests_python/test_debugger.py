@@ -19,7 +19,7 @@ import unittest
 import os
 import sys
 import time
-import debugger_unittest
+from tests_python import debugger_unittest
 
 #=======================================================================================================================
 # WriterThreadCase19 - [Test Case]: Evaluate '__' attributes
