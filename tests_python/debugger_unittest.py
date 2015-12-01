@@ -60,7 +60,7 @@ class ReaderThread(threading.Thread):
         except:
             pass  # ok, finished it
 
-    def DoKill(self):
+    def do_kill(self):
         self.sock.close()
 
 
@@ -181,13 +181,13 @@ class AbstractWriterThread(threading.Thread):
         self.port = port
 
 
-    def DoKill(self):
+    def do_kill(self):
         if hasattr(self, 'readerThread'):
             # if it's not created, it's not there...
-            self.readerThread.DoKill()
+            self.readerThread.do_kill()
         self.sock.close()
 
-    def Write(self, s):
+    def write(self, s):
 
         last = self.readerThread.lastReceived
         if SHOW_WRITES_AND_READS:
@@ -204,9 +204,9 @@ class AbstractWriterThread(threading.Thread):
             time.sleep(0.1)
 
 
-    def StartSocket(self):
+    def start_socket(self):
         if SHOW_WRITES_AND_READS:
-            print('StartSocket')
+            print('start_socket')
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind(('', self.port))
@@ -223,19 +223,19 @@ class AbstractWriterThread(threading.Thread):
 
         self._sequence = -1
         # initial command is always the version
-        self.WriteVersion()
-        self.log.append('StartSocket')
+        self.write_version()
+        self.log.append('start_socket')
 
-    def NextBreakpointId(self):
+    def next_breakpoint_id(self):
         self._next_breakpoint_id += 1
         return self._next_breakpoint_id
 
-    def NextSeq(self):
+    def next_seq(self):
         self._sequence += 2
         return self._sequence
 
 
-    def WaitForNewThread(self):
+    def wait_for_new_thread(self):
         i = 0
         # wait for hit breakpoint
         while not '<xml><thread name="' in self.readerThread.lastReceived or '<xml><thread name="pydevd.' in self.readerThread.lastReceived:
@@ -249,13 +249,13 @@ class AbstractWriterThread(threading.Thread):
         threadId = splitted[3]
         return threadId
 
-    def WaitForBreakpointHit(self, reason='111', get_line=False):
+    def wait_for_breakpoint_hit(self, reason='111', get_line=False):
         '''
             108 is over
             109 is return
             111 is breakpoint
         '''
-        self.log.append('Start: WaitForBreakpointHit')
+        self.log.append('Start: wait_for_breakpoint_hit')
         i = 0
         # wait for hit breakpoint
         last = self.readerThread.lastReceived
@@ -272,13 +272,13 @@ class AbstractWriterThread(threading.Thread):
         threadId = splitted[1]
         frameId = splitted[7]
         if get_line:
-            self.log.append('End(0): WaitForBreakpointHit')
+            self.log.append('End(0): wait_for_breakpoint_hit')
             return threadId, frameId, int(splitted[13])
 
-        self.log.append('End(1): WaitForBreakpointHit')
+        self.log.append('End(1): wait_for_breakpoint_hit')
         return threadId, frameId
 
-    def WaitForCustomOperation(self, expected):
+    def wait_for_custom_operation(self, expected):
         i = 0
         # wait for custom operation response, the response is double encoded
         expectedEncoded = quote(quote_plus(expected))
@@ -291,11 +291,11 @@ class AbstractWriterThread(threading.Thread):
 
         return True
 
-    def WaitForEvaluation(self, expected):
-        return self._WaitFor(expected, 'the expected evaluation was not found')
+    def wait_for_evaluation(self, expected):
+        return self._wait_for(expected, 'the expected evaluation was not found')
 
 
-    def WaitForVars(self, expected):
+    def wait_for_vars(self, expected):
         i = 0
         # wait for hit breakpoint
         while not expected in self.readerThread.lastReceived:
@@ -307,10 +307,10 @@ class AbstractWriterThread(threading.Thread):
 
         return True
 
-    def WaitForVar(self, expected):
-        self._WaitFor(expected, 'the var was not found')
+    def wait_for_var(self, expected):
+        self._wait_for(expected, 'the var was not found')
 
-    def _WaitFor(self, expected, error_msg):
+    def _wait_for(self, expected, error_msg):
         '''
         :param expected:
             If a list we'll work with any of the choices.
@@ -344,7 +344,7 @@ class AbstractWriterThread(threading.Thread):
 
         return True
 
-    def WaitForMultipleVars(self, expected_vars):
+    def wait_for_multiple_vars(self, expected_vars):
         i = 0
         # wait for hit breakpoint
         while True:
@@ -362,69 +362,69 @@ class AbstractWriterThread(threading.Thread):
 
         return True
 
-    def WriteMakeInitialRun(self):
-        self.Write("101\t%s\t" % self.NextSeq())
-        self.log.append('WriteMakeInitialRun')
+    def write_make_initial_run(self):
+        self.write("101\t%s\t" % self.next_seq())
+        self.log.append('write_make_initial_run')
 
-    def WriteVersion(self):
-        self.Write("501\t%s\t1.0\tWINDOWS\tID" % self.NextSeq())
+    def write_version(self):
+        self.write("501\t%s\t1.0\tWINDOWS\tID" % self.next_seq())
 
-    def WriteAddBreakpoint(self, line, func):
+    def write_add_breakpoint(self, line, func):
         '''
             @param line: starts at 1
         '''
-        breakpoint_id = self.NextBreakpointId()
-        self.Write("111\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (self.NextSeq(), breakpoint_id, 'python-line', self.TEST_FILE, line, func))
-        self.log.append('WriteAddBreakpoint: %s line: %s func: %s' % (breakpoint_id, line, func))
+        breakpoint_id = self.next_breakpoint_id()
+        self.write("111\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (self.next_seq(), breakpoint_id, 'python-line', self.TEST_FILE, line, func))
+        self.log.append('write_add_breakpoint: %s line: %s func: %s' % (breakpoint_id, line, func))
         return breakpoint_id
 
-    def WriteRemoveBreakpoint(self, breakpoint_id):
-        self.Write("112\t%s\t%s\t%s\t%s" % (self.NextSeq(), 'python-line', self.TEST_FILE, breakpoint_id))
+    def write_remove_breakpoint(self, breakpoint_id):
+        self.write("112\t%s\t%s\t%s\t%s" % (self.next_seq(), 'python-line', self.TEST_FILE, breakpoint_id))
 
-    def WriteChangeVariable(self, thread_id, frame_id, varname, value):
-        self.Write("117\t%s\t%s\t%s\t%s\t%s\t%s" % (self.NextSeq(), thread_id, frame_id, 'FRAME', varname, value))
+    def write_change_variable(self, thread_id, frame_id, varname, value):
+        self.write("117\t%s\t%s\t%s\t%s\t%s\t%s" % (self.next_seq(), thread_id, frame_id, 'FRAME', varname, value))
 
-    def WriteGetFrame(self, threadId, frameId):
-        self.Write("114\t%s\t%s\t%s\tFRAME" % (self.NextSeq(), threadId, frameId))
-        self.log.append('WriteGetFrame')
+    def write_get_frame(self, threadId, frameId):
+        self.write("114\t%s\t%s\t%s\tFRAME" % (self.next_seq(), threadId, frameId))
+        self.log.append('write_get_frame')
 
-    def WriteGetVariable(self, threadId, frameId, var_attrs):
-        self.Write("110\t%s\t%s\t%s\tFRAME\t%s" % (self.NextSeq(), threadId, frameId, var_attrs))
+    def write_get_variable(self, threadId, frameId, var_attrs):
+        self.write("110\t%s\t%s\t%s\tFRAME\t%s" % (self.next_seq(), threadId, frameId, var_attrs))
 
-    def WriteStepOver(self, threadId):
-        self.Write("108\t%s\t%s" % (self.NextSeq(), threadId,))
+    def write_step_over(self, threadId):
+        self.write("108\t%s\t%s" % (self.next_seq(), threadId,))
 
-    def WriteStepIn(self, threadId):
-        self.Write("107\t%s\t%s" % (self.NextSeq(), threadId,))
+    def write_step_in(self, threadId):
+        self.write("107\t%s\t%s" % (self.next_seq(), threadId,))
 
-    def WriteStepReturn(self, threadId):
-        self.Write("109\t%s\t%s" % (self.NextSeq(), threadId,))
+    def write_step_return(self, threadId):
+        self.write("109\t%s\t%s" % (self.next_seq(), threadId,))
 
-    def WriteSuspendThread(self, threadId):
-        self.Write("105\t%s\t%s" % (self.NextSeq(), threadId,))
+    def write_suspend_thread(self, threadId):
+        self.write("105\t%s\t%s" % (self.next_seq(), threadId,))
 
-    def WriteRunThread(self, threadId):
-        self.log.append('WriteRunThread')
-        self.Write("106\t%s\t%s" % (self.NextSeq(), threadId,))
+    def write_run_thread(self, threadId):
+        self.log.append('write_run_thread')
+        self.write("106\t%s\t%s" % (self.next_seq(), threadId,))
 
-    def WriteKillThread(self, threadId):
-        self.Write("104\t%s\t%s" % (self.NextSeq(), threadId,))
+    def write_kill_thread(self, threadId):
+        self.write("104\t%s\t%s" % (self.next_seq(), threadId,))
 
-    def WriteDebugConsoleExpression(self, locator):
-        self.Write("%s\t%s\t%s" % (CMD_EVALUATE_CONSOLE_EXPRESSION, self.NextSeq(), locator))
+    def write_debug_console_expression(self, locator):
+        self.write("%s\t%s\t%s" % (CMD_EVALUATE_CONSOLE_EXPRESSION, self.next_seq(), locator))
 
-    def WriteCustomOperation(self, locator, style, codeOrFile, operation_fn_name):
-        self.Write("%s\t%s\t%s||%s\t%s\t%s" % (CMD_RUN_CUSTOM_OPERATION, self.NextSeq(), locator, style, codeOrFile, operation_fn_name))
+    def write_custom_operation(self, locator, style, codeOrFile, operation_fn_name):
+        self.write("%s\t%s\t%s||%s\t%s\t%s" % (CMD_RUN_CUSTOM_OPERATION, self.next_seq(), locator, style, codeOrFile, operation_fn_name))
 
-    def WriteEvaluateExpression(self, locator, expression):
-        self.Write("113\t%s\t%s\t%s\t1" % (self.NextSeq(), locator, expression))
+    def write_evaluate_expression(self, locator, expression):
+        self.write("113\t%s\t%s\t%s\t1" % (self.next_seq(), locator, expression))
 
-    def WriteEnableDontTrace(self, enable):
+    def write_enable_dont_trace(self, enable):
         if enable:
             enable = 'true'
         else:
             enable = 'false'
-        self.Write("%s\t%s\t%s" % (CMD_ENABLE_DONT_TRACE, self.NextSeq(), enable))
+        self.write("%s\t%s\t%s" % (CMD_ENABLE_DONT_TRACE, self.next_seq(), enable))
 
 def _get_debugger_test_file(filename):
     try:

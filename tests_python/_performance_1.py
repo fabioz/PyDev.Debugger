@@ -23,5 +23,11 @@ def caller():
     print('TotalTime>>%s<<' % (time.time()-start_time,))
 
 if __name__ == '__main__':
+    import sys
+    if '--regular-trace' in sys.argv:
+        def trace_dispatch(frame, event, arg):
+            return trace_dispatch
+        sys.settrace(trace_dispatch)
+
     caller() # Initial breakpoint for a step-over here
     print('TEST SUCEEDED')
