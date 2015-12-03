@@ -79,17 +79,17 @@ def _suspend_jinja2(pydb, thread, frame, cmd=CMD_SET_BREAK, message=None):
     pydevd_vars.addAdditionalFrameById(GetThreadId(thread), {id(frame): frame})
     pydb.set_suspend(thread, cmd)
 
-    thread.additionalInfo.suspend_type = JINJA2_SUSPEND
-    thread.additionalInfo.filename = frame.f_code.co_filename
-    thread.additionalInfo.line = frame.f_lineno
+    thread.additional_info.suspend_type = JINJA2_SUSPEND
+    thread.additional_info.filename = frame.f_code.co_filename
+    thread.additional_info.line = frame.f_lineno
     if cmd == CMD_ADD_EXCEPTION_BREAK:
         # send exception name as message
-        thread.additionalInfo.message = message
+        thread.additional_info.message = message
 
     return frame
 
 def _is_jinja2_suspended(thread):
-    return thread.additionalInfo.suspend_type == JINJA2_SUSPEND
+    return thread.additional_info.suspend_type == JINJA2_SUSPEND
 
 def _is_jinja2_context_call(frame):
     return DictContains(frame.f_locals, "_Context__obj")
@@ -259,11 +259,11 @@ def cmd_step_into(plugin, pydb, frame, event, args, stop_info, stop):
         #we return from python code to Jinja2 rendering frame
         info.pydev_step_stop = info.pydev_call_from_jinja2
         info.pydev_call_from_jinja2 = None
-        thread.additionalInfo.suspend_type = JINJA2_SUSPEND
+        thread.additional_info.suspend_type = JINJA2_SUSPEND
         stop = False
 
         #print "info.pydev_call_from_jinja2", info.pydev_call_from_jinja2, "stop_info", stop_info, \
-        #    "thread.additionalInfo.suspend_type", thread.additionalInfo.suspend_type
+        #    "thread.additional_info.suspend_type", thread.additional_info.suspend_type
         #print "event", event, "farme.locals", frame.f_locals
     return stop, plugin_stop
 
@@ -299,11 +299,11 @@ def cmd_step_over(plugin, pydb, frame, event, args, stop_info, stop):
             #we return from python code to Jinja2 rendering frame
             info.pydev_call_from_jinja2 = None
             info.pydev_call_inside_jinja2 = _find_jinja2_render_frame(frame)
-            thread.additionalInfo.suspend_type = JINJA2_SUSPEND
+            thread.additional_info.suspend_type = JINJA2_SUSPEND
             stop = False
             return stop, plugin_stop
     #print "info.pydev_call_from_jinja2", info.pydev_call_from_jinja2, "stop", stop, "jinja_stop", jinja2_stop, \
-    #    "thread.additionalInfo.suspend_type", thread.additionalInfo.suspend_type
+    #    "thread.additional_info.suspend_type", thread.additional_info.suspend_type
     #print "event", event, "info.pydev_call_inside_jinja2", info.pydev_call_inside_jinja2
     #print "frame", frame, "frame.f_back", frame.f_back, "step_stop", info.pydev_step_stop
     #print "is_context_call", _is_jinja2_context_call(frame)
@@ -374,7 +374,7 @@ def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
                 #Jinja2 translates exception info and creates fake frame on his own
                 pydb_frame.set_suspend(thread, CMD_ADD_EXCEPTION_BREAK, message=exception_type)
                 add_exception_to_frame(frame, (exception, value, trace))
-                thread.additionalInfo.suspend_type = JINJA2_SUSPEND
+                thread.additional_info.suspend_type = JINJA2_SUSPEND
                 flag = True
                 return flag, frame
     return None

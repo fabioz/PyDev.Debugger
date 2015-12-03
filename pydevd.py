@@ -329,12 +329,12 @@ class PyDB:
 
     def __init__(self):
         SetGlobalDebugger(self)
-        pydevd_tracing.ReplaceSysSetTraceFunc()
+        pydevd_tracing.replace_sys_set_trace_func()
         self.reader = None
         self.writer = None
         self.output_checker = None
         self.quitting = None
-        self.cmdFactory = NetCommandFactory()
+        self.cmd_factory = NetCommandFactory()
         self._cmd_queue = {}  # the hash of Queues. Key is thread id, value is thread
 
         self.breakpoints = {}
@@ -504,7 +504,7 @@ class PyDB:
             v = out.getvalue()
 
             if v:
-                self.cmdFactory.make_io_message(v, outCtx, self)
+                self.cmd_factory.make_io_message(v, outCtx, self)
         except:
             traceback.print_exc()
 
@@ -565,12 +565,12 @@ class PyDB:
                         program_threads_alive[thread_id] = t
 
                         if not DictContains(self._running_thread_ids, thread_id):
-                            if not hasattr(t, 'additionalInfo'):
+                            if not hasattr(t, 'additional_info'):
                                 # see http://sourceforge.net/tracker/index.php?func=detail&aid=1955428&group_id=85796&atid=577329
                                 # Let's create the additional info right away!
-                                t.additionalInfo = PyDBAdditionalThreadInfo()
+                                t.additional_info = PyDBAdditionalThreadInfo()
                             self._running_thread_ids[thread_id] = t
-                            self.writer.add_command(self.cmdFactory.make_thread_created_message(t))
+                            self.writer.add_command(self.cmd_factory.make_thread_created_message(t))
 
 
                         queue = self.getInternalQueue(thread_id)
@@ -589,9 +589,9 @@ class PyDB:
                                         PydevdLog(2, "Matplotlib support in debug console failed", traceback.format_exc())
                                     self.mpl_hooks_in_debug_console = True
 
-                                if int_cmd.canBeExecutedBy(curr_thread_id):
+                                if int_cmd.can_be_executed_by(curr_thread_id):
                                     PydevdLog(2, "processing internal command ", str(int_cmd))
-                                    int_cmd.doIt(self)
+                                    int_cmd.do_it(self)
                                 else:
                                     PydevdLog(2, "NOT processing internal command ", str(int_cmd))
                                     cmdsToReadd.append(int_cmd)
@@ -637,21 +637,21 @@ class PyDB:
             for t in threads:
                 # TODO: optimize so that we only actually add that tracing if it's in
                 # the new breakpoint context.
-                additionalInfo = None
+                additional_info = None
                 try:
-                    additionalInfo = t.additionalInfo
+                    additional_info = t.additional_info
                 except AttributeError:
                     pass  # that's ok, no info currently set
 
-                if additionalInfo is not None:
-                    for frame in additionalInfo.IterFrames():
+                if additional_info is not None:
+                    for frame in additional_info.IterFrames():
                         if frame is not ignore_frame:
                             self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=overwrite_prev_trace)
         finally:
             frame = None
             t = None
             threads = None
-            additionalInfo = None
+            additional_info = None
 
 
     def consolidate_breakpoints(self, file, id_to_breakpoint, breakpoints):
@@ -760,11 +760,11 @@ class PyDB:
 
                     pydevd_file_utils.set_ide_os(ide_os)
 
-                    cmd = self.cmdFactory.make_version_message(seq)
+                    cmd = self.cmd_factory.make_version_message(seq)
 
                 elif cmd_id == CMD_LIST_THREADS:
                     # response is a list of threads
-                    cmd = self.cmdFactory.make_list_threads_message(seq)
+                    cmd = self.cmd_factory.make_list_threads_message(seq)
 
                 elif cmd_id == CMD_THREAD_KILL:
                     int_cmd = InternalTerminateThread(text)
@@ -774,14 +774,14 @@ class PyDB:
                     # Yes, thread suspend is still done at this point, not through an internal command!
                     t = PydevdFindThreadById(text)
                     if t:
-                        additionalInfo = None
+                        additional_info = None
                         try:
-                            additionalInfo = t.additionalInfo
+                            additional_info = t.additional_info
                         except AttributeError:
                             pass  # that's ok, no info currently set
 
-                        if additionalInfo is not None:
-                            for frame in additionalInfo.IterFrames():
+                        if additional_info is not None:
+                            for frame in additional_info.IterFrames():
                                 self.set_trace_for_frame_and_parents(frame)
                                 del frame
 
@@ -1121,7 +1121,7 @@ class PyDB:
                             source = f.read()
                         finally:
                             f.close()
-                        cmd = self.cmdFactory.makeGetFileContents(seq, source)
+                        cmd = self.cmd_factory.make_get_file_contents(seq, source)
 
                 elif cmd_id == CMD_SET_PROPERTY_TRACE:
                     # Command which receives whether to trace property getter/setter/deleter
@@ -1227,9 +1227,9 @@ class PyDB:
                     try:
                         f = open(path, 'r')
                         source = f.read()
-                        self.cmdFactory.makeLoadSourceMessage(seq, source, self)
+                        self.cmd_factory.make_load_source_message(seq, source, self)
                     except:
-                        return self.cmdFactory.make_error_message(seq, pydevd_tracing.GetExceptionTracebackStr())
+                        return self.cmd_factory.make_error_message(seq, pydevd_tracing.get_exception_traceback_str())
 
                 elif cmd_id == CMD_ADD_DJANGO_EXCEPTION_BREAK:
                     exception = text
@@ -1333,7 +1333,7 @@ class PyDB:
 
                 else:
                     #I have no idea what this is all about
-                    cmd = self.cmdFactory.make_error_message(seq, "unexpected command " + str(cmd_id))
+                    cmd = self.cmd_factory.make_error_message(seq, "unexpected command " + str(cmd_id))
 
                 if cmd is not None:
                     self.writer.add_command(cmd)
@@ -1341,7 +1341,7 @@ class PyDB:
 
             except Exception:
                 traceback.print_exc()
-                cmd = self.cmdFactory.make_error_message(seq,
+                cmd = self.cmd_factory.make_error_message(seq,
                     "Unexpected exception in process_net_command.\nInitial params: %s" % ((cmd_id, seq, text),))
 
                 self.writer.add_command(cmd)
@@ -1356,20 +1356,20 @@ class PyDB:
             if thread is None:
                 return
 
-            wasNotified = thread.additionalInfo.pydev_notify_kill
+            wasNotified = thread.additional_info.pydev_notify_kill
             if not wasNotified:
-                thread.additionalInfo.pydev_notify_kill = True
+                thread.additional_info.pydev_notify_kill = True
 
         finally:
             self._lock_running_thread_ids.release()
 
-        cmd = self.cmdFactory.make_thread_killed_message(threadId)
+        cmd = self.cmd_factory.make_thread_killed_message(threadId)
         self.writer.add_command(cmd)
 
 
     def set_suspend(self, thread, stop_reason):
-        thread.additionalInfo.suspend_type = PYTHON_SUSPEND
-        thread.additionalInfo.pydev_state = STATE_SUSPEND
+        thread.additional_info.suspend_type = PYTHON_SUSPEND
+        thread.additional_info.pydev_state = STATE_SUSPEND
         thread.stop_reason = stop_reason
 
         # If conditional breakpoint raises any exception during evaluation send details to Java
@@ -1382,13 +1382,13 @@ class PyDB:
         send exception details to java
         """
         thread_id = GetThreadId(thread)
-        conditional_breakpoint_exception_tuple = thread.additionalInfo.conditional_breakpoint_exception
+        conditional_breakpoint_exception_tuple = thread.additional_info.conditional_breakpoint_exception
         # conditional_breakpoint_exception_tuple - should contain 2 values (exception_type, stacktrace)
         if conditional_breakpoint_exception_tuple and len(conditional_breakpoint_exception_tuple) == 2:
             exc_type, stacktrace = conditional_breakpoint_exception_tuple
             int_cmd = InternalGetBreakpointException(thread_id, exc_type, stacktrace)
             # Reset the conditional_breakpoint_exception details to None
-            thread.additionalInfo.conditional_breakpoint_exception = None
+            thread.additional_info.conditional_breakpoint_exception = None
             self.postInternalCommand(int_cmd, thread_id)
 
 
@@ -1418,9 +1418,9 @@ class PyDB:
         """
         self.processInternalCommands()
 
-        message = getattr(thread.additionalInfo, "message", None)
+        message = getattr(thread.additional_info, "message", None)
 
-        cmd = self.cmdFactory.makeThreadSuspendMessage(GetThreadId(thread), frame, thread.stop_reason, message)
+        cmd = self.cmd_factory.make_thread_suspend_message(GetThreadId(thread), frame, thread.stop_reason, message)
         self.writer.add_command(cmd)
 
         CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
@@ -1430,8 +1430,8 @@ class PyDB:
             for frame_id, custom_frame in DictIterItems(CustomFramesContainer.custom_frames):
                 if custom_frame.thread_id == thread.ident:
                     # print >> sys.stderr, 'Frame created: ', frame_id
-                    self.writer.add_command(self.cmdFactory.make_custom_frame_created_message(frame_id, custom_frame.name))
-                    self.writer.add_command(self.cmdFactory.makeThreadSuspendMessage(frame_id, custom_frame.frame, CMD_THREAD_SUSPEND, ""))
+                    self.writer.add_command(self.cmd_factory.make_custom_frame_created_message(frame_id, custom_frame.name))
+                    self.writer.add_command(self.cmd_factory.make_thread_suspend_message(frame_id, custom_frame.frame, CMD_THREAD_SUSPEND, ""))
 
                 from_this_thread.append(frame_id)
 
@@ -1439,7 +1439,7 @@ class PyDB:
             CustomFramesContainer.custom_frames_lock.release()  # @UndefinedVariable
 
         imported = False
-        info = thread.additionalInfo
+        info = thread.additional_info
 
         if info.pydev_state == STATE_SUSPEND and not self._finishDebuggingSession:
             # before every stop check if matplotlib modules were imported inside script code
@@ -1526,7 +1526,7 @@ class PyDB:
                 info.pydev_state = STATE_RUN
 
         del frame
-        cmd = self.cmdFactory.makeThreadRunMessage(GetThreadId(thread), info.pydev_step_cmd)
+        cmd = self.cmd_factory.make_thread_run_message(GetThreadId(thread), info.pydev_step_cmd)
         self.writer.add_command(cmd)
 
         CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
@@ -1534,25 +1534,25 @@ class PyDB:
             # The ones that remained on last_running must now be removed.
             for frame_id in from_this_thread:
                 # print >> sys.stderr, 'Removing created frame: ', frame_id
-                self.writer.add_command(self.cmdFactory.make_thread_killed_message(frame_id))
+                self.writer.add_command(self.cmd_factory.make_thread_killed_message(frame_id))
 
         finally:
             CustomFramesContainer.custom_frames_lock.release()  # @UndefinedVariable
 
-    def handle_post_mortem_stop(self, additionalInfo, t):
+    def handle_post_mortem_stop(self, additional_info, t):
         pydev_log.debug("We are stopping in post-mortem\n")
-        frame, frames_byid = additionalInfo.pydev_force_stop_at_exception
+        frame, frames_byid = additional_info.pydev_force_stop_at_exception
         thread_id = GetThreadId(t)
         pydevd_vars.addAdditionalFrameById(thread_id, frames_byid)
         try:
             try:
-                add_exception_to_frame(frame, additionalInfo.exception)
+                add_exception_to_frame(frame, additional_info.exception)
                 self.set_suspend(t, CMD_ADD_EXCEPTION_BREAK)
                 self.do_wait_suspend(t, frame, 'exception', None)
             except:
                 pydev_log.error("We've got an error while stopping in post-mortem: %s\n"%sys.exc_info()[0])
         finally:
-            additionalInfo.pydev_force_stop_at_exception = None
+            additional_info.pydev_force_stop_at_exception = None
             pydevd_vars.removeAdditionalFrameById(thread_id)
 
     def trace_dispatch(self, frame, event, arg):
@@ -1604,17 +1604,17 @@ class PyDB:
                 return self.trace_dispatch
 
             try:
-                additionalInfo = t.additionalInfo
-                if additionalInfo is None:
+                additional_info = t.additional_info
+                if additional_info is None:
                     raise AttributeError()
             except:
-                t.additionalInfo = PyDBAdditionalThreadInfo()
-                additionalInfo = t.additionalInfo
+                t.additional_info = PyDBAdditionalThreadInfo()
+                additional_info = t.additional_info
 
-            if additionalInfo is None:
+            if additional_info is None:
                 return None
 
-            if additionalInfo.is_tracing:
+            if additional_info.is_tracing:
                 f = frame
                 while f is not None:
                     if 'trace_dispatch' == f.f_code.co_name:
@@ -1629,7 +1629,7 @@ class PyDB:
                 return None  # suspend tracing
 
             # each new frame...
-            return additionalInfo.CreateDbFrame((self, filename, additionalInfo, t, frame)).trace_dispatch(frame, event, arg)
+            return additional_info.CreateDbFrame((self, filename, additional_info, t, frame)).trace_dispatch(frame, event, arg)
 
         except SystemExit:
             return None
@@ -1803,7 +1803,7 @@ class PyDB:
         sys.stdout.flush()
         sys.stderr.flush()
         self.checkOutputRedirect()
-        cmd = self.cmdFactory.makeExitMessage()
+        cmd = self.cmd_factory.make_exit_message()
         self.writer.add_command(cmd)
 
     def wait_for_commands(self, globals):
@@ -1815,7 +1815,7 @@ class PyDB:
         from _pydevd_bundle import pydevd_vars
         pydevd_vars.addAdditionalFrameById(thread_id, {id(frame): frame})
 
-        cmd = self.cmdFactory.makeShowConsoleMessage(thread_id, frame)
+        cmd = self.cmd_factory.make_show_console_message(thread_id, frame)
         self.writer.add_command(cmd)
 
         while True:
@@ -2051,10 +2051,10 @@ def _locked_settrace(
 
         t = threadingCurrentThread()
         try:
-            additionalInfo = t.additionalInfo
+            additional_info = t.additional_info
         except AttributeError:
-            additionalInfo = PyDBAdditionalThreadInfo()
-            t.additionalInfo = additionalInfo
+            additional_info = PyDBAdditionalThreadInfo()
+            t.additional_info = additional_info
 
         while not debugger.readyToRun:
             time.sleep(0.1)  # busy wait until we receive run command
@@ -2089,10 +2089,10 @@ def _locked_settrace(
 
         t = threadingCurrentThread()
         try:
-            additionalInfo = t.additionalInfo
+            additional_info = t.additional_info
         except AttributeError:
-            additionalInfo = PyDBAdditionalThreadInfo()
-            t.additionalInfo = additionalInfo
+            additional_info = PyDBAdditionalThreadInfo()
+            t.additional_info = additional_info
 
         pydevd_tracing.SetTrace(debugger.trace_dispatch)
 
@@ -2108,7 +2108,7 @@ def _locked_settrace(
 def stoptrace():
     global connected
     if connected:
-        pydevd_tracing.RestoreSysSetTraceFunc()
+        pydevd_tracing.restore_sys_set_trace_func()
         sys.settrace(None)
         try:
             #not available in jython!
@@ -2193,7 +2193,7 @@ def settrace_forked():
     host, port = dispatch()
 
     from _pydevd_bundle import pydevd_tracing
-    pydevd_tracing.RestoreSysSetTraceFunc()
+    pydevd_tracing.restore_sys_set_trace_func()
 
     if port is not None:
         global connected

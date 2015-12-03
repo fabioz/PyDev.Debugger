@@ -24,7 +24,7 @@ class AbstractPyDBAdditionalThreadInfo:
         raise NotImplementedError()
 
     def CreateDbFrame(self, args):
-        #args = mainDebugger, filename, base, additionalInfo, t, frame
+        #args = mainDebugger, filename, base, additional_info, t, frame
         raise NotImplementedError()
 
     def __str__(self):

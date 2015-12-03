@@ -25,13 +25,13 @@ class TracingFunctionHolder:
     _warnings_shown = {}
  
  
-def GetExceptionTracebackStr():
+def get_exception_traceback_str():
     exc_info = sys.exc_info()
     s = StringIO.StringIO()
     traceback.print_exception(exc_info[0], exc_info[1], exc_info[2], file=s)
     return s.getvalue()
 
-def _GetStackStr(frame):
+def _get_stack_str(frame):
     
     msg = '\nIf this is needed, please check: ' + \
           '\nhttp://pydev.blogspot.com/2007/06/why-cant-pydev-debugger-work-with.html' + \
@@ -45,7 +45,7 @@ def _GetStackStr(frame):
     
     return msg
 
-def _InternalSetTrace(tracing_func):
+def _internal_set_trace(tracing_func):
     if TracingFunctionHolder._warn:
         frame = GetFrame()
         if frame is not None and frame.f_back is not None:
@@ -55,7 +55,7 @@ def _InternalSetTrace(tracing_func):
                 '\nPYDEV DEBUGGER WARNING:' + \
                 '\nsys.settrace() should not be used when the debugger is being used.' + \
                 '\nThis may cause the debugger to stop working correctly.' + \
-                '%s' % _GetStackStr(frame.f_back)
+                '%s' % _get_stack_str(frame.f_back)
                 
                 if message not in TracingFunctionHolder._warnings_shown:
                     #only warn about each message once...
@@ -68,25 +68,25 @@ def _InternalSetTrace(tracing_func):
 
 def SetTrace(tracing_func):
     if TracingFunctionHolder._original_tracing is None:
-        #This may happen before ReplaceSysSetTraceFunc is called.
+        #This may happen before replace_sys_set_trace_func is called.
         sys.settrace(tracing_func)
         return
 
     TracingFunctionHolder._lock.acquire()
     try:
         TracingFunctionHolder._warn = False
-        _InternalSetTrace(tracing_func)
+        _internal_set_trace(tracing_func)
         TracingFunctionHolder._warn = True
     finally:
         TracingFunctionHolder._lock.release()
 
 
-def ReplaceSysSetTraceFunc():
+def replace_sys_set_trace_func():
     if TracingFunctionHolder._original_tracing is None:
         TracingFunctionHolder._original_tracing = sys.settrace
-        sys.settrace = _InternalSetTrace
+        sys.settrace = _internal_set_trace
 
-def RestoreSysSetTraceFunc():
+def restore_sys_set_trace_func():
     if TracingFunctionHolder._original_tracing is not None:
         sys.settrace = TracingFunctionHolder._original_tracing
         TracingFunctionHolder._original_tracing = None

@@ -31,20 +31,20 @@ class TestCase(unittest.TestCase):
         mainDebugger = Null()
         filename = ''
         base = ''
-        additionalInfo = Null()
+        additional_info = Null()
         t = Null()
         frame = Null()
 
         times = 10
         for i in range(times):
-            info.CreateDbFrame((mainDebugger, filename, additionalInfo, t, frame))
+            info.CreateDbFrame((mainDebugger, filename, additional_info, t, frame))
 
         #we haven't kept any reference, so, they must have been garbage-collected already!
         self.assertEqual(0, len(info.IterFrames()))
 
         kept_frames = []
         for i in range(times):
-            kept_frames.append(info.CreateDbFrame((mainDebugger, filename, additionalInfo, t, frame)))
+            kept_frames.append(info.CreateDbFrame((mainDebugger, filename, additional_info, t, frame)))
 
         for i in range(times):
             self.assertEqual(times, len(info.IterFrames()))

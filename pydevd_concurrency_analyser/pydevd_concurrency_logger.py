@@ -39,7 +39,7 @@ except:
 
 
 def get_text_list_for_frame(frame):
-    # partial copy-paste from makeThreadSuspendStr
+    # partial copy-paste from make_thread_suspend_str
     curFrame = frame
     cmdTextList = []
     try:

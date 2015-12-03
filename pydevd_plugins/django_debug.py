@@ -123,7 +123,7 @@ def _is_django_resolve_call(frame):
 
 
 def _is_django_suspended(thread):
-    return thread.additionalInfo.suspend_type == DJANGO_SUSPEND
+    return thread.additional_info.suspend_type == DJANGO_SUSPEND
 
 
 def suspend_django(mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
@@ -133,7 +133,7 @@ def suspend_django(mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
         return None
 
     #try:
-    #    if thread.additionalInfo.filename == frame.f_code.co_filename and thread.additionalInfo.line == frame.f_lineno:
+    #    if thread.additional_info.filename == frame.f_code.co_filename and thread.additional_info.line == frame.f_lineno:
     #        return None # don't stay twice on the same line
     #except AttributeError:
     #    pass
@@ -141,10 +141,10 @@ def suspend_django(mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
     pydevd_vars.addAdditionalFrameById(GetThreadId(thread), {id(frame): frame})
 
     mainDebugger.set_suspend(thread, cmd)
-    thread.additionalInfo.suspend_type = DJANGO_SUSPEND
+    thread.additional_info.suspend_type = DJANGO_SUSPEND
 
-    thread.additionalInfo.filename = frame.f_code.co_filename
-    thread.additionalInfo.line = frame.f_lineno
+    thread.additional_info.filename = frame.f_code.co_filename
+    thread.additional_info.line = frame.f_lineno
 
     return frame
 
@@ -321,7 +321,7 @@ def cmd_step_over(plugin, mainDebugger, frame, event, args, stop_info, stop):
             #we return to Django suspend mode and should not stop before django rendering frame
             info.pydev_step_stop = info.pydev_django_resolve_frame
             info.pydev_django_resolve_frame = None
-            thread.additionalInfo.suspend_type = DJANGO_SUSPEND
+            thread.additional_info.suspend_type = DJANGO_SUSPEND
         stop = info.pydev_step_stop is frame and event in ('line', 'return')
     return stop, plugin_stop
 
@@ -377,7 +377,7 @@ def exception_break(plugin, mainDebugger, pydb_frame, frame, args, arg):
             if suspend_frame:
                 add_exception_to_frame(suspend_frame, (exception, value, trace))
                 flag = True
-                thread.additionalInfo.message = 'VariableDoesNotExist'
+                thread.additional_info.message = 'VariableDoesNotExist'
                 suspend_frame.f_back = frame
                 frame = suspend_frame
                 return (flag, frame)

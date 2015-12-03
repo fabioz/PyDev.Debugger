@@ -81,7 +81,7 @@ class PyDBFrame:
                         if exception_breakpoint.notify_on_first_raise_only:
                             if mainDebugger.first_appearance_in_scope(trace):
                                 add_exception_to_frame(frame, (exception, value, trace))
-                                thread.additionalInfo.message = exception_breakpoint.qname
+                                thread.additional_info.message = exception_breakpoint.qname
                                 flag = True
                             else:
                                 pydev_log.debug("Ignore exception %s in library %s" % (exception, frame.f_code.co_filename))
@@ -89,7 +89,7 @@ class PyDBFrame:
                     else:
                         if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):
                             add_exception_to_frame(frame, (exception, value, trace))
-                            thread.additionalInfo.message = exception_breakpoint.qname
+                            thread.additional_info.message = exception_breakpoint.qname
                             flag = True
                         else:
                             flag = False
@@ -370,7 +370,7 @@ class PyDBFrame:
                                     try:
                                         additional_info = None
                                         try:
-                                            additional_info = thread.additionalInfo
+                                            additional_info = thread.additional_info
                                         except AttributeError:
                                             pass  #that's ok, no info currently set
 
@@ -398,7 +398,7 @@ class PyDBFrame:
                                     val = sys.exc_info()[1]
                             finally:
                                 if val is not None:
-                                    thread.additionalInfo.message = val
+                                    thread.additional_info.message = val
 
                         if not main_debugger.first_breakpoint_reached:
                             if event == 'call':
