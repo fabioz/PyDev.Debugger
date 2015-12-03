@@ -97,7 +97,7 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
                 api.add_measurement(
                     writer_thread_class.BENCHMARK_NAME,
                     value=value, # How many times slower than without debugging
-                    version='.'.join((str(x) for x in pydevd.__version__)),
+                    version=pydevd.__version__,
                     released=False,
                     branch=branch,
                     commit_id=commit_id,

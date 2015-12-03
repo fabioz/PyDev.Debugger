@@ -7,7 +7,7 @@ __pycache__/
 .Python
 env/
 bin/
-build/
+build/temp.*
 develop-eggs/
 dist/
 eggs/
