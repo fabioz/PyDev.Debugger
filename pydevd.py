@@ -5,7 +5,8 @@ This module starts the debugger.
 '''
 from __future__ import nested_scopes # Jython 2.1 support
 
-__version__ = (1, 0, 0)
+__version_info__ = (1, 0, 1)
+__version__ = '.'.join(__version_info__)
 
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
 

@@ -378,6 +378,10 @@ class AbstractWriterThread(threading.Thread):
         self.log.append('write_add_breakpoint: %s line: %s func: %s' % (breakpoint_id, line, func))
         return breakpoint_id
 
+    def write_add_exception_breakpoint(self, exception):
+        self.write("122\t%s\t%s" % (self.next_seq(), exception))
+        self.log.append('write_add_exception_breakpoint: %s' % (exception,))
+
     def write_remove_breakpoint(self, breakpoint_id):
         self.write("112\t%s\t%s\t%s\t%s" % (self.next_seq(), 'python-line', self.TEST_FILE, breakpoint_id))
 

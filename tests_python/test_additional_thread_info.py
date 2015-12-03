@@ -24,7 +24,7 @@ class TestCase(unittest.TestCase):
         Used for profiling the PyDBAdditionalThreadInfoWithoutCurrentFramesSupport version
     '''
 
-    def testMetNoFramesSupport(self):
+    def test_met_no_frames_support(self):
         from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfoWithoutCurrentFramesSupport
         info = PyDBAdditionalThreadInfoWithoutCurrentFramesSupport()
 
@@ -50,7 +50,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(times, len(info.IterFrames()))
 
 
-    def testStartNewThread(self):
+    def test_start_new_thread(self):
         pydev_monkey.patch_thread_modules()
         try:
             found = {}
@@ -73,7 +73,7 @@ class TestCase(unittest.TestCase):
             pydev_monkey.undo_patch_thread_modules()
 
 
-    def testStartNewThread2(self):
+    def test_start_new_thread2(self):
         pydev_monkey.patch_thread_modules()
         try:
             found = {}
