@@ -49,11 +49,11 @@ class PyDBFrame:
         #yeap, much faster than putting in self and then getting it from self later on
         self._args = args[:-1]
 
-    def setSuspend(self, *args, **kwargs):
-        self._args[0].setSuspend(*args, **kwargs)
+    def set_suspend(self, *args, **kwargs):
+        self._args[0].set_suspend(*args, **kwargs)
 
-    def doWaitSuspend(self, *args, **kwargs):
-        self._args[0].doWaitSuspend(*args, **kwargs)
+    def do_wait_suspend(self, *args, **kwargs):
+        self._args[0].do_wait_suspend(*args, **kwargs)
 
     def trace_exception(self, frame, event, arg):
         if event == 'exception':
@@ -204,17 +204,17 @@ class PyDBFrame:
                 thread_id = GetThreadId(thread)
                 pydevd_vars.addAdditionalFrameById(thread_id, frame_id_to_frame)
                 try:
-                    mainDebugger.sendCaughtExceptionStack(thread, arg, id(frame))
-                    self.setSuspend(thread, CMD_STEP_CAUGHT_EXCEPTION)
-                    self.doWaitSuspend(thread, frame, event, arg)
-                    mainDebugger.sendCaughtExceptionStackProceeded(thread)
+                    mainDebugger.send_caught_exception_stack(thread, arg, id(frame))
+                    self.set_suspend(thread, CMD_STEP_CAUGHT_EXCEPTION)
+                    self.do_wait_suspend(thread, frame, event, arg)
+                    mainDebugger.send_caught_exception_stack_proceeded(thread)
 
                 finally:
                     pydevd_vars.removeAdditionalFrameById(thread_id)
             except:
                 traceback.print_exc()
 
-            mainDebugger.SetTraceForFrameAndParents(frame)
+            mainDebugger.set_trace_for_frame_and_parents(frame)
         finally:
             #Clear some local variables...
             trace_obj = None
@@ -381,7 +381,7 @@ class PyDBFrame:
                                                 error = ''.join(traceback.format_exception_only(etype, value))
                                                 stack = traceback.extract_stack(f=tb.tb_frame.f_back)
 
-                                                # On self.setSuspend(thread, CMD_SET_BREAK) this info will be
+                                                # On self.set_suspend(thread, CMD_SET_BREAK) this info will be
                                                 # sent to the client.
                                                 additional_info.conditional_breakpoint_exception = \
                                                     ('Condition:\n' + condition + '\n\nError:\n' + error, stack)
@@ -413,7 +413,7 @@ class PyDBFrame:
                                             stop = False
                                             main_debugger.first_breakpoint_reached = True
                 if stop:
-                    self.setSuspend(thread, CMD_SET_BREAK)
+                    self.set_suspend(thread, CMD_SET_BREAK)
                 elif flag and plugin_manager is not None:
                     result = plugin_manager.suspend(main_debugger, thread, frame, bp_type)
                     if result:
@@ -421,7 +421,7 @@ class PyDBFrame:
 
                 # if thread has a suspend flag, we suspend with a busy wait
                 if info.pydev_state == STATE_SUSPEND:
-                    self.doWaitSuspend(thread, frame, event, arg)
+                    self.do_wait_suspend(thread, frame, event, arg)
                     return self.trace_dispatch
 
             except:
@@ -512,8 +512,8 @@ class PyDBFrame:
                     stopped_on_plugin = plugin_manager.stop(main_debugger, frame, event, self._args, stop_info, arg, step_cmd)
                 elif stop:
                     if event == 'line':
-                        self.setSuspend(thread, step_cmd)
-                        self.doWaitSuspend(thread, frame, event, arg)
+                        self.set_suspend(thread, step_cmd)
+                        self.do_wait_suspend(thread, frame, event, arg)
                     else: #return event
                         back = frame.f_back
                         if back is not None:
@@ -536,13 +536,13 @@ class PyDBFrame:
                                     # other parent) has to be traced and it's not currently, we wouldn't stop where
                                     # we should anymore (so, a step in/over/return may not stop anywhere if no parent is traced).
                                     # Related test: _debugger_case17a.py
-                                    main_debugger.SetTraceForFrameAndParents(back, overwrite_prev_trace=True)
+                                    main_debugger.set_trace_for_frame_and_parents(back, overwrite_prev_trace=True)
                                     return None
 
                         if back is not None:
                             #if we're in a return, we want it to appear to the user in the previous frame!
-                            self.setSuspend(thread, step_cmd)
-                            self.doWaitSuspend(thread, back, event, arg)
+                            self.set_suspend(thread, step_cmd)
+                            self.do_wait_suspend(thread, back, event, arg)
                         else:
                             #in jython we may not have a back frame
                             info.pydev_step_stop = None

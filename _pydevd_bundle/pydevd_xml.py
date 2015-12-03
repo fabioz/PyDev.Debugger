@@ -15,11 +15,11 @@ except:
 try:
     from xml.sax.saxutils import escape
 
-    def makeValidXmlValue(s):
+    def make_valid_xml_value(s):
         return escape(s, {'"': '&quot;'})
 except:
     #Simple replacement if it's not there.
-    def makeValidXmlValue(s):
+    def make_valid_xml_value(s):
         return s.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
 
 class ExceptionOnEvaluate:
@@ -217,7 +217,7 @@ def varToXML(val, name, doTrim=True, additionalInXml=''):
         name = quote(name, '/>_= ') #TODO: Fix PY-5834 without using quote
     except:
         pass
-    xml = '<var name="%s" type="%s"' % (makeValidXmlValue(name), makeValidXmlValue(typeName))
+    xml = '<var name="%s" type="%s"' % (make_valid_xml_value(name), make_valid_xml_value(typeName))
 
     if value:
         #cannot be too big... communication may not handle it.
@@ -236,7 +236,7 @@ def varToXML(val, name, doTrim=True, additionalInXml=''):
         except TypeError: #in java, unicode is a function
             pass
 
-        xmlValue = ' value="%s"' % (makeValidXmlValue(quote(value, '/>_= ')))
+        xmlValue = ' value="%s"' % (make_valid_xml_value(quote(value, '/>_= ')))
     else:
         xmlValue = ''
 

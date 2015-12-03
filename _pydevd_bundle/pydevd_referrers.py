@@ -200,7 +200,7 @@ def get_referrer_info(searched_obj):
                 if found_as:
                     if not isinstance(found_as, str):
                         found_as = str(found_as)
-                    found_as = ' found_as="%s"' % (pydevd_vars.makeValidXmlValue(found_as),)
+                    found_as = ' found_as="%s"' % (pydevd_vars.make_valid_xml_value(found_as),)
 
                 ret.append(pydevd_vars.varToXML(
                     r,

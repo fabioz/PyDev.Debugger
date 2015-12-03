@@ -270,7 +270,7 @@ def handshake():
 
 
 #=======================================================================================================================
-# StartServer
+# start_server
 #=======================================================================================================================
 def start_server(host, port, interpreter):
     if port == 0:
@@ -339,7 +339,7 @@ def start_server(host, port, interpreter):
     return server
 
 
-def StartServer(host, port, client_port):
+def start_server(host, port, client_port):
     #replace exit (see comments on method)
     #note that this does not work in jython!!! (sys method can't be replaced).
     sys.exit = DoExit
@@ -502,4 +502,4 @@ if __name__ == '__main__':
 
         client_port = p
 
-    pydevconsole.StartServer(pydev_localhost.get_localhost(), int(port), int(client_port))
+    pydevconsole.start_server(pydev_localhost.get_localhost(), int(port), int(client_port))

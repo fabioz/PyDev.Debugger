@@ -75,7 +75,7 @@ def get_text_list_for_frame(frame):
             #variables = pydevd_vars.frameVarsToXML(curFrame.f_locals)
 
             variables = ''
-            cmdTextList.append('<frame id="%s" name="%s" ' % (myId , pydevd_vars.makeValidXmlValue(myName)))
+            cmdTextList.append('<frame id="%s" name="%s" ' % (myId , pydevd_vars.make_valid_xml_value(myName)))
             cmdTextList.append('file="%s" line="%s">"' % (quote(myFile, '/>_= \t'), myLine))
             cmdTextList.append(variables)
             cmdTextList.append("</frame>")
@@ -91,17 +91,17 @@ def send_message(event_class, time, name, thread_id, type, event, file, line, fr
     cmdTextList = ['<xml>']
 
     cmdTextList.append('<' + event_class)
-    cmdTextList.append(' time="%s"' % pydevd_vars.makeValidXmlValue(str(time)))
-    cmdTextList.append(' name="%s"' % pydevd_vars.makeValidXmlValue(name))
-    cmdTextList.append(' thread_id="%s"' % pydevd_vars.makeValidXmlValue(thread_id))
-    cmdTextList.append(' type="%s"' % pydevd_vars.makeValidXmlValue(type))
+    cmdTextList.append(' time="%s"' % pydevd_vars.make_valid_xml_value(str(time)))
+    cmdTextList.append(' name="%s"' % pydevd_vars.make_valid_xml_value(name))
+    cmdTextList.append(' thread_id="%s"' % pydevd_vars.make_valid_xml_value(thread_id))
+    cmdTextList.append(' type="%s"' % pydevd_vars.make_valid_xml_value(type))
     if type == "lock":
-        cmdTextList.append(' lock_id="%s"' % pydevd_vars.makeValidXmlValue(str(lock_id)))
+        cmdTextList.append(' lock_id="%s"' % pydevd_vars.make_valid_xml_value(str(lock_id)))
     if parent is not None:
-        cmdTextList.append(' parent="%s"' % pydevd_vars.makeValidXmlValue(parent))
-    cmdTextList.append(' event="%s"' % pydevd_vars.makeValidXmlValue(event))
-    cmdTextList.append(' file="%s"' % pydevd_vars.makeValidXmlValue(file))
-    cmdTextList.append(' line="%s"' % pydevd_vars.makeValidXmlValue(str(line)))
+        cmdTextList.append(' parent="%s"' % pydevd_vars.make_valid_xml_value(parent))
+    cmdTextList.append(' event="%s"' % pydevd_vars.make_valid_xml_value(event))
+    cmdTextList.append(' file="%s"' % pydevd_vars.make_valid_xml_value(file))
+    cmdTextList.append(' line="%s"' % pydevd_vars.make_valid_xml_value(str(line)))
     cmdTextList.append('></' + event_class + '>')
 
     cmdTextList += get_text_list_for_frame(frame)
@@ -109,7 +109,7 @@ def send_message(event_class, time, name, thread_id, type, event, file, line, fr
 
     text = ''.join(cmdTextList)
     if dbg.writer is not None:
-        dbg.writer.addCommand(NetCommand(145, 0, text))
+        dbg.writer.add_command(NetCommand(145, 0, text))
 
 
 def log_new_thread(global_debugger):

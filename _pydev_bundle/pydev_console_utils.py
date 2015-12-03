@@ -504,7 +504,7 @@ class BaseInterpreterInterface:
             self.debugger = pydevd.PyDB()
             try:
                 self.debugger.connect(pydev_localhost.get_localhost(), debuggerPort)
-                self.debugger.prepareToRun()
+                self.debugger.prepare_to_run()
                 from _pydevd_bundle import pydevd_tracing
                 pydevd_tracing.SetTrace(None)
             except:

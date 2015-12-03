@@ -176,7 +176,7 @@ def GenerateCompletionsAsXML(frame, act_tok):
         #list(tuple(name, descr, parameters, type))
         completions = completer.complete(act_tok)
 
-    valid_xml = pydevd_vars.makeValidXmlValue
+    valid_xml = pydevd_vars.make_valid_xml_value
     quote = pydevd_vars.quote
 
     msg = ["<xml>"]

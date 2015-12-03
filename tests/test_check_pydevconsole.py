@@ -92,7 +92,7 @@ class Test(unittest.TestCase):
             def run(self):
                 from _pydev_bundle import pydev_localhost
                 print('Starting server with:', pydev_localhost.get_localhost(), self.server_port, self.client_port)
-                pydevconsole.StartServer(pydev_localhost.get_localhost(), self.server_port, self.client_port)
+                pydevconsole.start_server(pydev_localhost.get_localhost(), self.server_port, self.client_port)
         server_thread = ServerThread(client_port, server_port)
         server_thread.setDaemon(True)
         server_thread.start()

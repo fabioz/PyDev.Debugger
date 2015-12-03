@@ -6,7 +6,7 @@ import traceback
 
 from _pydev_bundle import _pydev_completer
 from _pydevd_bundle.pydevd_tracing import GetExceptionTracebackStr
-from _pydevd_bundle.pydevd_vars import makeValidXmlValue
+from _pydevd_bundle.pydevd_vars import make_valid_xml_value
 from _pydev_bundle.pydev_imports import Exec
 from _pydevd_bundle.pydevd_io import IOBuf
 from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn
@@ -49,7 +49,7 @@ class ConsoleMessage:
             <more>true/false</more>
         </xml>
         """
-        makeValid = makeValidXmlValue
+        makeValid = make_valid_xml_value
 
         xml = '<xml><more>%s</more>' % (self.more)
 

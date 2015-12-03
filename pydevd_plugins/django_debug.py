@@ -140,7 +140,7 @@ def suspend_django(mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
 
     pydevd_vars.addAdditionalFrameById(GetThreadId(thread), {id(frame): frame})
 
-    mainDebugger.setSuspend(thread, cmd)
+    mainDebugger.set_suspend(thread, cmd)
     thread.additionalInfo.suspend_type = DJANGO_SUSPEND
 
     thread.additionalInfo.filename = frame.f_code.co_filename
@@ -331,7 +331,7 @@ def stop(plugin, mainDebugger, frame, event, args, stop_info, arg, step_cmd):
     if DictContains(stop_info, 'django_stop') and stop_info['django_stop']:
         frame = suspend_django(mainDebugger, thread, frame, step_cmd)
         if frame:
-            mainDebugger.doWaitSuspend(thread, frame, event, arg)
+            mainDebugger.do_wait_suspend(thread, frame, event, arg)
             return True
     return False
 

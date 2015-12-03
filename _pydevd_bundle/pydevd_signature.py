@@ -111,10 +111,10 @@ class SignatureFactory(object):
 def create_signature_message(signature):
     cmdTextList = ["<xml>"]
 
-    cmdTextList.append('<call_signature file="%s" name="%s">' % (pydevd_vars.makeValidXmlValue(signature.file), pydevd_vars.makeValidXmlValue(signature.name)))
+    cmdTextList.append('<call_signature file="%s" name="%s">' % (pydevd_vars.make_valid_xml_value(signature.file), pydevd_vars.make_valid_xml_value(signature.name)))
 
     for arg in signature.args:
-        cmdTextList.append('<arg name="%s" type="%s"></arg>' % (pydevd_vars.makeValidXmlValue(arg[0]), pydevd_vars.makeValidXmlValue(arg[1])))
+        cmdTextList.append('<arg name="%s" type="%s"></arg>' % (pydevd_vars.make_valid_xml_value(arg[0]), pydevd_vars.make_valid_xml_value(arg[1])))
 
     cmdTextList.append("</call_signature></xml>")
     cmdText = ''.join(cmdTextList)
@@ -122,7 +122,7 @@ def create_signature_message(signature):
 
 def sendSignatureCallTrace(dbg, frame, filename):
     if dbg.signature_factory.is_in_scope(filename):
-        dbg.writer.addCommand(create_signature_message(dbg.signature_factory.create_signature(frame)))
+        dbg.writer.add_command(create_signature_message(dbg.signature_factory.create_signature(frame)))
 
 
 

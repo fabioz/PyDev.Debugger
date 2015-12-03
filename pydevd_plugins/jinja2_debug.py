@@ -77,7 +77,7 @@ def _suspend_jinja2(pydb, thread, frame, cmd=CMD_SET_BREAK, message=None):
         return None
 
     pydevd_vars.addAdditionalFrameById(GetThreadId(thread), {id(frame): frame})
-    pydb.setSuspend(thread, cmd)
+    pydb.set_suspend(thread, cmd)
 
     thread.additionalInfo.suspend_type = JINJA2_SUSPEND
     thread.additionalInfo.filename = frame.f_code.co_filename
@@ -317,7 +317,7 @@ def stop(plugin, pydb, frame, event, args, stop_info, arg, step_cmd):
     if DictContains(stop_info, 'jinja2_stop') and stop_info['jinja2_stop']:
         frame = _suspend_jinja2(pydb, thread, frame, step_cmd)
         if frame:
-            pydb.doWaitSuspend(thread, frame, event, arg)
+            pydb.do_wait_suspend(thread, frame, event, arg)
             return True
     return False
 
@@ -372,7 +372,7 @@ def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
             name = frame.f_code.co_name
             if name in ('template', 'top-level template code') or name.startswith('block '):
                 #Jinja2 translates exception info and creates fake frame on his own
-                pydb_frame.setSuspend(thread, CMD_ADD_EXCEPTION_BREAK, message=exception_type)
+                pydb_frame.set_suspend(thread, CMD_ADD_EXCEPTION_BREAK, message=exception_type)
                 add_exception_to_frame(frame, (exception, value, trace))
                 thread.additionalInfo.suspend_type = JINJA2_SUSPEND
                 flag = True
