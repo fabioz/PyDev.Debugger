@@ -80,11 +80,11 @@ def addCustomFrame(frame, name, thread_id):
         CustomFramesContainer.custom_frames_lock.release()
 
 
-def updateCustomFrame(frame_id, frame, thread_id, name=None):
+def update_custom_frame(frame_id, frame, thread_id, name=None):
     CustomFramesContainer.custom_frames_lock.acquire()
     try:
         if DEBUG:
-            sys.stderr.write('updateCustomFrame: %s\n' % frame_id)
+            sys.stderr.write('update_custom_frame: %s\n' % frame_id)
         try:
             old = CustomFramesContainer.custom_frames[frame_id]
             if name is not None:

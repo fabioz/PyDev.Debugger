@@ -424,7 +424,7 @@ class BaseInterpreterInterface:
         keys = valDict.keys()
 
         for k in keys:
-            xml += pydevd_vars.varToXML(valDict[k], to_string(k))
+            xml += pydevd_vars.var_to_xml(valDict[k], to_string(k))
 
         xml += "</xml>"
 
@@ -450,7 +450,7 @@ class BaseInterpreterInterface:
         xml = "<xml>"
         result = pydevd_vars.evalInContext(expression, self.getNamespace(), self.getNamespace())
 
-        xml += pydevd_vars.varToXML(result, expression)
+        xml += pydevd_vars.var_to_xml(result, expression)
 
         xml += "</xml>"
 

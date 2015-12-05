@@ -29,12 +29,12 @@ if sys.platform.find('java') == -1:
             for a in t:
                 sys.stdout.write('%s\n' % (a,))
 
-        def testImports3(self):
+        def test_imports3(self):
             tip = _pydev_imports_tipper.generate_tip('os')
             ret = self.assertIn('path', tip)
             self.assertEquals('', ret[2])
 
-        def testImports2(self):
+        def test_imports2(self):
             try:
                 tip = _pydev_imports_tipper.generate_tip('OpenGL.GLUT')
                 self.assertIn('glutDisplayFunc', tip)
@@ -42,14 +42,14 @@ if sys.platform.find('java') == -1:
             except ImportError:
                 pass
 
-        def testImports4(self):
+        def test_imports4(self):
             try:
                 tip = _pydev_imports_tipper.generate_tip('mx.DateTime.mxDateTime.mxDateTime')
                 self.assertIn('now', tip)
             except ImportError:
                 pass
 
-        def testImports5(self):
+        def test_imports5(self):
             tip = _pydev_imports_tipper.generate_tip('%s.list' % BUILTIN_MOD)
             s = self.assertIn('sort', tip)
             self.check_args(
@@ -60,11 +60,11 @@ if sys.platform.find('java') == -1:
                 '(key=None, reverse=False)',
             )
 
-        def testImports2a(self):
+        def test_imports2a(self):
             tips = _pydev_imports_tipper.generate_tip('%s.RuntimeError' % BUILTIN_MOD)
             self.assertIn('__doc__', tips)
 
-        def testImports2b(self):
+        def test_imports2b(self):
             try:
                 file
             except:
@@ -74,7 +74,7 @@ if sys.platform.find('java') == -1:
                 t = self.assertIn('file' , tips)
                 self.assert_('->' in t[1].strip() or 'file' in t[1])
 
-        def testImports2c(self):
+        def test_imports2c(self):
             try:
                 file # file is not available on py 3
             except:
@@ -84,7 +84,7 @@ if sys.platform.find('java') == -1:
                 t = self.assertIn('readlines' , tips)
                 self.assert_('->' in t[1] or 'sizehint' in t[1])
 
-        def testImports(self):
+        def test_imports(self):
             '''
             You can print_ the results to check...
             '''
@@ -177,13 +177,13 @@ if sys.platform.find('java') == -1:
             raise AssertionError('%s not in %s' % (tok, tips))
 
 
-        def testSearch(self):
+        def test_search(self):
             s = _pydev_imports_tipper.Search('inspect.ismodule')
             (f, line, col), foundAs = s
             self.assert_(line > 0)
 
 
-        def testDotNetLibraries(self):
+        def test_dot_net_libraries(self):
             if sys.platform == 'cli':
                 tip = _pydev_imports_tipper.generate_tip('System.Drawing')
                 self.assertIn('Brushes' , tip)
@@ -192,7 +192,7 @@ if sys.platform.find('java') == -1:
                 self.assertIn('Aqua' , tip)
 
 
-        def testInspect(self):
+        def test_inspect(self):
 
             class C(object):
                 def metA(self, a, b):
@@ -207,7 +207,7 @@ if sys.platform.find('java') == -1:
 
     def suite():
         s = unittest.TestSuite()
-        s.addTest(Test("testImports5"))
+        s.addTest(Test("test_imports5"))
         unittest.TextTestRunner(verbosity=2).run(s)
 
 

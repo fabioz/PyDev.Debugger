@@ -53,7 +53,7 @@ if sys.platform.find('java') == -1:
         def tearDown(self):
             unittest.TestCase.tearDown(self)
         
-        def testMessage(self):
+        def test_message(self):
             t = pycompletionserver.CompletionServer(0)
             
             l = []
@@ -105,7 +105,7 @@ if sys.platform.find('java') == -1:
     
             return msg
     
-        def testCompletionSocketsAndMessages(self):
+        def test_completion_sockets_and_messages(self):
             t, socket = self.createConnections()
             self.socket = socket
             

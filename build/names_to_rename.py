@@ -83,17 +83,66 @@ NAMES = '''
 # DictValues
 
 
-DoExit
-DoFind
-EndRedirect
-# Exec -- skip
-ExecuteTestsInParallel
-# Find -- skip
-FinishDebuggingSession
-FlattenTestSuite
-GenerateCompletionsAsXML
-GenerateImportsTipForModule
-GenerateTip
+# DoExit
+# DoFind
+# EndRedirect
+# # Exec -- skip
+# ExecuteTestsInParallel
+# # Find -- skip
+# FinishDebuggingSession
+# FlattenTestSuite
+# GenerateCompletionsAsXML
+# GenerateImportsTipForModule
+# GenerateTip
+
+
+testAddExec
+testComplete
+testCompleteDoesNotDoPythonMatches
+testCompletionSocketsAndMessages
+testConsoleHello
+testConsoleRequests
+testDotNetLibraries
+testEdit
+testGetCompletions
+testGetNamespace
+testGetReferrers1
+testGetReferrers2
+testGetReferrers3
+testGetReferrers4
+testGetReferrers5
+testGetReferrers6
+testGetReferrers7
+testGettingInfoOnJython
+testGui
+testHistory
+testImports
+testImports1
+testImports1a
+testImports1b
+testImports1c
+testImports2
+testImports2a
+testImports2b
+testImports2c
+testImports3
+testImports4
+testImports5
+testInspect
+testIt
+testMessage
+testPrint
+testProperty
+testProperty2
+testProperty3
+testQuestionMark
+testSearch
+testSearchOnJython
+testServer
+testTipOnString
+toXML
+updateCustomFrame
+varToXML
 
 # GetContents
 # GetCoverageFiles
@@ -227,60 +276,15 @@ GenerateTip
 # sendKillMsg
 # sendSignatureCallTrace
 # setTracingForUntracedContexts
-# setUp
-# setUpClass
-# setUpModule
 # startClientThread
 # startDebuggerServerThread
 # startExec
-# startTest
-# stopTest
-# tearDown
-# testAddExec
-# testComplete
-# testCompleteDoesNotDoPythonMatches
-# testCompletionSocketsAndMessages
-# testConsoleHello
-# testConsoleRequests
-# testDotNetLibraries
-# testEdit
-# testGetCompletions
-# testGetNamespace
-# testGetReferrers1
-# testGetReferrers2
-# testGetReferrers3
-# testGetReferrers4
-# testGetReferrers5
-# testGetReferrers6
-# testGetReferrers7
-# testGettingInfoOnJython
-# testGui
-# testHistory
-# testImports
-# testImports1
-# testImports1a
-# testImports1b
-# testImports1c
-# testImports2
-# testImports2a
-# testImports2b
-# testImports2c
-# testImports3
-# testImports4
-# testImports5
-# testInspect
-# testIt
-# testMessage
-# testPrint
-# testProperty
-# testProperty2
-# testProperty3
-# testQuestionMark
-# testSearch
-# testSearchOnJython
-# testServer
-# testTipOnString
-# toXML
-# updateCustomFrame
-# varToXML
+
+# startTest -- skip
+# stopTest -- skip
+# setUp -- skip
+# setUpClass -- skip
+# setUpModule -- skip
+# tearDown -- skip
+
 '''

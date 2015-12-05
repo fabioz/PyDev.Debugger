@@ -436,7 +436,7 @@ def array_to_xml(array, roffset, coffset, rows, cols, format):
             else:
                 value = array[row][col]
             value = format % value
-            xml += varToXML(value, '')
+            xml += var_to_xml(value, '')
     return xml
 
 

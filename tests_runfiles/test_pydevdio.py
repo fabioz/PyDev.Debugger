@@ -6,7 +6,7 @@ import unittest
 
 class Test(unittest.TestCase):
 
-    def testIt(self):
+    def test_it(self):
         #make it as if we were executing from the directory above this one (so that we can use jycompletionserver
         #without the need for it being in the pythonpath)
         #(twice the dirname to get the previous level from this file.)

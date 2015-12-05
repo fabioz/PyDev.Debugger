@@ -161,7 +161,7 @@ def frameVarsToXML(frame_f_locals):
     for k in keys:
         try:
             v = frame_f_locals[k]
-            xml += varToXML(v, str(k))
+            xml += var_to_xml(v, str(k))
         except Exception:
             traceback.print_exc()
             pydev_log.error("Unexpected error, recovered safely.\n")
@@ -169,7 +169,7 @@ def frameVarsToXML(frame_f_locals):
     return xml
 
 
-def varToXML(val, name, doTrim=True, additionalInXml=''):
+def var_to_xml(val, name, doTrim=True, additionalInXml=''):
     """ single variable or dictionary to xml representation """
 
     is_exception_on_eval = isinstance(val, ExceptionOnEvaluate)
@@ -254,7 +254,7 @@ if USE_PSYCO_OPTIMIZATION:
     try:
         import psyco
 
-        varToXML = psyco.proxy(varToXML)
+        var_to_xml = psyco.proxy(var_to_xml)
     except ImportError:
         if hasattr(sys, 'exc_clear'): #jython does not have it
             sys.exc_clear() #don't keep the traceback -- clients don't want to see it

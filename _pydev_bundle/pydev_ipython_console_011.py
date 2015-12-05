@@ -451,7 +451,7 @@ class _PyDevFrontEnd:
 # in IPython to redirect to PyDev's version. This is essential to make
 # %gui in 0.11 work (0.12+ fixes it by calling self.enable_gui, which is implemented
 # above, instead of inputhook.enable_gui).
-# See testGui (test_pydev_ipython_011.TestRunningCode) which fails on 0.11 without
+# See test_gui (test_pydev_ipython_011.TestRunningCode) which fails on 0.11 without
 # this patch
 import IPython.lib.inputhook
 import pydev_ipython.inputhook

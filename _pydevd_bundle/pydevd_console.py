@@ -41,7 +41,7 @@ class ConsoleMessage:
         """
         self.more = more
 
-    def toXML(self):
+    def to_xml(self):
         """Create an XML for console message_list, error and more (true/false)
         <xml>
             <message_list>console message_list</message_list>

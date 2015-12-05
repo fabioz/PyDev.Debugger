@@ -21,7 +21,7 @@ except NameError:
 #=======================================================================================================================
 class Test(unittest.TestCase):
 
-    def testConsoleHello(self):
+    def test_console_hello(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
 
@@ -40,7 +40,7 @@ class Test(unittest.TestCase):
             sys.stdout = self.original_stdout
 
 
-    def testConsoleRequests(self):
+    def test_console_requests(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
 
@@ -210,7 +210,7 @@ class Test(unittest.TestCase):
         return port0, port1
 
 
-    def testServer(self):
+    def test_server(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
         try:

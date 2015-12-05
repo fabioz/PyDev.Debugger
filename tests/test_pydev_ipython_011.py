@@ -63,17 +63,17 @@ class TestPyDevFrontEnd(TestBase):
         assert 'testAddExec_x' in self.front_end.getNamespace()
         eq_(self.front_end.getNamespace()['testAddExec_x'], 10)
 
-    def testGetNamespace(self):
+    def test_get_namespace(self):
         assert 'testGetNamespace_a' not in self.front_end.getNamespace()
         self.addExec('testGetNamespace_a = 10')
         assert 'testGetNamespace_a' in self.front_end.getNamespace()
         eq_(self.front_end.getNamespace()['testGetNamespace_a'], 10)
 
-    def testComplete(self):
+    def test_complete(self):
         unused_text, matches = self.front_end.complete('%')
         assert len(matches) > 1, 'at least one magic should appear in completions'
 
-    def testCompleteDoesNotDoPythonMatches(self):
+    def test_complete_does_not_do_python_matches(self):
         # Test that IPython's completions do not do the things that
         # PyDev's completions will handle
         self.addExec('testComplete_a = 5')
@@ -109,7 +109,7 @@ class TestPyDevFrontEnd(TestBase):
         assert len(res[0][1]) > 100, 'docstring for %cd should be a reasonably long string'
 
 class TestRunningCode(TestBase):
-    def testPrint(self):
+    def test_print(self):
         self.redirectStdout()
         try:
             self.addExec('print("output")')
@@ -134,7 +134,7 @@ class TestRunningCode(TestBase):
             self.restoreStdout()
 
 
-    def testGui(self):
+    def test_gui(self):
         try:
             import Tkinter
         except:
@@ -149,7 +149,7 @@ class TestRunningCode(TestBase):
             self.addExec('%gui none')
             assert get_inputhook() is None
 
-    def testHistory(self):
+    def test_history(self):
         ''' Make sure commands are added to IPython's history '''
         self.redirectStdout()
         try:
@@ -168,7 +168,7 @@ class TestRunningCode(TestBase):
         finally:
             self.restoreStdout()
 
-    def testEdit(self):
+    def test_edit(self):
         ''' Make sure we can issue an edit command'''
         called_RequestInput = [False]
         called_IPythonEditor = [False]

@@ -2,7 +2,7 @@ from __future__ import nested_scopes
 from _pydevd_bundle.pydevd_constants import *  # @UnusedWildImport
 import stackless  # @UnresolvedImport
 from pydevd_tracing import SetTrace
-from _pydevd_bundle.pydevd_custom_frames import updateCustomFrame, removeCustomFrame, addCustomFrame
+from _pydevd_bundle.pydevd_custom_frames import update_custom_frame, removeCustomFrame, addCustomFrame
 from _pydevd_bundle.pydevd_comm import GetGlobalDebugger
 import weakref
 from pydevd_file_utils import GetFilenameAndBase
@@ -224,7 +224,7 @@ def _schedule_callback(prev, next):
                                 if tasklet_info.frame_id is None:
                                     tasklet_info.frame_id = addCustomFrame(frame, tasklet_info.tasklet_name, tasklet.thread_id)
                                 else:
-                                    updateCustomFrame(tasklet_info.frame_id, frame, tasklet.thread_id, name=tasklet_info.tasklet_name)
+                                    update_custom_frame(tasklet_info.frame_id, frame, tasklet.thread_id, name=tasklet_info.tasklet_name)
 
                     elif tasklet is next or is_running:
                         if tasklet_info.frame_id is not None:
@@ -290,7 +290,7 @@ if not hasattr(stackless.tasklet, "trace_function"):
                                     if tasklet_info.frame_id is None:
                                         tasklet_info.frame_id = addCustomFrame(f_back, tasklet_info.tasklet_name, tasklet.thread_id)
                                     else:
-                                        updateCustomFrame(tasklet_info.frame_id, f_back, tasklet.thread_id)
+                                        update_custom_frame(tasklet_info.frame_id, f_back, tasklet.thread_id)
 
                         elif tasklet.is_current:
                             if tasklet_info.frame_id is not None:

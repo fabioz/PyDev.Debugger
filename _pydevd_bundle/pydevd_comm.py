@@ -938,7 +938,7 @@ class InternalGetVariable(InternalThreadCommand):
                     keys = sorted(keys, cmp=compare_object_attrs) #Jython 2.1 does not have it (and all must be compared as strings).
 
             for k in keys:
-                xml += pydevd_vars.varToXML(valDict[k], to_string(k))
+                xml += pydevd_vars.var_to_xml(valDict[k], to_string(k))
 
             xml += "</xml>"
             cmd = dbg.cmd_factory.make_get_variable_message(self.sequence, xml)
@@ -1004,7 +1004,7 @@ class InternalChangeVariable(InternalThreadCommand):
         try:
             result = pydevd_vars.changeAttrExpression(self.thread_id, self.frame_id, self.attr, self.expression, dbg)
             xml = "<xml>"
-            xml += pydevd_vars.varToXML(result, "")
+            xml += pydevd_vars.var_to_xml(result, "")
             xml += "</xml>"
             cmd = dbg.cmd_factory.make_variable_changed_message(self.sequence, xml)
             dbg.writer.add_command(cmd)
@@ -1063,7 +1063,7 @@ class InternalEvaluateExpression(InternalThreadCommand):
         try:
             result = pydevd_vars.evaluateExpression(self.thread_id, self.frame_id, self.expression, self.doExec)
             xml = "<xml>"
-            xml += pydevd_vars.varToXML(result, self.expression, self.doTrim)
+            xml += pydevd_vars.var_to_xml(result, self.expression, self.doTrim)
             xml += "</xml>"
             cmd = dbg.cmd_factory.make_evaluate_expression_message(self.sequence, xml)
             dbg.writer.add_command(cmd)
@@ -1224,7 +1224,7 @@ class InternalEvaluateConsoleExpression(InternalThreadCommand):
                 console_message = pydevd_console.execute_console_command(
                     frame, self.thread_id, self.frame_id, self.line, self.buffer_output)
 
-                cmd = dbg.cmd_factory.make_send_console_message(self.sequence, console_message.toXML())
+                cmd = dbg.cmd_factory.make_send_console_message(self.sequence, console_message.to_xml())
             else:
                 from _pydevd_bundle.pydevd_console import ConsoleMessage
                 console_message = ConsoleMessage()
@@ -1232,7 +1232,7 @@ class InternalEvaluateConsoleExpression(InternalThreadCommand):
                     pydevd_console.CONSOLE_ERROR,
                     "Select the valid frame in the debug view (thread: %s, frame: %s invalid)" % (self.thread_id, self.frame_id),
                 )
-                cmd = dbg.cmd_factory.make_error_message(self.sequence, console_message.toXML())
+                cmd = dbg.cmd_factory.make_error_message(self.sequence, console_message.to_xml())
         except:
             exc = get_exception_traceback_str()
             cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error evaluating expression " + exc)
@@ -1315,7 +1315,7 @@ class InternalConsoleExec(InternalThreadCommand):
 
                 result = pydevconsole.consoleExec(self.thread_id, self.frame_id, self.expression)
                 xml = "<xml>"
-                xml += pydevd_vars.varToXML(result, "")
+                xml += pydevd_vars.var_to_xml(result, "")
                 xml += "</xml>"
                 cmd = dbg.cmd_factory.make_evaluate_expression_message(self.sequence, xml)
                 dbg.writer.add_command(cmd)

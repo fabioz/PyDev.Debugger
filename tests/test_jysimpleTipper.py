@@ -52,57 +52,57 @@ class TestMod(unittest.TestCase):
             s += '\n'
         raise AssertionError('%s not in %s' % (tok, s))
 
-    def testImports1a(self):
+    def test_imports1a(self):
         f, tip = _pydev_jy_imports_tipper.generate_tip('java.util.HashMap')
         assert f.endswith('rt.jar')
 
-    def testImports1c(self):
+    def test_imports1c(self):
         f, tip = _pydev_jy_imports_tipper.generate_tip('java.lang.Class')
         assert f.endswith('rt.jar')
 
-    def testImports1b(self):
+    def test_imports1b(self):
         try:
             f, tip = _pydev_jy_imports_tipper.generate_tip('__builtin__.m')
             self.fail('err')
         except:
             pass
 
-    def testImports1(self):
+    def test_imports1(self):
         f, tip = _pydev_jy_imports_tipper.generate_tip('junit.framework.TestCase')
         assert f.endswith('junit.jar')
         ret = self.assertIn('assertEquals', tip)
 #        self.assertEquals('', ret[2])
 
-    def testImports2(self):
+    def test_imports2(self):
         f, tip = _pydev_jy_imports_tipper.generate_tip('junit.framework')
         assert f.endswith('junit.jar')
         ret = self.assertIn('TestCase', tip)
         self.assertEquals('', ret[2])
 
-    def testImports2a(self):
+    def test_imports2a(self):
         f, tip = _pydev_jy_imports_tipper.generate_tip('org.apache.tools.ant')
         assert f.endswith('ant.jar')
         ret = self.assertIn('Task', tip)
         self.assertEquals('', ret[2])
 
-    def testImports3(self):
+    def test_imports3(self):
         f, tip = _pydev_jy_imports_tipper.generate_tip('os')
         assert f.endswith('os.py')
         ret = self.assertIn('path', tip)
         self.assertEquals('', ret[2])
 
-    def testTipOnString(self):
+    def test_tip_on_string(self):
         f, tip = _pydev_jy_imports_tipper.generate_tip('string')
         self.assertIn('join', tip)
         self.assertIn('uppercase', tip)
 
-    def testImports(self):
+    def test_imports(self):
         tip = _pydev_jy_imports_tipper.generate_tip('__builtin__')[1]
         self.assertIn('tuple'          , tip)
         self.assertIn('RuntimeError'   , tip)
         self.assertIn('RuntimeWarning' , tip)
 
-    def testImports5(self):
+    def test_imports5(self):
         f, tip = _pydev_jy_imports_tipper.generate_tip('java.lang')
         assert f.endswith('rt.jar')
         tup = self.assertIn('String' , tip)
@@ -142,7 +142,7 @@ class TestMod(unittest.TestCase):
 
 class TestSearch(unittest.TestCase):
 
-    def testSearchOnJython(self):
+    def test_search_on_jython(self):
         self.assertEqual('javaos.py', _pydev_jy_imports_tipper.Search('os')[0][0].split(os.sep)[-1])
         self.assertEqual(0, _pydev_jy_imports_tipper.Search('os')[0][1])
 
@@ -159,7 +159,7 @@ class TestCompl(unittest.TestCase):
     def tearDown(self):
         unittest.TestCase.tearDown(self)
 
-    def testGettingInfoOnJython(self):
+    def test_getting_info_on_jython(self):
 
         dbg('\n\n--------------------------- java')
         assert not ismethod(java)[0]

@@ -35,12 +35,12 @@ class Test(unittest.TestCase):
     def tearDown(self):
         unittest.TestCase.tearDown(self)
     
-    def testIt(self):
+    def test_it(self):
         if not IS_JYTHON:
             return
         dbg('ok')
         
-    def testMessage(self):
+    def test_message(self):
         if not IS_JYTHON:
             return
         t = jycompletionserver.T(0)
@@ -69,10 +69,10 @@ class Test(unittest.TestCase):
 
 
 
-    def testCompletionSocketsAndMessages(self):
+    def test_completion_sockets_and_messages(self):
         if not IS_JYTHON:
             return
-        dbg('testCompletionSocketsAndMessages')
+        dbg('test_completion_sockets_and_messages')
         t, socket = self.createConnections()
         self.socket = socket
         dbg('connections created')

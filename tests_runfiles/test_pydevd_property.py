@@ -29,7 +29,7 @@ class Test(unittest.TestCase):
         sys.path.remove(self.tempdir)
 
 
-    def testProperty(self):
+    def test_property(self):
         """Test case to validate custom property
         """
 
@@ -59,7 +59,7 @@ class Test(unittest.TestCase):
         self._check(testObj)
 
 
-    def testProperty2(self):
+    def test_property2(self):
         """Test case to validate custom property
         """
 
@@ -89,7 +89,7 @@ class Test(unittest.TestCase):
         self._check(testObj)
 
 
-    def testProperty3(self):
+    def test_property3(self):
         """Test case to validate custom property
         """
 

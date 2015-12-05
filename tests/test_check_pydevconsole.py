@@ -73,7 +73,7 @@ class Test(unittest.TestCase):
         return port0, port1
 
 
-    def testServer(self):
+    def test_server(self):
         # Just making sure that the singleton is created in this thread.
         try:
             from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
