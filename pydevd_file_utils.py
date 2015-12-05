@@ -313,7 +313,7 @@ else:
 
 
 # For given file f returns tuple of its absolute path, real path and base name
-def GetNormPathsAndBaseFromFile(f):
+def get_norm_paths_and_base_from_file(f):
     try:
         return NORM_PATHS_AND_BASE_CONTAINER[f]
     except KeyError:
@@ -323,17 +323,17 @@ def GetNormPathsAndBaseFromFile(f):
         return abs_path, real_path, base
 
 
-def GetFileNameAndBaseFromFile(f):
-    abs_path, real_path, base = GetNormPathsAndBaseFromFile(f)
+def get_file_name_and_base_from_file(f):
+    abs_path, real_path, base = get_norm_paths_and_base_from_file(f)
     return real_path, base
 
 
-def GetFilenameAndBase(frame):
-    abs_path, real_path, base = GetNormPathsAndBase(frame)
+def get_filename_and_base(frame):
+    abs_path, real_path, base = get_norm_paths_and_base(frame)
     return real_path, base
 
 
-def GetNormPathsAndBase(frame):
+def get_norm_paths_and_base(frame):
     #This one is just internal (so, does not need any kind of client-server translation)
     f = frame.f_code.co_filename
     if f is not None and f.startswith('build/bdist.'):
@@ -341,4 +341,4 @@ def GetNormPathsAndBase(frame):
         f = frame.f_globals['__file__']
         if f.endswith('.pyc'):
             f = f[:-1]
-    return GetNormPathsAndBaseFromFile(f)
+    return get_norm_paths_and_base_from_file(f)

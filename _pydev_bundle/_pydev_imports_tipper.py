@@ -62,7 +62,7 @@ if sys.platform == 'cli':
 
 
 
-def GetFile(mod):
+def get_file(mod):
     f = None
     try:
         f = inspect.getsourcefile(mod) or inspect.getfile(mod)
@@ -84,7 +84,7 @@ def Find(name, log=None):
     foundAs = ''
 
     if inspect.ismodule(mod):
-        f = GetFile(mod)
+        f = get_file(mod)
 
     components = name.split('.')
 
@@ -100,7 +100,7 @@ def Find(name, log=None):
                 raise
 
         if inspect.ismodule(mod):
-            f = GetFile(mod)
+            f = get_file(mod)
         else:
             if len(foundAs) > 0:
                 foundAs = foundAs + '.'

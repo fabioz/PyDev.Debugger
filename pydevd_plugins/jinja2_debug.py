@@ -1,9 +1,9 @@
 import traceback
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_name
-from _pydevd_bundle.pydevd_constants import GetThreadId, STATE_SUSPEND, dict_contains, dict_iter_items, dict_keys
+from _pydevd_bundle.pydevd_constants import get_thread_id, STATE_SUSPEND, dict_contains, dict_iter_items, dict_keys
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_STEP_OVER, CMD_ADD_EXCEPTION_BREAK
 from _pydevd_bundle import pydevd_vars
-from pydevd_file_utils import GetFileNameAndBaseFromFile
+from pydevd_file_utils import get_file_name_and_base_from_file
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, FCode
 
 JINJA2_SUSPEND = 3
@@ -76,7 +76,7 @@ def _suspend_jinja2(pydb, thread, frame, cmd=CMD_SET_BREAK, message=None):
     if frame.f_lineno is None:
         return None
 
-    pydevd_vars.addAdditionalFrameById(GetThreadId(thread), {id(frame): frame})
+    pydevd_vars.addAdditionalFrameById(get_thread_id(thread), {id(frame): frame})
     pydb.set_suspend(thread, cmd)
 
     thread.additional_info.suspend_type = JINJA2_SUSPEND
@@ -201,7 +201,7 @@ def _get_jinja2_template_line(frame):
 def _get_jinja2_template_filename(frame):
     if dict_contains(frame.f_globals, '__jinja_template__'):
         fname = frame.f_globals['__jinja_template__'].filename
-        filename, base = GetFileNameAndBaseFromFile(fname)
+        filename, base = get_file_name_and_base_from_file(fname)
         return filename
     return None
 

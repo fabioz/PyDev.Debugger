@@ -1,5 +1,5 @@
 from _pydevd_bundle.pydevd_constants import *  #@UnusedWildImport
-from pydevd_file_utils import GetFilenameAndBase
+from pydevd_file_utils import get_filename_and_base
 from _pydev_imps import _pydev_thread
 threadingCurrentThread = threading.currentThread
 
@@ -63,7 +63,7 @@ class CustomFrame:
 def addCustomFrame(frame, name, thread_id):
     CustomFramesContainer.custom_frames_lock.acquire()
     try:
-        curr_thread_id = GetThreadId(threadingCurrentThread())
+        curr_thread_id = get_thread_id(threadingCurrentThread())
         next_id = CustomFramesContainer._next_frame_id = CustomFramesContainer._next_frame_id + 1
 
         # Note: the frame id kept contains an id and thread information on the thread where the frame was added
@@ -71,7 +71,7 @@ def addCustomFrame(frame, name, thread_id):
         frame_id = '__frame__:%s|%s' % (next_id, curr_thread_id)
         if DEBUG:
             sys.stderr.write('addCustomFrame: %s (%s) %s %s\n' % (
-                frame_id, GetFilenameAndBase(frame)[1], frame.f_lineno, frame.f_code.co_name))
+                frame_id, get_filename_and_base(frame)[1], frame.f_lineno, frame.f_code.co_name))
 
         CustomFramesContainer.custom_frames[frame_id] = CustomFrame(name, frame, thread_id)
         CustomFramesContainer._py_db_command_thread_event.set()

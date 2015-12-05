@@ -161,9 +161,9 @@ class ServerComm(threading.Thread):
 
 
 #=======================================================================================================================
-# InitializeServer
+# initialize_server
 #=======================================================================================================================
-def InitializeServer(port, daemon=False):
+def initialize_server(port, daemon=False):
     if _ServerHolder.SERVER is None:
         if port is not None:
             notifications_queue = Queue()

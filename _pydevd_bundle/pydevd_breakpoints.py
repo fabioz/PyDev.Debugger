@@ -12,7 +12,7 @@ from _pydev_imps import _pydev_threading as threading
 
 threadingCurrentThread = threading.currentThread
 
-from _pydevd_bundle.pydevd_comm import GetGlobalDebugger
+from _pydevd_bundle.pydevd_comm import get_global_debugger
 
 class ExceptionBreakpoint:
 
@@ -98,7 +98,7 @@ def _excepthook(exctype, value, tb):
         return
 
     frames = []
-    debugger = GetGlobalDebugger()
+    debugger = get_global_debugger()
     user_frame = None
 
     while tb:
@@ -165,4 +165,4 @@ def _get_class( kls ):
     try:
         return eval(kls)
     except:
-        return pydevd_import_class.ImportName(kls)
+        return pydevd_import_class.import_name(kls)

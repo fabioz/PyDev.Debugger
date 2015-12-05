@@ -1,6 +1,6 @@
 '''For debug purpose we are replacing actual builtin property by the debug property
 '''
-from _pydevd_bundle.pydevd_comm import GetGlobalDebugger
+from _pydevd_bundle.pydevd_comm import get_global_debugger
 from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
 from _pydevd_bundle import pydevd_tracing
 
@@ -48,7 +48,7 @@ class DebugProperty(object):
     def __get__(self, obj, objtype=None):
         if obj is None:
             return self
-        global_debugger = GetGlobalDebugger()
+        global_debugger = get_global_debugger()
         try:
             if global_debugger is not None and global_debugger.disable_property_getter_trace:
                 pydevd_tracing.SetTrace(None)
@@ -61,7 +61,7 @@ class DebugProperty(object):
 
 
     def __set__(self, obj, value):
-        global_debugger = GetGlobalDebugger()
+        global_debugger = get_global_debugger()
         try:
             if global_debugger is not None and global_debugger.disable_property_setter_trace:
                 pydevd_tracing.SetTrace(None)
@@ -74,7 +74,7 @@ class DebugProperty(object):
 
 
     def __delete__(self, obj):
-        global_debugger = GetGlobalDebugger()
+        global_debugger = get_global_debugger()
         try:
             if global_debugger is not None and global_debugger.disable_property_deleter_trace:
                 pydevd_tracing.SetTrace(None)

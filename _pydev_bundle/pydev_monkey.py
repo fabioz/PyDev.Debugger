@@ -46,8 +46,8 @@ def _on_forked_process():
     pydevd.settrace_forked()
 
 def _on_set_trace_for_new_thread():
-    from _pydevd_bundle.pydevd_comm import GetGlobalDebugger
-    global_debugger = GetGlobalDebugger()
+    from _pydevd_bundle.pydevd_comm import get_global_debugger
+    global_debugger = get_global_debugger()
     if global_debugger is not None:
         global_debugger.SetTrace(global_debugger.trace_dispatch)
 
@@ -488,8 +488,8 @@ class _NewThreadStartupWithTrace:
 
     def __call__(self):
         _on_set_trace_for_new_thread()
-        from _pydevd_bundle.pydevd_comm import GetGlobalDebugger
-        global_debugger = GetGlobalDebugger()
+        from _pydevd_bundle.pydevd_comm import get_global_debugger
+        global_debugger = get_global_debugger()
 
         if global_debugger is not None and global_debugger.thread_analyser is not None:
             # we can detect start_new_thread only here

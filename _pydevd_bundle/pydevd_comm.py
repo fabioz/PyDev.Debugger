@@ -230,10 +230,12 @@ class GlobalDebuggerHolder:
     globalDbg = None
 
 #=======================================================================================================================
-# GetGlobalDebugger
+# get_global_debugger
 #=======================================================================================================================
-def GetGlobalDebugger():
+def get_global_debugger():
     return GlobalDebuggerHolder.globalDbg
+
+GetGlobalDebugger = get_global_debugger # Backward-compatibility
 
 #=======================================================================================================================
 # SetGlobalDebugger
@@ -287,7 +289,7 @@ class PyDBDaemonThread(threading.Thread):
 
             disable_tracing = True
 
-            if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON and sys.hexversion <= 0x020201f0:
+            if pydevd_vm_type.get_vm_type() == pydevd_vm_type.PydevdVmType.JYTHON and sys.hexversion <= 0x020201f0:
                 # don't run untraced threads if we're in jython 2.2.1 or lower
                 # jython bug: if we start a thread and another thread changes the tracing facility
                 # it affects other threads (it's not set only for the thread but globally)
@@ -382,7 +384,7 @@ class WriterThread(PyDBDaemonThread):
         self.sock = sock
         self.setName("pydevd.Writer")
         self.cmdQueue = _queue.Queue()
-        if pydevd_vm_type.GetVmType() == 'python':
+        if pydevd_vm_type.get_vm_type() == 'python':
             self.timeout = 0
         else:
             self.timeout = 0.1
@@ -527,7 +529,7 @@ class NetCommandFactory:
     def _thread_to_xml(self, thread):
         """ thread information as XML """
         name = pydevd_vars.make_valid_xml_value(thread.getName())
-        cmdText = '<thread name="%s" id="%s" />' % (quote(name), GetThreadId(thread))
+        cmdText = '<thread name="%s" id="%s" />' % (quote(name), get_thread_id(thread))
         return cmdText
 
     def make_error_message(self, seq, text):
@@ -632,7 +634,7 @@ class NetCommandFactory:
 
                 #print "name is ", my_name
 
-                abs_path, real_path, base = pydevd_file_utils.GetNormPathsAndBase(curr_frame)
+                abs_path, real_path, base = pydevd_file_utils.get_norm_paths_and_base(curr_frame)
 
                 myFile = pydevd_file_utils.NormFileToClient(abs_path)
                 if file_system_encoding.lower() != "utf-8" and hasattr(myFile, "decode"):
@@ -1339,12 +1341,12 @@ def PydevdFindThreadById(thread_id):
         # there was a deadlock here when I did not remove the tracing function when thread was dead
         threads = threading.enumerate()
         for i in threads:
-            tid = GetThreadId(i)
+            tid = get_thread_id(i)
             if thread_id == tid or thread_id.endswith('|' + tid):
                 return i
 
         sys.stderr.write("Could not find thread %s\n" % thread_id)
-        sys.stderr.write("Available: %s\n" % [GetThreadId(t) for t in threads])
+        sys.stderr.write("Available: %s\n" % [get_thread_id(t) for t in threads])
         sys.stderr.flush()
     except:
         traceback.print_exc()

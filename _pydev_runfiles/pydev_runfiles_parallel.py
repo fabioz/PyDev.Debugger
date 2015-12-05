@@ -47,8 +47,8 @@ def execute_tests_in_parallel(tests, jobs, split, verbosity, coverage_files, cov
         It may also return False if in debug mode (in which case, multi-processes are not accepted)
     '''
     try:
-        from _pydevd_bundle.pydevd_comm import GetGlobalDebugger
-        if GetGlobalDebugger() is not None:
+        from _pydevd_bundle.pydevd_comm import get_global_debugger
+        if get_global_debugger() is not None:
             return False
     except:
         pass #Ignore any error here.

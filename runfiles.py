@@ -47,7 +47,7 @@ def main():
     except:
         sys.stderr.write('Command line received: %s\n' % (sys.argv,))
         raise
-    pydev_runfiles_xml_rpc.InitializeServer(configuration.port)  # Note that if the port is None, a Null server will be initialized.
+    pydev_runfiles_xml_rpc.initialize_server(configuration.port)  # Note that if the port is None, a Null server will be initialized.
 
     NOSE_FRAMEWORK = 1
     PY_TEST_FRAMEWORK = 2

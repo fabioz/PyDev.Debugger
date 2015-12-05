@@ -47,7 +47,7 @@ def _get_stack_str(frame):
 
 def _internal_set_trace(tracing_func):
     if TracingFunctionHolder._warn:
-        frame = GetFrame()
+        frame = get_frame()
         if frame is not None and frame.f_back is not None:
             if not frame.f_back.f_code.co_filename.lower().endswith('threading.py'):
             

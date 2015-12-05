@@ -1,7 +1,7 @@
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
 import inspect
-from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, GetThreadId, dict_contains, dict_iter_items
-from pydevd_file_utils import NormFileToServer, GetFileNameAndBaseFromFile
+from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_thread_id, dict_contains, dict_iter_items
+from pydevd_file_utils import NormFileToServer, get_file_name_and_base_from_file
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_name
 from _pydevd_bundle import pydevd_vars
 import traceback
@@ -138,7 +138,7 @@ def suspend_django(mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
     #except AttributeError:
     #    pass
 
-    pydevd_vars.addAdditionalFrameById(GetThreadId(thread), {id(frame): frame})
+    pydevd_vars.addAdditionalFrameById(get_thread_id(thread), {id(frame): frame})
 
     mainDebugger.set_suspend(thread, cmd)
     thread.additional_info.suspend_type = DJANGO_SUSPEND
@@ -212,7 +212,7 @@ def _get_template_file_name(frame):
             pydev_log.debug("Source name is %s\n" % fname)
             return None
         else:
-            filename, base = GetFileNameAndBaseFromFile(fname)
+            filename, base = get_file_name_and_base_from_file(fname)
             return filename
     except:
         pydev_log.debug(traceback.format_exc())

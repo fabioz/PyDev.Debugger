@@ -367,7 +367,7 @@ class CompletionServer:
 
                         err = s.getvalue()
                         dbg(SERVER_NAME + ' received error: ' + str(err), ERROR)
-                        self.send(self.getCompletionsMessage(None, [('ERROR:', '%s\nLog:%s' % (err, log.GetContents()), '')]))
+                        self.send(self.getCompletionsMessage(None, [('ERROR:', '%s\nLog:%s' % (err, log.get_contents()), '')]))
 
 
                 finally:

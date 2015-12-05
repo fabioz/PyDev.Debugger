@@ -20,7 +20,7 @@ class AbstractPyDBAdditionalThreadInfo:
         self.conditional_breakpoint_exception = None
 
 
-    def IterFrames(self):
+    def iter_frames(self):
         raise NotImplementedError()
 
     def create_db_frame(self, args):
@@ -36,7 +36,7 @@ class AbstractPyDBAdditionalThreadInfo:
 #=======================================================================================================================
 class PyDBAdditionalThreadInfoWithCurrentFramesSupport(AbstractPyDBAdditionalThreadInfo):
 
-    def IterFrames(self):
+    def iter_frames(self):
         #sys._current_frames(): dictionary with thread id -> topmost frame
         return sys._current_frames().values() #return a copy... don't know if it's changed if we did get an iterator
 
@@ -106,7 +106,7 @@ class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(AbstractPyDBAdditional
         return db_frame
 
 
-    def IterFrames(self):
+    def iter_frames(self):
         #We cannot use yield (because of the lock)
         self._acquire_lock()
         try:
@@ -122,7 +122,7 @@ class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(AbstractPyDBAdditional
             self._release_lock()
 
     def __str__(self):
-        return 'State:%s Stop:%s Cmd: %s Kill:%s Frames:%s' % (self.pydev_state, self.pydev_step_stop, self.pydev_step_cmd, self.pydev_notify_kill, len(self.IterFrames()))
+        return 'State:%s Stop:%s Cmd: %s Kill:%s Frames:%s' % (self.pydev_state, self.pydev_step_stop, self.pydev_step_cmd, self.pydev_notify_kill, len(self.iter_frames()))
 
 #=======================================================================================================================
 # NOW, WE HAVE TO DEFINE WHICH THREAD INFO TO USE

@@ -62,6 +62,8 @@ from _pydevd_bundle.pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          PyDBDaemonThread, \
                          _queue, \
                          ReaderThread, \
+                         GetGlobalDebugger, \
+                         get_global_debugger, \
                          SetGlobalDebugger, \
                          WriterThread, \
                          PydevdFindThreadById, \
@@ -84,7 +86,7 @@ from _pydevd_bundle.pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          InternalEvaluateConsoleExpression,\
                          InternalConsoleGetCompletions
 
-from pydevd_file_utils import NormFileToServer, GetFilenameAndBase
+from pydevd_file_utils import NormFileToServer, get_filename_and_base
 import pydevd_file_utils
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_vm_type
@@ -278,7 +280,7 @@ class CheckOutputThread(PyDBDaemonThread):
 
             disable_tracing = True
 
-            if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON and sys.hexversion <= 0x020201f0:
+            if pydevd_vm_type.get_vm_type() == pydevd_vm_type.PydevdVmType.JYTHON and sys.hexversion <= 0x020201f0:
                 # don't run untraced threads if we're in jython 2.2.1 or lower
                 # jython bug: if we start a thread and another thread changes the tracing facility
                 # it affects other threads (it's not set only for the thread but globally)
@@ -473,7 +475,7 @@ class PyDB:
         if thread_id == "*":
             threads = threadingEnumerate()
             for t in threads:
-                thread_id = GetThreadId(t)
+                thread_id = get_thread_id(t)
                 queue = self.getInternalQueue(thread_id)
                 queue.put(int_cmd)
 
@@ -547,14 +549,14 @@ class PyDB:
 
             self.checkOutputRedirect()
 
-            curr_thread_id = GetThreadId(threadingCurrentThread())
+            curr_thread_id = get_thread_id(threadingCurrentThread())
             program_threads_alive = {}
             all_threads = threadingEnumerate()
             program_threads_dead = []
             self._lock_running_thread_ids.acquire()
             try:
                 for t in all_threads:
-                    thread_id = GetThreadId(t)
+                    thread_id = get_thread_id(t)
 
                     if getattr(t, 'is_pydev_daemon_thread', False):
                         pass # I.e.: skip the DummyThreads created from pydev daemon threads
@@ -644,7 +646,7 @@ class PyDB:
                     pass  # that's ok, no info currently set
 
                 if additional_info is not None:
-                    for frame in additional_info.IterFrames():
+                    for frame in additional_info.iter_frames():
                         if frame is not ignore_frame:
                             self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=overwrite_prev_trace)
         finally:
@@ -781,7 +783,7 @@ class PyDB:
                             pass  # that's ok, no info currently set
 
                         if additional_info is not None:
-                            for frame in additional_info.IterFrames():
+                            for frame in additional_info.iter_frames():
                                 self.set_trace_for_frame_and_parents(frame)
                                 del frame
 
@@ -792,7 +794,7 @@ class PyDB:
                 elif cmd_id == CMD_THREAD_RUN:
                     t = PydevdFindThreadById(text)
                     if t:
-                        thread_id = GetThreadId(t)
+                        thread_id = get_thread_id(t)
                         int_cmd = InternalRunThread(thread_id)
                         self.postInternalCommand(int_cmd, thread_id)
 
@@ -805,7 +807,7 @@ class PyDB:
                     # we received some command to make a single step
                     t = PydevdFindThreadById(text)
                     if t:
-                        thread_id = GetThreadId(t)
+                        thread_id = get_thread_id(t)
                         int_cmd = InternalStepThread(thread_id, cmd_id)
                         self.postInternalCommand(int_cmd, thread_id)
 
@@ -835,7 +837,7 @@ class PyDB:
                     # for tid, t in self._running_thread_ids.items(): #Iterate in copy
                     #    thread_name = t.getName()
                     #
-                    #    print thread_name, GetThreadId(t)
+                    #    print thread_name, get_thread_id(t)
                     #    #Note: if possible, try to reload on the main thread
                     #    if thread_name == 'MainThread':
                     #        thread_id = tid
@@ -1381,7 +1383,7 @@ class PyDB:
         """If conditional breakpoint raises an exception during evaluation
         send exception details to java
         """
-        thread_id = GetThreadId(thread)
+        thread_id = get_thread_id(thread)
         conditional_breakpoint_exception_tuple = thread.additional_info.conditional_breakpoint_exception
         # conditional_breakpoint_exception_tuple - should contain 2 values (exception_type, stacktrace)
         if conditional_breakpoint_exception_tuple and len(conditional_breakpoint_exception_tuple) == 2:
@@ -1397,7 +1399,7 @@ class PyDB:
 
         arg is: exception type, description, traceback object
         """
-        thread_id = GetThreadId(thread)
+        thread_id = get_thread_id(thread)
         int_cmd = InternalSendCurrExceptionTrace(thread_id, arg, curr_frame_id)
         self.postInternalCommand(int_cmd, thread_id)
 
@@ -1405,7 +1407,7 @@ class PyDB:
     def send_caught_exception_stack_proceeded(self, thread):
         """Sends that some thread was resumed and is no longer showing an exception trace.
         """
-        thread_id = GetThreadId(thread)
+        thread_id = get_thread_id(thread)
         int_cmd = InternalSendCurrExceptionTraceProceeded(thread_id)
         self.postInternalCommand(int_cmd, thread_id)
         self.processInternalCommands()
@@ -1420,7 +1422,7 @@ class PyDB:
 
         message = getattr(thread.additional_info, "message", None)
 
-        cmd = self.cmd_factory.make_thread_suspend_message(GetThreadId(thread), frame, thread.stop_reason, message)
+        cmd = self.cmd_factory.make_thread_suspend_message(get_thread_id(thread), frame, thread.stop_reason, message)
         self.writer.add_command(cmd)
 
         CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
@@ -1526,7 +1528,7 @@ class PyDB:
                 info.pydev_state = STATE_RUN
 
         del frame
-        cmd = self.cmd_factory.make_thread_run_message(GetThreadId(thread), info.pydev_step_cmd)
+        cmd = self.cmd_factory.make_thread_run_message(get_thread_id(thread), info.pydev_step_cmd)
         self.writer.add_command(cmd)
 
         CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
@@ -1542,7 +1544,7 @@ class PyDB:
     def handle_post_mortem_stop(self, additional_info, t):
         pydev_log.debug("We are stopping in post-mortem\n")
         frame, frames_byid = additional_info.pydev_force_stop_at_exception
-        thread_id = GetThreadId(t)
+        thread_id = get_thread_id(t)
         pydevd_vars.addAdditionalFrameById(thread_id, frames_byid)
         try:
             try:
@@ -1576,7 +1578,7 @@ class PyDB:
                 self._terminationEventSent = True
                 return None
 
-            filename, base = GetFilenameAndBase(frame)
+            filename, base = get_filename_and_base(frame)
 
             if self.thread_analyser is not None:
                 self.thread_analyser.log_event(frame)
@@ -1618,14 +1620,14 @@ class PyDB:
                 f = frame
                 while f is not None:
                     if 'trace_dispatch' == f.f_code.co_name:
-                        _fname, bs = GetFilenameAndBase(f)
+                        _fname, bs = get_filename_and_base(f)
                         if bs == 'pydevd_frame.py':
                             return None  #we don't wan't to trace code invoked from pydevd_frame.trace_dispatch
                     f = f.f_back
 
             # if thread is not alive, cancel trace_dispatch processing
             if not isThreadAlive(t):
-                self._process_thread_not_alive(GetThreadId(t))
+                self._process_thread_not_alive(get_thread_id(t))
                 return None  # suspend tracing
 
             # each new frame...
@@ -1785,7 +1787,7 @@ class PyDB:
             wrap_threads()
             t = threadingCurrentThread()
             self.thread_analyser.set_start_time(cur_time())
-            send_message("threading_event", 0, t.getName(), GetThreadId(t), "thread", "start", file, 1, None, parent=GetThreadId(t))
+            send_message("threading_event", 0, t.getName(), get_thread_id(t), "thread", "start", file, 1, None, parent=get_thread_id(t))
 
         if self.asyncio_analyser is not None:
             # we don't have main thread in asyncio graph, so we should add a fake event
@@ -1811,7 +1813,7 @@ class PyDB:
         from _pydevd_bundle import pydevd_frame_utils
         frame = pydevd_frame_utils.Frame(None, -1, pydevd_frame_utils.FCode("Console",
                                                                             os.path.abspath(os.path.dirname(__file__))), globals, globals)
-        thread_id = GetThreadId(thread)
+        thread_id = get_thread_id(thread)
         from _pydevd_bundle import pydevd_vars
         pydevd_vars.addAdditionalFrameById(thread_id, {id(frame): frame})
 
@@ -2038,7 +2040,7 @@ def _locked_settrace(
         if bufferStdErrToServer:
             init_stderr_redirect()
 
-        debugger.set_trace_for_frame_and_parents(GetFrame(), False, overwrite_prev_trace=overwrite_prev_trace)
+        debugger.set_trace_for_frame_and_parents(get_frame(), False, overwrite_prev_trace=overwrite_prev_trace)
 
 
         CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
@@ -2068,7 +2070,7 @@ def _locked_settrace(
             debugger.patch_threads()
 
             # As this is the first connection, also set tracing for any untraced threads
-            debugger.setTracingForUntracedContexts(ignore_frame=GetFrame(), overwrite_prev_trace=overwrite_prev_trace)
+            debugger.setTracingForUntracedContexts(ignore_frame=get_frame(), overwrite_prev_trace=overwrite_prev_trace)
 
         # Stop the tracing as the last thing before the actual shutdown for a clean exit.
         atexit.register(stoptrace)
@@ -2083,9 +2085,9 @@ def _locked_settrace(
 
     else:
         # ok, we're already in debug mode, with all set, so, let's just set the break
-        debugger = GetGlobalDebugger()
+        debugger = get_global_debugger()
 
-        debugger.set_trace_for_frame_and_parents(GetFrame(), False)
+        debugger.set_trace_for_frame_and_parents(get_frame(), False)
 
         t = threadingCurrentThread()
         try:
@@ -2119,12 +2121,12 @@ def stoptrace():
         from _pydev_bundle.pydev_monkey import undo_patch_thread_modules
         undo_patch_thread_modules()
 
-        debugger = GetGlobalDebugger()
+        debugger = get_global_debugger()
 
         if debugger:
 
             debugger.set_trace_for_frame_and_parents(
-                GetFrame(), also_add_to_passed_frame=True, overwrite_prev_trace=True, dispatch_func=lambda *args:None)
+                get_frame(), also_add_to_passed_frame=True, overwrite_prev_trace=True, dispatch_func=lambda *args:None)
             debugger.exiting()
 
             killAllPydevThreads()
@@ -2379,7 +2381,7 @@ if __name__ == '__main__':
             sys.modules['psyco'] = pydevd_psyco_stub
 
         if setup['save-signatures']:
-            if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON:
+            if pydevd_vm_type.get_vm_type() == pydevd_vm_type.PydevdVmType.JYTHON:
                 sys.stderr.write("Collecting run-time type information is not supported for Jython\n")
             else:
                 # Only import it if we're going to use it!

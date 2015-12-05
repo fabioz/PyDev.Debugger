@@ -3,9 +3,9 @@ from _pydevd_bundle.pydevd_constants import *  # @UnusedWildImport
 import stackless  # @UnresolvedImport
 from pydevd_tracing import SetTrace
 from _pydevd_bundle.pydevd_custom_frames import update_custom_frame, removeCustomFrame, addCustomFrame
-from _pydevd_bundle.pydevd_comm import GetGlobalDebugger
+from _pydevd_bundle.pydevd_comm import get_global_debugger
 import weakref
-from pydevd_file_utils import GetFilenameAndBase
+from pydevd_file_utils import get_filename_and_base
 from pydevd import DONT_TRACE
 from _pydevd_bundle.pydevd_constants import dict_items
 
@@ -181,7 +181,7 @@ def _schedule_callback(prev, next):
             register_tasklet_info(next)
 
             # Ok, making next runnable: set the tracing facility in it.
-            debugger = GetGlobalDebugger()
+            debugger = get_global_debugger()
             if debugger is not None:
                 next.trace_function = debugger.trace_dispatch
                 frame = next.frame
@@ -216,7 +216,7 @@ def _schedule_callback(prev, next):
                         if frame is current_frame:
                             frame = frame.f_back
                         if frame is not None:
-                            _filename, base = GetFilenameAndBase(frame)
+                            _filename, base = get_filename_and_base(frame)
                             # print >>sys.stderr, "SchedCB: %r, %d, '%s', '%s'" % (tasklet, frame.f_lineno, _filename, base)
                             is_file_to_ignore = dict_contains(DONT_TRACE, base)
                             if not is_file_to_ignore:
@@ -260,7 +260,7 @@ if not hasattr(stackless.tasklet, "trace_function"):
                 register_tasklet_info(next)
 
                 # Ok, making next runnable: set the tracing facility in it.
-                debugger = GetGlobalDebugger()
+                debugger = get_global_debugger()
                 if debugger is not None and next.frame:
                     if hasattr(next.frame, 'f_trace'):
                         next.frame.f_trace = debugger.trace_dispatch
@@ -284,7 +284,7 @@ if not hasattr(stackless.tasklet, "trace_function"):
                         if tasklet.paused or tasklet.blocked or tasklet.scheduled:
                             if tasklet.frame and tasklet.frame.f_back:
                                 f_back = tasklet.frame.f_back
-                                _filename, base = GetFilenameAndBase(f_back)
+                                _filename, base = get_filename_and_base(f_back)
                                 is_file_to_ignore = dict_contains(DONT_TRACE, base)
                                 if not is_file_to_ignore:
                                     if tasklet_info.frame_id is None:
@@ -323,7 +323,7 @@ if not hasattr(stackless.tasklet, "trace_function"):
         f = self.tempval
         def new_f(old_f, args, kwargs):
 
-            debugger = GetGlobalDebugger()
+            debugger = get_global_debugger()
             if debugger is not None:
                 SetTrace(debugger.trace_dispatch)
 
@@ -363,7 +363,7 @@ if not hasattr(stackless.tasklet, "trace_function"):
     # run
     #=======================================================================================================================
     def run(*args, **kwargs):
-        debugger = GetGlobalDebugger()
+        debugger = get_global_debugger()
         if debugger is not None:
             SetTrace(debugger.trace_dispatch)
         debugger = None

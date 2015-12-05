@@ -46,7 +46,7 @@ if sys.platform == 'cli':
         return _old_imp(initial_name, log)
     
 
-def ImportName(name, log=None):
+def import_name(name, log=None):
     mod = _imp(name, log)
 
     components = name.split('.')

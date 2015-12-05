@@ -4,7 +4,7 @@ from pydevd_concurrency_analyser.pydevd_thread_wrappers import ObjectWrapper, wr
 import pydevd_file_utils
 from _pydevd_bundle import pydevd_vars
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
-from _pydevd_bundle.pydevd_constants import dict_contains, GetThreadId, IS_PY3K
+from _pydevd_bundle.pydevd_constants import dict_contains, get_thread_id, IS_PY3K
 
 file_system_encoding = getfilesystemencoding()
 
@@ -57,7 +57,7 @@ def get_text_list_for_frame(frame):
 
             #print "name is ", myName
 
-            filename, base = pydevd_file_utils.GetFilenameAndBase(curFrame)
+            filename, base = pydevd_file_utils.get_filename_and_base(curFrame)
 
             myFile = pydevd_file_utils.NormFileToClient(filename)
             if file_system_encoding.lower() != "utf-8" and hasattr(myFile, "decode"):
@@ -115,8 +115,8 @@ def send_message(event_class, time, name, thread_id, type, event, file, line, fr
 def log_new_thread(global_debugger):
     t = threadingCurrentThread()
     event_time = cur_time() - global_debugger.thread_analyser.start_time
-    send_message("threading_event", event_time, t.getName(), GetThreadId(t), "thread",
-             "start", "code_name", 0, None, parent=GetThreadId(t))
+    send_message("threading_event", event_time, t.getName(), get_thread_id(t), "thread",
+             "start", "code_name", 0, None, parent=get_thread_id(t))
 
 
 class ThreadingLogger:
@@ -146,7 +146,7 @@ class ThreadingLogger:
                 back = frame.f_back
                 if not back:
                     return
-                name, back_base = pydevd_file_utils.GetFilenameAndBase(back)
+                name, back_base = pydevd_file_utils.get_filename_and_base(back)
                 event_time = cur_time() - self.start_time
                 method_name = frame.f_code.co_name
 
@@ -155,7 +155,7 @@ class ThreadingLogger:
                         wrap_attr(self_obj, "run")
                     if (method_name in THREAD_METHODS) and (back_base not in DONT_TRACE_THREADING or \
                             (method_name in INNER_METHODS and back_base in INNER_FILES)):
-                        thread_id = GetThreadId(self_obj)
+                        thread_id = get_thread_id(self_obj)
                         name = self_obj.getName()
                         real_method = frame.f_code.co_name
                         parent = None
@@ -165,17 +165,17 @@ class ThreadingLogger:
                                 back = back.f_back.f_back
                             real_method = "stop"
                             if hasattr(self_obj, "_pydev_join_called"):
-                                parent = GetThreadId(t)
+                                parent = get_thread_id(t)
                         elif real_method == "join":
                             # join called in the current thread, not in self object
                             if not self_obj.is_alive():
                                 return
-                            thread_id = GetThreadId(t)
+                            thread_id = get_thread_id(t)
                             name = t.getName()
                             setattr(self_obj, "_pydev_join_called", True)
 
                         if real_method == "start":
-                            parent = GetThreadId(t)
+                            parent = get_thread_id(t)
                         send_message("threading_event", event_time, name, thread_id, "thread",
                         real_method, back.f_code.co_filename, back.f_lineno, back, parent=parent)
                         # print(event_time, self_obj.getName(), thread_id, "thread",
@@ -190,7 +190,7 @@ class ThreadingLogger:
                             if isinstance(back.f_locals["self"], threading.Thread):
                                 my_self_obj = frame.f_back.f_back.f_locals["self"]
                                 my_back = frame.f_back.f_back
-                                my_thread_id = GetThreadId(my_self_obj)
+                                my_thread_id = get_thread_id(my_self_obj)
                                 send_massage = True
                                 if IS_PY3K and hasattr(my_self_obj, "_pydev_join_called"):
                                     send_massage = False
@@ -203,13 +203,13 @@ class ThreadingLogger:
                     if back_base in DONT_TRACE_THREADING:
                         # do not trace methods called from threading
                         return
-                    _, back_back_base = pydevd_file_utils.GetFilenameAndBase(back.f_back)
+                    _, back_back_base = pydevd_file_utils.get_filename_and_base(back.f_back)
                     back = back.f_back
                     if back_back_base in DONT_TRACE_THREADING:
                         # back_back_base is the file, where the method was called froms
                         return
                     if method_name == "__init__":
-                        send_message("threading_event", event_time, t.getName(), GetThreadId(t), "lock",
+                        send_message("threading_event", event_time, t.getName(), get_thread_id(t), "lock",
                                      method_name, back.f_code.co_filename, back.f_lineno, back, lock_id=str(id(frame.f_locals["self"])))
                     if dict_contains(frame.f_locals, "attr") and \
                             (frame.f_locals["attr"] in LOCK_METHODS or
@@ -224,14 +224,14 @@ class ThreadingLogger:
                         if real_method == "release_end":
                             # do not log release end. Maybe use it later
                             return
-                        send_message("threading_event", event_time, t.getName(), GetThreadId(t), "lock",
+                        send_message("threading_event", event_time, t.getName(), get_thread_id(t), "lock",
                         real_method, back.f_code.co_filename, back.f_lineno, back, lock_id=str(id(self_obj)))
 
                         if real_method in ("put_end", "get_end"):
                             # fake release for queue, cause we don't call it directly
-                            send_message("threading_event", event_time, t.getName(), GetThreadId(t), "lock",
+                            send_message("threading_event", event_time, t.getName(), get_thread_id(t), "lock",
                                          "release", back.f_code.co_filename, back.f_lineno, back, lock_id=str(id(self_obj)))
-                        # print(event_time, t.getName(), GetThreadId(t), "lock",
+                        # print(event_time, t.getName(), get_thread_id(t), "lock",
                         #       real_method, back.f_code.co_filename, back.f_lineno)
 
 

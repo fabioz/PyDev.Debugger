@@ -56,10 +56,10 @@ def iterFrames(initialFrame):
 
 def dumpFrames(thread_id):
     sys.stdout.write('dumping frames\n')
-    if thread_id != GetThreadId(threading.currentThread()):
+    if thread_id != get_thread_id(threading.currentThread()):
         raise VariableError("findFrame: must execute on same thread")
 
-    curFrame = GetFrame()
+    curFrame = get_frame()
     for frame in iterFrames(curFrame):
         sys.stdout.write('%s\n' % pickle.dumps(frame))
 
@@ -85,7 +85,7 @@ def removeAdditionalFrameById(thread_id):
 def findFrame(thread_id, frame_id):
     """ returns a frame on the thread that has a given frame_id """
     try:
-        curr_thread_id = GetThreadId(threading.currentThread())
+        curr_thread_id = get_thread_id(threading.currentThread())
         if thread_id != curr_thread_id :
             try:
                 return getCustomFrame(thread_id, frame_id)  #I.e.: thread_id could be a stackless frame id + thread_id.
@@ -103,7 +103,7 @@ def findFrame(thread_id, frame_id):
                 if frame is not None:
                     return frame
 
-        curFrame = GetFrame()
+        curFrame = get_frame()
         if frame_id == "*":
             return curFrame  # any frame is specified with "*"
 
@@ -129,7 +129,7 @@ def findFrame(thread_id, frame_id):
             msgFrames = ''
             i = 0
 
-            for frame in iterFrames(GetFrame()):
+            for frame in iterFrames(get_frame()):
                 i += 1
                 msgFrames += str(id(frame))
                 if i % 5 == 0:
@@ -167,7 +167,7 @@ def getVariable(thread_id, frame_id, scope, attrs):
            not the frame (as we don't care about the frame in this case).
     """
     if scope == 'BY_ID':
-        if thread_id != GetThreadId(threading.currentThread()) :
+        if thread_id != get_thread_id(threading.currentThread()) :
             raise VariableError("getVariable: must execute on same thread")
 
         try:

@@ -21,7 +21,7 @@ class Log:
         self._contents.append(s.getvalue())
 
         
-    def GetContents(self):
+    def get_contents(self):
         return '\n'.join(self._contents)
     
     def clear_log(self):

@@ -4,9 +4,9 @@ from _pydevd_bundle.pydevd_constants import Null
 
 
 #=======================================================================================================================
-# GetCoverageFiles
+# get_coverage_files
 #=======================================================================================================================
-def GetCoverageFiles(coverage_output_dir, number_of_files):
+def get_coverage_files(coverage_output_dir, number_of_files):
     base_dir = coverage_output_dir
     ret = []
     i = 0
@@ -60,7 +60,7 @@ def StartCoverageSupportFromParams(coverage_output_dir, coverage_output_file, jo
                     if n <= 0:
                         n += 1
                     n += 1 #Add 1 more for the current process (which will do the initial import).
-                    coverage_files = GetCoverageFiles(coverage_output_dir, n)
+                    coverage_files = get_coverage_files(coverage_output_dir, n)
                     os.environ['COVERAGE_FILE'] = coverage_files.pop(0)
                     
                     coverage_instance = coverage.coverage(source=[coverage_include])
