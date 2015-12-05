@@ -147,9 +147,9 @@ def StartPydevNosePluginSingleton(configuration):
 
 original = MultiProcessTestRunner.consolidate
 #=======================================================================================================================
-# NewConsolidate
+# new_consolidate
 #=======================================================================================================================
-def NewConsolidate(self, result, batch_result):
+def new_consolidate(self, result, batch_result):
     '''
     Used so that it can work with the multiprocess plugin.
     Monkeypatched because nose seems a bit unsupported at this time (ideally
@@ -177,4 +177,4 @@ def NewConsolidate(self, result, batch_result):
 
     return ret
 
-MultiProcessTestRunner.consolidate = NewConsolidate
+MultiProcessTestRunner.consolidate = new_consolidate

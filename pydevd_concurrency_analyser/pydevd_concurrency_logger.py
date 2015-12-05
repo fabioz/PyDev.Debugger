@@ -59,7 +59,7 @@ def get_text_list_for_frame(frame):
 
             filename, base = pydevd_file_utils.get_filename_and_base(curFrame)
 
-            myFile = pydevd_file_utils.NormFileToClient(filename)
+            myFile = pydevd_file_utils.norm_file_to_client(filename)
             if file_system_encoding.lower() != "utf-8" and hasattr(myFile, "decode"):
                 # myFile is a byte string encoded using the file system encoding
                 # convert it to utf8

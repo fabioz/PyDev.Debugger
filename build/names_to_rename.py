@@ -27,7 +27,7 @@ NAMES = '''
 # makeCustomFrameCreatedMessage
 # makeListThreadsMessage
 # makeVariableChangedMessage
-# makeIoMessage    
+# makeIoMessage
 # makeVersionMessage
 # makeThreadKilledMessage
 # makeThreadSuspendStr
@@ -144,7 +144,7 @@ NAMES = '''
 # updateCustomFrame
 # varToXML
 
-# 
+#
 # GetContents
 # GetCoverageFiles
 # GetFile
@@ -163,21 +163,24 @@ NAMES = '''
 # IterFrames
 
 
-# Method1
-# Method1a
-# Method2
-# Method3
-# NewConsolidate
-# NormFileToClient
-# NormFileToServer
-# Notify
-# NotifyFinished
-# OnFunButton
-# OnInit
-# OnTimeToClose
-# PydevdFindThreadById
-# PydevdLog
-# RequestInput
+# Method1 -- skip
+# Method1a  -- skip
+# Method2 -- skip
+# Method3 -- skip
+
+NewConsolidate
+NormFileToClient
+NormFileToServer
+# Notify -- skip
+# NotifyFinished -- skip
+OnFunButton
+# OnInit -- skip
+OnTimeToClose
+PydevdFindThreadById
+PydevdLog
+# RequestInput -- skip
+
+
 # Search
 # ServerProxy
 # SetGlobalDebugger

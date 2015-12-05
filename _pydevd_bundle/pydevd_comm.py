@@ -205,9 +205,9 @@ file_system_encoding = getfilesystemencoding()
 #--------------------------------------------------------------------------------------------------- UTILITIES
 
 #=======================================================================================================================
-# PydevdLog
+# pydevd_log
 #=======================================================================================================================
-def PydevdLog(level, *args):
+def pydevd_log(level, *args):
     """ levels are:
         0 most serious warnings/errors
         1 warnings/significant events
@@ -420,7 +420,7 @@ class WriterThread(PyDBDaemonThread):
                         else:
                             continue
                 except:
-                    #PydevdLog(0, 'Finishing debug communication...(1)')
+                    #pydevd_log(0, 'Finishing debug communication...(1)')
                     #when liberating the thread here, we could have errors because we were shutting down
                     #but the thread was still not liberated
                     return
@@ -472,7 +472,7 @@ def start_server(port):
 #=======================================================================================================================
 def start_client(host, port):
     """ connects to a host/port """
-    PydevdLog(1, "Connecting to ", host, ":", str(port))
+    pydevd_log(1, "Connecting to ", host, ":", str(port))
 
     s = socket(AF_INET, SOCK_STREAM)
 
@@ -485,7 +485,7 @@ def start_client(host, port):
             i+=1
             time.sleep(0.2)
             continue
-        PydevdLog(1, "Connected.")
+        pydevd_log(1, "Connected.")
         return s
 
     sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
@@ -636,7 +636,7 @@ class NetCommandFactory:
 
                 abs_path, real_path, base = pydevd_file_utils.get_norm_paths_and_base(curr_frame)
 
-                myFile = pydevd_file_utils.NormFileToClient(abs_path)
+                myFile = pydevd_file_utils.norm_file_to_client(abs_path)
                 if file_system_encoding.lower() != "utf-8" and hasattr(myFile, "decode"):
                     # myFile is a byte string encoded using the file system encoding
                     # convert it to utf8
@@ -857,7 +857,7 @@ class InternalTerminateThread(InternalThreadCommand):
         self.thread_id = thread_id
 
     def do_it(self, dbg):
-        PydevdLog(1, "killing ", str(self.thread_id))
+        pydevd_log(1, "killing ", str(self.thread_id))
         cmd = dbg.cmd_factory.make_thread_killed_message(self.thread_id)
         dbg.writer.add_command(cmd)
 
@@ -870,7 +870,7 @@ class InternalRunThread(InternalThreadCommand):
         self.thread_id = thread_id
 
     def do_it(self, dbg):
-        t = PydevdFindThreadById(self.thread_id)
+        t = pydevd_find_thread_by_id(self.thread_id)
         if t:
             t.additional_info.pydev_step_cmd = None
             t.additional_info.pydev_step_stop = None
@@ -886,7 +886,7 @@ class InternalStepThread(InternalThreadCommand):
         self.cmd_id = cmd_id
 
     def do_it(self, dbg):
-        t = PydevdFindThreadById(self.thread_id)
+        t = pydevd_find_thread_by_id(self.thread_id)
         if t:
             t.additional_info.pydev_step_cmd = self.cmd_id
             t.additional_info.pydev_state = STATE_RUN
@@ -902,7 +902,7 @@ class InternalSetNextStatementThread(InternalThreadCommand):
         self.func_name = func_name
 
     def do_it(self, dbg):
-        t = PydevdFindThreadById(self.thread_id)
+        t = pydevd_find_thread_by_id(self.thread_id)
         if t:
             t.additional_info.pydev_step_cmd = self.cmd_id
             t.additional_info.pydev_next_line = int(self.line)
@@ -1334,9 +1334,9 @@ class InternalConsoleExec(InternalThreadCommand):
 
 
 #=======================================================================================================================
-# PydevdFindThreadById
+# pydevd_find_thread_by_id
 #=======================================================================================================================
-def PydevdFindThreadById(thread_id):
+def pydevd_find_thread_by_id(thread_id):
     try:
         # there was a deadlock here when I did not remove the tracing function when thread was dead
         threads = threading.enumerate()

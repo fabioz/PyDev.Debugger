@@ -66,8 +66,8 @@ from _pydevd_bundle.pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          get_global_debugger, \
                          SetGlobalDebugger, \
                          WriterThread, \
-                         PydevdFindThreadById, \
-                         PydevdLog, \
+                         pydevd_find_thread_by_id, \
+                         pydevd_log, \
                          start_client, \
                          start_server, \
                          InternalSetNextStatementThread, \
@@ -86,7 +86,7 @@ from _pydevd_bundle.pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          InternalEvaluateConsoleExpression,\
                          InternalConsoleGetCompletions
 
-from pydevd_file_utils import NormFileToServer, get_filename_and_base
+from pydevd_file_utils import norm_file_to_server, get_filename_and_base
 import pydevd_file_utils
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_vm_type
@@ -245,14 +245,14 @@ class PyDBCommandThread(PyDBDaemonThread):
                 try:
                     self.pyDb.processInternalCommands()
                 except:
-                    PydevdLog(0, 'Finishing debug communication...(2)')
+                    pydevd_log(0, 'Finishing debug communication...(2)')
                 self._py_db_command_thread_event.clear()
                 self._py_db_command_thread_event.wait(0.5)
         except:
             pydev_log.debug(sys.exc_info()[0])
 
             #only got this error in interpreter shutdown
-            #PydevdLog(0, 'Finishing debug communication...(3)')
+            #pydevd_log(0, 'Finishing debug communication...(3)')
 
 
 def killAllPydevThreads():
@@ -588,14 +588,14 @@ class PyDB:
                                         self.init_matplotlib_in_debug_console()
                                         self.mpl_in_use = True
                                     except:
-                                        PydevdLog(2, "Matplotlib support in debug console failed", traceback.format_exc())
+                                        pydevd_log(2, "Matplotlib support in debug console failed", traceback.format_exc())
                                     self.mpl_hooks_in_debug_console = True
 
                                 if int_cmd.can_be_executed_by(curr_thread_id):
-                                    PydevdLog(2, "processing internal command ", str(int_cmd))
+                                    pydevd_log(2, "processing internal command ", str(int_cmd))
                                     int_cmd.do_it(self)
                                 else:
-                                    PydevdLog(2, "NOT processing internal command ", str(int_cmd))
+                                    pydevd_log(2, "NOT processing internal command ", str(int_cmd))
                                     cmdsToReadd.append(int_cmd)
 
 
@@ -774,7 +774,7 @@ class PyDB:
 
                 elif cmd_id == CMD_THREAD_SUSPEND:
                     # Yes, thread suspend is still done at this point, not through an internal command!
-                    t = PydevdFindThreadById(text)
+                    t = pydevd_find_thread_by_id(text)
                     if t:
                         additional_info = None
                         try:
@@ -792,7 +792,7 @@ class PyDB:
                         sys.stderr.write("Can't suspend tasklet: %s\n" % (text,))
 
                 elif cmd_id == CMD_THREAD_RUN:
-                    t = PydevdFindThreadById(text)
+                    t = pydevd_find_thread_by_id(text)
                     if t:
                         thread_id = get_thread_id(t)
                         int_cmd = InternalRunThread(thread_id)
@@ -805,7 +805,7 @@ class PyDB:
                 elif cmd_id == CMD_STEP_INTO or cmd_id == CMD_STEP_OVER or cmd_id == CMD_STEP_RETURN or \
                         cmd_id == CMD_STEP_INTO_MY_CODE:
                     # we received some command to make a single step
-                    t = PydevdFindThreadById(text)
+                    t = pydevd_find_thread_by_id(text)
                     if t:
                         thread_id = get_thread_id(t)
                         int_cmd = InternalStepThread(thread_id, cmd_id)
@@ -818,7 +818,7 @@ class PyDB:
                 elif cmd_id == CMD_RUN_TO_LINE or cmd_id == CMD_SET_NEXT_STATEMENT or cmd_id == CMD_SMART_STEP_INTO:
                     # we received some command to make a single step
                     thread_id, line, func_name = text.split('\t', 2)
-                    t = PydevdFindThreadById(thread_id)
+                    t = pydevd_find_thread_by_id(thread_id)
                     if t:
                         int_cmd = InternalSetNextStatementThread(thread_id, cmd_id, line, func_name)
                         self.postInternalCommand(int_cmd, thread_id)
@@ -946,7 +946,7 @@ class PyDB:
                     if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
                         file = file.encode(file_system_encoding)
 
-                    file = NormFileToServer(file)
+                    file = norm_file_to_server(file)
 
                     if not pydevd_file_utils.exists(file):
                         sys.stderr.write('pydev debugger: warning: trying to add breakpoint'\
@@ -1005,7 +1005,7 @@ class PyDB:
                     if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
                         file = file.encode(file_system_encoding)
 
-                    file = NormFileToServer(file)
+                    file = norm_file_to_server(file)
 
                     try:
                         breakpoint_id = int(breakpoint_id)
@@ -1313,7 +1313,7 @@ class PyDB:
                                 if not IS_PY3K:
                                     filename = filename.encode(file_system_encoding)
 
-                                filename = NormFileToServer(filename)
+                                filename = norm_file_to_server(filename)
 
                                 if os.path.exists(filename):
                                     lines_ignored = self.filename_to_lines_where_exceptions_are_ignored.get(filename)

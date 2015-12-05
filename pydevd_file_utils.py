@@ -247,7 +247,7 @@ if PATHS_FROM_ECLIPSE_TO_PYTHON:
 
 
     #only setup translation functions if absolutely needed!
-    def NormFileToServer(filename):
+    def norm_file_to_server(filename):
         #Eclipse will send the passed filename to be translated to the python process
         #So, this would be 'NormFileFromEclipseToPython'
         try:
@@ -277,7 +277,7 @@ if PATHS_FROM_ECLIPSE_TO_PYTHON:
             return translated
 
 
-    def NormFileToClient(filename):
+    def norm_file_to_client(filename):
         #The result of this method will be passed to eclipse
         #So, this would be 'NormFileFromPythonToEclipse'
         try:
@@ -308,8 +308,8 @@ if PATHS_FROM_ECLIPSE_TO_PYTHON:
 
 else:
     #no translation step needed (just inline the calls)
-    NormFileToClient = _AbsFile
-    NormFileToServer = _NormFile
+    norm_file_to_client = _AbsFile
+    norm_file_to_server = _NormFile
 
 
 # For given file f returns tuple of its absolute path, real path and base name
