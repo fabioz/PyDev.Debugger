@@ -4,7 +4,7 @@ from pydevd_concurrency_analyser.pydevd_thread_wrappers import ObjectWrapper, wr
 import pydevd_file_utils
 from _pydevd_bundle import pydevd_vars
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
-from _pydevd_bundle.pydevd_constants import DictContains, GetThreadId, IS_PY3K
+from _pydevd_bundle.pydevd_constants import dict_contains, GetThreadId, IS_PY3K
 
 file_system_encoding = getfilesystemencoding()
 
@@ -129,7 +129,7 @@ class ThreadingLogger:
     def log_event(self, frame):
         write_log = False
         self_obj = None
-        if DictContains(frame.f_locals, "self"):
+        if dict_contains(frame.f_locals, "self"):
             self_obj = frame.f_locals["self"]
             if isinstance(self_obj, threading.Thread) or self_obj.__class__ == ObjectWrapper:
                 write_log = True
@@ -137,7 +137,7 @@ class ThreadingLogger:
             back = frame.f_back
             if hasattr(back, "f_back") and back.f_back is not None:
                 back = back.f_back
-                if DictContains(back.f_locals, "self"):
+                if dict_contains(back.f_locals, "self"):
                     if isinstance(back.f_locals["self"], threading.Thread):
                         write_log = True
         try:
@@ -186,7 +186,7 @@ class ThreadingLogger:
                         back = frame.f_back
                         if hasattr(back, "f_back") and back.f_back is not None:
                             back = back.f_back
-                        if DictContains(back.f_locals, "self"):
+                        if dict_contains(back.f_locals, "self"):
                             if isinstance(back.f_locals["self"], threading.Thread):
                                 my_self_obj = frame.f_back.f_back.f_locals["self"]
                                 my_back = frame.f_back.f_back
@@ -211,7 +211,7 @@ class ThreadingLogger:
                     if method_name == "__init__":
                         send_message("threading_event", event_time, t.getName(), GetThreadId(t), "lock",
                                      method_name, back.f_code.co_filename, back.f_lineno, back, lock_id=str(id(frame.f_locals["self"])))
-                    if DictContains(frame.f_locals, "attr") and \
+                    if dict_contains(frame.f_locals, "attr") and \
                             (frame.f_locals["attr"] in LOCK_METHODS or
                             frame.f_locals["attr"] in QUEUE_METHODS):
                         real_method = frame.f_locals["attr"]
@@ -260,7 +260,7 @@ class AsyncioLogger:
 
     def get_task_id(self, frame):
         while frame is not None:
-            if DictContains(frame.f_locals, "self"):
+            if dict_contains(frame.f_locals, "self"):
                 self_obj = frame.f_locals["self"]
                 if isinstance(self_obj,  asyncio.Task):
                     method_name = frame.f_code.co_name
@@ -281,7 +281,7 @@ class AsyncioLogger:
             return
         back = frame.f_back
 
-        if DictContains(frame.f_locals, "self"):
+        if dict_contains(frame.f_locals, "self"):
             self_obj = frame.f_locals["self"]
             if isinstance(self_obj, asyncio.Task):
                 method_name = frame.f_code.co_name

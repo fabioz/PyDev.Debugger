@@ -1,6 +1,6 @@
 import sys
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder
-from _pydevd_bundle.pydevd_constants import DictContains
+from _pydevd_bundle.pydevd_constants import dict_contains
 
 import traceback
 
@@ -32,7 +32,7 @@ def error(message, tb=False):
 
 
 def error_once(message):
-    if not DictContains(WARN_ONCE_MAP, message):
+    if not dict_contains(WARN_ONCE_MAP, message):
         WARN_ONCE_MAP[message] = True
         error(message)
 

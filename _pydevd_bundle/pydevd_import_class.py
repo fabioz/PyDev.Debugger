@@ -10,15 +10,15 @@ def _imp(name, log=None):
             sub = name[0:name.rfind('.')]
             
             if log is not None:
-                log.AddContent('Unable to import', name, 'trying with', sub)
-                log.AddException()
+                log.add_content('Unable to import', name, 'trying with', sub)
+                log.add_exception()
             
             return _imp(sub, log)
         else:
             s = 'Unable to import module: %s - sys.path: %s' % (str(name), sys.path)
             if log is not None:
-                log.AddContent(s)
-                log.AddException()
+                log.add_content(s)
+                log.add_exception()
             
             raise ImportError(s)
         

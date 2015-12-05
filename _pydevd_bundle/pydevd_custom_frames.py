@@ -20,7 +20,7 @@ class CustomFramesContainer:
     _py_db_command_thread_event = None
 
 
-def CustomFramesContainerInit(): #Note: no staticmethod on jython 2.1 (so, use free-function)
+def custom_frames_container_init(): #Note: no staticmethod on jython 2.1 (so, use free-function)
 
     CustomFramesContainer.custom_frames_lock = _pydev_thread.allocate_lock()
 
@@ -38,7 +38,7 @@ def CustomFramesContainerInit(): #Note: no staticmethod on jython 2.1 (so, use f
     CustomFramesContainer._py_db_command_thread_event = Null()
 
 #Initialize it the first time (it may be reinitialized later on when dealing with a fork).
-CustomFramesContainerInit()
+custom_frames_container_init()
 
 
 #=======================================================================================================================
@@ -124,7 +124,7 @@ def removeCustomFrame(frame_id):
     try:
         if DEBUG:
             sys.stderr.write('removeCustomFrame: %s\n' % frame_id)
-        DictPop(CustomFramesContainer.custom_frames, frame_id, None)
+        dict_pop(CustomFramesContainer.custom_frames, frame_id, None)
         CustomFramesContainer._py_db_command_thread_event.set()
     finally:
         CustomFramesContainer.custom_frames_lock.release()

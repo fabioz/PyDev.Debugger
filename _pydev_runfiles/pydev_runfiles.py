@@ -223,7 +223,7 @@ def parse_cmdline(argv=None):
                         file_and_test = line.split('|')
                         if len(file_and_test) == 2:
                             file, test = file_and_test
-                            if DictContains(files_to_tests, file):
+                            if dict_contains(files_to_tests, file):
                                 files_to_tests[file].append(test)
                             else:
                                 files_to_tests[file] = [test]
@@ -537,7 +537,7 @@ class PydevTestRunner(object):
             testFnNames = []
             className = testCaseClass.__name__
 
-            if DictContains(self.accepted_classes, className):
+            if dict_contains(self.accepted_classes, className):
                 for attrname in dir(testCaseClass):
                     #If a class is chosen, we select all the 'test' methods'
                     if attrname.startswith('test') and hasattr(getattr(testCaseClass, attrname), '__call__'):
@@ -546,7 +546,7 @@ class PydevTestRunner(object):
             else:
                 for attrname in dir(testCaseClass):
                     #If we have the class+method name, we must do a full check and have an exact match.
-                    if DictContains(self.accepted_methods, className + '.' + attrname):
+                    if dict_contains(self.accepted_methods, className + '.' + attrname):
                         if hasattr(getattr(testCaseClass, attrname), '__call__'):
                             testFnNames.append(attrname)
 

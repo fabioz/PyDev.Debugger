@@ -52,7 +52,7 @@ if sys.platform.find('java') == -1:
         def testImports5(self):
             tip = _pydev_imports_tipper.GenerateTip('%s.list' % BUILTIN_MOD)
             s = self.assertIn('sort', tip)
-            self.CheckArgs(
+            self.check_args(
                 s,
                 '(cmp=None, key=None, reverse=False)',
                 '(self, object cmp, object key, bool reverse)',
@@ -123,16 +123,16 @@ if sys.platform.find('java') == -1:
 
             # Remove cmp as it's not available on py 3
             #t = self.assertIn('cmp' , tip)
-            #self.CheckArgs(t, '(x, y)', '(object x, object y)', '(x: object, y: object)') #args
+            #self.check_args(t, '(x, y)', '(object x, object y)', '(x: object, y: object)') #args
 
             t = self.assertIn('isinstance' , tip)
-            self.CheckArgs(t, '(object, class_or_type_or_tuple)', '(object o, type typeinfo)', '(o: object, typeinfo: type)') #args
+            self.check_args(t, '(object, class_or_type_or_tuple)', '(object o, type typeinfo)', '(o: object, typeinfo: type)') #args
 
             t = self.assertIn('compile' , tip)
-            self.CheckArgs(t, '(source, filename, mode)', '()', '(o: object, name: str, val: object)') #args
+            self.check_args(t, '(source, filename, mode)', '()', '(o: object, name: str, val: object)') #args
 
             t = self.assertIn('setattr' , tip)
-            self.CheckArgs(t, '(object, name, value)', '(object o, str name, object val)', '(o: object, name: str, val: object)') #args
+            self.check_args(t, '(object, name, value)', '(object o, str name, object val)', '(o: object, name: str, val: object)') #args
 
             try:
                 import compiler
@@ -156,7 +156,7 @@ if sys.platform.find('java') == -1:
                 self.assertIn('parse'          , tip)
 
 
-        def CheckArgs(self, t, *expected):
+        def check_args(self, t, *expected):
             for x in expected:
                 if x == t[2]:
                     return

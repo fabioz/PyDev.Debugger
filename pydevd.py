@@ -91,7 +91,7 @@ from _pydevd_bundle import pydevd_vm_type
 from _pydevd_bundle import pydevd_tracing
 from _pydevd_bundle import pydevd_io
 from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
-from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, CustomFramesContainerInit
+from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle import pydevd_dont_trace
 from _pydevd_bundle import pydevd_traceproperty
 
@@ -254,7 +254,7 @@ class PyDBCommandThread(PyDBDaemonThread):
 
 
 def killAllPydevThreads():
-    threads = DictKeys(PyDBDaemonThread.created_pydb_daemon_threads)
+    threads = dict_keys(PyDBDaemonThread.created_pydb_daemon_threads)
     for t in threads:
         if hasattr(t, 'do_kill_pydev_thread'):
             t.do_kill_pydev_thread()
@@ -512,8 +512,8 @@ class PyDB:
     def init_matplotlib_in_debug_console(self):
         # import hook and patches for matplotlib support in debug console
         from _pydev_bundle.pydev_import_hook import import_hook_manager
-        for module in DictKeys(self.mpl_modules_for_patching):
-            import_hook_manager.add_module_name(module, DictPop(self.mpl_modules_for_patching, module))
+        for module in dict_keys(self.mpl_modules_for_patching):
+            import_hook_manager.add_module_name(module, dict_pop(self.mpl_modules_for_patching, module))
 
     def init_matplotlib_support(self):
         # prepare debugger for integration with matplotlib GUI event loop
@@ -564,7 +564,7 @@ class PyDB:
                     elif isThreadAlive(t):
                         program_threads_alive[thread_id] = t
 
-                        if not DictContains(self._running_thread_ids, thread_id):
+                        if not dict_contains(self._running_thread_ids, thread_id):
                             if not hasattr(t, 'additional_info'):
                                 # see http://sourceforge.net/tracker/index.php?func=detail&aid=1955428&group_id=85796&atid=577329
                                 # Let's create the additional info right away!
@@ -605,7 +605,7 @@ class PyDB:
 
                 thread_ids = list(self._running_thread_ids.keys())
                 for tId in thread_ids:
-                    if not DictContains(program_threads_alive, tId):
+                    if not dict_contains(program_threads_alive, tId):
                         program_threads_dead.append(tId)
             finally:
                 self._lock_running_thread_ids.release()
@@ -656,7 +656,7 @@ class PyDB:
 
     def consolidate_breakpoints(self, file, id_to_breakpoint, breakpoints):
         break_dict = {}
-        for breakpoint_id, pybreakpoint in DictIterItems(id_to_breakpoint):
+        for breakpoint_id, pybreakpoint in dict_iter_items(id_to_breakpoint):
             break_dict[pybreakpoint.line] = pybreakpoint
 
         breakpoints[file] = break_dict
@@ -983,7 +983,7 @@ class PyDB:
                         pydev_log.debug('Added breakpoint:%s - line:%s - func_name:%s\n' % (file, line, func_name.encode('utf-8')))
                         sys.stderr.flush()
 
-                    if DictContains(file_to_id_to_breakpoint, file):
+                    if dict_contains(file_to_id_to_breakpoint, file):
                         id_to_pybreakpoint = file_to_id_to_breakpoint[file]
                     else:
                         id_to_pybreakpoint = file_to_id_to_breakpoint[file] = {}
@@ -1038,7 +1038,7 @@ class PyDB:
 
                             except KeyError:
                                 pydev_log.error("Error removing breakpoint: Breakpoint id not found: %s id: %s. Available ids: %s\n" % (
-                                    file, breakpoint_id, DictKeys(id_to_pybreakpoint)))
+                                    file, breakpoint_id, dict_keys(id_to_pybreakpoint)))
 
 
                 elif cmd_id == CMD_EVALUATE_EXPRESSION or cmd_id == CMD_EXEC_EXPRESSION:
@@ -1199,11 +1199,11 @@ class PyDB:
                     if type == 'python':
                         try:
                             cp = self.break_on_uncaught_exceptions.copy()
-                            DictPop(cp, exception, None)
+                            dict_pop(cp, exception, None)
                             self.break_on_uncaught_exceptions = cp
 
                             cp = self.break_on_caught_exceptions.copy()
-                            DictPop(cp, exception, None)
+                            dict_pop(cp, exception, None)
                             self.break_on_caught_exceptions = cp
                         except:
                             pydev_log.debug("Error while removing exception %s"%sys.exc_info()[0])
@@ -1427,7 +1427,7 @@ class PyDB:
         try:
             from_this_thread = []
 
-            for frame_id, custom_frame in DictIterItems(CustomFramesContainer.custom_frames):
+            for frame_id, custom_frame in dict_iter_items(CustomFramesContainer.custom_frames):
                 if custom_frame.thread_id == thread.ident:
                     # print >> sys.stderr, 'Frame created: ', frame_id
                     self.writer.add_command(self.cmd_factory.make_custom_frame_created_message(frame_id, custom_frame.name))
@@ -1444,9 +1444,9 @@ class PyDB:
         if info.pydev_state == STATE_SUSPEND and not self._finishDebuggingSession:
             # before every stop check if matplotlib modules were imported inside script code
             if len(self.mpl_modules_for_patching) > 0:
-                for module in DictKeys(self.mpl_modules_for_patching):
+                for module in dict_keys(self.mpl_modules_for_patching):
                     if module in sys.modules:
-                        activate_function = DictPop(self.mpl_modules_for_patching, module)
+                        activate_function = dict_pop(self.mpl_modules_for_patching, module)
                         activate_function()
                         self.mpl_in_use = True
 
@@ -1584,7 +1584,7 @@ class PyDB:
             if self.asyncio_analyser is not None:
                 self.asyncio_analyser.log_event(frame)
 
-            is_file_to_ignore = DictContains(DONT_TRACE, base) #we don't want to debug threading or anything related to pydevd
+            is_file_to_ignore = dict_contains(DONT_TRACE, base) #we don't want to debug threading or anything related to pydevd
 
             #print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, is_file_to_ignore)
             if is_file_to_ignore:
@@ -1629,7 +1629,7 @@ class PyDB:
                 return None  # suspend tracing
 
             # each new frame...
-            return additional_info.CreateDbFrame((self, filename, additional_info, t, frame)).trace_dispatch(frame, event, arg)
+            return additional_info.create_db_frame((self, filename, additional_info, t, frame)).trace_dispatch(frame, event, arg)
 
         except SystemExit:
             return None
@@ -2043,7 +2043,7 @@ def _locked_settrace(
 
         CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
         try:
-            for _frameId, custom_frame in DictIterItems(CustomFramesContainer.custom_frames):
+            for _frameId, custom_frame in dict_iter_items(CustomFramesContainer.custom_frames):
                 debugger.set_trace_for_frame_and_parents(custom_frame.frame, False)
         finally:
             CustomFramesContainer.custom_frames_lock.release()  # @UndefinedVariable
@@ -2199,7 +2199,7 @@ def settrace_forked():
         global connected
         connected = False
 
-        CustomFramesContainerInit()
+        custom_frames_container_init()
 
         settrace(
             host,

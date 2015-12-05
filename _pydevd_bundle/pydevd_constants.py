@@ -90,24 +90,24 @@ _nextThreadIdLock = _pydev_thread.allocate_lock()
 # Jython?
 #=======================================================================================================================
 try:
-    DictContains = dict.has_key
+    dict_contains = dict.has_key
 except:
     try:
         #Py3k does not have has_key anymore, and older versions don't have __contains__
-        DictContains = dict.__contains__
+        dict_contains = dict.__contains__
     except:
         try:
-            DictContains = dict.has_key
+            dict_contains = dict.has_key
         except NameError:
-            def DictContains(d, key):
+            def dict_contains(d, key):
                 return d.has_key(key)
 try:
-    DictPop = dict.pop
+    dict_pop = dict.pop
 except:
     #=======================================================================================================================
     # Jython 2.1
     #=======================================================================================================================
-    def DictPop(d, key, default=None):
+    def dict_pop(d, key, default=None):
         try:
             ret = d[key]
             del d[key]
@@ -117,49 +117,49 @@ except:
 
 
 if IS_PY3K:
-    def DictKeys(d):
+    def dict_keys(d):
         return list(d.keys())
 
-    def DictValues(d):
+    def dict_values(d):
         return list(d.values())
 
-    DictIterValues = dict.values
+    dict_iter_values = dict.values
 
-    def DictIterItems(d):
+    def dict_iter_items(d):
         return d.items()
 
-    def DictItems(d):
+    def dict_items(d):
         return list(d.items())
 
 else:
     try:
-        DictKeys = dict.keys
+        dict_keys = dict.keys
     except:
-        def DictKeys(d):
+        def dict_keys(d):
             return d.keys()
     
     try:
-        DictIterValues = dict.itervalues
+        dict_iter_values = dict.itervalues
     except:
         try:
-            DictIterValues = dict.values #Older versions don't have the itervalues
+            dict_iter_values = dict.values #Older versions don't have the itervalues
         except:
-            def DictIterValues(d):
+            def dict_iter_values(d):
                 return d.values()
 
     try:
-        DictValues = dict.values
+        dict_values = dict.values
     except:
-        def DictValues(d):
+        def dict_values(d):
             return d.values()
 
-    def DictIterItems(d):
+    def dict_iter_items(d):
         try:
             return d.iteritems()
         except:
             return d.items()
 
-    def DictItems(d):
+    def dict_items(d):
         return d.items()
 
 

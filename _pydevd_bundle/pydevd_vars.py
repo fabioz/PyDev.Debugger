@@ -97,7 +97,7 @@ def findFrame(thread_id, frame_id):
         lookingFor = int(frame_id)
 
         if AdditionalFramesContainer.additional_frames:
-            if DictContains(AdditionalFramesContainer.additional_frames, thread_id):
+            if dict_contains(AdditionalFramesContainer.additional_frames, thread_id):
                 frame = AdditionalFramesContainer.additional_frames[thread_id].get(lookingFor)
 
                 if frame is not None:

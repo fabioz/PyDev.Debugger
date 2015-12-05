@@ -1,6 +1,6 @@
 import traceback
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_name
-from _pydevd_bundle.pydevd_constants import GetThreadId, STATE_SUSPEND, DictContains, DictIterItems, DictKeys
+from _pydevd_bundle.pydevd_constants import GetThreadId, STATE_SUSPEND, dict_contains, dict_iter_items, dict_keys
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_STEP_OVER, CMD_ADD_EXCEPTION_BREAK
 from _pydevd_bundle import pydevd_vars
 from pydevd_file_utils import GetFileNameAndBaseFromFile
@@ -62,7 +62,7 @@ def get_breakpoints(plugin, pydb, type):
 def _is_jinja2_render_call(frame):
     try:
         name = frame.f_code.co_name
-        if DictContains(frame.f_globals, "__jinja_template__") and name in ("root", "loop", "macro") or name.startswith("block_"):
+        if dict_contains(frame.f_globals, "__jinja_template__") and name in ("root", "loop", "macro") or name.startswith("block_"):
             return True
         return False
     except:
@@ -92,10 +92,10 @@ def _is_jinja2_suspended(thread):
     return thread.additional_info.suspend_type == JINJA2_SUSPEND
 
 def _is_jinja2_context_call(frame):
-    return DictContains(frame.f_locals, "_Context__obj")
+    return dict_contains(frame.f_locals, "_Context__obj")
 
 def _is_jinja2_internal_function(frame):
-    return DictContains(frame.f_locals, 'self') and frame.f_locals['self'].__class__.__name__ in \
+    return dict_contains(frame.f_locals, 'self') and frame.f_locals['self'].__class__.__name__ in \
         ('LoopContext', 'TemplateReference', 'Macro', 'BlockReference')
 
 def _find_jinja2_render_frame(frame):
@@ -170,7 +170,7 @@ def _find_render_function_frame(frame):
     #in order to hide internal rendering functions
     old_frame = frame
     try:
-        while not (DictContains(frame.f_locals, 'self') and frame.f_locals['self'].__class__.__name__ == 'Template' and \
+        while not (dict_contains(frame.f_locals, 'self') and frame.f_locals['self'].__class__.__name__ == 'Template' and \
                                frame.f_code.co_name == 'render'):
             frame = frame.f_back
             if frame is None:
@@ -181,7 +181,7 @@ def _find_render_function_frame(frame):
 
 def _get_jinja2_template_line(frame):
     debug_info = None
-    if DictContains(frame.f_globals,'__jinja_template__'):
+    if dict_contains(frame.f_globals,'__jinja_template__'):
         _debug_info = frame.f_globals['__jinja_template__']._debug_info
         if _debug_info != '':
             #sometimes template contains only plain text
@@ -199,7 +199,7 @@ def _get_jinja2_template_line(frame):
     return None
 
 def _get_jinja2_template_filename(frame):
-    if DictContains(frame.f_globals, '__jinja_template__'):
+    if dict_contains(frame.f_globals, '__jinja_template__'):
         fname = frame.f_globals['__jinja_template__'].filename
         filename, base = GetFileNameAndBaseFromFile(fname)
         return filename
@@ -217,7 +217,7 @@ def has_exception_breaks(plugin):
     return False
 
 def has_line_breaks(plugin):
-    for file, breakpoints in DictIterItems(plugin.main_debugger.jinja2_breakpoints):
+    for file, breakpoints in dict_iter_items(plugin.main_debugger.jinja2_breakpoints):
         if len(breakpoints) > 0:
             return True
     return False
@@ -291,7 +291,7 @@ def cmd_step_over(plugin, pydb, frame, event, args, stop_info, stop):
                     stop_info['jinja2_stop'] = True
                     plugin_stop = stop_info['jinja2_stop']
             if event == 'return':
-                if frame is info.pydev_call_inside_jinja2 and not DictContains(frame.f_back.f_locals,'event'):
+                if frame is info.pydev_call_inside_jinja2 and not dict_contains(frame.f_back.f_locals,'event'):
                     info.pydev_call_inside_jinja2 = _find_jinja2_render_frame(frame.f_back)
         return stop, plugin_stop
     else:
@@ -314,7 +314,7 @@ def cmd_step_over(plugin, pydb, frame, event, args, stop_info, stop):
 
 def stop(plugin, pydb, frame, event, args, stop_info, arg, step_cmd):
     pydb, filename, info, thread = args
-    if DictContains(stop_info, 'jinja2_stop') and stop_info['jinja2_stop']:
+    if dict_contains(stop_info, 'jinja2_stop') and stop_info['jinja2_stop']:
         frame = _suspend_jinja2(pydb, thread, frame, step_cmd)
         if frame:
             pydb.do_wait_suspend(thread, frame, event, arg)
@@ -337,7 +337,7 @@ def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
         if jinja2_breakpoints_for_file:
             lineno = frame.f_lineno
             template_lineno = _get_jinja2_template_line(frame)
-            if template_lineno is not None and DictContains(jinja2_breakpoints_for_file, template_lineno):
+            if template_lineno is not None and dict_contains(jinja2_breakpoints_for_file, template_lineno):
                 jinja2_breakpoint = jinja2_breakpoints_for_file[template_lineno]
                 flag = True
                 new_frame = Jinja2TemplateFrame(frame)
@@ -355,7 +355,7 @@ def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
     pydb, filename, info, thread = args
     exception, value, trace = arg
     if pydb.jinja2_exception_break:
-        exception_type = DictKeys(pydb.jinja2_exception_break)[0]
+        exception_type = dict_keys(pydb.jinja2_exception_break)[0]
         if get_exception_name(exception) in ('UndefinedError', 'TemplateNotFound', 'TemplatesNotFound'):
             #errors in rendering
             render_frame = _find_jinja2_render_frame(frame)

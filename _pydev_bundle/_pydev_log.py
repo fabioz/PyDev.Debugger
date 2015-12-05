@@ -11,10 +11,10 @@ class Log:
     def __init__(self):
         self._contents = []
         
-    def AddContent(self, *content):
+    def add_content(self, *content):
         self._contents.append(' '.join(content))
         
-    def AddException(self):
+    def add_exception(self):
         s = StringIO.StringIO()
         exc_info = sys.exc_info()
         traceback.print_exception(exc_info[0], exc_info[1], exc_info[2], limit=None, file=s)

@@ -7,7 +7,7 @@ from _pydevd_bundle.pydevd_comm import GetGlobalDebugger
 import weakref
 from pydevd_file_utils import GetFilenameAndBase
 from pydevd import DONT_TRACE
-from _pydevd_bundle.pydevd_constants import DictItems
+from _pydevd_bundle.pydevd_constants import dict_items
 
 
 # Used so that we don't loose the id (because we'll remove when it's not alive and would generate a new id for the
@@ -196,7 +196,7 @@ def _schedule_callback(prev, next):
             register_tasklet_info(prev)
 
         try:
-            for tasklet_ref, tasklet_info in DictItems(_weak_tasklet_registered_to_info):  # Make sure it's a copy!
+            for tasklet_ref, tasklet_info in dict_items(_weak_tasklet_registered_to_info):  # Make sure it's a copy!
                 tasklet = tasklet_ref()
                 if tasklet is None or not tasklet.alive:
                     # Garbage-collected already!
@@ -218,7 +218,7 @@ def _schedule_callback(prev, next):
                         if frame is not None:
                             _filename, base = GetFilenameAndBase(frame)
                             # print >>sys.stderr, "SchedCB: %r, %d, '%s', '%s'" % (tasklet, frame.f_lineno, _filename, base)
-                            is_file_to_ignore = DictContains(DONT_TRACE, base)
+                            is_file_to_ignore = dict_contains(DONT_TRACE, base)
                             if not is_file_to_ignore:
                                 tasklet_info.update_name()
                                 if tasklet_info.frame_id is None:
@@ -270,7 +270,7 @@ if not hasattr(stackless.tasklet, "trace_function"):
                 register_tasklet_info(prev)
 
             try:
-                for tasklet_ref, tasklet_info in DictItems(_weak_tasklet_registered_to_info):  # Make sure it's a copy!
+                for tasklet_ref, tasklet_info in dict_items(_weak_tasklet_registered_to_info):  # Make sure it's a copy!
                     tasklet = tasklet_ref()
                     if tasklet is None or not tasklet.alive:
                         # Garbage-collected already!
@@ -285,7 +285,7 @@ if not hasattr(stackless.tasklet, "trace_function"):
                             if tasklet.frame and tasklet.frame.f_back:
                                 f_back = tasklet.frame.f_back
                                 _filename, base = GetFilenameAndBase(f_back)
-                                is_file_to_ignore = DictContains(DONT_TRACE, base)
+                                is_file_to_ignore = dict_contains(DONT_TRACE, base)
                                 if not is_file_to_ignore:
                                     if tasklet_info.frame_id is None:
                                         tasklet_info.frame_id = addCustomFrame(f_back, tasklet_info.tasklet_name, tasklet.thread_id)

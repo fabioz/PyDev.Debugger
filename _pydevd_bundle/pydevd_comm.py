@@ -827,13 +827,13 @@ class ReloadCodeCommand(InternalThreadCommand):
             self.lock.release()
 
         module_name = self.module_name
-        if not DictContains(sys.modules, module_name):
+        if not dict_contains(sys.modules, module_name):
             if '.' in module_name:
                 new_module_name = module_name.split('.')[-1]
-                if DictContains(sys.modules, new_module_name):
+                if dict_contains(sys.modules, new_module_name):
                     module_name = new_module_name
 
-        if not DictContains(sys.modules, module_name):
+        if not dict_contains(sys.modules, module_name):
             sys.stderr.write('pydev debugger: Unable to find module to reload: "' + module_name + '".\n')
             # Too much info...
             # sys.stderr.write('pydev debugger: This usually means you are trying to reload the __main__ module (which cannot be reloaded).\n')

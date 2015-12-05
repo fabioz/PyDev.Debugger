@@ -171,7 +171,7 @@ class PyDBFrame:
                     # print ('user input', from_user_input)
                     # print ('merged', merged, 'curr', exc_lineno)
 
-                    if not DictContains(merged, exc_lineno):  #Note: check on merged but update lines_ignored.
+                    if not dict_contains(merged, exc_lineno):  #Note: check on merged but update lines_ignored.
                         try:
                             line = linecache.getline(filename, exc_lineno, check_trace_obj.tb_frame.f_globals)
                         except:
@@ -304,7 +304,7 @@ class PyDBFrame:
                     if curr_func_name in ('?', '<module>'):
                         curr_func_name = ''
 
-                    for breakpoint in DictIterValues(breakpoints_for_file): #jython does not support itervalues()
+                    for breakpoint in dict_iter_values(breakpoints_for_file): #jython does not support itervalues()
                         #will match either global or some function
                         if breakpoint.func_name in ('None', curr_func_name):
                             break
@@ -332,7 +332,7 @@ class PyDBFrame:
                 stop = False
                 bp_type = None
                 if not flag and event != 'return' and info.pydev_state != STATE_SUSPEND and breakpoints_for_file is not None \
-                        and DictContains(breakpoints_for_file, line):
+                        and dict_contains(breakpoints_for_file, line):
                     breakpoint = breakpoints_for_file[line]
                     new_frame = frame
                     stop = True

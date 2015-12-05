@@ -25,15 +25,15 @@ def _imp(name, log=None):
             sub = name[0:name.rfind('.')]
 
             if log is not None:
-                log.AddContent('Unable to import', name, 'trying with', sub)
-                log.AddException()
+                log.add_content('Unable to import', name, 'trying with', sub)
+                log.add_exception()
 
             return _imp(sub, log)
         else:
             s = 'Unable to import module: %s - sys.path: %s' % (str(name), sys.path)
             if log is not None:
-                log.AddContent(s)
-                log.AddException()
+                log.add_content(s)
+                log.add_exception()
 
             raise ImportError(s)
 
@@ -135,7 +135,7 @@ def GenerateTip(data, log=None):
     return f, tips
 
 
-def CheckChar(c):
+def check_char(c):
     if c == '-' or c == '.':
         return '_'
     return c
@@ -295,7 +295,7 @@ def GenerateImportsTipForModule(obj_to_complete, dirComps=None, getattr=getattr,
                                                         if i == 0 or i == l:
                                                             r.append(args[i])
                                                         else:
-                                                            r.append(CheckChar(args[i]))
+                                                            r.append(check_char(args[i]))
 
                                                     args = ''.join(r)
 

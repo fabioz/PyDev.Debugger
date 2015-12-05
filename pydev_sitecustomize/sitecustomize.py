@@ -45,17 +45,17 @@ if IS_PYTHON_3K:
     
 try:
     import org.python.core.PyDictionary #@UnresolvedImport @UnusedImport -- just to check if it could be valid
-    def DictContains(d, key):
+    def dict_contains(d, key):
         return d.has_key(key)
 except:
     try:
         #Py3k does not have has_key anymore, and older versions don't have __contains__
-        DictContains = dict.__contains__
+        dict_contains = dict.__contains__
     except:
         try:
-            DictContains = dict.has_key
+            dict_contains = dict.has_key
         except NameError:
-            def DictContains(d, key):
+            def dict_contains(d, key):
                 return d.has_key(key)
 
 
@@ -83,7 +83,7 @@ try:
                 #We'll re-add any paths removed but the pydev_sitecustomize we added from pydev.
                 paths_removed.append(c)
             
-    if DictContains(sys.modules, 'sitecustomize'):
+    if dict_contains(sys.modules, 'sitecustomize'):
         del sys.modules['sitecustomize'] #this module
 except:
     #print the error... should never happen (so, always show, and not only on debug)!
@@ -96,7 +96,7 @@ else:
     except:
         pass
     
-    if not DictContains(sys.modules, 'sitecustomize'):
+    if not dict_contains(sys.modules, 'sitecustomize'):
         #If there was no sitecustomize, re-add the pydev sitecustomize (pypy gives a KeyError if it's not there)
         sys.modules['sitecustomize'] = __pydev_sitecustomize_module__
     

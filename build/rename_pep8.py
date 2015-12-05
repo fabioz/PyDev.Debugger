@@ -33,24 +33,32 @@ def find_matches():
     print '\n'.join(sorted(found))
     print 'Total', len(found)
     
+def substitute_contents(re_name_to_new_val, initial_contents):
+    contents = initial_contents
+    for key, val in re_name_to_new_val.iteritems():
+        contents = re.sub(key, val, contents)
+    return contents
+
 def make_replace():
-    re_name_to_new_val = load_re_to_new_val()
+    re_name_to_new_val = load_re_to_new_val(names_to_rename.NAMES)
     # traverse root directory, and list directories as dirs and files as files
     for path, initial_contents in iter_files_in_dir(os.path.dirname(os.path.dirname(__file__))):
-        for key, val in re_name_to_new_val.iteritems():
-            contents = re.sub(key, val, initial_contents)
-
+        contents = substitute_contents(re_name_to_new_val, initial_contents)
         if contents != initial_contents:
-            if re.findall(r'\b%s\b' % (val,), initial_contents):
-                raise AssertionError('Error in:\n%s\n%s is already being used (and changes may conflict).' % (path, val,))
+            print 'Changed something at: %s' % (path,)
             
-        with open(path, 'wb') as stream:
-            stream.write(contents)
+            for val in re_name_to_new_val.itervalues():
+                # Check in initial contents to see if it already existed!
+                if re.findall(r'\b%s\b' % (val,), initial_contents):
+                    raise AssertionError('Error in:\n%s\n%s is already being used (and changes may conflict).' % (path, val,))
+            
+            with open(path, 'wb') as stream:
+                stream.write(contents)
 
 
-def load_re_to_new_val():
+def load_re_to_new_val(names):
     name_to_new_val = {}
-    for n in names_to_rename.NAMES.splitlines():
+    for n in names.splitlines():
         n = n.strip()
         if not n.startswith('#') and n:
             name_to_new_val[r'\b'+n+r'\b'] = _normalize(n)
@@ -69,8 +77,44 @@ def test():
     def CamelCaseAnother()
     ''')
     assert matches == ['CamelCase', 'camelCase', 'Camel', 'CamelCaseAnother']
+    re_name_to_new_val = load_re_to_new_val('''
+# Call -- skip
+# Call1 -- skip
+# Call2 -- skip
+# Call3 -- skip
+# Call4 -- skip
+CustomFramesContainerInit
+DictContains
+DictItems
+DictIterItems
+DictIterValues
+DictKeys
+DictPop
+DictValues
+''') 
+    assert re_name_to_new_val == {'\\bDictPop\\b': 'dict_pop', '\\bDictItems\\b': 'dict_items', '\\bDictIterValues\\b': 'dict_iter_values', '\\bDictKeys\\b': 'dict_keys', '\\bDictContains\\b': 'dict_contains', '\\bDictIterItems\\b': 'dict_iter_items', '\\bCustomFramesContainerInit\\b': 'custom_frames_container_init', '\\bDictValues\\b': 'dict_values'}
+    assert substitute_contents(re_name_to_new_val, '''
+CustomFramesContainerInit
+DictContains
+DictItems
+DictIterItems
+DictIterValues
+DictKeys
+DictPop
+DictValues
+''') == '''
+custom_frames_container_init
+dict_contains
+dict_items
+dict_iter_items
+dict_iter_values
+dict_keys
+dict_pop
+dict_values
+'''
     
 if __name__ == '__main__':
-    find_matches()
-#     make_replace()
+#     find_matches()
+    make_replace()
+#     test()
 

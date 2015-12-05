@@ -105,7 +105,7 @@ BUFFER_SIZE = 1024
 
 currDirModule = None
 
-def CompleteFromDir(directory):
+def complete_from_dir(directory):
     '''
     This is necessary so that we get the imports from the same directory where the file
     we are completing is located.
@@ -119,7 +119,7 @@ def CompleteFromDir(directory):
     sys.path.insert(0, directory)
 
 
-def ChangePythonPath(pythonpath):
+def change_python_path(pythonpath):
     '''Changes the pythonpath (clears all the previous pythonpath)
 
     @param pythonpath: string with paths separated by |
@@ -297,7 +297,7 @@ class CompletionServer:
                             elif data.startswith(MSG_CHANGE_PYTHONPATH):
                                 data = data[len(MSG_CHANGE_PYTHONPATH):]
                                 data = unquote_plus(data)
-                                ChangePythonPath(data)
+                                change_python_path(data)
                                 self.send(MSG_OK)
 
                             elif data.startswith(MSG_JEDI):
@@ -351,7 +351,7 @@ class CompletionServer:
                             elif data.startswith(MSG_CHANGE_DIR):
                                 data = data[len(MSG_CHANGE_DIR):]
                                 data = unquote_plus(data)
-                                CompleteFromDir(data)
+                                complete_from_dir(data)
                                 self.send(MSG_OK)
 
                             else:

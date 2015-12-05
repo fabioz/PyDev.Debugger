@@ -23,7 +23,7 @@ class AbstractPyDBAdditionalThreadInfo:
     def IterFrames(self):
         raise NotImplementedError()
 
-    def CreateDbFrame(self, args):
+    def create_db_frame(self, args):
         #args = mainDebugger, filename, base, additional_info, t, frame
         raise NotImplementedError()
 
@@ -41,7 +41,7 @@ class PyDBAdditionalThreadInfoWithCurrentFramesSupport(AbstractPyDBAdditionalThr
         return sys._current_frames().values() #return a copy... don't know if it's changed if we did get an iterator
 
     #just create the db frame directly
-    CreateDbFrame = PyDBFrame
+    create_db_frame = PyDBFrame
 
 #=======================================================================================================================
 # PyDBAdditionalThreadInfoWithoutCurrentFramesSupport
@@ -94,7 +94,7 @@ class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(AbstractPyDBAdditional
             self._release_lock()
 
 
-    def CreateDbFrame(self, args):
+    def create_db_frame(self, args):
         #the frame must be cached as a weak-ref (we return the actual db frame -- which will be kept
         #alive until its trace_dispatch method is not referenced anymore).
         #that's a large workaround because:

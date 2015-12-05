@@ -1,6 +1,6 @@
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
 import inspect
-from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, GetThreadId, DictContains, DictIterItems
+from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, GetThreadId, dict_contains, dict_iter_items
 from pydevd_file_utils import NormFileToServer, GetFileNameAndBaseFromFile
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_name
 from _pydevd_bundle import pydevd_vars
@@ -74,7 +74,7 @@ def _is_django_render_call(frame):
         if name != 'render':
             return False
 
-        if not DictContains(frame.f_locals, 'self'):
+        if not dict_contains(frame.f_locals, 'self'):
             return False
 
         cls = frame.f_locals['self'].__class__
@@ -93,7 +93,7 @@ def _is_django_render_call(frame):
 
 def _is_django_context_get_call(frame):
     try:
-        if not DictContains(frame.f_locals, 'self'):
+        if not dict_contains(frame.f_locals, 'self'):
             return False
 
         cls = frame.f_locals['self'].__class__
@@ -110,7 +110,7 @@ def _is_django_resolve_call(frame):
         if name != '_resolve_lookup':
             return False
 
-        if not DictContains(frame.f_locals, 'self'):
+        if not dict_contains(frame.f_locals, 'self'):
             return False
 
         cls = frame.f_locals['self'].__class__
@@ -290,7 +290,7 @@ def has_exception_breaks(plugin):
     return False
 
 def has_line_breaks(plugin):
-    for file, breakpoints in DictIterItems(plugin.main_debugger.django_breakpoints):
+    for file, breakpoints in dict_iter_items(plugin.main_debugger.django_breakpoints):
         if len(breakpoints) > 0:
             return True
     return False
@@ -328,7 +328,7 @@ def cmd_step_over(plugin, mainDebugger, frame, event, args, stop_info, stop):
 
 def stop(plugin, mainDebugger, frame, event, args, stop_info, arg, step_cmd):
     mainDebugger, filename, info, thread = args
-    if DictContains(stop_info, 'django_stop') and stop_info['django_stop']:
+    if dict_contains(stop_info, 'django_stop') and stop_info['django_stop']:
         frame = suspend_django(mainDebugger, thread, frame, step_cmd)
         if frame:
             mainDebugger.do_wait_suspend(thread, frame, event, arg)
@@ -353,7 +353,7 @@ def get_breakpoint(plugin, mainDebugger, pydb_frame, frame, event, args):
             template_line = _get_template_line(frame)
             pydev_log.debug("Tracing template line: %d\n" % template_line)
 
-            if DictContains(django_breakpoints_for_file, template_line):
+            if dict_contains(django_breakpoints_for_file, template_line):
                 django_breakpoint = django_breakpoints_for_file[template_line]
                 flag = True
                 new_frame = DjangoTemplateFrame(frame)

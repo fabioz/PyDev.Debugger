@@ -13,7 +13,7 @@ except:
     setattr(__builtin__, 'False', 0)
 
 from _pydevd_bundle import pydevd_constants
-from _pydevd_bundle.pydevd_constants import DictIterItems, DictKeys, xrange
+from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, xrange
 
 
 # Note: 300 is already a lot to see in the outline (after that the user should really use the shell to get things)
@@ -230,7 +230,7 @@ class DictResolver:
         #ok, we have to iterate over the items to find the one that matches the id, because that's the only way
         #to actually find the reference from the string we have before.
         expected_id = int(key.split('(')[-1][:-1])
-        for key, val in DictIterItems(dict):
+        for key, val in dict_iter_items(dict):
             if id(key) == expected_id:
                 return val
 
@@ -249,7 +249,7 @@ class DictResolver:
         ret = {}
 
         i = 0
-        for key, val in DictIterItems(dict):
+        for key, val in dict_iter_items(dict):
             i += 1
             #we need to add the id because otherwise we cannot find the real object to get its contents later on.
             key = '%s (%s)' % (self.keyStr(key), id(key))
@@ -475,7 +475,7 @@ class MultiValueDictResolver(DictResolver):
         #ok, we have to iterate over the items to find the one that matches the id, because that's the only way
         #to actually find the reference from the string we have before.
         expected_id = int(key.split('(')[-1][:-1])
-        for key in DictKeys(dict):
+        for key in dict_keys(dict):
             val = dict.getlist(key)
             if id(key) == expected_id:
                 return val
@@ -485,7 +485,7 @@ class MultiValueDictResolver(DictResolver):
     def getDictionary(self, dict):
         ret = {}
         i = 0
-        for key in DictKeys(dict):
+        for key in dict_keys(dict):
             val = dict.getlist(key)
             i += 1
             #we need to add the id because otherwise we cannot find the real object to get its contents later on.
