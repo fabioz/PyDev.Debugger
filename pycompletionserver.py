@@ -371,7 +371,7 @@ class CompletionServer:
 
 
                 finally:
-                    log.Clear()
+                    log.clear_log()
 
             self.socket.close()
             self.ended = True

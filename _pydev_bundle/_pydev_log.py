@@ -24,5 +24,5 @@ class Log:
     def GetContents(self):
         return '\n'.join(self._contents)
     
-    def Clear(self):
+    def clear_log(self):
         del self._contents[:]

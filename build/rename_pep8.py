@@ -12,7 +12,12 @@ def find_matches_in_contents(contents):
     return [x[1] for x in re.findall(_CAMEL_DEF_RE, contents)]
     
 def iter_files_in_dir(dirname):
-    for root, _dirs, files in os.walk(dirname):
+    for root, dirs, files in os.walk(dirname):
+        for name in ('pydevd_attach_to_process', '.git', 'stubs', 'pydev_ipython', 'third_party', 'pydev_ipython'):
+            try:
+                dirs.remove(name)
+            except:
+                pass
         for filename in files:
             if filename.endswith('.py') and filename not in ('rename_pep8.py', 'names_to_rename.py'):
                 path = os.path.join(root, filename)
@@ -66,6 +71,6 @@ def test():
     assert matches == ['CamelCase', 'camelCase', 'Camel', 'CamelCaseAnother']
     
 if __name__ == '__main__':
-    #find_matches()
-    make_replace()
+    find_matches()
+#     make_replace()
 

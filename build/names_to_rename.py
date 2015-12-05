@@ -1,690 +1,157 @@
 NAMES = '''
-sendCaughtExceptionStack
-sendBreakpointConditionException
-setSuspend
-processThreadNotAlive
-sendCaughtExceptionStackProceeded
-doWaitSuspend
-SetTraceForFrameAndParents
-prepareToRun
-processCommandLine
-initStdoutRedirect
-initStderrRedirect
-OnRun
-doKillPydevThread
-stopTrace
-handleExcept
-processCommand
-processNetCommand
-addCommand
-StartClient
-getNextSeq
-makeMessage
-StartServer
-threadToXML
-makeErrorMessage
-makeThreadCreatedMessage
-makeCustomFrameCreatedMessage
-makeListThreadsMessage
-makeVariableChangedMessage
-makeIoMessage    
-makeVersionMessage
-makeThreadKilledMessage
-makeThreadSuspendStr
-makeValidXmlValue
-makeThreadSuspendMessage
-makeThreadRunMessage
-makeGetVariableMessage
-makeGetArrayMessage
-makeGetFrameMessage
-makeEvaluateExpressionMessage
-makeGetCompletionsMessage
-makeGetFileContents
-makeSendBreakpointExceptionMessage
-makeSendCurrExceptionTraceMessage
-makeSendCurrExceptionTraceProceededMessage
-makeSendConsoleMessage
-makeCustomOperationMessage
-makeLoadSourceMessage
-makeShowConsoleMessage
-makeExitMessage
-canBeExecutedBy
-doIt
-additionalInfo
-cmdFactory
-GetExceptionTracebackStr
-_GetStackStr
-_InternalSetTrace
-ReplaceSysSetTraceFunc
-RestoreSysSetTraceFunc
+# sendCaughtExceptionStack
+# sendBreakpointConditionException
+# setSuspend
+# processThreadNotAlive
+# sendCaughtExceptionStackProceeded
+# doWaitSuspend
+# SetTraceForFrameAndParents
+# prepareToRun
+# processCommandLine
+# initStdoutRedirect
+# initStderrRedirect
+# OnRun
+# doKillPydevThread
+# stopTrace
+# handleExcept
+# processCommand
+# processNetCommand
+# addCommand
+# StartClient
+# getNextSeq
+# makeMessage
+# StartServer
+# threadToXML
+# makeErrorMessage
+# makeThreadCreatedMessage
+# makeCustomFrameCreatedMessage
+# makeListThreadsMessage
+# makeVariableChangedMessage
+# makeIoMessage    
+# makeVersionMessage
+# makeThreadKilledMessage
+# makeThreadSuspendStr
+# makeValidXmlValue
+# makeThreadSuspendMessage
+# makeThreadRunMessage
+# makeGetVariableMessage
+# makeGetArrayMessage
+# makeGetFrameMessage
+# makeEvaluateExpressionMessage
+# makeGetCompletionsMessage
+# makeGetFileContents
+# makeSendBreakpointExceptionMessage
+# makeSendCurrExceptionTraceMessage
+# makeSendCurrExceptionTraceProceededMessage
+# makeSendConsoleMessage
+# makeCustomOperationMessage
+# makeLoadSourceMessage
+# makeShowConsoleMessage
+# makeExitMessage
+# canBeExecutedBy
+# doIt
+# additionalInfo
+# cmdFactory
+# GetExceptionTracebackStr
+# _GetStackStr
+# _InternalSetTrace
+# ReplaceSysSetTraceFunc
+# RestoreSysSetTraceFunc
 
 
 
-# AddContent
-# AddException
-# AddObserver
-# AdjustTokenPrivileges
-# AllocConsole
-# ArgList
-# Assign
-# AttachConsole
-# Attr
-# BlankLine
-# Call
-# Call1
-# Call2
-# Call3
-# Call4
-# ChangePythonPath
-# CheckArgs
-# CheckChar
-# CheckRemoteDebuggerPresent
-# ChildWindowFromPoint
-# Clear
-# ClientToScreen
-# CloseHandle
-# CloseServiceHandle
-# CloseThreadWaitChainSession
-# Comma
-# CommandLineToArgvA
-# CommandLineToArgvW
-# CompleteFromDir
-# ContinueDebugEvent
-# ControlService
-# ConvertSidToStringSidA
-# ConvertSidToStringSidW
-# ConvertStringSidToSidA
-# ConvertStringSidToSidW
-# CopySid
-# CreateBitmapIndirect
-# CreateDbFrame
-# CreateEventA
-# CreateEventW
-# CreateFileA
-# CreateFileMappingA
-# CreateFileMappingW
-# CreateFileW
-# CreateMutexA
-# CreateMutexW
-# CreateProcessA
-# CreateProcessAsUserA
-# CreateProcessAsUserW
-# CreateProcessW
-# CreateProcessWithLogonW
-# CreateProcessWithTokenW
-# CreateRemoteThread
-# CreateServiceA
-# CreateServiceW
-# CreateToolhelp32Snapshot
-# CsrGetProcessId
-# CurrentDirectories
-# CustomAddressIterator
-# CustomFramesContainerInit
-# DataAddressIterator
-# DebugActiveProcess
-# DebugActiveProcessStop
-# DebugBreakProcess
-# DebugSetProcessKillOnExit
-# DeleteProcThreadAttributeList
-# DeleteService
-# DeviceIoControl
-# DictContains
-# DictItems
-# DictIterItems
-# DictIterValues
-# DictKeys
-# DictPop
-# DictValues
-# DllCanUnloadNow
-# DllGetClassObject
+AddContent
+AddException
+AddObserver
+# Call -- skip
+# Call1 -- skip
+# Call2 -- skip
+# Call3 -- skip
+# Call4 -- skip
+ChangePythonPath
+CheckArgs
+CheckChar
+CompleteFromDir
+CreateDbFrame
+CustomFramesContainerInit
+DictContains
+DictItems
+DictIterItems
+DictIterValues
+DictKeys
+DictPop
+DictValues
+
+
 # DoExit
 # DoFind
-# Dot
-# DuplicateHandle
-# DuplicateToken
-# DuplicateTokenEx
-# EnableWindow
 # EndRedirect
-# EnumChildWindows
-# EnumDeviceDrivers
-# EnumProcessModules
-# EnumProcessModulesEx
-# EnumProcesses
-# EnumServicesStatusA
-# EnumServicesStatusExA
-# EnumServicesStatusExW
-# EnumServicesStatusW
-# EnumThreadWindows
-# EnumWindows
-# EqualSid
 # Exec
-# ExecutableAddressIterator
-# ExecutableAndWriteableAddressIterator
 # ExecuteTestsInParallel
-# FileTimeToSystemTime
 # Find
-# FindExecutableA
-# FindExecutableW
-# FindWindowA
-# FindWindowExA
-# FindWindowExW
-# FindWindowW
 # FinishDebuggingSession
 # FlattenTestSuite
-# FlushFileBuffers
-# FlushInstructionCache
-# FlushProcessWriteBuffers
-# FlushViewOfFile
-# FreeConsole
-# FreeLibrary
-# FreeSid
-# FromImport
 # GenerateCompletionsAsXML
-# GenerateConsoleCtrlEvent
 # GenerateImportsTipForModule
 # GenerateTip
-# GetAncestor
-# GetBitmapBits
-# GetClassNameA
-# GetClassNameW
-# GetClientRect
-# GetConsoleCP
-# GetConsoleOutputCP
-# GetConsoleScreenBufferInfo
 # GetContents
 # GetCoverageFiles
-# GetCurrentDirectoryA
-# GetCurrentDirectoryW
-# GetCurrentProcess
-# GetCurrentProcessId
-# GetCurrentProcessorNumber
-# GetCurrentThread
-# GetCurrentThreadId
-# GetDC
-# GetDesktopWindow
-# GetDeviceDriverBaseNameA
-# GetDeviceDriverBaseNameW
-# GetDeviceDriverFileNameA
-# GetDeviceDriverFileNameW
-# GetDllDirectoryA
-# GetDllDirectoryW
-# GetErrorMode
-# GetExitCodeProcess
-# GetExitCodeThread
 # GetFile
-# GetFileInformationByHandle
-# GetFileInformationByHandleEx
 # GetFileNameAndBaseFromFile
-# GetFileVersionInfoA
-# GetFileVersionInfoW
 # GetFilenameAndBase
-# GetFinalPathNameByHandleA
-# GetFinalPathNameByHandleW
-# GetForegroundWindow
 # GetFrame
-# GetFullPathNameA
-# GetFullPathNameW
-# GetGUIThreadInfo
 # GetGlobalDebugger
-# GetGuiResources
-# GetHandleInformation
-# GetImports
-# GetLargePageMinimum
-# GetLastError
-# GetLengthSid
-# GetLogicalDriveStringsA
-# GetLogicalDriveStringsW
-# GetMappedFileNameA
-# GetMappedFileNameW
-# GetModuleFileNameExA
-# GetModuleFileNameExW
-# GetModuleHandleA
-# GetModuleHandleW
-# GetModuleInformation
-# GetNativeSystemInfo
 # GetNormPathsAndBase
 # GetNormPathsAndBaseFromFile
-# GetObject
-# GetObjectType
-# GetParent
-# GetPriorityClass
-# GetProcAddressA
-# GetProcessAffinityMask
-# GetProcessDEPPolicy
-# GetProcessHandleCount
-# GetProcessId
-# GetProcessIdOfThread
-# GetProcessImageFileNameA
-# GetProcessImageFileNameW
-# GetProcessPriorityBoost
-# GetProcessTimes
-# GetProcessVersion
-# GetProductInfo
-# GetPropA
-# GetPropW
-# GetServiceDisplayNameA
-# GetServiceDisplayNameW
-# GetServiceKeyNameA
-# GetServiceKeyNameW
-# GetShellWindow
-# GetStdHandle
-# GetStockObject
-# GetSystemInfo
-# GetSystemMetrics
-# GetSystemTimeAsFileTime
-# GetTempFileNameA
-# GetTempFileNameW
-# GetTempPathA
-# GetTempPathW
 # GetTestsToRun
-# GetThreadContext
-# GetThreadErrorMode
 # GetThreadId
-# GetThreadSelectorEntry
-# GetThreadWaitChain
-# GetTokenInformation
-# GetUserNameA
-# GetUserNameW
-# GetVersion
-# GetVersionExA
-# GetVersionExW
 # GetVmType
-# GetWindow
-# GetWindowDC
-# GetWindowLongA
-# GetWindowLongPtrA
-# GetWindowLongPtrW
-# GetWindowLongW
-# GetWindowPlacement
-# GetWindowRect
-# GetWindowTextA
-# GetWindowTextW
-# GetWindowThreadProcessId
-# GlobalAddAtomA
-# GlobalAddAtomW
-# GlobalDeleteAtom
-# GlobalFindAtomA
-# GlobalFindAtomW
-# GlobalGetAtomNameA
-# GlobalGetAtomNameW
-# Heap32First
-# Heap32ListFirst
-# Heap32ListNext
-# Heap32Next
 # IPythonEditor
-# ImageAddressIterator
-# ImagehlpApiVersion
-# ImagehlpApiVersionEx
 # ImportName
-# InitializeProcThreadAttributeList
 # InitializeServer
-# IsChild
-# IsIconic
-# IsOS
-# IsTokenRestricted
-# IsUserAnAdmin
-# IsValidSid
-# IsWindow
-# IsWindowEnabled
-# IsWindowVisible
-# IsWow64Process
-# IsZoomed
 # IterFrames
-# KeywordArg
-# LParen
-# ListComp
-# LoadLibrary
-# LoadLibraryA
-# LoadLibraryExA
-# LoadLibraryExW
-# LoadLibraryW
-# LocalFree
-# LookupAccountSidA
-# LookupAccountSidW
-# LookupPrivilegeNameA
-# LookupPrivilegeNameW
-# LookupPrivilegeValueA
-# LookupPrivilegeValueW
-# MakeANSIVersion
-# MakeSureDirectoryPathExistsA
-# MakeWideVersion
-# MapViewOfFile
-# MapWindowPoints
-# MappedAddressIterator
 # Method1
 # Method1a
 # Method2
 # Method3
-# Module32First
-# Module32Next
-# MoveWindow
-# Name
 # NewConsolidate
-# Newline
 # NormFileToClient
 # NormFileToServer
 # Notify
 # NotifyFinished
-# NtQueryInformationFile
-# NtQueryInformationProcess
-# NtQueryInformationThread
-# NtSystemDebugControl
-# Number
 # OnFunButton
 # OnInit
 # OnTimeToClose
-# OpenEventA
-# OpenEventW
-# OpenFileMappingA
-# OpenFileMappingW
-# OpenMutexA
-# OpenMutexW
-# OpenProcess
-# OpenProcessToken
-# OpenSCManagerA
-# OpenSCManagerW
-# OpenServiceA
-# OpenServiceW
-# OpenThread
-# OpenThreadToken
-# OpenThreadWaitChainSession
-# OutputDebugStringA
-# OutputDebugStringW
-# PathAddBackslashA
-# PathAddBackslashW
-# PathAddExtensionA
-# PathAddExtensionW
-# PathAppendA
-# PathAppendW
-# PathCanonicalizeA
-# PathCanonicalizeW
-# PathCombineA
-# PathCombineW
-# PathFileExistsA
-# PathFileExistsW
-# PathFindExtensionA
-# PathFindExtensionW
-# PathFindFileNameA
-# PathFindFileNameW
-# PathFindNextComponentA
-# PathFindNextComponentW
-# PathFindOnPathA
-# PathFindOnPathW
-# PathGetArgsA
-# PathGetArgsW
-# PathIsContentTypeA
-# PathIsContentTypeW
-# PathIsDirectoryA
-# PathIsDirectoryEmptyA
-# PathIsDirectoryEmptyW
-# PathIsDirectoryW
-# PathIsNetworkPathA
-# PathIsNetworkPathW
-# PathIsRelativeA
-# PathIsRelativeW
-# PathIsRootA
-# PathIsRootW
-# PathIsSameRootA
-# PathIsSameRootW
-# PathIsUNCA
-# PathIsUNCW
-# PathMakePrettyA
-# PathMakePrettyW
-# PathRelativePathToA
-# PathRelativePathToW
-# PathRemoveArgsA
-# PathRemoveArgsW
-# PathRemoveBackslashA
-# PathRemoveBackslashW
-# PathRemoveExtensionA
-# PathRemoveExtensionW
-# PathRemoveFileSpecA
-# PathRemoveFileSpecW
-# PathRenameExtensionA
-# PathRenameExtensionW
-# PathUnExpandEnvStringsA
-# PathUnExpandEnvStringsW
-# PostMessageA
-# PostMessageW
-# PostThreadMessageA
-# PostThreadMessageW
-# Process32First
-# Process32Next
-# ProcessIdToSessionId
-# PulseEvent
 # PydevdFindThreadById
 # PydevdLog
-# QueryDosDeviceA
-# QueryDosDeviceW
-# QueryFullProcessImageNameA
-# QueryFullProcessImageNameW
-# QueryServiceStatus
-# QueryServiceStatusEx
-# RParen
-# RaiseIfLastError
-# RaiseIfNotErrorSuccess
-# RaiseIfNotZero
-# RaiseIfZero
-# ReadProcessMemory
-# ReadableAddressIterator
-# RealChildWindowFromPoint
-# RegCloseKey
-# RegConnectRegistryA
-# RegConnectRegistryW
-# RegCopyTreeA
-# RegCopyTreeW
-# RegCreateKeyA
-# RegCreateKeyW
-# RegDeleteKeyA
-# RegDeleteKeyExA
-# RegDeleteKeyExW
-# RegDeleteKeyValueA
-# RegDeleteKeyValueW
-# RegDeleteKeyW
-# RegDeleteTreeA
-# RegDeleteTreeW
-# RegDeleteValueA
-# RegDeleteValueW
-# RegEnumKeyA
-# RegEnumKeyW
-# RegEnumValueA
-# RegEnumValueW
-# RegFlushKey
-# RegOpenCurrentUser
-# RegOpenKeyA
-# RegOpenKeyExA
-# RegOpenKeyExW
-# RegOpenKeyW
-# RegOpenUserClassesRoot
-# RegQueryValueA
-# RegQueryValueExA
-# RegQueryValueExW
-# RegQueryValueW
-# RegSetValueEx
-# RegisterClipboardFormatA
-# RegisterClipboardFormatW
-# RegisterWindowMessageA
-# RegisterWindowMessageW
-# ReleaseDC
-# ReleaseMutex
-# RemovePropA
-# RemovePropW
 # RequestInput
-# ResetEvent
-# ResumeThread
-# RtlNtStatusToDosError
-# RtlPcToFileHeader
-# Run
-# SHGetFolderPathA
-# SHGetFolderPathW
-# SaferCloseLevel
-# SaferComputeTokenFromLevel
-# SaferCreateLevel
-# SaferiIsExecutableFileType
-# ScreenToClient
 # Search
-# SearchPathA
-# SearchPathW
-# SelectObject
-# SendDlgItemMessageA
-# SendDlgItemMessageW
-# SendMessageA
-# SendMessageTimeoutA
-# SendMessageTimeoutW
-# SendMessageW
-# SendNotifyMessageA
-# SendNotifyMessageW
 # ServerProxy
-# SetConsoleActiveScreenBuffer
-# SetConsoleCP
-# SetConsoleCtrlHandler
-# SetConsoleOutputCP
-# SetConsoleTextAttribute
-# SetConsoleWindowInfo
-# SetDllDirectoryA
-# SetDllDirectoryW
-# SetErrorMode
-# SetEvent
-# SetForegroundWindow
 # SetGlobalDebugger
-# SetHandleInformation
-# SetLastError
-# SetLastErrorEx
-# SetPointerType
-# SetPriorityClass
-# SetProcessAffinityMask
-# SetProcessPriorityBoost
-# SetPropA
-# SetPropW
-# SetSearchPathMode
 # SetServer
-# SetThreadContext
-# SetThreadErrorMode
 # SetTrace
 # SetUp
 # SetVmType
-# SetWindowLongA
-# SetWindowLongPtrA
-# SetWindowLongPtrW
-# SetWindowLongW
-# SetWindowPlacement
-# SetWindowTextA
-# SetWindowTextW
 # SetupType
-# ShellExecuteA
-# ShellExecuteEx
-# ShellExecuteExA
-# ShellExecuteExW
-# ShellExecuteW
-# ShowWindow
-# ShowWindowAsync
-# StackWalk64
 # StartCoverageSupport
 # StartCoverageSupportFromParams
 # StartPydevNosePluginSingleton
 # StartRedirect
-# StartServiceA
-# StartServiceW
-# String
-# Subscript
-# SuspendThread
-# SymCleanup
-# SymEnumerateModules64A
-# SymEnumerateModules64W
-# SymEnumerateModulesA
-# SymEnumerateModulesW
-# SymEnumerateSymbols64A
-# SymEnumerateSymbols64W
-# SymEnumerateSymbolsA
-# SymEnumerateSymbolsW
-# SymFromAddr
-# SymFromAddrW
-# SymFromName
-# SymFromNameW
-# SymGetHomeDirectoryA
-# SymGetHomeDirectoryW
-# SymGetModuleInfo64A
-# SymGetModuleInfo64W
-# SymGetModuleInfoA
-# SymGetModuleInfoW
-# SymGetOptions
-# SymGetSearchPathA
-# SymGetSearchPathW
-# SymGetSymFromAddr64
-# SymInitializeA
-# SymLoadModule64A
-# SymLoadModuleA
-# SymRefreshModuleList
-# SymSetHomeDirectoryA
-# SymSetHomeDirectoryW
-# SymSetOptions
-# SymSetParentWindow
-# SymSetSearchPathA
-# SymSetSearchPathW
-# SymUnloadModule
-# SymUnloadModule64
-# TerminateProcess
-# TerminateThread
-# Thread32First
-# Thread32Next
 # ToTuple
-# Toolhelp32ReadProcessMemory
-# Transactional
-# UnDecorateSymbolNameA
-# UnDecorateSymbolNameW
-# UnmapViewOfFile
-# UpdateProcThreadAttribute
-# VerQueryValueA
-# VerQueryValueW
-# VerSetConditionMask
-# VerifyVersionInfo
-# VerifyVersionInfoA
-# VerifyVersionInfoW
-# VirtualAllocEx
-# VirtualFreeEx
-# VirtualProtectEx
-# VirtualQueryEx
-# WTSEnumerateProcessesA
-# WTSEnumerateProcessesW
-# WTSFreeMemory
-# WTSGetActiveConsoleSessionId
-# WTSTerminateProcess
-# WaitForDebugEvent
-# WaitForInputIdle
-# WaitForMultipleObjects
-# WaitForMultipleObjectsEx
-# WaitForSingleObject
-# WaitForSingleObjectEx
-# WinError
-# WindowFromPoint
-# Wow64DisableWow64FsRedirection
-# Wow64EnableWow64FsRedirection
-# Wow64GetThreadContext
-# Wow64GetThreadSelectorEntry
-# Wow64ResumeThread
-# Wow64RevertWow64FsRedirection
-# Wow64SetThreadContext
-# Wow64SuspendThread
-# WriteProcessMemory
-# WriteableAddressIterator
 # addAdditionalFrameById
 # addCustomFrame
 # addError
 # addExec
 # addFailure
-# addNote
-# addRow
 # addSuccess
 # assertArgs
 # assertIn
 # basicAsStr
-# briefReport
 # changeAttrExpression
 # changeVariable
 # checkOutput
 # checkOutputRedirect
 # clearBuffer
-# clearNotes
 # connectToDebugger
 # connectToServer
 # consoleExec
@@ -696,11 +163,8 @@ RestoreSysSetTraceFunc
 # doExecCode
 # dumpFrames
 # enableGui
-# environmentReport
 # evalInContext
-# evalString
 # evaluateExpression
-# eventMethod
 # execLine
 # execMultipleLines
 # findFrame
@@ -711,7 +175,6 @@ RestoreSysSetTraceFunc
 # formatCompletionMessage
 # formatParamClassName
 # frameVarsToXML
-# fullReport
 # fullyNormalizePath
 # getArray
 # getAsDoc
@@ -728,41 +191,29 @@ RestoreSysSetTraceFunc
 # getInternalQueue
 # getIoFromError
 # getNamespace
-# getNotes
-# getOutput
 # getTestName
 # getTokenAndData
 # getType
 # getVariable
-# getWidth
-# hasNotes
 # haveAliveThreads
 # initializeNetwork
-# isExploitable
 # isThreadAlive
 # iterFrames
-# iterNotes
 # keyStr
 # killAllPydevThreads
-# lastEvent
 # longRunning
 # metA
-# modName
 # nativePath
 # needMore
 # needMoreForCode
-# notesReport
 # notifyCommands
 # notifyConnected
 # notifyStartTest
 # notifyTest
 # notifyTestRunFinished
 # notifyTestsCollected
-# pageSize
 # postInternalCommand
-# procName
 # processInternalCommands
-# protectFromClose
 # readMsg
 # redirectStdout
 # removeAdditionalFrameById
@@ -828,10 +279,7 @@ RestoreSysSetTraceFunc
 # testSearchOnJython
 # testServer
 # testTipOnString
-# toCrash
-# toMBI
 # toXML
 # updateCustomFrame
 # varToXML
-# yieldOutput
 '''
