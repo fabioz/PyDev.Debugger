@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
     #replace exit (see comments on method)
     #note that this does not work in jython!!! (sys method can't be replaced).
-    sys.exit = DoExit
+    sys.exit = do_exit
 
     interpreter = InterpreterInterface(host, int(client_port), threading.currentThread())
 

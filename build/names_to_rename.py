@@ -60,40 +60,41 @@ NAMES = '''
 
 
 
-AddContent
-AddException
-AddObserver
-# Call -- skip
-# Call1 -- skip
-# Call2 -- skip
-# Call3 -- skip
-# Call4 -- skip
-ChangePythonPath
-CheckArgs
-CheckChar
-CompleteFromDir
-CreateDbFrame
-CustomFramesContainerInit
-DictContains
-DictItems
-DictIterItems
-DictIterValues
-DictKeys
-DictPop
-DictValues
+# AddContent
+# AddException
+# AddObserver
+# # Call -- skip
+# # Call1 -- skip
+# # Call2 -- skip
+# # Call3 -- skip
+# # Call4 -- skip
+# ChangePythonPath
+# CheckArgs
+# CheckChar
+# CompleteFromDir
+# CreateDbFrame
+# CustomFramesContainerInit
+# DictContains
+# DictItems
+# DictIterItems
+# DictIterValues
+# DictKeys
+# DictPop
+# DictValues
 
 
-# DoExit
-# DoFind
-# EndRedirect
-# Exec
-# ExecuteTestsInParallel
-# Find
-# FinishDebuggingSession
-# FlattenTestSuite
-# GenerateCompletionsAsXML
-# GenerateImportsTipForModule
-# GenerateTip
+DoExit
+DoFind
+EndRedirect
+# Exec -- skip
+ExecuteTestsInParallel
+# Find -- skip
+FinishDebuggingSession
+FlattenTestSuite
+GenerateCompletionsAsXML
+GenerateImportsTipForModule
+GenerateTip
+
 # GetContents
 # GetCoverageFiles
 # GetFile

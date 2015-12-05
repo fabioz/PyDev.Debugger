@@ -10,21 +10,21 @@ import time
 import os
 
 #=======================================================================================================================
-# FlattenTestSuite
+# flatten_test_suite
 #=======================================================================================================================
-def FlattenTestSuite(test_suite, ret):
+def flatten_test_suite(test_suite, ret):
     if isinstance(test_suite, unittest.TestSuite):
         for t in test_suite._tests:
-            FlattenTestSuite(t, ret)
+            flatten_test_suite(t, ret)
 
     elif isinstance(test_suite, unittest.TestCase):
         ret.append(test_suite)
 
 
 #=======================================================================================================================
-# ExecuteTestsInParallel
+# execute_tests_in_parallel
 #=======================================================================================================================
-def ExecuteTestsInParallel(tests, jobs, split, verbosity, coverage_files, coverage_include):
+def execute_tests_in_parallel(tests, jobs, split, verbosity, coverage_files, coverage_include):
     '''
     @param tests: list(PydevTestSuite)
         A list with the suites to be run
@@ -63,7 +63,7 @@ def ExecuteTestsInParallel(tests, jobs, split, verbosity, coverage_files, covera
         module_to_tests = {}
         for test in tests:
             lst = []
-            FlattenTestSuite(test, lst)
+            flatten_test_suite(test, lst)
             for test in lst:
                 key = (test.__pydev_pyfile__, test.__pydev_module_name__)
                 module_to_tests.setdefault(key, []).append(test)
@@ -78,7 +78,7 @@ def ExecuteTestsInParallel(tests, jobs, split, verbosity, coverage_files, covera
     elif split == 'tests':
         for test in tests:
             lst = []
-            FlattenTestSuite(test, lst)
+            flatten_test_suite(test, lst)
             for test in lst:
                 queue_elements.append([test])
 

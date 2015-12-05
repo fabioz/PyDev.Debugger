@@ -365,7 +365,7 @@ class ReaderThread(PyDBDaemonThread):
 
 
     def handle_except(self):
-        GlobalDebuggerHolder.globalDbg.FinishDebuggingSession()
+        GlobalDebuggerHolder.globalDbg.finish_debugging_session()
 
     def process_command(self, cmd_id, seq, text):
         GlobalDebuggerHolder.globalDbg.process_net_command(cmd_id, seq, text)
@@ -443,7 +443,7 @@ class WriterThread(PyDBDaemonThread):
                     break #interpreter shutdown
                 time.sleep(self.timeout)
         except Exception:
-            GlobalDebuggerHolder.globalDbg.FinishDebuggingSession()
+            GlobalDebuggerHolder.globalDbg.finish_debugging_session()
             if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 0:
                 traceback.print_exc()
 
@@ -1095,7 +1095,7 @@ class InternalGetCompletions(InternalThreadCommand):
                 frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
                 if frame is not None:
 
-                    msg = _pydev_completer.GenerateCompletionsAsXML(frame, self.act_tok)
+                    msg = _pydev_completer.generate_completions_as_xml(frame, self.act_tok)
 
                     cmd = dbg.cmd_factory.make_get_completions_message(self.sequence, msg)
                     dbg.writer.add_command(cmd)

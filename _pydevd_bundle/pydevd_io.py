@@ -89,7 +89,7 @@ def StartRedirect(keep_original_redirection=False, std='stdout'):
     return buf
 
 
-def EndRedirect(std='stdout'):
+def end_redirect(std='stdout'):
     import sys
     if std == 'both':
         config_stds = ['stdout', 'stderr']

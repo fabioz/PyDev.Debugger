@@ -222,7 +222,7 @@ def get_completions(frame, act_tok):
     """ fetch all completions, create xml for the same
     return the completions xml
     """
-    return _pydev_completer.GenerateCompletionsAsXML(frame, act_tok)
+    return _pydev_completer.generate_completions_as_xml(frame, act_tok)
 
 
 

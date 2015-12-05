@@ -248,7 +248,7 @@ except:
 #=======================================================================================================================
 # _DoExit
 #=======================================================================================================================
-def DoExit(*args):
+def do_exit(*args):
     '''
         We have to override the exit because calling sys.exit will only actually exit the main thread,
         and as we're in a Xml-rpc server, that won't work.
@@ -342,7 +342,7 @@ def start_console_server(host, port, interpreter):
 def start_server(host, port, client_port):
     #replace exit (see comments on method)
     #note that this does not work in jython!!! (sys method can't be replaced).
-    sys.exit = DoExit
+    sys.exit = do_exit
 
     interpreter = InterpreterInterface(host, client_port, threading.currentThread())
 

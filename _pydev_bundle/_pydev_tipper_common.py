@@ -17,7 +17,7 @@ except:
 
 from _pydevd_bundle.pydevd_constants import xrange
 
-def DoFind(f, mod):
+def do_find(f, mod):
     import linecache
     if inspect.ismodule(mod):
         return f, 0, 0

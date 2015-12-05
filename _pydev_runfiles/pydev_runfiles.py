@@ -479,8 +479,8 @@ class PydevTestRunner(object):
                     import traceback;traceback.print_exc()
                     sys.stderr.write('ERROR: Module: %s could not be imported (file: %s).\n' % (modname, pyfile))
                 finally:
-                    pydevd_io.EndRedirect('stderr')
-                    pydevd_io.EndRedirect('stdout')
+                    pydevd_io.end_redirect('stderr')
+                    pydevd_io.end_redirect('stdout')
 
                 pydev_runfiles_xml_rpc.notifyTest(
                     'error', buf_out.getvalue(), buf_err.getvalue(), pyfile, modname, 0)
@@ -778,9 +778,9 @@ class PydevTestRunner(object):
                 from _pydev_runfiles import pydev_runfiles_parallel
 
                 #What may happen is that the number of jobs needed is lower than the number of jobs requested
-                #(e.g.: 2 jobs were requested for running 1 test) -- in which case ExecuteTestsInParallel will
+                #(e.g.: 2 jobs were requested for running 1 test) -- in which case execute_tests_in_parallel will
                 #return False and won't run any tests.
-                executed_in_parallel = pydev_runfiles_parallel.ExecuteTestsInParallel(
+                executed_in_parallel = pydev_runfiles_parallel.execute_tests_in_parallel(
                     all_tests, self.jobs, self.split_jobs, self.verbosity, coverage_files, self.configuration.coverage_include)
 
             if not executed_in_parallel:

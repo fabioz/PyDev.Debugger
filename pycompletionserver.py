@@ -291,7 +291,7 @@ class CompletionServer:
                             if data.startswith(MSG_IMPORTS):
                                 data = data[len(MSG_IMPORTS):]
                                 data = unquote_plus(data)
-                                defFile, comps = _pydev_imports_tipper.GenerateTip(data, log)
+                                defFile, comps = _pydev_imports_tipper.generate_tip(data, log)
                                 self.send(self.getCompletionsMessage(defFile, comps))
 
                             elif data.startswith(MSG_CHANGE_PYTHONPATH):

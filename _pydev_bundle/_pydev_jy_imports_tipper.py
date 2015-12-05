@@ -4,7 +4,7 @@ from java.lang import StringBuffer #@UnresolvedImport
 from java.lang import String #@UnresolvedImport
 import java.lang #@UnresolvedImport
 import sys
-from _pydev_bundle._pydev_tipper_common import DoFind
+from _pydev_bundle._pydev_tipper_common import do_find
 
 
 try:
@@ -102,13 +102,13 @@ def formatParamClassName(paramClassName):
     return paramClassName
 
 
-def GenerateTip(data, log=None):
+def generate_tip(data, log=None):
     data = data.replace('\n', '')
     if data.endswith('.'):
         data = data.rstrip('.')
 
     f, mod, parent, foundAs = Find(data)
-    tips = GenerateImportsTipForModule(mod)
+    tips = generate_imports_tip_for_module(mod)
     return f, tips
 
 
@@ -389,12 +389,12 @@ def Search(data):
         data = data.rstrip('.')
     f, mod, parent, foundAs = Find(data)
     try:
-        return DoFind(f, mod), foundAs
+        return do_find(f, mod), foundAs
     except:
-        return DoFind(f, parent), foundAs
+        return do_find(f, parent), foundAs
 
 
-def GenerateImportsTipForModule(obj_to_complete, dirComps=None, getattr=getattr, filter=lambda name:True):
+def generate_imports_tip_for_module(obj_to_complete, dirComps=None, getattr=getattr, filter=lambda name:True):
     '''
         @param obj_to_complete: the object from where we should get the completions
         @param dirComps: if passed, we should not 'dir' the object and should just iterate those passed as a parameter

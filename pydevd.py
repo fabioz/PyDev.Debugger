@@ -294,7 +294,7 @@ class CheckOutputThread(PyDBDaemonThread):
                     and not has_data_to_redirect():
                 try:
                     pydev_log.debug("No alive threads, finishing debug session")
-                    self.pyDb.FinishDebuggingSession()
+                    self.pyDb.finish_debugging_session()
                     killAllPydevThreads()
                 except:
                     traceback.print_exc()
@@ -432,7 +432,7 @@ class PyDB:
 
         return False
 
-    def FinishDebuggingSession(self):
+    def finish_debugging_session(self):
         self._finishDebuggingSession = True
 
 
@@ -620,7 +620,7 @@ class PyDB:
 
 
             if len(program_threads_alive) == 0:
-                self.FinishDebuggingSession()
+                self.finish_debugging_session()
                 for t in all_threads:
                     if hasattr(t, 'do_kill_pydev_thread'):
                         t.do_kill_pydev_thread()

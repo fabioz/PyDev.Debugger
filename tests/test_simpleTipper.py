@@ -30,13 +30,13 @@ if sys.platform.find('java') == -1:
                 sys.stdout.write('%s\n' % (a,))
 
         def testImports3(self):
-            tip = _pydev_imports_tipper.GenerateTip('os')
+            tip = _pydev_imports_tipper.generate_tip('os')
             ret = self.assertIn('path', tip)
             self.assertEquals('', ret[2])
 
         def testImports2(self):
             try:
-                tip = _pydev_imports_tipper.GenerateTip('OpenGL.GLUT')
+                tip = _pydev_imports_tipper.generate_tip('OpenGL.GLUT')
                 self.assertIn('glutDisplayFunc', tip)
                 self.assertIn('glutInitDisplayMode', tip)
             except ImportError:
@@ -44,13 +44,13 @@ if sys.platform.find('java') == -1:
 
         def testImports4(self):
             try:
-                tip = _pydev_imports_tipper.GenerateTip('mx.DateTime.mxDateTime.mxDateTime')
+                tip = _pydev_imports_tipper.generate_tip('mx.DateTime.mxDateTime.mxDateTime')
                 self.assertIn('now', tip)
             except ImportError:
                 pass
 
         def testImports5(self):
-            tip = _pydev_imports_tipper.GenerateTip('%s.list' % BUILTIN_MOD)
+            tip = _pydev_imports_tipper.generate_tip('%s.list' % BUILTIN_MOD)
             s = self.assertIn('sort', tip)
             self.check_args(
                 s,
@@ -61,7 +61,7 @@ if sys.platform.find('java') == -1:
             )
 
         def testImports2a(self):
-            tips = _pydev_imports_tipper.GenerateTip('%s.RuntimeError' % BUILTIN_MOD)
+            tips = _pydev_imports_tipper.generate_tip('%s.RuntimeError' % BUILTIN_MOD)
             self.assertIn('__doc__', tips)
 
         def testImports2b(self):
@@ -70,7 +70,7 @@ if sys.platform.find('java') == -1:
             except:
                 pass
             else:
-                tips = _pydev_imports_tipper.GenerateTip('%s' % BUILTIN_MOD)
+                tips = _pydev_imports_tipper.generate_tip('%s' % BUILTIN_MOD)
                 t = self.assertIn('file' , tips)
                 self.assert_('->' in t[1].strip() or 'file' in t[1])
 
@@ -80,7 +80,7 @@ if sys.platform.find('java') == -1:
             except:
                 pass
             else:
-                tips = _pydev_imports_tipper.GenerateTip('%s.file' % BUILTIN_MOD)
+                tips = _pydev_imports_tipper.generate_tip('%s.file' % BUILTIN_MOD)
                 t = self.assertIn('readlines' , tips)
                 self.assert_('->' in t[1] or 'sizehint' in t[1])
 
@@ -89,30 +89,30 @@ if sys.platform.find('java') == -1:
             You can print_ the results to check...
             '''
             if HAS_WX:
-                tip = _pydev_imports_tipper.GenerateTip('wxPython.wx')
+                tip = _pydev_imports_tipper.generate_tip('wxPython.wx')
                 self.assertIn('wxApp'        , tip)
 
-                tip = _pydev_imports_tipper.GenerateTip('wxPython.wx.wxApp')
+                tip = _pydev_imports_tipper.generate_tip('wxPython.wx.wxApp')
 
                 try:
-                    tip = _pydev_imports_tipper.GenerateTip('qt')
+                    tip = _pydev_imports_tipper.generate_tip('qt')
                     self.assertIn('QWidget'        , tip)
                     self.assertIn('QDialog'        , tip)
 
-                    tip = _pydev_imports_tipper.GenerateTip('qt.QWidget')
+                    tip = _pydev_imports_tipper.generate_tip('qt.QWidget')
                     self.assertIn('rect'           , tip)
                     self.assertIn('rect'           , tip)
                     self.assertIn('AltButton'      , tip)
 
-                    tip = _pydev_imports_tipper.GenerateTip('qt.QWidget.AltButton')
+                    tip = _pydev_imports_tipper.generate_tip('qt.QWidget.AltButton')
                     self.assertIn('__xor__'      , tip)
 
-                    tip = _pydev_imports_tipper.GenerateTip('qt.QWidget.AltButton.__xor__')
+                    tip = _pydev_imports_tipper.generate_tip('qt.QWidget.AltButton.__xor__')
                     self.assertIn('__class__'      , tip)
                 except ImportError:
                     pass
 
-            tip = _pydev_imports_tipper.GenerateTip(BUILTIN_MOD)
+            tip = _pydev_imports_tipper.generate_tip(BUILTIN_MOD)
     #        for t in tip[1]:
     #            print_ t
             self.assertIn('object'         , tip)
@@ -145,7 +145,7 @@ if sys.platform.find('java') == -1:
                     compiler_module = None
 
             if compiler_module is not None: #Not available in iron python
-                tip = _pydev_imports_tipper.GenerateTip(compiler_module)
+                tip = _pydev_imports_tipper.generate_tip(compiler_module)
                 if compiler_module == 'compiler':
                     self.assertArgs('parse', '(buf, mode)', tip)
                     self.assertArgs('walk', '(tree, visitor, walker, verbose)', tip)
@@ -185,10 +185,10 @@ if sys.platform.find('java') == -1:
 
         def testDotNetLibraries(self):
             if sys.platform == 'cli':
-                tip = _pydev_imports_tipper.GenerateTip('System.Drawing')
+                tip = _pydev_imports_tipper.generate_tip('System.Drawing')
                 self.assertIn('Brushes' , tip)
 
-                tip = _pydev_imports_tipper.GenerateTip('System.Drawing.Brushes')
+                tip = _pydev_imports_tipper.generate_tip('System.Drawing.Brushes')
                 self.assertIn('Aqua' , tip)
 
 

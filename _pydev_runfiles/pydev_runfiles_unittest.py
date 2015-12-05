@@ -65,7 +65,7 @@ class PydevTestResult(_PythonTextTestResult):
 
     def stopTest(self, test):
         end_time = time.time()
-        pydevd_io.EndRedirect(std='both')
+        pydevd_io.end_redirect(std='both')
 
         _PythonTextTestResult.stopTest(self, test)
 

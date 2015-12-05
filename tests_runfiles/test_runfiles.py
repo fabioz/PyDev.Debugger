@@ -408,7 +408,7 @@ class RunfilesTest(unittest.TestCase):
                 notifications
             )
         finally:
-            pydevd_io.EndRedirect()
+            pydevd_io.end_redirect()
         b = buf.getvalue()
         if not IS_JYTHON:
             self.assert_(b.find('Ran 4 tests in ') != -1, 'Found: ' + b)
