@@ -62,7 +62,7 @@ if __name__ == '__main__':
 
     interpreter = InterpreterInterface(host, int(client_port), threading.currentThread())
 
-    server_thread = threading.Thread(target=start_server,
+    server_thread = threading.Thread(target=start_console_server,
                                      name='ServerThread',
                                      args=(host, int(port), interpreter))
     server_thread.setDaemon(True)

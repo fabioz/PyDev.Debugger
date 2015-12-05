@@ -270,9 +270,9 @@ def handshake():
 
 
 #=======================================================================================================================
-# start_server
+# start_console_server
 #=======================================================================================================================
-def start_server(host, port, interpreter):
+def start_console_server(host, port, interpreter):
     if port == 0:
         host = ''
 
@@ -346,7 +346,7 @@ def start_server(host, port, client_port):
 
     interpreter = InterpreterInterface(host, client_port, threading.currentThread())
 
-    start_new_thread(start_server,(host, port, interpreter))
+    start_new_thread(start_console_server,(host, port, interpreter))
 
     process_exec_queue(interpreter)
 
