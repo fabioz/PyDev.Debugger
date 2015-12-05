@@ -168,20 +168,22 @@ NAMES = '''
 # Method2 -- skip
 # Method3 -- skip
 
-NewConsolidate
-NormFileToClient
-NormFileToServer
-# Notify -- skip
-# NotifyFinished -- skip
-OnFunButton
-# OnInit -- skip
-OnTimeToClose
-PydevdFindThreadById
-PydevdLog
-# RequestInput -- skip
+# NewConsolidate
+# NormFileToClient
+# NormFileToServer
+# # Notify -- skip
+# # NotifyFinished -- skip
+# OnFunButton
+# # OnInit -- skip
+# OnTimeToClose
+# PydevdFindThreadById
+# PydevdLog
+# # RequestInput -- skip
 
 
-# Search
+# Search -- manual: search_definition
+
+
 # ServerProxy
 # SetGlobalDebugger
 # SetServer

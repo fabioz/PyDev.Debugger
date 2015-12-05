@@ -178,7 +178,7 @@ if sys.platform.find('java') == -1:
 
 
         def test_search(self):
-            s = _pydev_imports_tipper.Search('inspect.ismodule')
+            s = _pydev_imports_tipper.search_definition('inspect.ismodule')
             (f, line, col), foundAs = s
             self.assert_(line > 0)
 

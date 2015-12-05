@@ -345,7 +345,7 @@ class CompletionServer:
                             elif data.startswith(MSG_SEARCH):
                                 data = data[len(MSG_SEARCH):]
                                 data = unquote_plus(data)
-                                (f, line, col), foundAs = _pydev_imports_tipper.Search(data)
+                                (f, line, col), foundAs = _pydev_imports_tipper.search_definition(data)
                                 self.send(self.getCompletionsMessage(f, [(line, col, foundAs)]))
 
                             elif data.startswith(MSG_CHANGE_DIR):

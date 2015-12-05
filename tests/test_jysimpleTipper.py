@@ -143,13 +143,13 @@ class TestMod(unittest.TestCase):
 class TestSearch(unittest.TestCase):
 
     def test_search_on_jython(self):
-        self.assertEqual('javaos.py', _pydev_jy_imports_tipper.Search('os')[0][0].split(os.sep)[-1])
-        self.assertEqual(0, _pydev_jy_imports_tipper.Search('os')[0][1])
+        self.assertEqual('javaos.py', _pydev_jy_imports_tipper.search_definition('os')[0][0].split(os.sep)[-1])
+        self.assertEqual(0, _pydev_jy_imports_tipper.search_definition('os')[0][1])
 
-        self.assertEqual('javaos.py', _pydev_jy_imports_tipper.Search('os.makedirs')[0][0].split(os.sep)[-1])
-        self.assertNotEqual(0, _pydev_jy_imports_tipper.Search('os.makedirs')[0][1])
+        self.assertEqual('javaos.py', _pydev_jy_imports_tipper.search_definition('os.makedirs')[0][0].split(os.sep)[-1])
+        self.assertNotEqual(0, _pydev_jy_imports_tipper.search_definition('os.makedirs')[0][1])
 
-        #print _pydev_jy_imports_tipper.Search('os.makedirs')
+        #print _pydev_jy_imports_tipper.search_definition('os.makedirs')
 
 class TestCompl(unittest.TestCase):
 

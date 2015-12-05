@@ -110,7 +110,7 @@ def Find(name, log=None):
 
     return f, mod, parent, foundAs
 
-def Search(data):
+def search_definition(data):
     '''@return file, line, col
     '''
 

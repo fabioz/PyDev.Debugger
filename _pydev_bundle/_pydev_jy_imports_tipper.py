@@ -380,7 +380,7 @@ def formatArg(arg):
 
 
 
-def Search(data):
+def search_definition(data):
     '''@return file, line, col
     '''
 
