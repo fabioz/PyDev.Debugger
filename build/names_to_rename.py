@@ -182,10 +182,9 @@ NAMES = '''
 
 
 # Search -- manual: search_definition
-
-
-# ServerProxy
+# ServerProxy -- skip
 # SetGlobalDebugger
+
 # SetServer
 # SetTrace
 # SetUp

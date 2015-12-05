@@ -238,9 +238,9 @@ def get_global_debugger():
 GetGlobalDebugger = get_global_debugger # Backward-compatibility
 
 #=======================================================================================================================
-# SetGlobalDebugger
+# set_global_debugger
 #=======================================================================================================================
-def SetGlobalDebugger(dbg):
+def set_global_debugger(dbg):
     GlobalDebuggerHolder.globalDbg = dbg
 
 

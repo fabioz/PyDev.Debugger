@@ -64,7 +64,7 @@ from _pydevd_bundle.pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          ReaderThread, \
                          GetGlobalDebugger, \
                          get_global_debugger, \
-                         SetGlobalDebugger, \
+                         set_global_debugger, \
                          WriterThread, \
                          pydevd_find_thread_by_id, \
                          pydevd_log, \
@@ -330,7 +330,7 @@ class PyDB:
 
 
     def __init__(self):
-        SetGlobalDebugger(self)
+        set_global_debugger(self)
         pydevd_tracing.replace_sys_set_trace_func()
         self.reader = None
         self.writer = None
