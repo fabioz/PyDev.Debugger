@@ -7,6 +7,7 @@ import threading
 import time
 from _pydev_bundle import pydev_localhost
 import subprocess
+import sys
 
 CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION, CMD_ENABLE_DONT_TRACE = 133, 134, 135, 141
 
@@ -29,15 +30,16 @@ except:
 
 
 #=======================================================================================================================
-# ReaderThread
+# reader_thread
 #=======================================================================================================================
-class ReaderThread(threading.Thread):
+class reader_thread(threading.Thread):
 
     def __init__(self, sock):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.sock = sock
-        self.lastReceived = ''
+        self.last_received = ''
+        self.all_received = []
 
     def run(self):
         last_printed = None
@@ -47,15 +49,16 @@ class ReaderThread(threading.Thread):
                 l = self.sock.recv(1024)
                 if IS_PY3K:
                     l = l.decode('utf-8')
+                self.all_received.append(l)
                 buf += l
 
                 if '\n' in buf:
-                    self.lastReceived = buf
+                    self.last_received = buf
                     buf = ''
 
                 if SHOW_WRITES_AND_READS:
-                    if last_printed != self.lastReceived.strip():
-                        last_printed = self.lastReceived.strip()
+                    if last_printed != self.last_received.strip():
+                        last_printed = self.last_received.strip()
                         print('Test Reader Thread Received %s' % last_printed)
         except:
             pass  # ok, finished it
@@ -182,14 +185,14 @@ class AbstractWriterThread(threading.Thread):
 
 
     def do_kill(self):
-        if hasattr(self, 'readerThread'):
+        if hasattr(self, 'reader_thread'):
             # if it's not created, it's not there...
-            self.readerThread.do_kill()
+            self.reader_thread.do_kill()
         self.sock.close()
 
     def write(self, s):
 
-        last = self.readerThread.lastReceived
+        last = self.reader_thread.last_received
         if SHOW_WRITES_AND_READS:
             print('Test Writer Thread Written %s' % (s,))
         msg = s + '\n'
@@ -199,7 +202,7 @@ class AbstractWriterThread(threading.Thread):
         time.sleep(0.2)
 
         i = 0
-        while last == self.readerThread.lastReceived and i < 10:
+        while last == self.reader_thread.last_received and i < 10:
             i += 1
             time.sleep(0.1)
 
@@ -217,8 +220,8 @@ class AbstractWriterThread(threading.Thread):
         if SHOW_WRITES_AND_READS:
             print('Test Writer Thread Socket:', newSock, addr)
 
-        readerThread = self.readerThread = ReaderThread(newSock)
-        readerThread.start()
+        reader_thread = self.reader_thread = reader_thread(newSock)
+        reader_thread.start()
         self.sock = newSock
 
         self._sequence = -1
@@ -238,14 +241,14 @@ class AbstractWriterThread(threading.Thread):
     def wait_for_new_thread(self):
         i = 0
         # wait for hit breakpoint
-        while not '<xml><thread name="' in self.readerThread.lastReceived or '<xml><thread name="pydevd.' in self.readerThread.lastReceived:
+        while not '<xml><thread name="' in self.reader_thread.last_received or '<xml><thread name="pydevd.' in self.reader_thread.last_received:
             i += 1
             time.sleep(1)
             if i >= 15:
                 raise AssertionError('After %s seconds, a thread was not created.' % i)
 
         # we have something like <xml><thread name="MainThread" id="12103472" /></xml>
-        splitted = self.readerThread.lastReceived.split('"')
+        splitted = self.reader_thread.last_received.split('"')
         threadId = splitted[3]
         return threadId
 
@@ -255,39 +258,45 @@ class AbstractWriterThread(threading.Thread):
             109 is return
             111 is breakpoint
         '''
-        self.log.append('Start: wait_for_breakpoint_hit')
-        i = 0
-        # wait for hit breakpoint
-        last = self.readerThread.lastReceived
-        while not ('stop_reason="%s"' % reason) in last:
-            i += 1
-            time.sleep(1)
-            last = self.readerThread.lastReceived
-            if i >= 10:
-                raise AssertionError('After %s seconds, a break with reason: %s was not hit. Found: %s' % \
-                    (i, reason, last))
-
-        # we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" ...
-        splitted = last.split('"')
-        threadId = splitted[1]
-        frameId = splitted[7]
-        if get_line:
-            self.log.append('End(0): wait_for_breakpoint_hit')
-            return threadId, frameId, int(splitted[13])
-
-        self.log.append('End(1): wait_for_breakpoint_hit')
-        return threadId, frameId
+        try:
+            self.log.append('Start: wait_for_breakpoint_hit')
+            i = 0
+            # wait for hit breakpoint
+            last = self.reader_thread.last_received
+            while not ('stop_reason="%s"' % reason) in last:
+                i += 1
+                time.sleep(1)
+                last = self.reader_thread.last_received
+                if i >= 10:
+                    raise AssertionError('After %s seconds, a break with reason: %s was not hit. Found: %s' % \
+                        (i, reason, last))
+    
+            # we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" ...
+            splitted = last.split('"')
+            threadId = splitted[1]
+            frameId = splitted[7]
+            if get_line:
+                self.log.append('End(0): wait_for_breakpoint_hit')
+                return threadId, frameId, int(splitted[13])
+    
+            self.log.append('End(1): wait_for_breakpoint_hit')
+            return threadId, frameId
+        except:
+            sys.stderr.write(
+                'Error. Messages received so far: %s\n\n' % 
+                ''.join(self.reader_thread.all_received))
+            raise
 
     def wait_for_custom_operation(self, expected):
         i = 0
         # wait for custom operation response, the response is double encoded
         expectedEncoded = quote(quote_plus(expected))
-        while not expectedEncoded in self.readerThread.lastReceived:
+        while not expectedEncoded in self.reader_thread.last_received:
             i += 1
             time.sleep(1)
             if i >= 10:
                 raise AssertionError('After %s seconds, the custom operation not received. Last found:\n%s\nExpected (encoded)\n%s' %
-                    (i, self.readerThread.lastReceived, expectedEncoded))
+                    (i, self.reader_thread.last_received, expectedEncoded))
 
         return True
 
@@ -298,12 +307,12 @@ class AbstractWriterThread(threading.Thread):
     def wait_for_vars(self, expected):
         i = 0
         # wait for hit breakpoint
-        while not expected in self.readerThread.lastReceived:
+        while not expected in self.reader_thread.last_received:
             i += 1
             time.sleep(1)
             if i >= 10:
                 raise AssertionError('After %s seconds, the vars were not found. Last found:\n%s' %
-                    (i, self.readerThread.lastReceived))
+                    (i, self.reader_thread.last_received))
 
         return True
 
@@ -321,7 +330,7 @@ class AbstractWriterThread(threading.Thread):
         i = 0
         found = False
         while not found:
-            last = self.readerThread.lastReceived
+            last = self.reader_thread.last_received
             for e in expected:
                 if e in last:
                     found = True
@@ -349,7 +358,7 @@ class AbstractWriterThread(threading.Thread):
         # wait for hit breakpoint
         while True:
             for expected in expected_vars:
-                if expected not in self.readerThread.lastReceived:
+                if expected not in self.reader_thread.last_received:
                     break  # Break out of loop (and don't get to else)
             else:
                 return True
@@ -358,7 +367,7 @@ class AbstractWriterThread(threading.Thread):
             time.sleep(1)
             if i >= 10:
                 raise AssertionError('After %s seconds, the vars were not found. Last found:\n%s' %
-                    (i, self.readerThread.lastReceived))
+                    (i, self.reader_thread.last_received))
 
         return True
 
