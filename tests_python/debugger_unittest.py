@@ -30,9 +30,9 @@ except:
 
 
 #=======================================================================================================================
-# reader_thread
+# ReaderThread
 #=======================================================================================================================
-class reader_thread(threading.Thread):
+class ReaderThread(threading.Thread):
 
     def __init__(self, sock):
         threading.Thread.__init__(self)
@@ -220,7 +220,7 @@ class AbstractWriterThread(threading.Thread):
         if SHOW_WRITES_AND_READS:
             print('Test Writer Thread Socket:', newSock, addr)
 
-        reader_thread = self.reader_thread = reader_thread(newSock)
+        reader_thread = self.reader_thread = ReaderThread(newSock)
         reader_thread.start()
         self.sock = newSock
 
