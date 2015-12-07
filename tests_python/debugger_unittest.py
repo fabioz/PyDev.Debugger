@@ -258,34 +258,32 @@ class AbstractWriterThread(threading.Thread):
             109 is return
             111 is breakpoint
         '''
-        try:
-            self.log.append('Start: wait_for_breakpoint_hit')
-            i = 0
-            # wait for hit breakpoint
+        self.log.append('Start: wait_for_breakpoint_hit')
+        i = 0
+        # wait for hit breakpoint
+        last = self.reader_thread.last_received
+        while not ('stop_reason="%s"' % reason) in last:
+            i += 1
+            time.sleep(1)
             last = self.reader_thread.last_received
-            while not ('stop_reason="%s"' % reason) in last:
-                i += 1
-                time.sleep(1)
-                last = self.reader_thread.last_received
-                if i >= 10:
-                    raise AssertionError('After %s seconds, a break with reason: %s was not hit. Found: %s' % \
-                        (i, reason, last))
-    
-            # we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" ...
-            splitted = last.split('"')
-            threadId = splitted[1]
-            frameId = splitted[7]
-            if get_line:
-                self.log.append('End(0): wait_for_breakpoint_hit')
+            if i >= 10:
+                raise AssertionError('After %s seconds, a break with reason: %s was not hit. Found: %s' % \
+                    (i, reason, last))
+
+        # we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" ...
+        splitted = last.split('"')
+        threadId = splitted[1]
+        frameId = splitted[7]
+        if get_line:
+            self.log.append('End(0): wait_for_breakpoint_hit')
+            try:
                 return threadId, frameId, int(splitted[13])
-    
-            self.log.append('End(1): wait_for_breakpoint_hit')
-            return threadId, frameId
-        except:
-            sys.stderr.write(
-                'Error. Messages received so far: %s\n\n' % 
-                ''.join(self.reader_thread.all_received))
-            raise
+            except:
+                raise AssertionError('Error with: %s, %s, %s.\nLast: %s.\n\nAll: %s\n\nSplitted: %s' % (
+                    threadId, frameId, splitted[13], last, '\n'.join(self.reader_thread.all_received, splitted)))
+
+        self.log.append('End(1): wait_for_breakpoint_hit')
+        return threadId, frameId
 
     def wait_for_custom_operation(self, expected):
         i = 0

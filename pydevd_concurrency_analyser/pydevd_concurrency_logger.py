@@ -76,7 +76,7 @@ def get_text_list_for_frame(frame):
 
             variables = ''
             cmdTextList.append('<frame id="%s" name="%s" ' % (myId , pydevd_vars.make_valid_xml_value(myName)))
-            cmdTextList.append('file="%s" line="%s">"' % (quote(myFile, '/>_= \t'), myLine))
+            cmdTextList.append('file="%s" line="%s">' % (quote(myFile, '/>_= \t'), myLine))
             cmdTextList.append(variables)
             cmdTextList.append("</frame>")
             curFrame = curFrame.f_back
