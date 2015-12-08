@@ -258,14 +258,15 @@ NAMES = '''
 
 
 
-# getFrameStack
-# getFreeAddresses
-# getInternalQueue
-# getIoFromError
-# getNamespace
-# getTestName
-# getTokenAndData
-# getType
+getFrameStack
+getFreeAddresses
+getInternalQueue
+getIoFromError
+getNamespace
+getTestName
+getTokenAndData
+getType
+
 # getVariable -- skip (part of public API for console)
 # haveAliveThreads
 # initializeNetwork

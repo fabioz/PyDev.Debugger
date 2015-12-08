@@ -241,7 +241,7 @@ class BaseInterpreterInterface:
         raise NotImplementedError()
 
 
-    def getNamespace(self):
+    def get_namespace(self):
         '''
         Subclasses should override.
 
@@ -255,14 +255,14 @@ class BaseInterpreterInterface:
             obj = None
             if '.' not in text:
                 try:
-                    obj = self.getNamespace()[text]
+                    obj = self.get_namespace()[text]
                 except KeyError:
                     return ''
 
             else:
                 try:
                     splitted = text.split('.')
-                    obj = self.getNamespace()[splitted[0]]
+                    obj = self.get_namespace()[splitted[0]]
                     for t in splitted[1:]:
                         obj = getattr(obj, t)
                 except:
@@ -410,14 +410,14 @@ class BaseInterpreterInterface:
 
     def getFrame(self):
         xml = "<xml>"
-        xml += pydevd_xml.frame_vars_to_xml(self.getNamespace())
+        xml += pydevd_xml.frame_vars_to_xml(self.get_namespace())
         xml += "</xml>"
 
         return xml
 
     def getVariable(self, attributes):
         xml = "<xml>"
-        valDict = pydevd_vars.resolveVar(self.getNamespace(), attributes)
+        valDict = pydevd_vars.resolveVar(self.get_namespace(), attributes)
         if valDict is None:
             valDict = {}
 
@@ -433,7 +433,7 @@ class BaseInterpreterInterface:
     def getArray(self, attr, roffset, coffset, rows, cols, format):
         xml = "<xml>"
         name = attr.split("\t")[-1]
-        array = pydevd_vars.eval_in_context(name, self.getNamespace(), self.getNamespace())
+        array = pydevd_vars.eval_in_context(name, self.get_namespace(), self.get_namespace())
 
         array, metaxml, r, c, f = pydevd_vars.array_to_meta_xml(array, name, format)
         xml += metaxml
@@ -448,7 +448,7 @@ class BaseInterpreterInterface:
 
     def evaluate(self, expression):
         xml = "<xml>"
-        result = pydevd_vars.eval_in_context(expression, self.getNamespace(), self.getNamespace())
+        result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
 
         xml += pydevd_vars.var_to_xml(result, expression)
 
@@ -458,7 +458,7 @@ class BaseInterpreterInterface:
 
     def changeVariable(self, attr, value):
         def do_change_variable():
-            Exec('%s=%s' % (attr, value), self.getNamespace(), self.getNamespace())
+            Exec('%s=%s' % (attr, value), self.get_namespace(), self.get_namespace())
 
         # Important: it has to be really enabled in the main thread, so, schedule
         # it to run in the main thread.
@@ -474,7 +474,7 @@ class BaseInterpreterInterface:
         if thread_id == VIRTUAL_CONSOLE_ID and frame_id == VIRTUAL_FRAME_ID:
             f = FakeFrame()
             f.f_globals = {} #As globals=locals here, let's simply let it empty (and save a bit of network traffic).
-            f.f_locals = self.getNamespace()
+            f.f_locals = self.get_namespace()
             return f
         else:
             return self.orig_find_frame(thread_id, frame_id)

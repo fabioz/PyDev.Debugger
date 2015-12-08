@@ -67,7 +67,7 @@ class PydevPlugin(Plugin):
             sys.stderr.write("\n\n\n")
             address = '?', '?'
 
-        error_contents = self.getIoFromError(error)
+        error_contents = self.get_io_from_error(error)
         try:
             time_str = '%.2f' % (time.time() - test._pydev_start_time)
         except:
@@ -87,7 +87,7 @@ class PydevPlugin(Plugin):
         pydev_runfiles_xml_rpc.notifyStartTest(file, test)
 
 
-    def getIoFromError(self, err):
+    def get_io_from_error(self, err):
         if type(err) == type(()):
             if len(err) != 3:
                 if len(err) == 2:

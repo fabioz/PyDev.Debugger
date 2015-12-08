@@ -122,7 +122,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         return command.more
 
 
-    def getNamespace(self):
+    def get_namespace(self):
         return self.namespace
 
 
@@ -290,7 +290,7 @@ def start_console_server(host, port, interpreter):
         raise
 
     # Tell UMD the proper default namespace
-    _set_globals_function(interpreter.getNamespace)
+    _set_globals_function(interpreter.get_namespace)
 
     server.register_function(interpreter.execLine)
     server.register_function(interpreter.execMultipleLines)

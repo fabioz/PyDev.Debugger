@@ -209,7 +209,7 @@ class CompletionServer:
         '''
         return self.processor.format_completion_message(defFile, completionsList)
 
-    def getTokenAndData(self, data):
+    def get_token_and_data(self, data):
         '''
         When we receive this, we have 'token):data'
         '''

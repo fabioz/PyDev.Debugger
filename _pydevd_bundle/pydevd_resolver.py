@@ -522,7 +522,7 @@ class FrameResolver:
             return defaultResolver.get_dictionary(obj)
 
         if attribute == 'stack':
-            return self.getFrameStack(obj)
+            return self.get_frame_stack(obj)
 
         if attribute == 'f_locals':
             return obj.f_locals
@@ -533,12 +533,12 @@ class FrameResolver:
     def get_dictionary(self, obj):
         ret = dict()
         ret['__internals__'] = defaultResolver.get_dictionary(obj)
-        ret['stack'] = self.getFrameStack(obj)
+        ret['stack'] = self.get_frame_stack(obj)
         ret['f_locals'] = obj.f_locals
         return ret
 
 
-    def getFrameStack(self, frame):
+    def get_frame_stack(self, frame):
         ret = []
         if frame is not None:
             ret.append(self.get_frame_name(frame))

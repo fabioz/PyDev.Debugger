@@ -459,7 +459,7 @@ class PyDB:
         self.initializeNetwork(s)
 
 
-    def getInternalQueue(self, thread_id):
+    def get_internal_queue(self, thread_id):
         """ returns internal command queue for a given thread.
         if new queue is created, notify the RDB about it """
         if thread_id.startswith('__frame__'):
@@ -476,11 +476,11 @@ class PyDB:
             threads = threadingEnumerate()
             for t in threads:
                 thread_id = get_thread_id(t)
-                queue = self.getInternalQueue(thread_id)
+                queue = self.get_internal_queue(thread_id)
                 queue.put(int_cmd)
 
         else:
-            queue = self.getInternalQueue(thread_id)
+            queue = self.get_internal_queue(thread_id)
             queue.put(int_cmd)
 
     def check_output_redirect(self):
@@ -575,7 +575,7 @@ class PyDB:
                             self.writer.add_command(self.cmd_factory.make_thread_created_message(t))
 
 
-                        queue = self.getInternalQueue(thread_id)
+                        queue = self.get_internal_queue(thread_id)
                         cmdsToReadd = []  # some commands must be processed by the thread itself... if that's the case,
                                             # we will re-add the commands to the queue after executing.
                         try:
@@ -1657,7 +1657,7 @@ class PyDB:
             process_net_command = psyco.proxy(process_net_command)
             processInternalCommands = psyco.proxy(processInternalCommands)
             do_wait_suspend = psyco.proxy(do_wait_suspend)
-            getInternalQueue = psyco.proxy(getInternalQueue)
+            get_internal_queue = psyco.proxy(get_internal_queue)
         except ImportError:
             if hasattr(sys, 'exc_clear'):  # jython does not have it
                 sys.exc_clear()  # don't keep the traceback (let's keep it clear for when we go to the point of executing client code)

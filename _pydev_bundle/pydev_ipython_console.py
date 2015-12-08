@@ -47,8 +47,8 @@ class InterpreterInterface(BaseInterpreterInterface):
         return res
 
 
-    def getNamespace(self):
-        return self.interpreter.getNamespace()
+    def get_namespace(self):
+        return self.interpreter.get_namespace()
 
 
     def getCompletions(self, text, act_tok):

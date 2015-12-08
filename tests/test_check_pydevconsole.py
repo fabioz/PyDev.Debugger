@@ -59,7 +59,7 @@ class Test(unittest.TestCase):
         return client_thread
 
 
-    def getFreeAddresses(self):
+    def get_free_addresses(self):
         import socket
         s = socket.socket()
         s.bind(('', 0))
@@ -82,7 +82,7 @@ class Test(unittest.TestCase):
             return
         get_pydev_frontend(get_localhost(), 0)
 
-        client_port, server_port = self.getFreeAddresses()
+        client_port, server_port = self.get_free_addresses()
         class ServerThread(threading.Thread):
             def __init__(self, client_port, server_port):
                 threading.Thread.__init__(self)

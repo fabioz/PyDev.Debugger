@@ -26,7 +26,7 @@ class Test(unittest.TestCase):
         sys.stdout = StringIO()
 
         try:
-            client_port, _server_port = self.getFreeAddresses()
+            client_port, _server_port = self.get_free_addresses()
             client_thread = self.startClientThread(client_port)  #@UnusedVariable
             import time
             time.sleep(.3)  #let's give it some time to start the threads
@@ -45,7 +45,7 @@ class Test(unittest.TestCase):
         sys.stdout = StringIO()
 
         try:
-            client_port, _server_port = self.getFreeAddresses()
+            client_port, _server_port = self.get_free_addresses()
             client_thread = self.startClientThread(client_port)  #@UnusedVariable
             import time
             time.sleep(.3)  #let's give it some time to start the threads
@@ -179,7 +179,7 @@ class Test(unittest.TestCase):
         return debugger_thread
 
 
-    def getFreeAddresses(self):
+    def get_free_addresses(self):
         import socket
         s = socket.socket()
         s.bind(('', 0))
@@ -214,7 +214,7 @@ class Test(unittest.TestCase):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
         try:
-            client_port, server_port = self.getFreeAddresses()
+            client_port, server_port = self.get_free_addresses()
             class ServerThread(threading.Thread):
                 def __init__(self, client_port, server_port):
                     threading.Thread.__init__(self)

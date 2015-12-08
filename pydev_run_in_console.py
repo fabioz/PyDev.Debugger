@@ -70,6 +70,6 @@ if __name__ == '__main__':
 
     globals = run_file(file, None, None)
 
-    interpreter.getNamespace().update(globals)
+    interpreter.get_namespace().update(globals)
 
     process_exec_queue(interpreter)

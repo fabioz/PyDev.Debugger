@@ -111,7 +111,7 @@ def _update_type_map():
             _TYPE_MAP.append((core.PyJavaInstance, pydevd_resolver.instanceResolver))
 
 
-def getType(o):
+def get_type(o):
     """ returns a triple (typeObject, typeString, resolver
         resolver != None means that variable is a container,
         and should be displayed as a hierarchy.
@@ -179,7 +179,7 @@ def var_to_xml(val, name, doTrim=True, additionalInXml=''):
     else:
         v = val
 
-    _type, typeName, resolver = getType(v)
+    _type, typeName, resolver = get_type(v)
 
     try:
         if hasattr(v, '__class__'):
