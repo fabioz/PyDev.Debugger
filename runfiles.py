@@ -6,6 +6,10 @@ Used to run with tests with unittest/pytest/nose.
 
 
 import os
+try:
+    xrange
+except:
+    xrange = range
 
 def main():
     import sys
@@ -159,13 +163,6 @@ def main():
                 sys.stdout.write('Final test framework args: %s\n' % (argv,))
                 sys.stdout.write('py_test_accept_filter: %s\n' % (py_test_accept_filter,))
 
-            import os
-
-            try:
-                xrange
-            except:
-                xrange = range
-
             def dotted(p):
                 # Helper to convert path to have dots instead of slashes
                 return os.path.normpath(p).replace(os.sep, "/").replace('/', '.')
@@ -243,7 +240,7 @@ if __name__ == '__main__':
         try:
             # The server is not a daemon thread, so, we have to ask for it to be killed!
             from _pydev_runfiles import pydev_runfiles_xml_rpc
-            pydev_runfiles_xml_rpc.forceServerKill()
+            pydev_runfiles_xml_rpc.force_server_kill()
         except:
             pass  # Ignore any errors here
 

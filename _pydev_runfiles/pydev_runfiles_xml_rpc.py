@@ -275,7 +275,7 @@ def notifyTestRunFinished(total_time):
 
 
 #=======================================================================================================================
-# forceServerKill
+# force_server_kill
 #=======================================================================================================================
-def forceServerKill():
+def force_server_kill():
     _ServerHolder.SERVER_COMM.notifications_queue.put_nowait(KillServer())

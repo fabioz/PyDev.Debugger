@@ -72,7 +72,7 @@ def get_text_list_for_frame(frame):
             #print "line is ", myLine
 
             #the variables are all gotten 'on-demand'
-            #variables = pydevd_vars.frameVarsToXML(curFrame.f_locals)
+            #variables = pydevd_vars.frame_vars_to_xml(curFrame.f_locals)
 
             variables = ''
             cmdTextList.append('<frame id="%s" name="%s" ' % (myId , pydevd_vars.make_valid_xml_value(myName)))

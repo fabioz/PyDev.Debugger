@@ -146,7 +146,7 @@ def getType(o):
     #no match return default
     return (type_object, type_name, pydevd_resolver.defaultResolver)
 
-def frameVarsToXML(frame_f_locals):
+def frame_vars_to_xml(frame_f_locals):
     """ dumps frame variables to XML
     <var name="var_name" scope="local" type="type" value="value"/>
     """

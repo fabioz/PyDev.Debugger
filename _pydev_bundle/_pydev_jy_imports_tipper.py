@@ -85,7 +85,7 @@ def Find(name):
 
     return f, mod, parent, foundAs
 
-def formatParamClassName(paramClassName):
+def format_param_class_name(paramClassName):
     if paramClassName.startswith('['):
         if paramClassName == '[C':
             paramClassName = 'char[]'
@@ -142,7 +142,7 @@ class Info:
         if self.args:
             s += '\n@params '
             for arg in self.args:
-                s += str(formatParamClassName(arg))
+                s += str(format_param_class_name(arg))
                 s += '  '
 
         if self.varargs:
@@ -155,7 +155,7 @@ class Info:
 
         if self.ret:
             s += '\n@return '
-            s += str(formatParamClassName(str(self.ret)))
+            s += str(format_param_class_name(str(self.ret)))
 
         return str(s)
 
@@ -260,7 +260,7 @@ def ismethod(func):
                                 paramClassName = repr(paramTypesClass) #just in case something else happens... it will at least be visible
                         #if the parameter equals [C, it means it it a char array, so, let's change it
 
-                        a = formatParamClassName(paramClassName)
+                        a = format_param_class_name(paramClassName)
                         #a = a.replace('[]','Array')
                         #a = a.replace('Object', 'obj')
                         #a = a.replace('String', 's')
@@ -361,7 +361,7 @@ def dir_obj(obj):
     return ret
 
 
-def formatArg(arg):
+def format_arg(arg):
     '''formats an argument to be shown
     '''
 
@@ -466,7 +466,7 @@ def generate_imports_tip_for_module(obj_to_complete, dirComps=None, getattr=geta
                     for a in (args):
                         if len(r) > 0:
                             r += ', '
-                        r += formatArg(a)
+                        r += format_arg(a)
                     args = '(%s)' % (r)
                 except TypeError:
                     traceback.print_exc()

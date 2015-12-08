@@ -649,7 +649,7 @@ class NetCommandFactory:
                 #print "line is ", myLine
 
                 #the variables are all gotten 'on-demand'
-                #variables = pydevd_vars.frameVarsToXML(curr_frame.f_locals)
+                #variables = pydevd_vars.frame_vars_to_xml(curr_frame.f_locals)
 
                 variables = ''
                 append('<frame id="%s" name="%s" ' % (my_id , make_valid_xml_value(my_name)))
@@ -1031,7 +1031,7 @@ class InternalGetFrame(InternalThreadCommand):
             frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
             if frame is not None:
                 xml = "<xml>"
-                xml += pydevd_vars.frameVarsToXML(frame.f_locals)
+                xml += pydevd_vars.frame_vars_to_xml(frame.f_locals)
                 del frame
                 xml += "</xml>"
                 cmd = dbg.cmd_factory.make_get_frame_message(self.sequence, xml)

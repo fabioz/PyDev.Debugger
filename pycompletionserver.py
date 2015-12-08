@@ -153,7 +153,7 @@ class Processor:
                 raise
         return ' '
 
-    def formatCompletionMessage(self, defFile, completionsList):
+    def format_completion_message(self, defFile, completionsList):
         '''
         Format the completions suggestions in the following format:
         @@COMPLETIONS(modFile(token,description),(token,description),(token,description))END@@
@@ -207,7 +207,7 @@ class CompletionServer:
         '''
         get message with completions.
         '''
-        return self.processor.formatCompletionMessage(defFile, completionsList)
+        return self.processor.format_completion_message(defFile, completionsList)
 
     def getTokenAndData(self, data):
         '''

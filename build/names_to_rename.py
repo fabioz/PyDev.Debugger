@@ -227,22 +227,23 @@ NAMES = '''
 # doExecCode
 # dumpFrames
 
-# enableGui -- skip (part of public API for console)
-evalInContext
-evaluateExpression
-# execLine  -- skip (part of public API for console)
-# execMultipleLines -- skip (part of public API for console)
-findFrame
-orig_findFrame
-finishExec
-fixGetpass
+# # enableGui -- skip (part of public API for console)
+# evalInContext
+# evaluateExpression
+# # execLine  -- skip (part of public API for console)
+# # execMultipleLines -- skip (part of public API for console)
+# findFrame
+# orig_findFrame
+# finishExec
+# fixGetpass
 
-# forceServerKill
-# formatArg
-# formatCompletionMessage
-# formatParamClassName
-# frameVarsToXML
-# fullyNormalizePath
+forceServerKill
+formatArg
+formatCompletionMessage
+formatParamClassName
+frameVarsToXML
+fullyNormalizePath
+
 # getArray -- skip (part of public API for console)
 # getAsDoc
 # getCapturedOutput

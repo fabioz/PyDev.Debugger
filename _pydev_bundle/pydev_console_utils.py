@@ -410,7 +410,7 @@ class BaseInterpreterInterface:
 
     def getFrame(self):
         xml = "<xml>"
-        xml += pydevd_xml.frameVarsToXML(self.getNamespace())
+        xml += pydevd_xml.frame_vars_to_xml(self.getNamespace())
         xml += "</xml>"
 
         return xml

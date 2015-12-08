@@ -51,7 +51,7 @@ class Test(unittest.TestCase):
         l.append(('Def1', 'description1', 'args1'))
         l.append(('Def2', 'description2', 'args2'))
         
-        msg = t.processor.formatCompletionMessage('test_jyserver.py', l)
+        msg = t.processor.format_completion_message('test_jyserver.py', l)
         
         self.assertEquals('@@COMPLETIONS(test_jyserver.py,(Def,description,args),(Def1,description1,args1),(Def2,description2,args2))END@@', msg)
         
@@ -59,7 +59,7 @@ class Test(unittest.TestCase):
         l.append(('Def', 'desc,,r,,i()ption', ''))
         l.append(('Def(1', 'descriptio(n1', ''))
         l.append(('De,f)2', 'de,s,c,ription2', ''))
-        msg = t.processor.formatCompletionMessage(None, l)
+        msg = t.processor.format_completion_message(None, l)
         expected = '@@COMPLETIONS(None,(Def,desc%2C%2Cr%2C%2Ci%28%29ption, ),(Def%281,descriptio%28n1, ),(De%2Cf%292,de%2Cs%2Cc%2Cription2, ))END@@'
         
         self.assertEquals(expected, msg)

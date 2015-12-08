@@ -61,14 +61,14 @@ if sys.platform.find('java') == -1:
             l.append(('Def1', 'description1', 'args1'))
             l.append(('Def2', 'description2', 'args2'))
             
-            msg = t.processor.formatCompletionMessage(None, l)
+            msg = t.processor.format_completion_message(None, l)
             self.assertEquals('@@COMPLETIONS(None,(Def,description,args),(Def1,description1,args1),(Def2,description2,args2))END@@', msg)
             
             l = []
             l.append(('Def', 'desc,,r,,i()ption', ''))
             l.append(('Def(1', 'descriptio(n1', ''))
             l.append(('De,f)2', 'de,s,c,ription2', ''))
-            msg = t.processor.formatCompletionMessage(None, l)
+            msg = t.processor.format_completion_message(None, l)
             self.assertEquals('@@COMPLETIONS(None,(Def,desc%2C%2Cr%2C%2Ci%28%29ption, ),(Def%281,descriptio%28n1, ),(De%2Cf%292,de%2Cs%2Cc%2Cription2, ))END@@', msg)
     
         def create_connections(self, p1=50002):
