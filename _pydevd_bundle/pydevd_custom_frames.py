@@ -101,7 +101,7 @@ def update_custom_frame(frame_id, frame, thread_id, name=None):
         CustomFramesContainer.custom_frames_lock.release()
 
 
-def getCustomFrame(thread_id, frame_id):
+def get_custom_frame(thread_id, frame_id):
     '''
     :param thread_id: This should actually be the frame_id which is returned by add_custom_frame.
     :param frame_id: This is the actual id() of the frame

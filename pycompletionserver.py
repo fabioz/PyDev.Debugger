@@ -203,7 +203,7 @@ class CompletionServer:
             sys.stderr.write('Error on connect_to_server with parameters: host: %s port: %s\n' % (HOST, self.port))
             raise
 
-    def getCompletionsMessage(self, defFile, completionsList):
+    def get_completions_message(self, defFile, completionsList):
         '''
         get message with completions.
         '''
@@ -283,7 +283,7 @@ class CompletionServer:
                             comps = []
                             for p in _sys_path:
                                 comps.append((p, ' '))
-                            self.send(self.getCompletionsMessage(None, comps))
+                            self.send(self.get_completions_message(None, comps))
 
                         else:
                             data = data[:data.rfind(MSG_END)]
@@ -292,7 +292,7 @@ class CompletionServer:
                                 data = data[len(MSG_IMPORTS):]
                                 data = unquote_plus(data)
                                 defFile, comps = _pydev_imports_tipper.generate_tip(data, log)
-                                self.send(self.getCompletionsMessage(defFile, comps))
+                                self.send(self.get_completions_message(defFile, comps))
 
                             elif data.startswith(MSG_CHANGE_PYTHONPATH):
                                 data = data[len(MSG_CHANGE_PYTHONPATH):]
@@ -307,7 +307,7 @@ class CompletionServer:
                                 try:
                                     import jedi  # @UnresolvedImport
                                 except:
-                                    self.send(self.getCompletionsMessage(None, [('Error on import jedi', 'Error importing jedi', '')]))
+                                    self.send(self.get_completions_message(None, [('Error on import jedi', 'Error importing jedi', '')]))
                                 else:
                                     script = jedi.Script(
                                         # Line +1 because it expects lines 1-based (and col 0-based)
@@ -340,13 +340,13 @@ class CompletionServer:
 
                                         # gen list(tuple(name, doc, args, type))
                                         lst.append((completion.name, '', '', t))
-                                    self.send(self.getCompletionsMessage('empty', lst))
+                                    self.send(self.get_completions_message('empty', lst))
 
                             elif data.startswith(MSG_SEARCH):
                                 data = data[len(MSG_SEARCH):]
                                 data = unquote_plus(data)
                                 (f, line, col), foundAs = _pydev_imports_tipper.search_definition(data)
-                                self.send(self.getCompletionsMessage(f, [(line, col, foundAs)]))
+                                self.send(self.get_completions_message(f, [(line, col, foundAs)]))
 
                             elif data.startswith(MSG_CHANGE_DIR):
                                 data = data[len(MSG_CHANGE_DIR):]
@@ -357,7 +357,7 @@ class CompletionServer:
                             else:
                                 self.send(MSG_INVALID_REQUEST)
                     except Exit:
-                        self.send(self.getCompletionsMessage(None, [('Exit:', 'SystemExit', '')]))
+                        self.send(self.get_completions_message(None, [('Exit:', 'SystemExit', '')]))
                         raise
 
                     except:
@@ -367,7 +367,7 @@ class CompletionServer:
 
                         err = s.getvalue()
                         dbg(SERVER_NAME + ' received error: ' + str(err), ERROR)
-                        self.send(self.getCompletionsMessage(None, [('ERROR:', '%s\nLog:%s' % (err, log.get_contents()), '')]))
+                        self.send(self.get_completions_message(None, [('ERROR:', '%s\nLog:%s' % (err, log.get_contents()), '')]))
 
 
                 finally:

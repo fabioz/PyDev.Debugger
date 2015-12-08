@@ -64,9 +64,9 @@ class AbstractResolver:
         This class exists only for documentation purposes to explain how to create a resolver.
 
         Some examples on how to resolve things:
-        - list: getDictionary could return a dict with index->item and use the index to resolve it later
-        - set: getDictionary could return a dict with id(object)->object and reiterate in that array to resolve it later
-        - arbitrary instance: getDictionary could return dict with attr_name->attr and use getattr to resolve it later
+        - list: get_dictionary could return a dict with index->item and use the index to resolve it later
+        - set: get_dictionary could return a dict with id(object)->object and reiterate in that array to resolve it later
+        - arbitrary instance: get_dictionary could return dict with attr_name->attr and use getattr to resolve it later
     '''
 
     def resolve(self, var, attribute):
@@ -75,11 +75,11 @@ class AbstractResolver:
             representing the previously asked dictionary.
 
             @param var: this is the actual variable to be resolved.
-            @param attribute: this is the string representation of a key previously returned in getDictionary.
+            @param attribute: this is the string representation of a key previously returned in get_dictionary.
         '''
         raise NotImplementedError
 
-    def getDictionary(self, var):
+    def get_dictionary(self, var):
         '''
             @param var: this is the variable that should have its children gotten.
 
@@ -100,7 +100,7 @@ class DefaultResolver:
     def resolve(self, var, attribute):
         return getattr(var, attribute)
 
-    def getDictionary(self, var):
+    def get_dictionary(self, var):
         if MethodWrapperType:
             return self._getPyDictionary(var)
         else:
@@ -245,7 +245,7 @@ class DictResolver:
                     return "u'%s'"%key
             return key
 
-    def getDictionary(self, dict):
+    def get_dictionary(self, dict):
         ret = {}
 
         i = 0
@@ -260,7 +260,7 @@ class DictResolver:
 
         ret['__len__'] = len(dict)
         # in case if the class extends built-in type and has some additional fields
-        additional_fields = defaultResolver.getDictionary(dict)
+        additional_fields = defaultResolver.get_dictionary(dict)
         ret.update(additional_fields)
         return ret
 
@@ -282,7 +282,7 @@ class TupleResolver: #to enumerate tuples and lists
         except:
             return getattr(var, attribute)
 
-    def getDictionary(self, var):
+    def get_dictionary(self, var):
         l = len(var)
         d = {}
 
@@ -299,7 +299,7 @@ class TupleResolver: #to enumerate tuples and lists
                 
         d['__len__'] = len(var)
         # in case if the class extends built-in type and has some additional fields
-        additional_fields = defaultResolver.getDictionary(var)
+        additional_fields = defaultResolver.get_dictionary(var)
         d.update(additional_fields)
         return d
 
@@ -328,7 +328,7 @@ class SetResolver:
 
         raise UnableToResolveVariableException('Unable to resolve %s in %s' % (attribute, var))
 
-    def getDictionary(self, var):
+    def get_dictionary(self, var):
         d = {}
         i = 0
         for item in var:
@@ -342,7 +342,7 @@ class SetResolver:
             
         d['__len__'] = len(var)
         # in case if the class extends built-in type and has some additional fields
-        additional_fields = defaultResolver.getDictionary(var)
+        additional_fields = defaultResolver.get_dictionary(var)
         d.update(additional_fields)
         return d
 
@@ -357,7 +357,7 @@ class InstanceResolver:
         field.setAccessible(True)
         return field.get(var)
 
-    def getDictionary(self, obj):
+    def get_dictionary(self, obj):
         ret = {}
 
         declaredFields = obj.__class__.getDeclaredFields()
@@ -385,7 +385,7 @@ class JyArrayResolver:
             return None
         return var[int(attribute)]
 
-    def getDictionary(self, obj):
+    def get_dictionary(self, obj):
         ret = {}
 
         for i in xrange(len(obj)):
@@ -410,7 +410,7 @@ class NdArrayResolver:
 
     def resolve(self, obj, attribute):
         if attribute == '__internals__':
-            return defaultResolver.getDictionary(obj)
+            return defaultResolver.get_dictionary(obj)
         if attribute == 'min':
             if self.is_numeric(obj):
                 return obj.min()
@@ -440,9 +440,9 @@ class NdArrayResolver:
             return container
         return None
 
-    def getDictionary(self, obj):
+    def get_dictionary(self, obj):
         ret = dict()
-        ret['__internals__'] = defaultResolver.getDictionary(obj)
+        ret['__internals__'] = defaultResolver.get_dictionary(obj)
         if obj.size > 1024 * 1024:
             ret['min'] = 'ndarray too big, calculating min would slow down debugging'
             ret['max'] = 'ndarray too big, calculating max would slow down debugging'
@@ -482,7 +482,7 @@ class MultiValueDictResolver(DictResolver):
 
         raise UnableToResolveVariableException()
 
-    def getDictionary(self, dict):
+    def get_dictionary(self, dict):
         ret = {}
         i = 0
         for key in dict_keys(dict):
@@ -503,8 +503,8 @@ class MultiValueDictResolver(DictResolver):
 # DequeResolver
 #=======================================================================================================================
 class DequeResolver(TupleResolver):
-    def getDictionary(self, var):
-        d = TupleResolver.getDictionary(self, var)
+    def get_dictionary(self, var):
+        d = TupleResolver.get_dictionary(self, var)
         d['maxlen'] = getattr(var, 'maxlen', None)
         return d
 
@@ -519,7 +519,7 @@ class FrameResolver:
 
     def resolve(self, obj, attribute):
         if attribute == '__internals__':
-            return defaultResolver.getDictionary(obj)
+            return defaultResolver.get_dictionary(obj)
 
         if attribute == 'stack':
             return self.getFrameStack(obj)
@@ -530,9 +530,9 @@ class FrameResolver:
         return None
 
 
-    def getDictionary(self, obj):
+    def get_dictionary(self, obj):
         ret = dict()
-        ret['__internals__'] = defaultResolver.getDictionary(obj)
+        ret['__internals__'] = defaultResolver.get_dictionary(obj)
         ret['stack'] = self.getFrameStack(obj)
         ret['f_locals'] = obj.f_locals
         return ret
@@ -541,15 +541,15 @@ class FrameResolver:
     def getFrameStack(self, frame):
         ret = []
         if frame is not None:
-            ret.append(self.getFrameName(frame))
+            ret.append(self.get_frame_name(frame))
 
             while frame.f_back:
                 frame = frame.f_back
-                ret.append(self.getFrameName(frame))
+                ret.append(self.get_frame_name(frame))
 
         return ret
 
-    def getFrameName(self, frame):
+    def get_frame_name(self, frame):
         if frame is None:
             return 'None'
         try:

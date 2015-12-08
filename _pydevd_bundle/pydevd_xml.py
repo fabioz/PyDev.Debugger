@@ -184,7 +184,7 @@ def var_to_xml(val, name, doTrim=True, additionalInXml=''):
     try:
         if hasattr(v, '__class__'):
             if v.__class__ == frame_type:
-                value = pydevd_resolver.frameResolver.getFrameName(v)
+                value = pydevd_resolver.frameResolver.get_frame_name(v)
                 
             elif v.__class__ in (list, tuple):
                 if len(v) > 300:

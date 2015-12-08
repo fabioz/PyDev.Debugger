@@ -245,16 +245,19 @@ NAMES = '''
 # fullyNormalizePath
 
 # getArray -- skip (part of public API for console)
-getAsDoc
-getCapturedOutput
+# getAsDoc
+# getCapturedOutput
 # getCompletions -- skip (part of public API for console)
 
 # getCompletionsMessage
 # getCustomFrame
-# getDescription -- skip (part of public API for console)
+# # getDescription -- skip (part of public API for console)
 # getDictionary
-# getFrame -- skip (part of public API for console)
+# # getFrame -- skip (part of public API for console)
 # getFrameName
+
+
+
 # getFrameStack
 # getFreeAddresses
 # getInternalQueue

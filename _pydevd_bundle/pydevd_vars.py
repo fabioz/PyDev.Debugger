@@ -5,7 +5,7 @@ import pickle
 from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
 from types import * #@UnusedWildImport
 
-from _pydevd_bundle.pydevd_custom_frames import getCustomFrame
+from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
 from _pydevd_bundle.pydevd_xml import *
 from _pydev_imps import _pydev_thread
 
@@ -89,7 +89,7 @@ def find_frame(thread_id, frame_id):
         curr_thread_id = get_thread_id(threading.currentThread())
         if thread_id != curr_thread_id :
             try:
-                return getCustomFrame(thread_id, frame_id)  #I.e.: thread_id could be a stackless frame id + thread_id.
+                return get_custom_frame(thread_id, frame_id)  #I.e.: thread_id could be a stackless frame id + thread_id.
             except:
                 pass
 
@@ -236,7 +236,7 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
 
     try:
         _type, _typeName, resolver = getType(var)
-        return resolver.getDictionary(var)
+        return resolver.get_dictionary(var)
     except:
         sys.stderr.write('Error evaluating: thread_id: %s\nframe_id: %s\nscope: %s\nattrs: %s\n' % (
             thread_id, frame_id, scope, attrs,))
@@ -253,7 +253,7 @@ def resolveVar(var, attrs):
 
     try:
         type, _typeName, resolver = getType(var)
-        return resolver.getDictionary(var)
+        return resolver.get_dictionary(var)
     except:
         traceback.print_exc()
 
