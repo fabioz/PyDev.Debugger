@@ -164,7 +164,7 @@ class BaseInterpreterInterface:
     def createStdIn(self):
         return StdIn(self, self.host, self.client_port)
 
-    def addExec(self, code_fragment):
+    def add_exec(self, code_fragment):
         original_in = sys.stdin
         try:
             help = None

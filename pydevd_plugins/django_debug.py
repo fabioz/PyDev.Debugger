@@ -138,7 +138,7 @@ def suspend_django(mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
     #except AttributeError:
     #    pass
 
-    pydevd_vars.addAdditionalFrameById(get_thread_id(thread), {id(frame): frame})
+    pydevd_vars.add_additional_frame_by_id(get_thread_id(thread), {id(frame): frame})
 
     mainDebugger.set_suspend(thread, cmd)
     thread.additional_info.suspend_type = DJANGO_SUSPEND

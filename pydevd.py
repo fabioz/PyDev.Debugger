@@ -1545,7 +1545,7 @@ class PyDB:
         pydev_log.debug("We are stopping in post-mortem\n")
         frame, frames_byid = additional_info.pydev_force_stop_at_exception
         thread_id = get_thread_id(t)
-        pydevd_vars.addAdditionalFrameById(thread_id, frames_byid)
+        pydevd_vars.add_additional_frame_by_id(thread_id, frames_byid)
         try:
             try:
                 add_exception_to_frame(frame, additional_info.exception)
@@ -1555,7 +1555,7 @@ class PyDB:
                 pydev_log.error("We've got an error while stopping in post-mortem: %s\n"%sys.exc_info()[0])
         finally:
             additional_info.pydev_force_stop_at_exception = None
-            pydevd_vars.removeAdditionalFrameById(thread_id)
+            pydevd_vars.remove_additional_frame_by_id(thread_id)
 
     def trace_dispatch(self, frame, event, arg):
         ''' This is the callback used when we enter some context in the debugger.
@@ -1815,7 +1815,7 @@ class PyDB:
                                                                             os.path.abspath(os.path.dirname(__file__))), globals, globals)
         thread_id = get_thread_id(thread)
         from _pydevd_bundle import pydevd_vars
-        pydevd_vars.addAdditionalFrameById(thread_id, {id(frame): frame})
+        pydevd_vars.add_additional_frame_by_id(thread_id, {id(frame): frame})
 
         cmd = self.cmd_factory.make_show_console_message(thread_id, frame)
         self.writer.add_command(cmd)

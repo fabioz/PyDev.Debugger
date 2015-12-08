@@ -202,7 +202,7 @@ class PyDBFrame:
                 f = None
 
                 thread_id = get_thread_id(thread)
-                pydevd_vars.addAdditionalFrameById(thread_id, frame_id_to_frame)
+                pydevd_vars.add_additional_frame_by_id(thread_id, frame_id_to_frame)
                 try:
                     mainDebugger.send_caught_exception_stack(thread, arg, id(frame))
                     self.set_suspend(thread, CMD_STEP_CAUGHT_EXCEPTION)
@@ -210,7 +210,7 @@ class PyDBFrame:
                     mainDebugger.send_caught_exception_stack_proceeded(thread)
 
                 finally:
-                    pydevd_vars.removeAdditionalFrameById(thread_id)
+                    pydevd_vars.remove_additional_frame_by_id(thread_id)
             except:
                 traceback.print_exc()
 

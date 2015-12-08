@@ -72,13 +72,14 @@ class AdditionalFramesContainer:
     additional_frames = {} #dict of dicts
 
 
-def addAdditionalFrameById(thread_id, frames_by_id):
+def add_additional_frame_by_id(thread_id, frames_by_id):
     AdditionalFramesContainer.additional_frames[thread_id] = frames_by_id
+addAdditionalFrameById = add_additional_frame_by_id # Backward compatibility
 
 
-def removeAdditionalFrameById(thread_id):
+def remove_additional_frame_by_id(thread_id):
     del AdditionalFramesContainer.additional_frames[thread_id]
-
+removeAdditionalFrameById = remove_additional_frame_by_id  # Backward compatibility
 
 
 

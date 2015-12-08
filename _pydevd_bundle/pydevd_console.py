@@ -113,7 +113,7 @@ class DebugConsole(InteractiveConsole, BaseInterpreterInterface):
                 if buffer_output:
                     out = sys.stdout = IOBuf()
                     err = sys.stderr = IOBuf()
-                more = self.addExec(line)
+                more = self.add_exec(line)
             except Exception:
                 exc = get_exception_traceback_str()
                 if buffer_output:

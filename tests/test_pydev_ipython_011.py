@@ -32,8 +32,8 @@ class TestBase(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def addExec(self, code, expected_more=False):
-        more = self.front_end.addExec(code)
+    def add_exec(self, code, expected_more=False):
+        more = self.front_end.add_exec(code)
         eq_(expected_more, more)
 
     def redirectStdout(self):
@@ -50,22 +50,22 @@ class TestBase(unittest.TestCase):
 class TestPyDevFrontEnd(TestBase):
 
     def testAddExec_1(self):
-        self.addExec('if True:', True)
+        self.add_exec('if True:', True)
 
     def testAddExec_2(self):
         #Change: 'more' must now be controlled in the client side after the initial 'True' returned.
-        self.addExec('if True:\n    testAddExec_a = 10\n', False)
+        self.add_exec('if True:\n    testAddExec_a = 10\n', False)
         assert 'testAddExec_a' in self.front_end.getNamespace()
 
     def testAddExec_3(self):
         assert 'testAddExec_x' not in self.front_end.getNamespace()
-        self.addExec('if True:\n    testAddExec_x = 10\n\n')
+        self.add_exec('if True:\n    testAddExec_x = 10\n\n')
         assert 'testAddExec_x' in self.front_end.getNamespace()
         eq_(self.front_end.getNamespace()['testAddExec_x'], 10)
 
     def test_get_namespace(self):
         assert 'testGetNamespace_a' not in self.front_end.getNamespace()
-        self.addExec('testGetNamespace_a = 10')
+        self.add_exec('testGetNamespace_a = 10')
         assert 'testGetNamespace_a' in self.front_end.getNamespace()
         eq_(self.front_end.getNamespace()['testGetNamespace_a'], 10)
 
@@ -76,17 +76,17 @@ class TestPyDevFrontEnd(TestBase):
     def test_complete_does_not_do_python_matches(self):
         # Test that IPython's completions do not do the things that
         # PyDev's completions will handle
-        self.addExec('testComplete_a = 5')
-        self.addExec('testComplete_b = 10')
-        self.addExec('testComplete_c = 15')
+        self.add_exec('testComplete_a = 5')
+        self.add_exec('testComplete_b = 10')
+        self.add_exec('testComplete_c = 15')
         unused_text, matches = self.front_end.complete('testComplete_')
         assert len(matches) == 0
 
     def testGetCompletions_1(self):
         # Test the merged completions include the standard completions
-        self.addExec('testComplete_a = 5')
-        self.addExec('testComplete_b = 10')
-        self.addExec('testComplete_c = 15')
+        self.add_exec('testComplete_a = 5')
+        self.add_exec('testComplete_b = 10')
+        self.add_exec('testComplete_c = 15')
         res = self.front_end.getCompletions('testComplete_', 'testComplete_')
         matches = [f[0] for f in res]
         assert len(matches) == 3
@@ -96,7 +96,7 @@ class TestPyDevFrontEnd(TestBase):
         # Test that we get IPython completions in results
         # we do this by checking kw completion which PyDev does
         # not do by default
-        self.addExec('def ccc(ABC=123): pass')
+        self.add_exec('def ccc(ABC=123): pass')
         res = self.front_end.getCompletions('ccc(', '')
         matches = [f[0] for f in res]
         assert 'ABC=' in matches
@@ -112,7 +112,7 @@ class TestRunningCode(TestBase):
     def test_print(self):
         self.redirectStdout()
         try:
-            self.addExec('print("output")')
+            self.add_exec('print("output")')
             eq_(sys.stdout.getvalue(), 'output\n')
         finally:
             self.restoreStdout()
@@ -120,7 +120,7 @@ class TestRunningCode(TestBase):
     def testQuestionMark_1(self):
         self.redirectStdout()
         try:
-            self.addExec('?')
+            self.add_exec('?')
             assert len(sys.stdout.getvalue()) > 1000, 'IPython help should be pretty big'
         finally:
             self.restoreStdout()
@@ -128,7 +128,7 @@ class TestRunningCode(TestBase):
     def testQuestionMark_2(self):
         self.redirectStdout()
         try:
-            self.addExec('int?')
+            self.add_exec('int?')
             assert sys.stdout.getvalue().find('Convert') != -1
         finally:
             self.restoreStdout()
@@ -142,24 +142,24 @@ class TestRunningCode(TestBase):
         else:
             from pydev_ipython.inputhook import get_inputhook
             assert get_inputhook() is None
-            self.addExec('%gui tk')
+            self.add_exec('%gui tk')
             # we can't test the GUI works here because we aren't connected to XML-RPC so
             # nowhere for hook to run
             assert get_inputhook() is not None
-            self.addExec('%gui none')
+            self.add_exec('%gui none')
             assert get_inputhook() is None
 
     def test_history(self):
         ''' Make sure commands are added to IPython's history '''
         self.redirectStdout()
         try:
-            self.addExec('a=1')
-            self.addExec('b=2')
+            self.add_exec('a=1')
+            self.add_exec('b=2')
             _ih = self.front_end.getNamespace()['_ih']
             eq_(_ih[-1], 'b=2')
             eq_(_ih[-2], 'a=1')
 
-            self.addExec('history')
+            self.add_exec('history')
             hist = sys.stdout.getvalue().split('\n')
             eq_(hist[-1], '')
             eq_(hist[-2], 'history')
@@ -218,7 +218,7 @@ class TestRunningCode(TestBase):
         sys.stdin = StdIn(self, get_localhost(), self.client_port)
         try:
             filename = 'made_up_file.py'
-            self.addExec('%edit ' + filename)
+            self.add_exec('%edit ' + filename)
 
             for i in xrange(10):
                 if called_IPythonEditor[0] == (os.path.abspath(filename), '0'):

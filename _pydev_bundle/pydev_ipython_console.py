@@ -39,7 +39,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         if (codeFragment.text.rstrip().endswith('??')):
             print('IPython-->')
         try:
-            res = bool(self.interpreter.addExec(codeFragment.text))
+            res = bool(self.interpreter.add_exec(codeFragment.text))
         finally:
             if (codeFragment.text.rstrip().endswith('??')):
                 print('<--IPython')

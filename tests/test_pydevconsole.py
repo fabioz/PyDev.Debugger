@@ -55,12 +55,12 @@ class Test(unittest.TestCase):
 
             interpreter = pydevconsole.InterpreterInterface(pydev_localhost.get_localhost(), client_port, threading.currentThread())
             sys.stdout = StringIO()
-            interpreter.addExec(CodeFragment('class Foo:\n    CONSTANT=1\n'))
-            interpreter.addExec(CodeFragment('foo=Foo()'))
-            interpreter.addExec(CodeFragment('foo.__doc__=None'))
-            interpreter.addExec(CodeFragment('val = %s()' % (raw_input_name,)))
-            interpreter.addExec(CodeFragment('50'))
-            interpreter.addExec(CodeFragment('print (val)'))
+            interpreter.add_exec(CodeFragment('class Foo:\n    CONSTANT=1\n'))
+            interpreter.add_exec(CodeFragment('foo=Foo()'))
+            interpreter.add_exec(CodeFragment('foo.__doc__=None'))
+            interpreter.add_exec(CodeFragment('val = %s()' % (raw_input_name,)))
+            interpreter.add_exec(CodeFragment('50'))
+            interpreter.add_exec(CodeFragment('print (val)'))
             found = sys.stdout.getvalue().split()
             try:
                 self.assertEqual(['50', 'input_request'], found)
@@ -100,7 +100,7 @@ class Test(unittest.TestCase):
             comps = interpreter.getCompletions('va', 'va')
             self.assert_(('val', '', '', '3') in comps or ('val', '', '', '4') in comps)
 
-            interpreter.addExec(CodeFragment('s = "mystring"'))
+            interpreter.add_exec(CodeFragment('s = "mystring"'))
 
             desc = interpreter.getDescription('val')
             self.assert_(desc.find('str(object) -> string') >= 0 or

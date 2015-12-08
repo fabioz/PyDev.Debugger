@@ -412,7 +412,7 @@ class _PyDevFrontEnd:
     def clearBuffer(self):
         del self._curr_exec_lines[:]
 
-    def addExec(self, line):
+    def add_exec(self, line):
         if self._curr_exec_lines:
             self._curr_exec_lines.append(line)
 

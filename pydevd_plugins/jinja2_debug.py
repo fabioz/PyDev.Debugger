@@ -76,7 +76,7 @@ def _suspend_jinja2(pydb, thread, frame, cmd=CMD_SET_BREAK, message=None):
     if frame.f_lineno is None:
         return None
 
-    pydevd_vars.addAdditionalFrameById(get_thread_id(thread), {id(frame): frame})
+    pydevd_vars.add_additional_frame_by_id(get_thread_id(thread), {id(frame): frame})
     pydb.set_suspend(thread, cmd)
 
     thread.additional_info.suspend_type = JINJA2_SUSPEND

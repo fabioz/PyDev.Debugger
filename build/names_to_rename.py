@@ -190,22 +190,27 @@ NAMES = '''
 # SetTrace -- skip
 
 
-SetVmType
-SetupType
-StartCoverageSupport
-StartCoverageSupportFromParams
-StartPydevNosePluginSingleton
-StartRedirect
-ToTuple
+# SetVmType
+# SetupType
+# StartCoverageSupport
+# StartCoverageSupportFromParams
+# StartPydevNosePluginSingleton
+# StartRedirect
+# ToTuple
 
 # addAdditionalFrameById
+removeAdditionalFrameById
+# removeCustomFrame
 # addCustomFrame
-# addError
+# addError -- skip
 # addExec
-# addFailure
-# addSuccess
+# addFailure -- skip
+# addSuccess -- skip
 # assertArgs
 # assertIn
+
+
+
 # basicAsStr
 # changeAttrExpression
 # changeVariable
@@ -276,8 +281,6 @@ ToTuple
 # processInternalCommands
 # readMsg
 # redirectStdout
-# removeAdditionalFrameById
-# removeCustomFrame
 # removeInvalidChars
 # reportCond
 # resolveCompoundVariable
