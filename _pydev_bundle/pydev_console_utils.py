@@ -211,7 +211,7 @@ class BaseInterpreterInterface:
                         from _pydevd_bundle import pydevd_tracing
                         pydevd_tracing.SetTrace(None)
 
-                    self.finishExec(more)
+                    self.finish_exec(more)
                 finally:
                     if help is not None:
                         try:
@@ -398,7 +398,7 @@ class BaseInterpreterInterface:
 
     server = property(get_server)
 
-    def finishExec(self, more):
+    def finish_exec(self, more):
         self.interruptable = False
 
         server = self.get_server()
@@ -433,7 +433,7 @@ class BaseInterpreterInterface:
     def getArray(self, attr, roffset, coffset, rows, cols, format):
         xml = "<xml>"
         name = attr.split("\t")[-1]
-        array = pydevd_vars.evalInContext(name, self.getNamespace(), self.getNamespace())
+        array = pydevd_vars.eval_in_context(name, self.getNamespace(), self.getNamespace())
 
         array, metaxml, r, c, f = pydevd_vars.array_to_meta_xml(array, name, format)
         xml += metaxml
@@ -448,7 +448,7 @@ class BaseInterpreterInterface:
 
     def evaluate(self, expression):
         xml = "<xml>"
-        result = pydevd_vars.evalInContext(expression, self.getNamespace(), self.getNamespace())
+        result = pydevd_vars.eval_in_context(expression, self.getNamespace(), self.getNamespace())
 
         xml += pydevd_vars.var_to_xml(result, expression)
 
@@ -477,7 +477,7 @@ class BaseInterpreterInterface:
             f.f_locals = self.getNamespace()
             return f
         else:
-            return self.orig_findFrame(thread_id, frame_id)
+            return self.orig_find_frame(thread_id, frame_id)
 
     def connectToDebugger(self, debuggerPort):
         '''
@@ -498,8 +498,8 @@ class BaseInterpreterInterface:
             from _pydev_bundle import pydev_localhost
             threading.currentThread().__pydevd_id__ = "console_main"
 
-            self.orig_findFrame = pydevd_vars.findFrame
-            pydevd_vars.findFrame = self._findFrame
+            self.orig_find_frame = pydevd_vars.find_frame
+            pydevd_vars.find_frame = self._findFrame
 
             self.debugger = pydevd.PyDB()
             try:

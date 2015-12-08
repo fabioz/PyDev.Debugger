@@ -1,4 +1,4 @@
-def fixGetpass():
+def fix_getpass():
     try:
         import getpass
     except ImportError:

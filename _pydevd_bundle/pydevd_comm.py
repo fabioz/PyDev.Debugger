@@ -969,8 +969,8 @@ class InternalGetArray(InternalThreadCommand):
 
     def do_it(self, dbg):
         try:
-            frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
-            var = pydevd_vars.evalInContext(self.name, frame.f_globals, frame.f_locals)
+            frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
+            var = pydevd_vars.eval_in_context(self.name, frame.f_globals, frame.f_locals)
 
             xml = "<xml>"
 
@@ -1028,7 +1028,7 @@ class InternalGetFrame(InternalThreadCommand):
     def do_it(self, dbg):
         """ Converts request into python variable """
         try:
-            frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
+            frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
             if frame is not None:
                 xml = "<xml>"
                 xml += pydevd_vars.frameVarsToXML(frame.f_locals)
@@ -1063,7 +1063,7 @@ class InternalEvaluateExpression(InternalThreadCommand):
     def do_it(self, dbg):
         """ Converts request into python variable """
         try:
-            result = pydevd_vars.evaluateExpression(self.thread_id, self.frame_id, self.expression, self.doExec)
+            result = pydevd_vars.evaluate_expression(self.thread_id, self.frame_id, self.expression, self.doExec)
             xml = "<xml>"
             xml += pydevd_vars.var_to_xml(result, self.expression, self.doTrim)
             xml += "</xml>"
@@ -1094,7 +1094,7 @@ class InternalGetCompletions(InternalThreadCommand):
             remove_path = None
             try:
 
-                frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
+                frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
                 if frame is not None:
 
                     msg = _pydev_completer.generate_completions_as_xml(frame, self.act_tok)
@@ -1221,7 +1221,7 @@ class InternalEvaluateConsoleExpression(InternalThreadCommand):
         </xml>
         """
         try:
-            frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
+            frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
             if frame is not None:
                 console_message = pydevd_console.execute_console_command(
                     frame, self.thread_id, self.frame_id, self.line, self.buffer_output)
@@ -1286,7 +1286,7 @@ class InternalConsoleGetCompletions(InternalThreadCommand):
         """ Get completions and write back to the client
         """
         try:
-            frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
+            frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
             completions_xml = pydevd_console.get_completions(frame, self.act_tok)
             cmd = dbg.cmd_factory.make_send_console_message(self.sequence, completions_xml)
             dbg.writer.add_command(cmd)

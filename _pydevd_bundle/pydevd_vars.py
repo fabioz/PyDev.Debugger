@@ -57,7 +57,7 @@ def iterFrames(initialFrame):
 def dump_frames(thread_id):
     sys.stdout.write('dumping frames\n')
     if thread_id != get_thread_id(threading.currentThread()):
-        raise VariableError("findFrame: must execute on same thread")
+        raise VariableError("find_frame: must execute on same thread")
 
     curFrame = get_frame()
     for frame in iterFrames(curFrame):
@@ -83,7 +83,7 @@ removeAdditionalFrameById = remove_additional_frame_by_id  # Backward compatibil
 
 
 
-def findFrame(thread_id, frame_id):
+def find_frame(thread_id, frame_id):
     """ returns a frame on the thread that has a given frame_id """
     try:
         curr_thread_id = get_thread_id(threading.currentThread())
@@ -93,7 +93,7 @@ def findFrame(thread_id, frame_id):
             except:
                 pass
 
-            raise VariableError("findFrame: must execute on same thread (%s != %s)" % (thread_id, curr_thread_id))
+            raise VariableError("find_frame: must execute on same thread (%s != %s)" % (thread_id, curr_thread_id))
 
         lookingFor = int(frame_id)
 
@@ -138,7 +138,7 @@ def findFrame(thread_id, frame_id):
                 else:
                     msgFrames += '  -  '
 
-            errMsg = '''findFrame: frame not found.
+            errMsg = '''find_frame: frame not found.
     Looking for thread_id:%s, frame_id:%s
     Current     thread_id:%s, available frames:
     %s\n
@@ -192,7 +192,7 @@ def getVariable(thread_id, frame_id, scope, attrs):
         sys.stderr.write('Unable to find object with id: %s\n' % (frame_id,))
         return None
 
-    frame = findFrame(thread_id, frame_id)
+    frame = find_frame(thread_id, frame_id)
     if frame is None:
         return {}
 
@@ -208,7 +208,7 @@ def getVariable(thread_id, frame_id, scope, attrs):
         for count in xrange(len(attrList)):
             if count == 0:
                 # An Expression can be in any scope (globals/locals), therefore it needs to evaluated as an expression
-                var = evaluateExpression(thread_id, frame_id, attrList[count], False)
+                var = evaluate_expression(thread_id, frame_id, attrList[count], False)
             else:
                 _type, _typeName, resolver = getType(var)
                 var = resolver.resolve(var, attrList[count])
@@ -281,7 +281,7 @@ def custom_operation(thread_id, frame_id, scope, attrs, style, code_or_file, ope
         traceback.print_exc()
 
 
-def evalInContext(expression, globals, locals):
+def eval_in_context(expression, globals, locals):
     result = None
     try:
         result = eval(expression, globals, locals)
@@ -318,11 +318,11 @@ def evalInContext(expression, globals, locals):
     return result
 
 
-def evaluateExpression(thread_id, frame_id, expression, doExec):
+def evaluate_expression(thread_id, frame_id, expression, doExec):
     '''returns the result of the evaluated expression
     @param doExec: determines if we should do an exec or an eval
     '''
-    frame = findFrame(thread_id, frame_id)
+    frame = find_frame(thread_id, frame_id)
     if frame is None:
         return
 
@@ -351,7 +351,7 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
             return
 
         else:
-            return evalInContext(expression, updated_globals, frame.f_locals)
+            return eval_in_context(expression, updated_globals, frame.f_locals)
     finally:
         #Should not be kept alive if an exception happens and this frame is kept in the stack.
         del updated_globals
@@ -360,7 +360,7 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
 def change_attr_expression(thread_id, frame_id, attr, expression, dbg):
     '''Changes some attribute in a given frame.
     '''
-    frame = findFrame(thread_id, frame_id)
+    frame = find_frame(thread_id, frame_id)
     if frame is None:
         return
 

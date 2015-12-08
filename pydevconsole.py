@@ -18,7 +18,7 @@ from _pydev_imps import _pydev_threading as threading
 
 import traceback
 from _pydev_bundle import fix_getpass
-fix_getpass.fixGetpass()
+fix_getpass.fix_getpass()
 
 from _pydevd_bundle import pydevd_vars
 
@@ -444,7 +444,7 @@ class ConsoleWriter(InteractiveInterpreter):
 def console_exec(thread_id, frame_id, expression):
     """returns 'False' in case expression is partially correct
     """
-    frame = pydevd_vars.findFrame(thread_id, frame_id)
+    frame = pydevd_vars.find_frame(thread_id, frame_id)
 
     expression = str(expression.replace('@LINE@', '\n'))
 

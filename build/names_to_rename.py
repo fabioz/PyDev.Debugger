@@ -216,25 +216,27 @@ NAMES = '''
 # checkOutputRedirect
 # clearBuffer
 
-# connectToDebugger -- skip (part of public API for console)
-connectToServer
-consoleExec
-createConnections
-createStdIn
-customOperation
-dirObj
-doAddExec
-doExecCode
-dumpFrames
+# # connectToDebugger -- skip (part of public API for console)
+# connectToServer
+# consoleExec
+# createConnections
+# createStdIn
+# customOperation
+# dirObj
+# doAddExec
+# doExecCode
+# dumpFrames
 
-# enableGui
-# evalInContext
-# evaluateExpression
+# enableGui -- skip (part of public API for console)
+evalInContext
+evaluateExpression
 # execLine  -- skip (part of public API for console)
 # execMultipleLines -- skip (part of public API for console)
-# findFrame
-# finishExec
-# fixGetpass
+findFrame
+orig_findFrame
+finishExec
+fixGetpass
+
 # forceServerKill
 # formatArg
 # formatCompletionMessage

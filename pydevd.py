@@ -2241,7 +2241,7 @@ if __name__ == '__main__':
             pid = ''
         sys.stderr.write("pydev debugger: starting%s\n" % pid)
 
-    fix_getpass.fixGetpass()
+    fix_getpass.fix_getpass()
 
     pydev_log.debug("Executing file %s" % setup['file'])
     pydev_log.debug("arguments: %s"% str(sys.argv))
