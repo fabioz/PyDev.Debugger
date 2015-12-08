@@ -21,10 +21,10 @@ def get_coverage_files(coverage_output_dir, number_of_files):
 
 
 #=======================================================================================================================
-# StartCoverageSupport
+# start_coverage_support
 #=======================================================================================================================
-def StartCoverageSupport(configuration):
-    return StartCoverageSupportFromParams(
+def start_coverage_support(configuration):
+    return start_coverage_support_from_params(
         configuration.coverage_output_dir, 
         configuration.coverage_output_file, 
         configuration.jobs, 
@@ -33,9 +33,9 @@ def StartCoverageSupport(configuration):
     
 
 #=======================================================================================================================
-# StartCoverageSupportFromParams
+# start_coverage_support_from_params
 #=======================================================================================================================
-def StartCoverageSupportFromParams(coverage_output_dir, coverage_output_file, jobs, coverage_include):
+def start_coverage_support_from_params(coverage_output_dir, coverage_output_file, jobs, coverage_include):
     coverage_files = []
     coverage_instance = Null()
     if coverage_output_dir or coverage_output_file:

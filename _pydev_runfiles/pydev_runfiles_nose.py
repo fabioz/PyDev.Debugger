@@ -3,7 +3,7 @@ from nose.plugins.base import Plugin  # @UnresolvedImport
 import sys
 from _pydev_runfiles import pydev_runfiles_xml_rpc
 import time
-from _pydev_runfiles.pydev_runfiles_coverage import StartCoverageSupport
+from _pydev_runfiles.pydev_runfiles_coverage import start_coverage_support
 
 #=======================================================================================================================
 # PydevPlugin
@@ -18,7 +18,7 @@ class PydevPlugin(Plugin):
     def begin(self):
         # Called before any test is run (it's always called, with multiprocess or not)
         self.start_time = time.time()
-        self.coverage_files, self.coverage = StartCoverageSupport(self.configuration)
+        self.coverage_files, self.coverage = start_coverage_support(self.configuration)
 
 
     def finalize(self, result):
@@ -137,7 +137,7 @@ class PydevPlugin(Plugin):
 
 
 PYDEV_NOSE_PLUGIN_SINGLETON = None
-def StartPydevNosePluginSingleton(configuration):
+def start_pydev_nose_plugin_singleton(configuration):
     global PYDEV_NOSE_PLUGIN_SINGLETON
     PYDEV_NOSE_PLUGIN_SINGLETON = PydevPlugin(configuration)
     return PYDEV_NOSE_PLUGIN_SINGLETON

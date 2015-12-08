@@ -2,7 +2,7 @@ from __future__ import nested_scopes
 
 import fnmatch
 import os.path
-from _pydev_runfiles.pydev_runfiles_coverage import StartCoverageSupport
+from _pydev_runfiles.pydev_runfiles_coverage import start_coverage_support
 from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
 import re
 import time
@@ -473,8 +473,8 @@ class PydevTestRunner(object):
             if print_exception:
                 from _pydev_runfiles import pydev_runfiles_xml_rpc
                 from _pydevd_bundle import pydevd_io
-                buf_err = pydevd_io.StartRedirect(keep_original_redirection=True, std='stderr')
-                buf_out = pydevd_io.StartRedirect(keep_original_redirection=True, std='stdout')
+                buf_err = pydevd_io.start_redirect(keep_original_redirection=True, std='stderr')
+                buf_out = pydevd_io.start_redirect(keep_original_redirection=True, std='stdout')
                 try:
                     import traceback;traceback.print_exc()
                     sys.stderr.write('ERROR: Module: %s could not be imported (file: %s).\n' % (modname, pyfile))
@@ -757,7 +757,7 @@ class PydevTestRunner(object):
 
 
         if handle_coverage:
-            coverage_files, coverage = StartCoverageSupport(self.configuration)
+            coverage_files, coverage = start_coverage_support(self.configuration)
 
         file_and_modules_and_module_name = self.find_modules_from_files(files)
         sys.stdout.write("done.\n")

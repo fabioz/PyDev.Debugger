@@ -29,7 +29,7 @@ class PydevTestResult(_PythonTextTestResult):
 
     def startTest(self, test):
         _PythonTextTestResult.startTest(self, test)
-        self.buf = pydevd_io.StartRedirect(keep_original_redirection=True, std='both')
+        self.buf = pydevd_io.start_redirect(keep_original_redirection=True, std='both')
         self.start_time = time.time()
         self._current_errors_stack = []
         self._current_failures_stack = []

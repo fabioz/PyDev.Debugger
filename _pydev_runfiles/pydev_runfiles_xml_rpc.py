@@ -42,7 +42,7 @@ class ParallelNotification(object):
         self.method = method
         self.args = args
 
-    def ToTuple(self):
+    def to_tuple(self):
         return self.method, self.args
 
 
@@ -134,7 +134,7 @@ class ServerComm(threading.Thread):
                 kill_found = True
             else:
                 assert isinstance(command, ParallelNotification)
-                commands.append(command.ToTuple())
+                commands.append(command.to_tuple())
 
             try:
                 while True:
@@ -143,7 +143,7 @@ class ServerComm(threading.Thread):
                         kill_found = True
                     else:
                         assert isinstance(command, ParallelNotification)
-                        commands.append(command.ToTuple())
+                        commands.append(command.to_tuple())
             except:
                 pass #That's OK, we're getting it until it becomes empty so that we notify multiple at once.
 

@@ -190,13 +190,14 @@ NAMES = '''
 # SetTrace -- skip
 
 
-# SetVmType
-# SetupType
-# StartCoverageSupport
-# StartCoverageSupportFromParams
-# StartPydevNosePluginSingleton
-# StartRedirect
-# ToTuple
+SetVmType
+SetupType
+StartCoverageSupport
+StartCoverageSupportFromParams
+StartPydevNosePluginSingleton
+StartRedirect
+ToTuple
+
 # addAdditionalFrameById
 # addCustomFrame
 # addError

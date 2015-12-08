@@ -2024,7 +2024,7 @@ def _locked_settrace(
     global bufferStdErrToServer
 
     if not connected :
-        pydevd_vm_type.SetupType()
+        pydevd_vm_type.setup_type()
 
         debugger = PyDB()
         debugger.connect(host, port)  # Note: connect can raise error.
@@ -2247,7 +2247,7 @@ if __name__ == '__main__':
     pydev_log.debug("arguments: %s"% str(sys.argv))
 
 
-    pydevd_vm_type.SetupType(setup.get('vm_type', None))
+    pydevd_vm_type.setup_type(setup.get('vm_type', None))
 
     if os.getenv('PYCHARM_DEBUG') or os.getenv('PYDEV_DEBUG'):
         set_debug(setup)

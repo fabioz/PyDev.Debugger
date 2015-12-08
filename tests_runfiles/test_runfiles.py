@@ -354,7 +354,7 @@ class RunfilesTest(unittest.TestCase):
         self._setup_scenario(None, files_to_tests=files_to_tests)
         self.MyTestRunner.verbosity = 2
 
-        buf = pydevd_io.StartRedirect(keep_original_redirection=False)
+        buf = pydevd_io.start_redirect(keep_original_redirection=False)
         try:
             self.MyTestRunner.run_tests()
             self.assertEqual(8, len(notifications))
