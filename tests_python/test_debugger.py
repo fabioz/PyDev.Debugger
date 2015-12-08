@@ -756,7 +756,7 @@ class WriterThreadCase1(debugger_unittest.AbstractWriterThread):
         self.start_socket()
 
         self.log.append('writing add breakpoint')
-        self.write_add_breakpoint(6, 'SetUp')
+        self.write_add_breakpoint(6, 'set_up')
 
         self.log.append('making initial run')
         self.write_make_initial_run()

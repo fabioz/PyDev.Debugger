@@ -337,7 +337,7 @@ class RunfilesTest(unittest.TestCase):
                 self.notifications.append(('notifyTestRunFinished',))
 
         server = Server(notifications)
-        pydev_runfiles_xml_rpc.SetServer(server)
+        pydev_runfiles_xml_rpc.set_server(server)
         simple_test = os.path.join(self.file_dir[0], 'simple_test.py')
         simple_test2 = os.path.join(self.file_dir[0], 'simple2_test.py')
         simpleClass_test = os.path.join(self.file_dir[0], 'simpleClass_test.py')

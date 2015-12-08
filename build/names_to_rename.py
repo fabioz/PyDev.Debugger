@@ -186,8 +186,10 @@ NAMES = '''
 # SetGlobalDebugger
 
 # SetServer
-# SetTrace
 # SetUp
+# SetTrace -- skip
+
+
 # SetVmType
 # SetupType
 # StartCoverageSupport

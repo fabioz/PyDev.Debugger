@@ -132,7 +132,7 @@ def run_client(job_id, port, verbosity, coverage_output_file, coverage_include):
         server_facade = ServerFacade(server_comm.notifications_queue)
         from _pydev_runfiles import pydev_runfiles
         from _pydev_runfiles import pydev_runfiles_xml_rpc
-        pydev_runfiles_xml_rpc.SetServer(server_facade)
+        pydev_runfiles_xml_rpc.set_server(server_facade)
 
         #Starts None and when the 1st test is gotten, it's started (because a server may be initiated and terminated
         #before receiving any test -- which would mean a different process got all the tests to run).
