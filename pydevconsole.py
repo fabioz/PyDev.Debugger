@@ -116,7 +116,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         self._input_error_printed = False
 
 
-    def doAddExec(self, codeFragment):
+    def do_add_exec(self, codeFragment):
         command = Command(self.interpreter, codeFragment)
         command.run()
         return command.more
@@ -441,7 +441,7 @@ class ConsoleWriter(InteractiveInterpreter):
             tblist = tb = None
         sys.stderr.write(''.join(lines))
 
-def consoleExec(thread_id, frame_id, expression):
+def console_exec(thread_id, frame_id, expression):
     """returns 'False' in case expression is partially correct
     """
     frame = pydevd_vars.findFrame(thread_id, frame_id)

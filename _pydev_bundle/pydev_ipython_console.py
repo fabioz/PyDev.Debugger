@@ -34,7 +34,7 @@ class InterpreterInterface(BaseInterpreterInterface):
     def get_greeting_msg(self):
         return self.interpreter.get_greeting_msg()
 
-    def doAddExec(self, codeFragment):
+    def do_add_exec(self, codeFragment):
         self.notify_about_magic()
         if (codeFragment.text.rstrip().endswith('??')):
             print('IPython-->')

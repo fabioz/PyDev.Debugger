@@ -14,7 +14,7 @@ if sys.platform.find('java') != -1:
     IS_JYTHON = 1
     from _pydev_bundle._pydev_jy_imports_tipper import ismethod
     from _pydev_bundle._pydev_jy_imports_tipper import isclass
-    from _pydev_bundle._pydev_jy_imports_tipper import dirObj
+    from _pydev_bundle._pydev_jy_imports_tipper import dir_obj
     from _pydev_bundle import _pydev_jy_imports_tipper
     from java.lang.reflect import Method #@UnresolvedImport
     from java.lang import System #@UnresolvedImport
@@ -182,7 +182,7 @@ class TestCompl(unittest.TestCase):
         dbg('\n\n--------------------------- String')
         assert not ismethod(System)[0]
         assert isclass(String)
-        assert len(dirObj(String)) > 10
+        assert len(dir_obj(String)) > 10
 
         dbg('\n\n--------------------------- arraycopy')
         isMet = ismethod(arraycopy)

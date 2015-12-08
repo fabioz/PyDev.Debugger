@@ -71,7 +71,7 @@ if sys.platform.find('java') == -1:
             msg = t.processor.formatCompletionMessage(None, l)
             self.assertEquals('@@COMPLETIONS(None,(Def,desc%2C%2Cr%2C%2Ci%28%29ption, ),(Def%281,descriptio%28n1, ),(De%2Cf%292,de%2Cs%2Cc%2Cription2, ))END@@', msg)
     
-        def createConnections(self, p1=50002):
+        def create_connections(self, p1=50002):
             '''
             Creates the connections needed for testing.
             '''
@@ -106,7 +106,7 @@ if sys.platform.find('java') == -1:
             return msg
     
         def test_completion_sockets_and_messages(self):
-            t, socket = self.createConnections()
+            t, socket = self.create_connections()
             self.socket = socket
             
             try:

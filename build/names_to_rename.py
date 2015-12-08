@@ -209,30 +209,29 @@ NAMES = '''
 # assertArgs
 # assertIn
 
+# basicAsStr
+# changeAttrExpression
+# # changeVariable -- skip (part of public API for console)
+# checkOutput
+# checkOutputRedirect
+# clearBuffer
 
+# connectToDebugger -- skip (part of public API for console)
+connectToServer
+consoleExec
+createConnections
+createStdIn
+customOperation
+dirObj
+doAddExec
+doExecCode
+dumpFrames
 
-basicAsStr
-changeAttrExpression
-# changeVariable -- skip (part of public API for console)
-checkOutput
-checkOutputRedirect
-clearBuffer
-
-# connectToDebugger
-# connectToServer
-# consoleExec
-# createConnections
-# createStdIn
-# customOperation
-# dirObj
-# doAddExec
-# doExecCode
-# dumpFrames
 # enableGui
 # evalInContext
 # evaluateExpression
-# execLine
-# execMultipleLines
+# execLine  -- skip (part of public API for console)
+# execMultipleLines -- skip (part of public API for console)
 # findFrame
 # finishExec
 # fixGetpass
@@ -242,15 +241,15 @@ clearBuffer
 # formatParamClassName
 # frameVarsToXML
 # fullyNormalizePath
-# getArray
+# getArray -- skip (part of public API for console)
 # getAsDoc
 # getCapturedOutput
-# getCompletions
+# getCompletions -- skip (part of public API for console)
 # getCompletionsMessage
 # getCustomFrame
-# getDescription
+# getDescription -- skip (part of public API for console)
 # getDictionary
-# getFrame
+# getFrame -- skip (part of public API for console)
 # getFrameName
 # getFrameStack
 # getFreeAddresses
@@ -260,7 +259,7 @@ clearBuffer
 # getTestName
 # getTokenAndData
 # getType
-# getVariable
+# getVariable -- skip (part of public API for console)
 # haveAliveThreads
 # initializeNetwork
 # isThreadAlive

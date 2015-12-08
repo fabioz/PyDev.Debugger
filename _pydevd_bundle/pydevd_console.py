@@ -79,8 +79,8 @@ class DebugConsole(InteractiveConsole, BaseInterpreterInterface):
     errors and outputs to the debug console
     """
 
-    overrides(BaseInterpreterInterface.createStdIn)
-    def createStdIn(self):
+    overrides(BaseInterpreterInterface.create_std_in)
+    def create_std_in(self):
         try:
             if not self.__buffer_output:
                 return sys.stdin
@@ -134,8 +134,8 @@ class DebugConsole(InteractiveConsole, BaseInterpreterInterface):
             return more, [], []
 
 
-    overrides(BaseInterpreterInterface.doAddExec)
-    def doAddExec(self, line):
+    overrides(BaseInterpreterInterface.do_add_exec)
+    def do_add_exec(self, line):
         return InteractiveConsole.push(self, line)
 
 

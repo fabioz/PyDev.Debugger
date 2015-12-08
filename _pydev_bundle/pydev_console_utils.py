@@ -161,7 +161,7 @@ class BaseInterpreterInterface:
 
         return self.needMoreForCode(self.buffer.text)
 
-    def createStdIn(self):
+    def create_std_in(self):
         return StdIn(self, self.host, self.client_port)
 
     def add_exec(self, code_fragment):
@@ -182,7 +182,7 @@ class BaseInterpreterInterface:
 
         more = False
         try:
-            sys.stdin = self.createStdIn()
+            sys.stdin = self.create_std_in()
             try:
                 if help is not None:
                     #This will enable the help() function to work.
@@ -205,7 +205,7 @@ class BaseInterpreterInterface:
                         from _pydevd_bundle import pydevd_tracing
                         pydevd_tracing.SetTrace(self.debugger.trace_dispatch)
 
-                    more = self.doAddExec(code_fragment)
+                    more = self.do_add_exec(code_fragment)
 
                     if hasattr(self, 'debugger'):
                         from _pydevd_bundle import pydevd_tracing
@@ -232,7 +232,7 @@ class BaseInterpreterInterface:
         return more
 
 
-    def doAddExec(self, codeFragment):
+    def do_add_exec(self, codeFragment):
         '''
         Subclasses should override.
 
@@ -310,7 +310,7 @@ class BaseInterpreterInterface:
             return ''
 
 
-    def doExecCode(self, code, is_single_line):
+    def do_exec_code(self, code, is_single_line):
         try:
             code_fragment = CodeFragment(code, is_single_line)
             more = self.needMore(code_fragment)
@@ -325,15 +325,15 @@ class BaseInterpreterInterface:
             return False
 
     def execLine(self, line):
-        return self.doExecCode(line, True)
+        return self.do_exec_code(line, True)
 
 
     def execMultipleLines(self, lines):
         if IS_JYTHON:
             for line in lines.split('\n'):
-                self.doExecCode(line, True)
+                self.do_exec_code(line, True)
         else:
-            return self.doExecCode(lines, False)
+            return self.do_exec_code(lines, False)
 
 
     def interrupt(self):

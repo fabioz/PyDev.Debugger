@@ -54,7 +54,7 @@ def iterFrames(initialFrame):
 
     return frames
 
-def dumpFrames(thread_id):
+def dump_frames(thread_id):
     sys.stdout.write('dumping frames\n')
     if thread_id != get_thread_id(threading.currentThread()):
         raise VariableError("findFrame: must execute on same thread")
@@ -258,7 +258,7 @@ def resolveVar(var, attrs):
         traceback.print_exc()
 
 
-def customOperation(thread_id, frame_id, scope, attrs, style, code_or_file, operation_fn_name):
+def custom_operation(thread_id, frame_id, scope, attrs, style, code_or_file, operation_fn_name):
     """
     We'll execute the code_or_file and then search in the namespace the operation_fn_name to execute with the given var.
 
@@ -268,7 +268,7 @@ def customOperation(thread_id, frame_id, scope, attrs, style, code_or_file, oper
     expressionValue = getVariable(thread_id, frame_id, scope, attrs)
 
     try:
-        namespace = {'__name__': '<customOperation>'}
+        namespace = {'__name__': '<custom_operation>'}
         if style == "EXECFILE":
             namespace['__file__'] = code_or_file
             execfile(code_or_file, namespace, namespace)

@@ -193,14 +193,14 @@ class CompletionServer:
         self.processor = Processor()
 
 
-    def connectToServer(self):
+    def connect_to_server(self):
         from _pydev_imps import _pydev_socket as socket
 
         self.socket = s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             s.connect((HOST, self.port))
         except:
-            sys.stderr.write('Error on connectToServer with parameters: host: %s port: %s\n' % (HOST, self.port))
+            sys.stderr.write('Error on connect_to_server with parameters: host: %s port: %s\n' % (HOST, self.port))
             raise
 
     def getCompletionsMessage(self, defFile, completionsList):
@@ -252,7 +252,7 @@ class CompletionServer:
 
             dbg(SERVER_NAME + ' connecting to java server on %s (%s)' % (HOST, self.port) , INFO1)
             # after being connected, create a socket as a client.
-            self.connectToServer()
+            self.connect_to_server()
 
             dbg(SERVER_NAME + ' Connected to java server', INFO1)
 

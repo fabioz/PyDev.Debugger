@@ -73,7 +73,7 @@ class Test(unittest.TestCase):
         if not IS_JYTHON:
             return
         dbg('test_completion_sockets_and_messages')
-        t, socket = self.createConnections()
+        t, socket = self.create_connections()
         self.socket = socket
         dbg('connections created')
         
@@ -123,7 +123,7 @@ class Test(unittest.TestCase):
 
 
 
-    def createConnections(self, p1=50001):
+    def create_connections(self, p1=50001):
         '''
         Creates the connections needed for testing.
         '''

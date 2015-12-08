@@ -291,7 +291,7 @@ def ismodule(mod):
     return isinstance(mod, core.PyModule)
 
 
-def dirObj(obj):
+def dir_obj(obj):
     ret = []
     found = java.util.HashMap()
     original = obj
@@ -406,7 +406,7 @@ def generate_imports_tip_for_module(obj_to_complete, dirComps=None, getattr=geta
     ret = []
 
     if dirComps is None:
-        dirComps = dirObj(obj_to_complete)
+        dirComps = dir_obj(obj_to_complete)
 
     for d in dirComps:
 

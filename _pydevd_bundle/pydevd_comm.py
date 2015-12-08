@@ -1037,7 +1037,7 @@ class InternalGetFrame(InternalThreadCommand):
                 cmd = dbg.cmd_factory.make_get_frame_message(self.sequence, xml)
                 dbg.writer.add_command(cmd)
             else:
-                #pydevd_vars.dumpFrames(self.thread_id)
+                #pydevd_vars.dump_frames(self.thread_id)
                 #don't print this error: frame not found: means that the client is not synchronized (but that's ok)
                 cmd = dbg.cmd_factory.make_error_message(self.sequence, "Frame not found: %s from thread: %s" % (self.frame_id, self.thread_id))
                 dbg.writer.add_command(cmd)
@@ -1259,7 +1259,7 @@ class InternalRunCustomOperation(InternalThreadCommand):
 
     def do_it(self, dbg):
         try:
-            res = pydevd_vars.customOperation(self.thread_id, self.frame_id, self.scope, self.attrs,
+            res = pydevd_vars.custom_operation(self.thread_id, self.frame_id, self.scope, self.attrs,
                                               self.style, self.code_or_file, self.fnname)
             resEncoded = quote_plus(res)
             cmd = dbg.cmd_factory.make_custom_operation_message(self.sequence, resEncoded)
@@ -1315,7 +1315,7 @@ class InternalConsoleExec(InternalThreadCommand):
                 #don't trace new threads created by console command
                 disable_trace_thread_modules()
 
-                result = pydevconsole.consoleExec(self.thread_id, self.frame_id, self.expression)
+                result = pydevconsole.console_exec(self.thread_id, self.frame_id, self.expression)
                 xml = "<xml>"
                 xml += pydevd_vars.var_to_xml(result, "")
                 xml += "</xml>"
