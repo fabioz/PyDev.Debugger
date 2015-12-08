@@ -134,7 +134,7 @@ class Info:
         return s
 
 
-    def getAsDoc(self):
+    def get_as_doc(self):
         s = str(self.name)
         if self.doc:
             s += '\n@doc %s\n' % str(self.doc)
@@ -461,7 +461,7 @@ def generate_imports_tip_for_module(obj_to_complete, dirComps=None, getattr=geta
                 info = isMet[1][0]
                 try:
                     args, vargs, kwargs = info.args, info.varargs, info.kwargs
-                    doc = info.getAsDoc()
+                    doc = info.get_as_doc()
                     r = ''
                     for a in (args):
                         if len(r) > 0:

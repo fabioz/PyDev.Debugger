@@ -103,7 +103,7 @@ class PydevPlugin(Plugin):
         return err
 
 
-    def getCapturedOutput(self, test):
+    def get_captured_output(self, test):
         if hasattr(test, 'capturedOutput') and test.capturedOutput:
             return test.capturedOutput
         return ''
@@ -113,7 +113,7 @@ class PydevPlugin(Plugin):
         self.reportCond(
             'error',
             test,
-            self.getCapturedOutput(test),
+            self.get_captured_output(test),
             err,
         )
 
@@ -122,7 +122,7 @@ class PydevPlugin(Plugin):
         self.reportCond(
             'fail',
             test,
-            self.getCapturedOutput(test),
+            self.get_captured_output(test),
             err,
         )
 
@@ -131,7 +131,7 @@ class PydevPlugin(Plugin):
         self.reportCond(
             'ok',
             test,
-            self.getCapturedOutput(test),
+            self.get_captured_output(test),
             '',
         )
 

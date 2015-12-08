@@ -282,7 +282,7 @@ class BaseInterpreterInterface:
                         ret = ''
                         if is_method:
                             for info in infos:
-                                ret += info.getAsDoc()
+                                ret += info.get_as_doc()
                             return ret
 
                     else:

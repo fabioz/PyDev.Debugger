@@ -237,17 +237,18 @@ NAMES = '''
 # finishExec
 # fixGetpass
 
-forceServerKill
-formatArg
-formatCompletionMessage
-formatParamClassName
-frameVarsToXML
-fullyNormalizePath
+# forceServerKill
+# formatArg
+# formatCompletionMessage
+# formatParamClassName
+# frameVarsToXML
+# fullyNormalizePath
 
 # getArray -- skip (part of public API for console)
-# getAsDoc
-# getCapturedOutput
+getAsDoc
+getCapturedOutput
 # getCompletions -- skip (part of public API for console)
+
 # getCompletionsMessage
 # getCustomFrame
 # getDescription -- skip (part of public API for console)
