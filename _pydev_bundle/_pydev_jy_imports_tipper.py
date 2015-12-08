@@ -125,7 +125,7 @@ class Info:
         self.kwargs = kwargs.get('kwargs', None) #string
         self.ret = kwargs.get('ret', None) #string
 
-    def basicAsStr(self):
+    def basic_as_str(self):
         '''@returns this class information as a string (just basic format)
         '''
 
@@ -271,7 +271,7 @@ def ismethod(func):
 
 
                     info = Info(name, args=args, ret=ret)
-                    #print_ info.basicAsStr()
+                    #print_ info.basic_as_str()
                     infos.append(info)
 
             return 1, infos

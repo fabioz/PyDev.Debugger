@@ -187,7 +187,7 @@ class TestCompl(unittest.TestCase):
         dbg('\n\n--------------------------- arraycopy')
         isMet = ismethod(arraycopy)
         assert isMet[0]
-        assert isMet[1][0].basicAsStr() == "function:arraycopy args=['java.lang.Object', 'int', 'java.lang.Object', 'int', 'int'], varargs=None, kwargs=None, docs:None"
+        assert isMet[1][0].basic_as_str() == "function:arraycopy args=['java.lang.Object', 'int', 'java.lang.Object', 'int', 'int'], varargs=None, kwargs=None, docs:None"
         assert not isclass(arraycopy)
 
         dbg('\n\n--------------------------- out')
@@ -199,15 +199,15 @@ class TestCompl(unittest.TestCase):
         isMet = ismethod(out.println) #@UndefinedVariable
         assert isMet[0]
         assert len(isMet[1]) == 10
-        self.assertEquals(isMet[1][0].basicAsStr(), "function:println args=[], varargs=None, kwargs=None, docs:None")
-        assert isMet[1][1].basicAsStr() == "function:println args=['long'], varargs=None, kwargs=None, docs:None"
+        self.assertEquals(isMet[1][0].basic_as_str(), "function:println args=[], varargs=None, kwargs=None, docs:None")
+        assert isMet[1][1].basic_as_str() == "function:println args=['long'], varargs=None, kwargs=None, docs:None"
         assert not isclass(out.println) #@UndefinedVariable
 
         dbg('\n\n--------------------------- str')
         isMet = ismethod(str)
         #the code below should work, but is failing on jython 22a1
         #assert isMet[0]
-        #assert isMet[1][0].basicAsStr() == "function:str args=['org.python.core.PyObject'], varargs=None, kwargs=None, docs:None"
+        #assert isMet[1][0].basic_as_str() == "function:str args=['org.python.core.PyObject'], varargs=None, kwargs=None, docs:None"
         assert not isclass(str)
 
 
@@ -218,7 +218,7 @@ class TestCompl(unittest.TestCase):
         dbg('\n\n--------------------------- met1')
         isMet = ismethod(met1)
         assert isMet[0]
-        assert isMet[1][0].basicAsStr() == "function:met1 args=[], varargs=None, kwargs=None, docs:None"
+        assert isMet[1][0].basic_as_str() == "function:met1 args=[], varargs=None, kwargs=None, docs:None"
         assert not isclass(met1)
 
         def met2(arg1, arg2, *vararg, **kwarg):
@@ -230,7 +230,7 @@ class TestCompl(unittest.TestCase):
         dbg('\n\n--------------------------- met2')
         isMet = ismethod(met2)
         assert isMet[0]
-        assert isMet[1][0].basicAsStr() == "function:met2 args=['arg1', 'arg2'], varargs=vararg, kwargs=kwarg, docs:docmet2"
+        assert isMet[1][0].basic_as_str() == "function:met2 args=['arg1', 'arg2'], varargs=vararg, kwargs=kwarg, docs:docmet2"
         assert not isclass(met2)
 
 

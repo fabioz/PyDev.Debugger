@@ -409,7 +409,7 @@ class _PyDevFrontEnd:
     def getNamespace(self):
         return self.ipython.user_ns
 
-    def clearBuffer(self):
+    def clear_buffer(self):
         del self._curr_exec_lines[:]
 
     def add_exec(self, line):

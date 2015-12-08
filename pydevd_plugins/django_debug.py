@@ -249,7 +249,7 @@ class DjangoTemplateFrame:
             pass
         return res
 
-    def changeVariable(self, name, value):
+    def _change_variable(self, name, value):
         for d in self.back_context.dicts:
             for k, v in d.items():
                 if k == name:
@@ -259,7 +259,7 @@ class DjangoTemplateFrame:
 def change_variable(plugin, frame, attr, expression):
     if isinstance(frame, DjangoTemplateFrame):
         result = eval(expression, frame.f_globals, frame.f_locals)
-        frame.changeVariable(attr, result)
+        frame._change_variable(attr, result)
         return result
     return False
 

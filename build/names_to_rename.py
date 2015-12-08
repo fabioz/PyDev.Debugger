@@ -199,7 +199,7 @@ NAMES = '''
 # ToTuple
 
 # addAdditionalFrameById
-removeAdditionalFrameById
+# removeAdditionalFrameById
 # removeCustomFrame
 # addCustomFrame
 # addError -- skip
@@ -211,12 +211,13 @@ removeAdditionalFrameById
 
 
 
-# basicAsStr
-# changeAttrExpression
-# changeVariable
-# checkOutput
-# checkOutputRedirect
-# clearBuffer
+basicAsStr
+changeAttrExpression
+# changeVariable -- skip (part of public API for console)
+checkOutput
+checkOutputRedirect
+clearBuffer
+
 # connectToDebugger
 # connectToServer
 # consoleExec

@@ -303,7 +303,7 @@ class CheckOutputThread(PyDBDaemonThread):
 
                 self.killReceived = True
 
-            self.pyDb.checkOutputRedirect()
+            self.pyDb.check_output_redirect()
 
 
     def do_kill_pydev_thread(self):
@@ -483,19 +483,19 @@ class PyDB:
             queue = self.getInternalQueue(thread_id)
             queue.put(int_cmd)
 
-    def checkOutputRedirect(self):
+    def check_output_redirect(self):
         global bufferStdOutToServer
         global bufferStdErrToServer
 
         if bufferStdOutToServer:
             init_stdout_redirect()
-            self.checkOutput(sys.stdoutBuf, 1) #@UndefinedVariable
+            self.check_output(sys.stdoutBuf, 1) #@UndefinedVariable
 
         if bufferStdErrToServer:
             init_stderr_redirect()
-            self.checkOutput(sys.stderrBuf, 2) #@UndefinedVariable
+            self.check_output(sys.stderrBuf, 2) #@UndefinedVariable
 
-    def checkOutput(self, out, outCtx):
+    def check_output(self, out, outCtx):
         '''Checks the output to see if we have to send some buffered output to the debug server
 
         @param out: sys.stdout or sys.stderr
@@ -547,7 +547,7 @@ class PyDB:
         self._main_lock.acquire()
         try:
 
-            self.checkOutputRedirect()
+            self.check_output_redirect()
 
             curr_thread_id = get_thread_id(threadingCurrentThread())
             program_threads_alive = {}
@@ -1804,7 +1804,7 @@ class PyDB:
     def exiting(self):
         sys.stdout.flush()
         sys.stderr.flush()
-        self.checkOutputRedirect()
+        self.check_output_redirect()
         cmd = self.cmd_factory.make_exit_message()
         self.writer.add_command(cmd)
 

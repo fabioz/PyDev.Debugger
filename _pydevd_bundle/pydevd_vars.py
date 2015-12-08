@@ -357,7 +357,7 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
         del updated_globals
         del frame
 
-def changeAttrExpression(thread_id, frame_id, attr, expression, dbg):
+def change_attr_expression(thread_id, frame_id, attr, expression, dbg):
     '''Changes some attribute in a given frame.
     '''
     frame = findFrame(thread_id, frame_id)

@@ -136,7 +136,7 @@ class Jinja2TemplateFrame:
                 res[k] = v
         return res
 
-    def changeVariable(self, frame, name, value):
+    def _change_variable(self, frame, name, value):
         in_vars_or_parents = False
         if name in frame.f_locals['context'].parent:
             self.back_context.parent[name] = value
@@ -156,7 +156,7 @@ class Jinja2TemplateFrame:
 def change_variable(plugin, frame, attr, expression):
     if isinstance(frame, Jinja2TemplateFrame):
         result = eval(expression, frame.f_globals, frame.f_locals)
-        frame.changeVariable(frame.f_back, attr, result)
+        frame._change_variable(frame.f_back, attr, result)
         return result
     return False
 

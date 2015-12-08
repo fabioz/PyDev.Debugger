@@ -27,7 +27,7 @@ class TestBase(unittest.TestCase):
 
         from pydev_ipython.inputhook import set_return_control_callback
         set_return_control_callback(lambda:True)
-        self.front_end.clearBuffer()
+        self.front_end.clear_buffer()
 
     def tearDown(self):
         pass
