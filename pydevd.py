@@ -202,21 +202,21 @@ file_system_encoding = getfilesystemencoding()
 # It is required to debug threads started by start_new_thread in Python 3.4
 _temp = threading.Thread()
 if hasattr(_temp, '_is_stopped'): # Python 3.4 has this
-    def isThreadAlive(t):
+    def is_thread_alive(t):
         try:
             return not t._is_stopped
         except:
             return t.isAlive()
 
 elif hasattr(_temp, '_Thread__stopped'): # Python 2.7 has this
-    def isThreadAlive(t):
+    def is_thread_alive(t):
         try:
             return not t._Thread__stopped
         except:
             return t.isAlive()
 
 else: # Haven't checked all other versions, so, let's use the regular isAlive call in this case.
-    def isThreadAlive(t):
+    def is_thread_alive(t):
         return t.isAlive()
 del _temp
 
@@ -255,7 +255,7 @@ class PyDBCommandThread(PyDBDaemonThread):
             #pydevd_log(0, 'Finishing debug communication...(3)')
 
 
-def killAllPydevThreads():
+def kill_all_pydev_threads():
     threads = dict_keys(PyDBDaemonThread.created_pydb_daemon_threads)
     for t in threads:
         if hasattr(t, 'do_kill_pydev_thread'):
@@ -292,12 +292,12 @@ class CheckOutputThread(PyDBDaemonThread):
 
         while not self.killReceived:
             time.sleep(0.3)
-            if not self.pyDb.haveAliveThreads() and self.pyDb.writer.empty() \
+            if not self.pyDb.has_threads_alive() and self.pyDb.writer.empty() \
                     and not has_data_to_redirect():
                 try:
                     pydev_log.debug("No alive threads, finishing debug session")
                     self.pyDb.finish_debugging_session()
-                    killAllPydevThreads()
+                    kill_all_pydev_threads()
                 except:
                     traceback.print_exc()
 
@@ -416,7 +416,7 @@ class PyDB:
                 trace = trace.tb_next
             return True
 
-    def haveAliveThreads(self):
+    def has_threads_alive(self):
         for t in threadingEnumerate():
             if getattr(t, 'is_pydev_daemon_thread', False):
                 #Important: Jython 2.5rc4 has a bug where a thread created with thread.start_new_thread won't be
@@ -428,7 +428,7 @@ class PyDB:
                 pydev_log.error_once(
                     'Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
 
-            if isThreadAlive(t):
+            if is_thread_alive(t):
                 if not t.isDaemon() or hasattr(t, "__pydevd_main_thread"):
                     return True
 
@@ -438,7 +438,7 @@ class PyDB:
         self._finishDebuggingSession = True
 
 
-    def initializeNetwork(self, sock):
+    def initialize_network(self, sock):
         try:
             sock.settimeout(None)  # infinite, no timeouts from now on - jython does not have it
         except:
@@ -456,7 +456,7 @@ class PyDB:
         else:
             s = start_server(port)
 
-        self.initializeNetwork(s)
+        self.initialize_network(s)
 
 
     def get_internal_queue(self, thread_id):
@@ -563,7 +563,7 @@ class PyDB:
                     elif isinstance(t, PyDBDaemonThread):
                         pydev_log.error_once('Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
 
-                    elif isThreadAlive(t):
+                    elif is_thread_alive(t):
                         program_threads_alive[thread_id] = t
 
                         if not dict_contains(self._running_thread_ids, thread_id):
@@ -1572,7 +1572,7 @@ class PyDB:
                 #that was not working very well because jython gave some socket errors
                 try:
                     if self.output_checker is None:
-                        killAllPydevThreads()
+                        kill_all_pydev_threads()
                 except:
                     traceback.print_exc()
                 self._terminationEventSent = True
@@ -1626,7 +1626,7 @@ class PyDB:
                     f = f.f_back
 
             # if thread is not alive, cancel trace_dispatch processing
-            if not isThreadAlive(t):
+            if not is_thread_alive(t):
                 self._process_thread_not_alive(get_thread_id(t))
                 return None  # suspend tracing
 
@@ -2129,7 +2129,7 @@ def stoptrace():
                 get_frame(), also_add_to_passed_frame=True, overwrite_prev_trace=True, dispatch_func=lambda *args:None)
             debugger.exiting()
 
-            killAllPydevThreads()
+            kill_all_pydev_threads()
 
         connected = False
 

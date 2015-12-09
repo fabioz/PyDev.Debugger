@@ -15,7 +15,7 @@ class SomeObject(QtCore.QObject):
     except:
         finished = QtCore.pyqtSignal()  # @UndefinedVariable
 
-    def longRunning(self):
+    def long_running(self):
         count = 0
         while count < 5:
             time.sleep(.5)
@@ -28,7 +28,7 @@ objThread = QtCore.QThread()
 obj = SomeObject()
 obj.moveToThread(objThread)
 obj.finished.connect(objThread.quit)
-objThread.started.connect(obj.longRunning)
+objThread.started.connect(obj.long_running)
 objThread.finished.connect(app.exit)
 objThread.start()
 app.exec_()

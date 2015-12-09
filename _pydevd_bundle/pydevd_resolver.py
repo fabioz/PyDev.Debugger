@@ -236,13 +236,13 @@ class DictResolver:
 
         raise UnableToResolveVariableException()
 
-    def keyStr(self, key):
+    def key_to_str(self, key):
         if isinstance(key, str):
-            return '%r'%key
+            return '%r' % key
         else:
             if not pydevd_constants.IS_PY3K:
                 if isinstance(key, unicode):
-                    return "u'%s'"%key
+                    return "u'%s'" % key
             return key
 
     def get_dictionary(self, dict):
@@ -252,7 +252,7 @@ class DictResolver:
         for key, val in dict_iter_items(dict):
             i += 1
             #we need to add the id because otherwise we cannot find the real object to get its contents later on.
-            key = '%s (%s)' % (self.keyStr(key), id(key))
+            key = '%s (%s)' % (self.key_to_str(key), id(key))
             ret[key] = val
             if i > MAX_ITEMS_TO_HANDLE:
                 ret[TOO_LARGE_ATTR] = TOO_LARGE_MSG
@@ -489,7 +489,7 @@ class MultiValueDictResolver(DictResolver):
             val = dict.getlist(key)
             i += 1
             #we need to add the id because otherwise we cannot find the real object to get its contents later on.
-            key = '%s (%s)' % (self.keyStr(key), id(key))
+            key = '%s (%s)' % (self.key_to_str(key), id(key))
             ret[key] = val
             if i > MAX_ITEMS_TO_HANDLE:
                 ret[TOO_LARGE_ATTR] = TOO_LARGE_MSG

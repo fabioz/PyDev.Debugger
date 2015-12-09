@@ -43,7 +43,7 @@ class VariableError(RuntimeError):pass
 
 class FrameNotFoundError(RuntimeError):pass
 
-def iterFrames(initialFrame):
+def _iter_frames(initialFrame):
     '''NO-YIELD VERSION: Iterates through all the frames starting at the specified frame (which will be the first returned item)'''
     #cannot use yield
     frames = []
@@ -60,7 +60,7 @@ def dump_frames(thread_id):
         raise VariableError("find_frame: must execute on same thread")
 
     curFrame = get_frame()
-    for frame in iterFrames(curFrame):
+    for frame in _iter_frames(curFrame):
         sys.stdout.write('%s\n' % pickle.dumps(frame))
 
 
@@ -110,7 +110,7 @@ def find_frame(thread_id, frame_id):
 
         frameFound = None
 
-        for frame in iterFrames(curFrame):
+        for frame in _iter_frames(curFrame):
             if lookingFor == id(frame):
                 frameFound = frame
                 del frame
@@ -130,7 +130,7 @@ def find_frame(thread_id, frame_id):
             msgFrames = ''
             i = 0
 
-            for frame in iterFrames(get_frame()):
+            for frame in _iter_frames(get_frame()):
                 i += 1
                 msgFrames += str(id(frame))
                 if i % 5 == 0:

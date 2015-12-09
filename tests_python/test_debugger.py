@@ -708,7 +708,7 @@ class WriterThreadCaseQThread2(debugger_unittest.AbstractWriterThread):
 
     def run(self):
         self.start_socket()
-        breakpoint_id = self.write_add_breakpoint(21, 'longRunning')
+        breakpoint_id = self.write_add_breakpoint(21, 'long_running')
         self.write_make_initial_run()
 
         thread_id, frame_id = self.wait_for_breakpoint_hit()

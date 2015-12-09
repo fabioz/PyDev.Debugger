@@ -258,25 +258,27 @@ NAMES = '''
 
 
 
-getFrameStack
-getFreeAddresses
-getInternalQueue
-getIoFromError
-getNamespace
-getTestName
-getTokenAndData
-getType
+# getFrameStack
+# getFreeAddresses
+# getInternalQueue
+# getIoFromError
+# getNamespace
+# getTestName
+# getTokenAndData
+# getType
 
 # getVariable -- skip (part of public API for console)
-# haveAliveThreads
-# initializeNetwork
-# isThreadAlive
-# iterFrames
-# keyStr
-# killAllPydevThreads
-# longRunning
-# metA
-# nativePath
+
+# haveAliveThreads -> has_threads_alive
+initializeNetwork
+isThreadAlive
+# iterFrames -> _iter_frames
+# keyStr -> key_to_str
+killAllPydevThreads
+longRunning
+# metA -- skip
+nativePath
+
 # needMore
 # needMoreForCode
 # notifyCommands

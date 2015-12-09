@@ -57,7 +57,7 @@ if sys.platform == "cygwin":
         sys.path.append(join(sys.path[0], 'third_party/wrapped_for_pydev'))
         import ctypes
 
-    def nativePath(path):
+    def native_path(path):
         MAX_PATH = 512  # On cygwin NT, its 260 lately, but just need BIG ENOUGH buffer
         '''Get the native form of the path, like c:\\Foo for /cygdrive/c/Foo'''
 
@@ -70,7 +70,7 @@ if sys.platform == "cygwin":
         return retval.value
 
 else:
-    def nativePath(path):
+    def native_path(path):
         return fully_normalize_path(path)
 
 
@@ -172,7 +172,7 @@ if __name__ == '__main__':
         pass
 
     try:
-        executable = tounicode(nativePath(sys.executable))
+        executable = tounicode(native_path(sys.executable))
     except:
         executable = tounicode(sys.executable)
 
@@ -201,7 +201,7 @@ if __name__ == '__main__':
     # this is the new implementation to get the system folders
     # (still need to check if it works in linux)
     # (previously, we were getting the executable dir, but that is not always correct...)
-    prefix = tounicode(nativePath(sys.prefix))
+    prefix = tounicode(native_path(sys.prefix))
     # print_ 'prefix is', prefix
 
 
@@ -214,7 +214,7 @@ if __name__ == '__main__':
         pass  # just ignore it...
 
     for p in path_used:
-        p = tounicode(nativePath(p))
+        p = tounicode(native_path(p))
 
         try:
             import string  # to be compatible with older versions
