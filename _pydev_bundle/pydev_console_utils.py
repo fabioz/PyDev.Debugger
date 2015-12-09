@@ -131,7 +131,7 @@ class BaseInterpreterInterface:
         self.exec_queue = _queue.Queue(0)
         self.buffer = None
 
-    def needMoreForCode(self, source):
+    def need_more_for_code(self, source):
         # PyDev-502: PyDev 3.9 F2 doesn't support backslash continuations
 
         # Strangely even the IPython console is_complete said it was complete
@@ -153,13 +153,13 @@ class BaseInterpreterInterface:
         # Case 3
         return False
 
-    def needMore(self, code_fragment):
+    def need_more(self, code_fragment):
         if self.buffer is None:
             self.buffer = code_fragment
         else:
             self.buffer.append(code_fragment)
 
-        return self.needMoreForCode(self.buffer.text)
+        return self.need_more_for_code(self.buffer.text)
 
     def create_std_in(self):
         return StdIn(self, self.host, self.client_port)
@@ -313,7 +313,7 @@ class BaseInterpreterInterface:
     def do_exec_code(self, code, is_single_line):
         try:
             code_fragment = CodeFragment(code, is_single_line)
-            more = self.needMore(code_fragment)
+            more = self.need_more(code_fragment)
             if not more:
                 code_fragment = self.buffer
                 self.buffer = None
@@ -515,7 +515,7 @@ class BaseInterpreterInterface:
             self.debugrunning = False
             try:
                 import pydevconsole
-                pydevconsole.set_debug_hook(self.debugger.processInternalCommands)
+                pydevconsole.set_debug_hook(self.debugger.process_internal_commands)
             except:
                 traceback.print_exc()
                 sys.stderr.write('Version of Python does not support debuggable Interactive Console.\n')

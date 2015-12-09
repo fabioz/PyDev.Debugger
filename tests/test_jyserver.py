@@ -84,7 +84,7 @@ class Test(unittest.TestCase):
             toWrite = '@@IMPORTS:%sEND@@' % msg
             dbg('writing' + str(toWrite))
             socket.send(toWrite)  #math completions
-            completions = self.readMsg()
+            completions = self.read_msg()
             dbg(urllib.unquote_plus(completions))
             
             start = '@@COMPLETIONS('
@@ -97,7 +97,7 @@ class Test(unittest.TestCase):
             toWrite = '@@IMPORTS:%sEND@@' % msg
             dbg('writing' + str(toWrite))
             socket.send(toWrite)  #math completions
-            completions = self.readMsg()
+            completions = self.read_msg()
             dbg(urllib.unquote_plus(completions))
             
             start = '@@COMPLETIONS('
@@ -141,7 +141,7 @@ class Test(unittest.TestCase):
         return t, sock
         
 
-    def readMsg(self):
+    def read_msg(self):
         msg = '@@PROCESSING_END@@'
         while msg.startswith('@@PROCESSING'):
             msg = self.socket.recv(1024)

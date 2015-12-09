@@ -88,7 +88,7 @@ if sys.platform.find('java') == -1:
             return t, s
             
     
-        def readMsg(self):
+        def read_msg(self):
             finish = False
             msg = ''
             while finish == False:
@@ -113,7 +113,7 @@ if sys.platform.find('java') == -1:
                 #now that we have the connections all set up, check the code completion messages.
                 msg = quote_plus('math')
                 send(socket, '@@IMPORTS:%sEND@@' % msg)  #math completions
-                completions = self.readMsg()
+                completions = self.read_msg()
                 #print_ unquote_plus(completions)
                 
                 #math is a builtin and because of that, it starts with None as a file
@@ -130,33 +130,33 @@ if sys.platform.find('java') == -1:
                 #now, test i
                 msg = quote_plus('%s.list' % BUILTIN_MOD)
                 send(socket, "@@IMPORTS:%s\nEND@@" % msg)
-                found = self.readMsg()
+                found = self.read_msg()
                 self.assert_('sort' in found, 'Could not find sort in: %s' % (found,))
     
                 #now, test search
                 msg = quote_plus('inspect.ismodule')
                 send(socket, '@@SEARCH%sEND@@' % msg)  #math completions
-                found = self.readMsg()
+                found = self.read_msg()
                 self.assert_('inspect.py' in found)
                 self.assert_('33' in found or '34' in found or '51' in found or '50' in found, 'Could not find 33, 34, 50 or 51 in %s' % found)
     
                 #now, test search
                 msg = quote_plus('inspect.CO_NEWLOCALS')
                 send(socket, '@@SEARCH%sEND@@' % msg)  #math completions
-                found = self.readMsg()
+                found = self.read_msg()
                 self.assert_('inspect.py' in found)
                 self.assert_('CO_NEWLOCALS' in found)
                 
                 #now, test search
                 msg = quote_plus('inspect.BlockFinder.tokeneater')
                 send(socket, '@@SEARCH%sEND@@' % msg) 
-                found = self.readMsg()
+                found = self.read_msg()
                 self.assert_('inspect.py' in found)
     #            self.assert_('CO_NEWLOCALS' in found)
     
             #reload modules test
     #        send(socket, '@@RELOAD_MODULES_END@@')
-    #        ok = self.readMsg()
+    #        ok = self.read_msg()
     #        self.assertEquals('@@MSG_OK_END@@' , ok)
     #        this test is not executed because it breaks our current enviroment.
             

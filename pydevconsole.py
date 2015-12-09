@@ -376,7 +376,7 @@ def exec_code(code, globals, locals):
     interpreterInterface = get_interpreter()
     interpreterInterface.interpreter.update(globals, locals)
 
-    res = interpreterInterface.needMore(code)
+    res = interpreterInterface.need_more(code)
 
     if res:
         return True

@@ -269,27 +269,29 @@ NAMES = '''
 
 # getVariable -- skip (part of public API for console)
 
-# haveAliveThreads -> has_threads_alive
-initializeNetwork
-isThreadAlive
-# iterFrames -> _iter_frames
-# keyStr -> key_to_str
-killAllPydevThreads
-longRunning
-# metA -- skip
-nativePath
+# # haveAliveThreads -> has_threads_alive
+# initializeNetwork
+# isThreadAlive
+# # iterFrames -> _iter_frames
+# # keyStr -> key_to_str
+# killAllPydevThreads
+# longRunning
+# # metA -- skip
+# nativePath
 
-# needMore
-# needMoreForCode
-# notifyCommands
-# notifyConnected
-# notifyStartTest
-# notifyTest
-# notifyTestRunFinished
-# notifyTestsCollected
-# postInternalCommand
-# processInternalCommands
-# readMsg
+needMore
+needMoreForCode
+# notifyCommands -- skip (part of public API)
+# notifyConnected -- skip (part of public API)
+# notifyStartTest -- skip (part of public API)
+# notifyTest -- skip (part of public API)
+# notifyTestRunFinished -- skip (part of public API)
+# notifyTestsCollected -- skip (part of public API)
+postInternalCommand
+processInternalCommands
+readMsg
+
+
 # redirectStdout
 # removeInvalidChars
 # reportCond
@@ -302,7 +304,6 @@ nativePath
 # startClientThread
 # startDebuggerServerThread
 # startExec
-
 # startTest -- skip
 # stopTest -- skip
 # setUp -- skip

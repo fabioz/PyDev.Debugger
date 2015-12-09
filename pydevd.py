@@ -243,7 +243,7 @@ class PyDBCommandThread(PyDBDaemonThread):
         try:
             while not self.killReceived:
                 try:
-                    self.pyDb.processInternalCommands()
+                    self.pyDb.process_internal_commands()
                 except:
                     pydevd_log(0, 'Finishing debug communication...(2)')
                 self._py_db_command_thread_event.clear()
@@ -470,7 +470,7 @@ class PyDB:
             return self._cmd_queue.setdefault(thread_id, _queue.Queue()) #@UndefinedVariable
 
 
-    def postInternalCommand(self, int_cmd, thread_id):
+    def post_internal_command(self, int_cmd, thread_id):
         """ if thread_id is *, post to all """
         if thread_id == "*":
             threads = threadingEnumerate()
@@ -541,7 +541,7 @@ class PyDB:
                             "pylab": activate_pylab }
 
 
-    def processInternalCommands(self):
+    def process_internal_commands(self):
         '''This function processes internal commands
         '''
         self._main_lock.acquire()
@@ -770,7 +770,7 @@ class PyDB:
 
                 elif cmd_id == CMD_THREAD_KILL:
                     int_cmd = InternalTerminateThread(text)
-                    self.postInternalCommand(int_cmd, text)
+                    self.post_internal_command(int_cmd, text)
 
                 elif cmd_id == CMD_THREAD_SUSPEND:
                     # Yes, thread suspend is still done at this point, not through an internal command!
@@ -796,7 +796,7 @@ class PyDB:
                     if t:
                         thread_id = get_thread_id(t)
                         int_cmd = InternalRunThread(thread_id)
-                        self.postInternalCommand(int_cmd, thread_id)
+                        self.post_internal_command(int_cmd, thread_id)
 
                     elif text.startswith('__frame__:'):
                         sys.stderr.write("Can't make tasklet run: %s\n" % (text,))
@@ -809,7 +809,7 @@ class PyDB:
                     if t:
                         thread_id = get_thread_id(t)
                         int_cmd = InternalStepThread(thread_id, cmd_id)
-                        self.postInternalCommand(int_cmd, thread_id)
+                        self.post_internal_command(int_cmd, thread_id)
 
                     elif text.startswith('__frame__:'):
                         sys.stderr.write("Can't make tasklet step command: %s\n" % (text,))
@@ -821,7 +821,7 @@ class PyDB:
                     t = pydevd_find_thread_by_id(thread_id)
                     if t:
                         int_cmd = InternalSetNextStatementThread(thread_id, cmd_id, line, func_name)
-                        self.postInternalCommand(int_cmd, thread_id)
+                        self.post_internal_command(int_cmd, thread_id)
                     elif thread_id.startswith('__frame__:'):
                         sys.stderr.write("Can't set next statement in tasklet: %s\n" % (thread_id,))
 
@@ -843,7 +843,7 @@ class PyDB:
                     #        thread_id = tid
 
                     int_cmd = ReloadCodeCommand(module_name, thread_id)
-                    self.postInternalCommand(int_cmd, thread_id)
+                    self.post_internal_command(int_cmd, thread_id)
 
 
                 elif cmd_id == CMD_CHANGE_VARIABLE:
@@ -855,7 +855,7 @@ class PyDB:
                         attr = attr_and_value[0:tab_index].replace('\t', '.')
                         value = attr_and_value[tab_index + 1:]
                         int_cmd = InternalChangeVariable(seq, thread_id, frame_id, scope, attr, value)
-                        self.postInternalCommand(int_cmd, thread_id)
+                        self.post_internal_command(int_cmd, thread_id)
 
                     except:
                         traceback.print_exc()
@@ -872,7 +872,7 @@ class PyDB:
                             scope, attrs = (scopeattrs, None)
 
                         int_cmd = InternalGetVariable(seq, thread_id, frame_id, scope, attrs)
-                        self.postInternalCommand(int_cmd, thread_id)
+                        self.post_internal_command(int_cmd, thread_id)
 
                     except:
                         traceback.print_exc()
@@ -889,7 +889,7 @@ class PyDB:
                             scope, attrs = (scopeattrs, None)
 
                         int_cmd = InternalGetArray(seq, roffset, coffset, rows, cols, format, thread_id, frame_id, scope, attrs)
-                        self.postInternalCommand(int_cmd, thread_id)
+                        self.post_internal_command(int_cmd, thread_id)
 
                     except:
                         traceback.print_exc()
@@ -901,7 +901,7 @@ class PyDB:
                         thread_id, frame_id, scope, act_tok = text.split('\t', 3)
 
                         int_cmd = InternalGetCompletions(seq, thread_id, frame_id, act_tok)
-                        self.postInternalCommand(int_cmd, thread_id)
+                        self.post_internal_command(int_cmd, thread_id)
 
                     except:
                         traceback.print_exc()
@@ -910,7 +910,7 @@ class PyDB:
                     thread_id, frame_id, scope = text.split('\t', 2)
 
                     int_cmd = InternalGetFrame(seq, thread_id, frame_id)
-                    self.postInternalCommand(int_cmd, thread_id)
+                    self.post_internal_command(int_cmd, thread_id)
 
                 elif cmd_id == CMD_SET_BREAK:
                     # func name: 'None': match anything. Empty: match global, specified: only method context.
@@ -1049,7 +1049,7 @@ class PyDB:
                     thread_id, frame_id, scope, expression, trim = text.split('\t', 4)
                     int_cmd = InternalEvaluateExpression(seq, thread_id, frame_id, expression,
                         cmd_id == CMD_EXEC_EXPRESSION, int(trim) == 1)
-                    self.postInternalCommand(int_cmd, thread_id)
+                    self.post_internal_command(int_cmd, thread_id)
 
                 elif cmd_id == CMD_CONSOLE_EXEC:
                     #command to exec expression in console, in case expression is only partially valid 'False' is returned
@@ -1058,7 +1058,7 @@ class PyDB:
                     thread_id, frame_id, scope, expression = text.split('\t', 3)
 
                     int_cmd = InternalConsoleExec(seq, thread_id, frame_id, expression)
-                    self.postInternalCommand(int_cmd, thread_id)
+                    self.post_internal_command(int_cmd, thread_id)
 
                 elif cmd_id == CMD_SET_PY_EXCEPTION:
                     # Command which receives set of exceptions on which user wants to break the debugger
@@ -1271,7 +1271,7 @@ class PyDB:
                         else:
                             raise ValueError('Unrecognized command: %s' % (console_command,))
 
-                        self.postInternalCommand(int_cmd, thread_id)
+                        self.post_internal_command(int_cmd, thread_id)
 
                 elif cmd_id == CMD_RUN_CUSTOM_OPERATION:
                     # Command which runs a custom operation
@@ -1295,7 +1295,7 @@ class PyDB:
                         style, encoded_code_or_file, fnname = custom.split('\t', 3)
                         int_cmd = InternalRunCustomOperation(seq, thread_id, frame_id, scope, attrs,
                                                              style, encoded_code_or_file, fnname)
-                        self.postInternalCommand(int_cmd, thread_id)
+                        self.post_internal_command(int_cmd, thread_id)
 
                 elif cmd_id == CMD_IGNORE_THROWN_EXCEPTION_AT:
                     if text:
@@ -1391,7 +1391,7 @@ class PyDB:
             int_cmd = InternalGetBreakpointException(thread_id, exc_type, stacktrace)
             # Reset the conditional_breakpoint_exception details to None
             thread.additional_info.conditional_breakpoint_exception = None
-            self.postInternalCommand(int_cmd, thread_id)
+            self.post_internal_command(int_cmd, thread_id)
 
 
     def send_caught_exception_stack(self, thread, arg, curr_frame_id):
@@ -1401,7 +1401,7 @@ class PyDB:
         """
         thread_id = get_thread_id(thread)
         int_cmd = InternalSendCurrExceptionTrace(thread_id, arg, curr_frame_id)
-        self.postInternalCommand(int_cmd, thread_id)
+        self.post_internal_command(int_cmd, thread_id)
 
 
     def send_caught_exception_stack_proceeded(self, thread):
@@ -1409,8 +1409,8 @@ class PyDB:
         """
         thread_id = get_thread_id(thread)
         int_cmd = InternalSendCurrExceptionTraceProceeded(thread_id)
-        self.postInternalCommand(int_cmd, thread_id)
-        self.processInternalCommands()
+        self.post_internal_command(int_cmd, thread_id)
+        self.process_internal_commands()
 
 
     def do_wait_suspend(self, thread, frame, event, arg): #@UnusedVariable
@@ -1418,7 +1418,7 @@ class PyDB:
         it expects thread's state as attributes of the thread.
         Upon running, processes any outstanding Stepping commands.
         """
-        self.processInternalCommands()
+        self.process_internal_commands()
 
         message = getattr(thread.additional_info, "message", None)
 
@@ -1465,7 +1465,7 @@ class PyDB:
                 except:
                     pass
 
-            self.processInternalCommands()
+            self.process_internal_commands()
             time.sleep(0.01)
 
         # process any stepping instructions
@@ -1655,7 +1655,7 @@ class PyDB:
             import psyco
             trace_dispatch = psyco.proxy(trace_dispatch)
             process_net_command = psyco.proxy(process_net_command)
-            processInternalCommands = psyco.proxy(processInternalCommands)
+            process_internal_commands = psyco.proxy(process_internal_commands)
             do_wait_suspend = psyco.proxy(do_wait_suspend)
             get_internal_queue = psyco.proxy(get_internal_queue)
         except ImportError:
@@ -1821,7 +1821,7 @@ class PyDB:
         self.writer.add_command(cmd)
 
         while True:
-            self.processInternalCommands()
+            self.process_internal_commands()
             time.sleep(0.01)
 
 def set_debug(setup):
