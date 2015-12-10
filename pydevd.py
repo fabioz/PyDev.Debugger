@@ -180,10 +180,10 @@ del _temp
 #=======================================================================================================================
 class PyDBCommandThread(PyDBDaemonThread):
 
-    def __init__(self, pyDb):
+    def __init__(self, py_db):
         PyDBDaemonThread.__init__(self)
-        self._py_db_command_thread_event = pyDb._py_db_command_thread_event
-        self.pyDb = pyDb
+        self._py_db_command_thread_event = py_db._py_db_command_thread_event
+        self.py_db = py_db
         self.setName('pydevd.CommandThread')
 
     def _on_run(self):
@@ -193,12 +193,12 @@ class PyDBCommandThread(PyDBDaemonThread):
                 return
 
         if self.dontTraceMe:
-            self.pyDb.SetTrace(None) # no debugging on this thread
+            self.py_db.SetTrace(None) # no debugging on this thread
 
         try:
             while not self.killReceived:
                 try:
-                    self.pyDb.process_internal_commands()
+                    self.py_db.process_internal_commands()
                 except:
                     pydevd_log(0, 'Finishing debug communication...(2)')
                 self._py_db_command_thread_event.clear()
@@ -223,12 +223,12 @@ def kill_all_pydev_threads():
 #=======================================================================================================================
 class CheckOutputThread(PyDBDaemonThread):
 
-    def __init__(self, pyDb):
+    def __init__(self, py_db):
         PyDBDaemonThread.__init__(self)
-        self.pyDb = pyDb
+        self.py_db = py_db
         self.setName('pydevd.CheckAliveThread')
         self.daemon = False
-        pyDb.output_checker = self
+        py_db.output_checker = self
 
     def _on_run(self):
         if self.dontTraceMe:
@@ -247,18 +247,18 @@ class CheckOutputThread(PyDBDaemonThread):
 
         while not self.killReceived:
             time.sleep(0.3)
-            if not self.pyDb.has_threads_alive() and self.pyDb.writer.empty() \
+            if not self.py_db.has_threads_alive() and self.py_db.writer.empty() \
                     and not has_data_to_redirect():
                 try:
                     pydev_log.debug("No alive threads, finishing debug session")
-                    self.pyDb.finish_debugging_session()
+                    self.py_db.finish_debugging_session()
                     kill_all_pydev_threads()
                 except:
                     traceback.print_exc()
 
                 self.killReceived = True
 
-            self.pyDb.check_output_redirect()
+            self.py_db.check_output_redirect()
 
 
     def do_kill_pydev_thread(self):
