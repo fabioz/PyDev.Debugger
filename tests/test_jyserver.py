@@ -109,7 +109,7 @@ class Test(unittest.TestCase):
         
         finally:
             try:
-                self.sendKillMsg(socket)
+                self.send_kill_msg(socket)
                 
         
                 while not t.ended:
@@ -153,7 +153,7 @@ class Test(unittest.TestCase):
         
         return msg
         
-    def sendKillMsg(self, socket):
+    def send_kill_msg(self, socket):
         socket.send(jycompletionserver.MSG_KILL_SERVER)
         
     

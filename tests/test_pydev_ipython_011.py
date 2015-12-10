@@ -36,13 +36,13 @@ class TestBase(unittest.TestCase):
         more = self.front_end.add_exec(code)
         eq_(expected_more, more)
 
-    def redirectStdout(self):
+    def redirect_stdout(self):
         from IPython.utils import io
 
         self.original_stdout = sys.stdout
         sys.stdout = io.stdout = StringIO()
 
-    def restoreStdout(self):
+    def restore_stdout(self):
         from IPython.utils import io
         io.stdout = sys.stdout = self.original_stdout
 
@@ -110,28 +110,28 @@ class TestPyDevFrontEnd(TestBase):
 
 class TestRunningCode(TestBase):
     def test_print(self):
-        self.redirectStdout()
+        self.redirect_stdout()
         try:
             self.add_exec('print("output")')
             eq_(sys.stdout.getvalue(), 'output\n')
         finally:
-            self.restoreStdout()
+            self.restore_stdout()
 
     def testQuestionMark_1(self):
-        self.redirectStdout()
+        self.redirect_stdout()
         try:
             self.add_exec('?')
             assert len(sys.stdout.getvalue()) > 1000, 'IPython help should be pretty big'
         finally:
-            self.restoreStdout()
+            self.restore_stdout()
 
     def testQuestionMark_2(self):
-        self.redirectStdout()
+        self.redirect_stdout()
         try:
             self.add_exec('int?')
             assert sys.stdout.getvalue().find('Convert') != -1
         finally:
-            self.restoreStdout()
+            self.restore_stdout()
 
 
     def test_gui(self):
@@ -151,7 +151,7 @@ class TestRunningCode(TestBase):
 
     def test_history(self):
         ''' Make sure commands are added to IPython's history '''
-        self.redirectStdout()
+        self.redirect_stdout()
         try:
             self.add_exec('a=1')
             self.add_exec('b=2')
@@ -166,13 +166,13 @@ class TestRunningCode(TestBase):
             eq_(hist[-3], 'b=2')
             eq_(hist[-4], 'a=1')
         finally:
-            self.restoreStdout()
+            self.restore_stdout()
 
     def test_edit(self):
         ''' Make sure we can issue an edit command'''
         called_RequestInput = [False]
         called_IPythonEditor = [False]
-        def startClientThread(client_port):
+        def start_client_thread(client_port):
             class ClientThread(threading.Thread):
                 def __init__(self, client_port):
                     threading.Thread.__init__(self)
@@ -213,7 +213,7 @@ class TestRunningCode(TestBase):
         s.close()
         self.front_end = get_pydev_frontend(get_localhost(), client_port)
 
-        client_thread = startClientThread(self.client_port)
+        client_thread = start_client_thread(self.client_port)
         orig_stdin = sys.stdin
         sys.stdin = StdIn(self, get_localhost(), self.client_port)
         try:

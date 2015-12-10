@@ -279,31 +279,32 @@ NAMES = '''
 # # metA -- skip
 # nativePath
 
-needMore
-needMoreForCode
-# notifyCommands -- skip (part of public API)
-# notifyConnected -- skip (part of public API)
-# notifyStartTest -- skip (part of public API)
-# notifyTest -- skip (part of public API)
-# notifyTestRunFinished -- skip (part of public API)
-# notifyTestsCollected -- skip (part of public API)
-postInternalCommand
-processInternalCommands
-readMsg
+# needMore
+# needMoreForCode
+# # notifyCommands -- skip (part of public API)
+# # notifyConnected -- skip (part of public API)
+# # notifyStartTest -- skip (part of public API)
+# # notifyTest -- skip (part of public API)
+# # notifyTestRunFinished -- skip (part of public API)
+# # notifyTestsCollected -- skip (part of public API)
+# postInternalCommand
+# processInternalCommands
+# readMsg
 
 
-# redirectStdout
-# removeInvalidChars
-# reportCond
-# resolveCompoundVariable
-# resolveVar
-# restoreStdout
-# sendKillMsg
-# sendSignatureCallTrace
-# setTracingForUntracedContexts
-# startClientThread
-# startDebuggerServerThread
-# startExec
+redirectStdout
+removeInvalidChars
+reportCond
+resolveCompoundVariable
+resolveVar
+restoreStdout
+sendKillMsg
+sendSignatureCallTrace
+setTracingForUntracedContexts
+startClientThread
+startDebuggerServerThread
+startExec
+
 # startTest -- skip
 # stopTest -- skip
 # setUp -- skip

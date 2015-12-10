@@ -139,7 +139,7 @@ class Processor:
         # nothing to do
         return
 
-    def removeInvalidChars(self, msg):
+    def remove_invalid_chars(self, msg):
         try:
             msg = str(msg)
         except UnicodeDecodeError:
@@ -164,17 +164,17 @@ class Processor:
             compMsg.append(',')
 
             compMsg.append('(')
-            compMsg.append(str(self.removeInvalidChars(tup[0])))  # token
+            compMsg.append(str(self.remove_invalid_chars(tup[0])))  # token
             compMsg.append(',')
-            compMsg.append(self.removeInvalidChars(tup[1]))  # description
+            compMsg.append(self.remove_invalid_chars(tup[1]))  # description
 
             if(len(tup) > 2):
                 compMsg.append(',')
-                compMsg.append(self.removeInvalidChars(tup[2]))  # args - only if function.
+                compMsg.append(self.remove_invalid_chars(tup[2]))  # args - only if function.
 
             if(len(tup) > 3):
                 compMsg.append(',')
-                compMsg.append(self.removeInvalidChars(tup[3]))  # TYPE
+                compMsg.append(self.remove_invalid_chars(tup[3]))  # TYPE
 
             compMsg.append(')')
 

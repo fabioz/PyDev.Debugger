@@ -229,7 +229,7 @@ def getVariable(thread_id, frame_id, scope, attrs):
     return var
 
 
-def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
+def resolve_compound_variable(thread_id, frame_id, scope, attrs):
     """ returns the value of the compound variable as a dictionary"""
 
     var = getVariable(thread_id, frame_id, scope, attrs)
@@ -243,7 +243,7 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
         traceback.print_exc()
 
 
-def resolveVar(var, attrs):
+def resolve_var(var, attrs):
     attrList = attrs.split('\t')
 
     for k in attrList:

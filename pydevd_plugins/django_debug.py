@@ -35,7 +35,7 @@ def add_exception_breakpoint(plugin, pydb, type, exception):
         if not hasattr(pydb, 'django_exception_break'):
             _init_plugin_breaks(pydb)
         pydb.django_exception_break[exception] = True
-        pydb.setTracingForUntracedContexts()
+        pydb.set_tracing_for_untraced_contexts()
         return True
     return False
 

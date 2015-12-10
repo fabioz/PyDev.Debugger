@@ -164,7 +164,7 @@ if sys.platform.find('java') == -1:
             finally:
                 try:
                     sys.stdout.write('succedded...sending kill msg\n')
-                    self.sendKillMsg(socket)
+                    self.send_kill_msg(socket)
                     
             
     #                while not hasattr(t, 'ended'):
@@ -176,7 +176,7 @@ if sys.platform.find('java') == -1:
                 except:
                     pass
             
-        def sendKillMsg(self, socket):
+        def send_kill_msg(self, socket):
             socket.send(pycompletionserver.MSG_KILL_SERVER)
 
         

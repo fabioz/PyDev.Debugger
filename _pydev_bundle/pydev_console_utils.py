@@ -200,7 +200,7 @@ class BaseInterpreterInterface:
                             traceback.print_exc()
 
                 try:
-                    self.startExec()
+                    self.start_exec()
                     if hasattr(self, 'debugger'):
                         from _pydevd_bundle import pydevd_tracing
                         pydevd_tracing.SetTrace(self.debugger.trace_dispatch)
@@ -387,7 +387,7 @@ class BaseInterpreterInterface:
     def close(self):
         sys.exit(0)
 
-    def startExec(self):
+    def start_exec(self):
         self.interruptable = True
 
     def get_server(self):
@@ -417,7 +417,7 @@ class BaseInterpreterInterface:
 
     def getVariable(self, attributes):
         xml = "<xml>"
-        valDict = pydevd_vars.resolveVar(self.get_namespace(), attributes)
+        valDict = pydevd_vars.resolve_var(self.get_namespace(), attributes)
         if valDict is None:
             valDict = {}
 

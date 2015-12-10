@@ -23,7 +23,7 @@ except NameError:
 class Test(unittest.TestCase):
 
 
-    def startClientThread(self, client_port):
+    def start_client_thread(self, client_port):
         class ClientThread(threading.Thread):
             def __init__(self, client_port):
                 threading.Thread.__init__(self)
@@ -97,7 +97,7 @@ class Test(unittest.TestCase):
         server_thread.setDaemon(True)
         server_thread.start()
 
-        client_thread = self.startClientThread(client_port) #@UnusedVariable
+        client_thread = self.start_client_thread(client_port) #@UnusedVariable
 
         try:
             import time

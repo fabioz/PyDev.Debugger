@@ -13,9 +13,9 @@ from pydevd_file_utils import get_filename_and_base
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised
 
 try:
-    from _pydevd_bundle.pydevd_signature import sendSignatureCallTrace
+    from _pydevd_bundle.pydevd_signature import send_signature_call_trace
 except ImportError:
-    def sendSignatureCallTrace(*args, **kwargs):
+    def send_signature_call_trace(*args, **kwargs):
         pass
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_dont_trace
@@ -237,7 +237,7 @@ class PyDBFrame:
                 return None
 
             if event == 'call' and main_debugger.signature_factory:
-                sendSignatureCallTrace(main_debugger, frame, filename)
+                send_signature_call_trace(main_debugger, frame, filename)
                 
             plugin_manager = main_debugger.plugin
 

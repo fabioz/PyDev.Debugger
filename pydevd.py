@@ -631,7 +631,7 @@ class PyDB:
             self._main_lock.release()
 
 
-    def setTracingForUntracedContexts(self, ignore_frame=None, overwrite_prev_trace=False):
+    def set_tracing_for_untraced_contexts(self, ignore_frame=None, overwrite_prev_trace=False):
         # Enable the tracing for existing threads (because there may be frames being executed that
         # are currently untraced).
         threads = threadingEnumerate()
@@ -710,7 +710,7 @@ class PyDB:
 
             if not updated_on_caught and eb.notify_always:
                 updated_on_caught = True
-                self.setTracingForUntracedContexts()
+                self.set_tracing_for_untraced_contexts()
 
 
     def process_net_command(self, cmd_id, seq, text):
@@ -995,7 +995,7 @@ class PyDB:
                     if self.plugin is not None:
                         self.has_plugin_line_breaks = self.plugin.has_line_breaks()
 
-                    self.setTracingForUntracedContexts(overwrite_prev_trace=True)
+                    self.set_tracing_for_untraced_contexts(overwrite_prev_trace=True)
 
                 elif cmd_id == CMD_REMOVE_BREAK:
                     #command to remove some breakpoint
@@ -2070,7 +2070,7 @@ def _locked_settrace(
             debugger.patch_threads()
 
             # As this is the first connection, also set tracing for any untraced threads
-            debugger.setTracingForUntracedContexts(ignore_frame=get_frame(), overwrite_prev_trace=overwrite_prev_trace)
+            debugger.set_tracing_for_untraced_contexts(ignore_frame=get_frame(), overwrite_prev_trace=overwrite_prev_trace)
 
         # Stop the tracing as the last thing before the actual shutdown for a clean exit.
         atexit.register(stoptrace)

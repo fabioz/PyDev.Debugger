@@ -926,7 +926,7 @@ class InternalGetVariable(InternalThreadCommand):
         """ Converts request into python variable """
         try:
             xml = "<xml>"
-            valDict = pydevd_vars.resolveCompoundVariable(self.thread_id, self.frame_id, self.scope, self.attributes)
+            valDict = pydevd_vars.resolve_compound_variable(self.thread_id, self.frame_id, self.scope, self.attributes)
             if valDict is None:
                 valDict = {}
 

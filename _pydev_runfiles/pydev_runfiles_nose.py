@@ -37,7 +37,7 @@ class PydevPlugin(Plugin):
     #===================================================================================================================
 
 
-    def reportCond(self, cond, test, captured_output, error=''):
+    def report_cond(self, cond, test, captured_output, error=''):
         '''
         @param cond: fail, error, ok
         '''
@@ -110,7 +110,7 @@ class PydevPlugin(Plugin):
 
 
     def addError(self, test, err):
-        self.reportCond(
+        self.report_cond(
             'error',
             test,
             self.get_captured_output(test),
@@ -119,7 +119,7 @@ class PydevPlugin(Plugin):
 
 
     def addFailure(self, test, err):
-        self.reportCond(
+        self.report_cond(
             'fail',
             test,
             self.get_captured_output(test),
@@ -128,7 +128,7 @@ class PydevPlugin(Plugin):
 
 
     def addSuccess(self, test):
-        self.reportCond(
+        self.report_cond(
             'ok',
             test,
             self.get_captured_output(test),
@@ -159,7 +159,7 @@ def new_consolidate(self, result, batch_result):
 
     parent_frame = sys._getframe().f_back
     # addr is something as D:\pytesting1\src\mod1\hello.py:TestCase.testMet4
-    # so, convert it to what reportCond expects
+    # so, convert it to what report_cond expects
     addr = parent_frame.f_locals['addr']
     i = addr.rindex(':')
     addr = [addr[:i], addr[i + 1:]]
@@ -167,12 +167,12 @@ def new_consolidate(self, result, batch_result):
     output, testsRun, failures, errors, errorClasses = batch_result
     if failures or errors:
         for failure in failures:
-            PYDEV_NOSE_PLUGIN_SINGLETON.reportCond('fail', addr, output, failure)
+            PYDEV_NOSE_PLUGIN_SINGLETON.report_cond('fail', addr, output, failure)
 
         for error in errors:
-            PYDEV_NOSE_PLUGIN_SINGLETON.reportCond('error', addr, output, error)
+            PYDEV_NOSE_PLUGIN_SINGLETON.report_cond('error', addr, output, error)
     else:
-        PYDEV_NOSE_PLUGIN_SINGLETON.reportCond('ok', addr, output)
+        PYDEV_NOSE_PLUGIN_SINGLETON.report_cond('ok', addr, output)
 
 
     return ret

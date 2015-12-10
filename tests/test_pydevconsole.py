@@ -27,7 +27,7 @@ class Test(unittest.TestCase):
 
         try:
             client_port, _server_port = self.get_free_addresses()
-            client_thread = self.startClientThread(client_port)  #@UnusedVariable
+            client_thread = self.start_client_thread(client_port)  #@UnusedVariable
             import time
             time.sleep(.3)  #let's give it some time to start the threads
 
@@ -46,7 +46,7 @@ class Test(unittest.TestCase):
 
         try:
             client_port, _server_port = self.get_free_addresses()
-            client_thread = self.startClientThread(client_port)  #@UnusedVariable
+            client_thread = self.start_client_thread(client_port)  #@UnusedVariable
             import time
             time.sleep(.3)  #let's give it some time to start the threads
 
@@ -127,7 +127,7 @@ class Test(unittest.TestCase):
             sys.stdout = self.original_stdout
 
 
-    def startClientThread(self, client_port):
+    def start_client_thread(self, client_port):
         class ClientThread(threading.Thread):
             def __init__(self, client_port):
                 threading.Thread.__init__(self)
@@ -159,7 +159,7 @@ class Test(unittest.TestCase):
         return client_thread
 
 
-    def startDebuggerServerThread(self, debugger_port, socket_code):
+    def start_debugger_server_thread(self, debugger_port, socket_code):
         class DebuggerServerThread(threading.Thread):
             def __init__(self, debugger_port, socket_code):
                 threading.Thread.__init__(self)
@@ -228,7 +228,7 @@ class Test(unittest.TestCase):
             server_thread.setDaemon(True)
             server_thread.start()
 
-            client_thread = self.startClientThread(client_port)  #@UnusedVariable
+            client_thread = self.start_client_thread(client_port)  #@UnusedVariable
 
             import time
             time.sleep(.3)  #let's give it some time to start the threads
