@@ -31,7 +31,11 @@ TRACE_PROPERTY = 'pydevd_traceproperty.py'
 #=======================================================================================================================
 # PyDBFrame
 #=======================================================================================================================
+# IFDEF CYTHON
+# cdef class PyDBFrame:
+# ELSE
 class PyDBFrame:
+# ENDIF
     '''This makes the tracing for a given frame, so, the trace_dispatch
     is used initially when we enter into a new context ('call') and then
     is reused for the entire context.
@@ -44,10 +48,24 @@ class PyDBFrame:
     filename_to_lines_where_exceptions_are_ignored = {}
     filename_to_stat_info = {}
 
+    # IFDEF CYTHON
+    # cdef public tuple _args;
+    # cdef public int should_skip;
+    # ELSE
+    should_skip = -1  # Default value when non-cython (in cython it's set in the constructor).
+    # ENDIF
+
+
+    # IFDEF CYTHON
+    # def __init__(self, tuple args):
+        # self.should_skip = -1
+        # self._args = args # In the cython version we don't need to pass the frame
+    # ELSE
     def __init__(self, args):
         #args = mainDebugger, filename, base, info, t, frame
         #yeap, much faster than putting in self and then getting it from self later on
-        self._args = args[:-1]
+        self._args = args[:-1] # Remove the frame (we don't want to have a reference to it).
+    # ENDIF
 
     def set_suspend(self, *args, **kwargs):
         self._args[0].set_suspend(*args, **kwargs)
@@ -238,7 +256,7 @@ class PyDBFrame:
 
             if event == 'call' and main_debugger.signature_factory:
                 send_signature_call_trace(main_debugger, frame, filename)
-                
+
             plugin_manager = main_debugger.plugin
 
             is_exception_event = event == 'exception'
@@ -430,13 +448,17 @@ class PyDBFrame:
 
             #step handling. We stop when we hit the right frame
             try:
-                should_skip = False
+                should_skip = 0
                 if pydevd_dont_trace.should_trace_hook is not None:
-                    if not hasattr(self, 'should_skip'):
+                    if self.should_skip == -1:
                         # I.e.: cache the result on self.should_skip (no need to evaluate the same frame multiple times).
                         # Note that on a code reload, we won't re-evaluate this because in practice, the frame.f_code
                         # Which will be handled by this frame is read-only, so, we can cache it safely.
-                        should_skip = self.should_skip = not pydevd_dont_trace.should_trace_hook(frame, filename)
+                        if not pydevd_dont_trace.should_trace_hook(frame, filename):
+                            # -1, 0, 1 to be Cython-friendly
+                            should_skip = self.should_skip = 1
+                        else:
+                            should_skip = self.should_skip = 0
                     else:
                         should_skip = self.should_skip
 
@@ -569,12 +591,3 @@ class PyDBFrame:
 
         #end trace_dispatch
 
-    if USE_PSYCO_OPTIMIZATION:
-        try:
-            import psyco
-
-            trace_dispatch = psyco.proxy(trace_dispatch)
-        except ImportError:
-            if hasattr(sys, 'exc_clear'): #jython does not have it
-                sys.exc_clear() #don't keep the traceback
-            pass #ok, psyco not available

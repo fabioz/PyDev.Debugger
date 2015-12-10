@@ -3,62 +3,52 @@ Entry point module (keep at root):
 
 This module starts the debugger.
 '''
-from __future__ import nested_scopes # Jython 2.1 support
+from __future__ import nested_scopes  # Jython 2.1 support
+
+import atexit
+import os
+import sys
+import traceback
+
+from _pydev_bundle import fix_getpass
+from _pydev_bundle import pydev_imports, pydev_log
+from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
+from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
+from _pydev_imps import _pydev_threading as threading
+from _pydev_imps import _pydev_time as time, _pydev_thread
+from _pydevd_bundle import pydevd_io, pydevd_vm_type, pydevd_tracing
+from _pydevd_bundle import pydevd_utils
+from _pydevd_bundle import pydevd_vars
+from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
+from _pydevd_bundle.pydevd_breakpoints import ExceptionBreakpoint, update_exception_hook
+from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO, CMD_STEP_OVER, \
+    CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE, CMD_THREAD_SUSPEND, CMD_RUN_TO_LINE, \
+    CMD_ADD_EXCEPTION_BREAK, CMD_SMART_STEP_INTO, InternalConsoleExec, NetCommandFactory, \
+    PyDBDaemonThread, _queue, ReaderThread, GetGlobalDebugger, get_global_debugger, \
+    set_global_debugger, WriterThread, pydevd_find_thread_by_id, pydevd_log, \
+    start_client, start_server, InternalGetBreakpointException, InternalSendCurrExceptionTrace, \
+    InternalSendCurrExceptionTraceProceeded
+from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, get_thread_id, dict_keys, dict_pop, dict_contains, \
+    dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange
+from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
+from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
+from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
+from _pydevd_bundle.pydevd_trace_dispatch import trace_dispatch as _trace_dispatch
+from _pydevd_bundle.pydevd_utils import save_main_module
+from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
+from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
+
 
 __version_info__ = (1, 0, 1)
 __version__ = '.'.join(str(x) for x in __version_info__)
 
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
 
-from _pydevd_bundle import pydevd_utils
-from _pydevd_bundle.pydevd_utils import save_main_module
 
-import traceback
 
-from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
-from _pydev_bundle import pydev_imports
-from _pydevd_bundle.pydevd_breakpoints import * #@UnusedWildImport
-from _pydev_bundle import fix_getpass
-from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, \
-                         CMD_SET_NEXT_STATEMENT,\
-                         CMD_STEP_INTO, \
-                         CMD_STEP_OVER, \
-                         CMD_STEP_RETURN, \
-                         CMD_STEP_INTO_MY_CODE, \
-                         CMD_THREAD_SUSPEND, \
-                         CMD_RUN_TO_LINE, \
-                         CMD_ADD_EXCEPTION_BREAK, \
-                         CMD_SMART_STEP_INTO,\
-                         InternalConsoleExec, \
-                         NetCommandFactory, \
-                         PyDBDaemonThread, \
-                         _queue, \
-                         ReaderThread, \
-                         GetGlobalDebugger, \
-                         get_global_debugger, \
-                         set_global_debugger, \
-                         WriterThread, \
-                         pydevd_find_thread_by_id, \
-                         pydevd_log, \
-                         start_client, \
-                         start_server, \
-                         InternalGetBreakpointException, \
-                         InternalSendCurrExceptionTrace,\
-                         InternalSendCurrExceptionTraceProceeded
 
-from pydevd_file_utils import get_filename_and_base
-from _pydevd_bundle import pydevd_vars
-from _pydevd_bundle import pydevd_io
-from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
-from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 
-from _pydev_imps import _pydev_time as time, _pydev_thread
 
-from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
-from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
-
-import os
-import atexit
 
 SUPPORT_PLUGINS = not IS_JYTH_LESS25
 PluginManager = None
@@ -78,102 +68,14 @@ try:
 except:
     pass
 
-LIB_FILE = 0
-PYDEV_FILE = 1
-
-DONT_TRACE = {
-              # commonly used things from the stdlib that we don't want to trace
-              'Queue.py':LIB_FILE,
-              'queue.py':LIB_FILE,
-              'socket.py':LIB_FILE,
-              'weakref.py':LIB_FILE,
-              '_weakrefset.py':LIB_FILE,
-              'linecache.py':LIB_FILE,
-              'threading.py':LIB_FILE,
-
-              # thirs party libs that we don't want to trace
-              '_pydev_pluginbase.py':PYDEV_FILE,
-              '_pydev_pkgutil_old.py':PYDEV_FILE,
-              '_pydev_uuid_old.py':PYDEV_FILE,
-
-              #things from pydev that we don't want to trace
-              '_pydev_execfile.py':PYDEV_FILE,
-              '_pydev_threading':PYDEV_FILE,
-              '_pydev_Queue':PYDEV_FILE,
-              'django_debug.py':PYDEV_FILE,
-              'jinja2_debug.py':PYDEV_FILE,
-              'pydev_log.py':PYDEV_FILE,
-              'pydev_monkey.py':PYDEV_FILE,
-              'pydev_monkey_qt.py':PYDEV_FILE,
-              'pydevd.py':PYDEV_FILE,
-              'pydevd_additional_thread_info.py':PYDEV_FILE,
-              'pydevd_breakpoints.py':PYDEV_FILE,
-              'pydevd_comm.py':PYDEV_FILE,
-              'pydevd_console.py':PYDEV_FILE,
-              'pydevd_constants.py':PYDEV_FILE,
-              'pydevd_custom_frames.py':PYDEV_FILE,
-              'pydevd_dont_trace.py':PYDEV_FILE,
-              'pydevd_exec.py':PYDEV_FILE,
-              'pydevd_exec2.py':PYDEV_FILE,
-              'pydevd_file_utils.py':PYDEV_FILE,
-              'pydevd_frame.py':PYDEV_FILE,
-              'pydevd_import_class.py':PYDEV_FILE,
-              'pydevd_io.py':PYDEV_FILE,
-              'pydevd_process_net_command.py':PYDEV_FILE,
-              'pydevd_psyco_stub.py':PYDEV_FILE,
-              'pydevd_referrers.py':PYDEV_FILE,
-              'pydevd_reload.py':PYDEV_FILE,
-              'pydevd_resolver.py':PYDEV_FILE,
-              'pydevd_save_locals.py':PYDEV_FILE,
-              'pydevd_signature.py':PYDEV_FILE,
-              'pydevd_stackless.py':PYDEV_FILE,
-              'pydevd_traceproperty.py':PYDEV_FILE,
-              'pydevd_tracing.py':PYDEV_FILE,
-              'pydevd_utils.py':PYDEV_FILE,
-              'pydevd_vars.py':PYDEV_FILE,
-              'pydevd_vm_type.py':PYDEV_FILE,
-              'pydevd_xml.py':PYDEV_FILE,
-            }
-
-if IS_PY3K:
-    # if we try to trace io.py it seems it can get halted (see http://bugs.python.org/issue4716)
-    DONT_TRACE['io.py'] = LIB_FILE
-
-    # Don't trace common encodings too
-    DONT_TRACE['cp1252.py'] = LIB_FILE
-    DONT_TRACE['utf_8.py'] = LIB_FILE
-
 
 connected = False
 bufferStdOutToServer = False
 bufferStdErrToServer = False
 remote = False
 
-from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 file_system_encoding = getfilesystemencoding()
 
-
-# Hack for https://sw-brainwy.rhcloud.com/tracker/PyDev/363 (i.e.: calling isAlive() can throw AssertionError under some circumstances)
-# It is required to debug threads started by start_new_thread in Python 3.4
-_temp = threading.Thread()
-if hasattr(_temp, '_is_stopped'): # Python 3.4 has this
-    def is_thread_alive(t):
-        try:
-            return not t._is_stopped
-        except:
-            return t.isAlive()
-
-elif hasattr(_temp, '_Thread__stopped'): # Python 2.7 has this
-    def is_thread_alive(t):
-        try:
-            return not t._Thread__stopped
-        except:
-            return t.isAlive()
-
-else: # Haven't checked all other versions, so, let's use the regular isAlive call in this case.
-    def is_thread_alive(t):
-        return t.isAlive()
-del _temp
 
 #=======================================================================================================================
 # PyDBCommandThread
@@ -209,12 +111,6 @@ class PyDBCommandThread(PyDBDaemonThread):
             #only got this error in interpreter shutdown
             #pydevd_log(0, 'Finishing debug communication...(3)')
 
-
-def kill_all_pydev_threads():
-    threads = dict_keys(PyDBDaemonThread.created_pydb_daemon_threads)
-    for t in threads:
-        if hasattr(t, 'do_kill_pydev_thread'):
-            t.do_kill_pydev_thread()
 
 
 #=======================================================================================================================
@@ -875,115 +771,6 @@ class PyDB:
             additional_info.pydev_force_stop_at_exception = None
             pydevd_vars.remove_additional_frame_by_id(thread_id)
 
-    def trace_dispatch(self, frame, event, arg):
-        ''' This is the callback used when we enter some context in the debugger.
-
-        We also decorate the thread we are in with info about the debugging.
-        The attributes added are:
-            pydev_state
-            pydev_step_stop
-            pydev_step_cmd
-            pydev_notify_kill
-        '''
-        try:
-            if self._finishDebuggingSession and not self._terminationEventSent:
-                #that was not working very well because jython gave some socket errors
-                try:
-                    if self.output_checker is None:
-                        kill_all_pydev_threads()
-                except:
-                    traceback.print_exc()
-                self._terminationEventSent = True
-                return None
-
-            filename, base = get_filename_and_base(frame)
-
-            if self.thread_analyser is not None:
-                self.thread_analyser.log_event(frame)
-
-            if self.asyncio_analyser is not None:
-                self.asyncio_analyser.log_event(frame)
-
-            is_file_to_ignore = dict_contains(DONT_TRACE, base) #we don't want to debug threading or anything related to pydevd
-
-            #print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, is_file_to_ignore)
-            if is_file_to_ignore:
-                if DONT_TRACE[base] == LIB_FILE:
-                    if self.not_in_scope(filename):
-                        return None
-                else:
-                    return None
-
-            try:
-                #this shouldn't give an exception, but it could happen... (python bug)
-                #see http://mail.python.org/pipermail/python-bugs-list/2007-June/038796.html
-                #and related bug: http://bugs.python.org/issue1733757
-                t = threadingCurrentThread()
-            except:
-                frame.f_trace = self.trace_dispatch
-                return self.trace_dispatch
-
-            try:
-                additional_info = t.additional_info
-                if additional_info is None:
-                    raise AttributeError()
-            except:
-                t.additional_info = PyDBAdditionalThreadInfo()
-                additional_info = t.additional_info
-
-            if additional_info is None:
-                return None
-
-            if additional_info.is_tracing:
-                f = frame
-                while f is not None:
-                    if 'trace_dispatch' == f.f_code.co_name:
-                        _fname, bs = get_filename_and_base(f)
-                        if bs == 'pydevd_frame.py':
-                            return None  #we don't wan't to trace code invoked from pydevd_frame.trace_dispatch
-                    f = f.f_back
-
-            # if thread is not alive, cancel trace_dispatch processing
-            if not is_thread_alive(t):
-                self._process_thread_not_alive(get_thread_id(t))
-                return None  # suspend tracing
-
-            # each new frame...
-            return additional_info.create_db_frame((self, filename, additional_info, t, frame)).trace_dispatch(frame, event, arg)
-
-        except SystemExit:
-            return None
-
-        except Exception:
-            if self._finishDebuggingSession:
-                return None # Don't log errors when we're shutting down.
-            # Log it
-            try:
-                if traceback is not None:
-                    # This can actually happen during the interpreter shutdown in Python 2.7
-                    traceback.print_exc()
-            except:
-                # Error logging? We're really in the interpreter shutdown...
-                # (https://github.com/fabioz/PyDev.Debugger/issues/8)
-                pass
-            return None
-
-    if USE_PSYCO_OPTIMIZATION:
-        try:
-            import psyco
-            trace_dispatch = psyco.proxy(trace_dispatch)
-            process_internal_commands = psyco.proxy(process_internal_commands)
-            do_wait_suspend = psyco.proxy(do_wait_suspend)
-            get_internal_queue = psyco.proxy(get_internal_queue)
-        except ImportError:
-            if hasattr(sys, 'exc_clear'):  # jython does not have it
-                sys.exc_clear()  # don't keep the traceback (let's keep it clear for when we go to the point of executing client code)
-
-            if not IS_PY3K and not IS_PY27 and not IS_64_BITS and not sys.platform.startswith("java") and not sys.platform.startswith("cli"):
-                sys.stderr.write("pydev debugger: warning: psyco not available for speedups (the debugger will still work correctly, but a bit slower)\n")
-                sys.stderr.flush()
-
-
 
     def set_trace_for_frame_and_parents(self, frame, also_add_to_passed_frame=True, overwrite_prev_trace=False, dispatch_func=None):
         if dispatch_func is None:
@@ -1140,6 +927,8 @@ class PyDB:
         while True:
             self.process_internal_commands()
             time.sleep(0.01)
+
+    trace_dispatch = _trace_dispatch
 
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True

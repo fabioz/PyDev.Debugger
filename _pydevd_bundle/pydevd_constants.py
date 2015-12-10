@@ -22,9 +22,6 @@ class DebugInfoHolder:
     DEBUG_TRACE_LEVEL = -1
     DEBUG_TRACE_BREAKPOINTS = -1
 
-#Optimize with psyco? This gave a 50% speedup in the debugger in tests
-USE_PSYCO_OPTIMIZATION = True
-
 #Hold a reference to the original _getframe (because psyco will change that as soon as it's imported)
 import sys #Note: the sys import must be here anyways (others depend on it)
 try:
@@ -137,7 +134,7 @@ else:
     except:
         def dict_keys(d):
             return d.keys()
-    
+
     try:
         dict_iter_values = dict.itervalues
     except:
@@ -168,7 +165,7 @@ try:
 except:
     #Python 3k does not have it
     xrange = range
-    
+
 try:
     import itertools
     izip = itertools.izip

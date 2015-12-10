@@ -21,11 +21,9 @@ import os
 # But it may make the compilation with visual fail!
 
 # TODO: Work in progress
-basedir = os.path.dirname(__file__)
-shutil.copy2(os.path.join(basedir, '_pydevd_regular.py'), os.path.join(basedir, '_pydevd_cython.py'))
 setup(
     name='Cythonize',
     ext_modules=cythonize([
-        "_pydevd_cython.py",
+        "_pydevd_bundle/pydevd_trace_dispatch_cython.pyx",
     ]),
 )

@@ -90,7 +90,10 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
                 (SPEEDTIN_PROJECT_ID_NOTRACE, regular_time),
                 (SPEEDTIN_PROJECT_ID_SIMPLETRACE, simple_trace_time),
                 ):
-                import pyspeedtin
+                try:
+                    import pyspeedtin
+                except ImportError:
+                    continue
                 api = pyspeedtin.PySpeedTinApi(authorization_key=SPEEDTIN_AUTHORIZATION_KEY, project_id=project_id)
                 api.add_benchmark(writer_thread_class.BENCHMARK_NAME)
                 commit_id, branch, commit_date = api.git_commit_id_branch_and_date_from_path(__file__)

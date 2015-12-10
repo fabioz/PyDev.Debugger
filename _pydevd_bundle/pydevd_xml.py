@@ -36,7 +36,7 @@ def _update_type_map():
     if not sys.platform.startswith("java"):
         _TYPE_MAP = [
                 #None means that it should not be treated as a compound variable
-    
+
                 #isintance does not accept a tuple on some versions of python, so, we must declare it expanded
                 (type(None), None,),
                 (int, None),
@@ -47,33 +47,33 @@ def _update_type_map():
                 (list, pydevd_resolver.tupleResolver),
                 (dict, pydevd_resolver.dictResolver),
         ]
-    
+
         try:
             _TYPE_MAP.append((long, None))
         except:
             pass #not available on all python versions
-    
+
         try:
             _TYPE_MAP.append((unicode, None))
         except:
             pass #not available on all python versions
-    
+
         try:
             _TYPE_MAP.append((set, pydevd_resolver.setResolver))
         except:
             pass #not available on all python versions
-    
+
         try:
             _TYPE_MAP.append((frozenset, pydevd_resolver.setResolver))
         except:
             pass #not available on all python versions
-    
+
         try:
             import numpy
             _TYPE_MAP.append((numpy.ndarray, pydevd_resolver.ndarrayResolver))
         except:
             pass  #numpy may not be installed
-    
+
         try:
             from django.utils.datastructures import MultiValueDict
             _TYPE_MAP.insert(0, (MultiValueDict, pydevd_resolver.multiValueDictResolver))
@@ -89,8 +89,8 @@ def _update_type_map():
 
         if frame_type is not None:
             _TYPE_MAP.append((frame_type, pydevd_resolver.frameResolver))
-    
-    
+
+
     else: #platform is java
         from org.python import core #@UnresolvedImport
         _TYPE_MAP = [
@@ -105,7 +105,7 @@ def _update_type_map():
                 (core.PyDictionary, pydevd_resolver.dictResolver),
                 (core.PyStringMap, pydevd_resolver.dictResolver),
         ]
-    
+
         if hasattr(core, 'PyJavaInstance'):
             #Jython 2.5b3 removed it.
             _TYPE_MAP.append((core.PyJavaInstance, pydevd_resolver.instanceResolver))
@@ -185,7 +185,7 @@ def var_to_xml(val, name, doTrim=True, additionalInXml=''):
         if hasattr(v, '__class__'):
             if v.__class__ == frame_type:
                 value = pydevd_resolver.frameResolver.get_frame_name(v)
-                
+
             elif v.__class__ in (list, tuple):
                 if len(v) > 300:
                     value = '%s: %s' % (str(v.__class__), '<Too big to print. Len: %s>' % (len(v),))
@@ -250,11 +250,3 @@ def var_to_xml(val, name, doTrim=True, additionalInXml=''):
 
     return ''.join((xml, xmlValue, xmlCont, additionalInXml, ' />\n'))
 
-if USE_PSYCO_OPTIMIZATION:
-    try:
-        import psyco
-
-        var_to_xml = psyco.proxy(var_to_xml)
-    except ImportError:
-        if hasattr(sys, 'exc_clear'): #jython does not have it
-            sys.exc_clear() #don't keep the traceback -- clients don't want to see it
