@@ -227,13 +227,13 @@ class GlobalDebuggerHolder:
     '''
         Holder for the global debugger.
     '''
-    globalDbg = None
+    global_dbg = None  # Note: don't rename (the name is used in our attach to process)
 
 #=======================================================================================================================
 # get_global_debugger
 #=======================================================================================================================
 def get_global_debugger():
-    return GlobalDebuggerHolder.globalDbg
+    return GlobalDebuggerHolder.global_dbg
 
 GetGlobalDebugger = get_global_debugger # Backward-compatibility
 
@@ -241,7 +241,7 @@ GetGlobalDebugger = get_global_debugger # Backward-compatibility
 # set_global_debugger
 #=======================================================================================================================
 def set_global_debugger(dbg):
-    GlobalDebuggerHolder.globalDbg = dbg
+    GlobalDebuggerHolder.global_dbg = dbg
 
 
 #------------------------------------------------------------------- ACTUAL COMM
@@ -310,6 +310,10 @@ class ReaderThread(PyDBDaemonThread):
         PyDBDaemonThread.__init__(self)
         self.sock = sock
         self.setName("pydevd.Reader")
+        from _pydevd_bundle.pydevd_process_net_command import process_net_command
+        self.process_net_command = process_net_command
+        self.global_debugger_holder = GlobalDebuggerHolder
+
 
 
     def do_kill_pydev_thread(self):
@@ -323,7 +327,7 @@ class ReaderThread(PyDBDaemonThread):
 
     def _on_run(self):
         self._stop_trace()
-        buffer = ""
+        read_buffer = ""
         try:
 
             while not self.killReceived:
@@ -341,15 +345,15 @@ class ReaderThread(PyDBDaemonThread):
                 if hasattr(r, 'decode'):
                     r = r.decode('utf-8')
 
-                buffer += r
+                read_buffer += r
                 if DebugInfoHolder.DEBUG_RECORD_SOCKET_READS:
-                    pydev_log.debug('received >>%s<<\n' % (buffer,))
+                    pydev_log.debug('received >>%s<<\n' % (read_buffer,))
 
-                if len(buffer) == 0:
+                if len(read_buffer) == 0:
                     self.handle_except()
                     break
-                while buffer.find('\n') != -1:
-                    command, buffer = buffer.split('\n', 1)
+                while read_buffer.find('\n') != -1:
+                    command, read_buffer = read_buffer.split('\n', 1)
 
                     args = command.split('\t', 2)
                     try:
@@ -367,10 +371,10 @@ class ReaderThread(PyDBDaemonThread):
 
 
     def handle_except(self):
-        GlobalDebuggerHolder.globalDbg.finish_debugging_session()
+        self.global_debugger_holder.global_dbg.finish_debugging_session()
 
     def process_command(self, cmd_id, seq, text):
-        GlobalDebuggerHolder.globalDbg.process_net_command(cmd_id, seq, text)
+        self.process_net_command(self.global_debugger_holder.global_dbg, cmd_id, seq, text)
 
 
 #----------------------------------------------------------------------------------- SOCKET UTILITIES - WRITER
@@ -445,7 +449,7 @@ class WriterThread(PyDBDaemonThread):
                     break #interpreter shutdown
                 time.sleep(self.timeout)
         except Exception:
-            GlobalDebuggerHolder.globalDbg.finish_debugging_session()
+            GlobalDebuggerHolder.global_dbg.finish_debugging_session()
             if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 0:
                 traceback.print_exc()
 

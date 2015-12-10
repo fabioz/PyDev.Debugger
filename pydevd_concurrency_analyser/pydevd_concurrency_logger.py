@@ -87,7 +87,7 @@ def get_text_list_for_frame(frame):
 
 
 def send_message(event_class, time, name, thread_id, type, event, file, line, frame, lock_id=0, parent=None):
-    dbg = GlobalDebuggerHolder.globalDbg
+    dbg = GlobalDebuggerHolder.global_dbg
     cmdTextList = ['<xml>']
 
     cmdTextList.append('<' + event_class)
