@@ -292,18 +292,18 @@ NAMES = '''
 # readMsg
 
 
-redirectStdout
-removeInvalidChars
-reportCond
-resolveCompoundVariable
-resolveVar
-restoreStdout
-sendKillMsg
-sendSignatureCallTrace
-setTracingForUntracedContexts
-startClientThread
-startDebuggerServerThread
-startExec
+# redirectStdout
+# removeInvalidChars
+# reportCond
+# resolveCompoundVariable
+# resolveVar
+# restoreStdout
+# sendKillMsg
+# sendSignatureCallTrace
+# setTracingForUntracedContexts
+# startClientThread
+# startDebuggerServerThread
+# startExec
 
 # startTest -- skip
 # stopTest -- skip
