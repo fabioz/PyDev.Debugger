@@ -33,3 +33,5 @@ nosetests.xml
 coverage.xml
 
 snippet.py
+*.c
+*.pyx

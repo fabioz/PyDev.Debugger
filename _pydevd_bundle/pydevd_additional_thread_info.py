@@ -1,13 +1,14 @@
 import sys
-from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
-from _pydev_imps import _pydev_thread
-from _pydevd_bundle.pydevd_frame import PyDBFrame
 import weakref
+from _pydev_imps import _pydev_thread
+from _pydevd_bundle.pydevd_constants import STATE_RUN
+from _pydevd_bundle.pydevd_frame import PyDBFrame
+
 
 #=======================================================================================================================
-# AbstractPyDBAdditionalThreadInfo
+# PyDBAdditionalThreadInfo
 #=======================================================================================================================
-class AbstractPyDBAdditionalThreadInfo:
+class PyDBAdditionalThreadInfo:
     def __init__(self):
         self.pydev_state = STATE_RUN
         self.pydev_step_stop = None
@@ -21,41 +22,30 @@ class AbstractPyDBAdditionalThreadInfo:
 
 
     def iter_frames(self):
-        raise NotImplementedError()
-
-    def create_db_frame(self, args):
-        #args = mainDebugger, filename, base, additional_info, t, frame
-        raise NotImplementedError()
-
-    def __str__(self):
-        return 'State:%s Stop:%s Cmd: %s Kill:%s' % (self.pydev_state, self.pydev_step_stop, self.pydev_step_cmd, self.pydev_notify_kill)
-
-
-#=======================================================================================================================
-# PyDBAdditionalThreadInfoWithCurrentFramesSupport
-#=======================================================================================================================
-class PyDBAdditionalThreadInfoWithCurrentFramesSupport(AbstractPyDBAdditionalThreadInfo):
-
-    def iter_frames(self):
         #sys._current_frames(): dictionary with thread id -> topmost frame
         return sys._current_frames().values() #return a copy... don't know if it's changed if we did get an iterator
 
     #just create the db frame directly
     create_db_frame = PyDBFrame
 
+
+    def __str__(self):
+        return 'State:%s Stop:%s Cmd: %s Kill:%s' % (self.pydev_state, self.pydev_step_stop, self.pydev_step_cmd, self.pydev_notify_kill)
+
+
 #=======================================================================================================================
 # PyDBAdditionalThreadInfoWithoutCurrentFramesSupport
 #=======================================================================================================================
-class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(AbstractPyDBAdditionalThreadInfo):
+class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(PyDBAdditionalThreadInfo):
 
     def __init__(self):
-        AbstractPyDBAdditionalThreadInfo.__init__(self)
+        PyDBAdditionalThreadInfo.__init__(self)
         #That's where the last frame entered is kept. That's needed so that we're able to
         #trace contexts that were previously untraced and are currently active. So, the bad thing
         #is that the frame may be kept alive longer than it would if we go up on the frame stack,
         #and is only disposed when some other frame is removed.
         #A better way would be if we could get the topmost frame for each thread, but that's
-        #not possible (until python 2.5 -- which is the PyDBAdditionalThreadInfoWithCurrentFramesSupport version)
+        #not possible (until python 2.5 -- which is the PyDBAdditionalThreadInfo version)
         #Or if the user compiled threadframe (from http://www.majid.info/mylos/stories/2004/06/10/threadframe.html)
 
         #NOT RLock!! (could deadlock if it was)
@@ -122,7 +112,8 @@ class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(AbstractPyDBAdditional
             self._release_lock()
 
     def __str__(self):
-        return 'State:%s Stop:%s Cmd: %s Kill:%s Frames:%s' % (self.pydev_state, self.pydev_step_stop, self.pydev_step_cmd, self.pydev_notify_kill, len(self.iter_frames()))
+        return 'State:%s Stop:%s Cmd: %s Kill:%s Frames:%s' % (
+            self.pydev_state, self.pydev_step_stop, self.pydev_step_cmd, self.pydev_notify_kill, len(self.iter_frames()))
 
 #=======================================================================================================================
 # NOW, WE HAVE TO DEFINE WHICH THREAD INFO TO USE
@@ -130,14 +121,11 @@ class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(AbstractPyDBAdditional
 # from version 2.5 onwards, we can use sys._current_frames to get a dict with the threads
 # and frames, but to support other versions, we can't rely on that.
 #=======================================================================================================================
-if hasattr(sys, '_current_frames'):
-    PyDBAdditionalThreadInfo = PyDBAdditionalThreadInfoWithCurrentFramesSupport
-else:
+if not hasattr(sys, '_current_frames'):
     try:
         import threadframe  #@UnresolvedImport
         sys._current_frames = threadframe.dict
         assert sys._current_frames is threadframe.dict  #Just check if it was correctly set
-        PyDBAdditionalThreadInfo = PyDBAdditionalThreadInfoWithCurrentFramesSupport
     except:
         #If all fails, let's use the support without frames
         PyDBAdditionalThreadInfo = PyDBAdditionalThreadInfoWithoutCurrentFramesSupport
