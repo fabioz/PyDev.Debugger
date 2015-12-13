@@ -634,7 +634,7 @@ class PyDB:
         """
         self.process_internal_commands()
 
-        message = getattr(thread.additional_info, "message", None)
+        message = thread.additional_info.message
 
         cmd = self.cmd_factory.make_thread_suspend_message(get_thread_id(thread), frame, thread.stop_reason, message)
         self.writer.add_command(cmd)
@@ -755,20 +755,18 @@ class PyDB:
         finally:
             CustomFramesContainer.custom_frames_lock.release()  # @UndefinedVariable
 
-    def handle_post_mortem_stop(self, additional_info, t):
+    def handle_post_mortem_stop(self, thread, frame, frames_byid, exception):
         pydev_log.debug("We are stopping in post-mortem\n")
-        frame, frames_byid = additional_info.pydev_force_stop_at_exception
-        thread_id = get_thread_id(t)
+        thread_id = get_thread_id(thread)
         pydevd_vars.add_additional_frame_by_id(thread_id, frames_byid)
         try:
             try:
-                add_exception_to_frame(frame, additional_info.exception)
-                self.set_suspend(t, CMD_ADD_EXCEPTION_BREAK)
-                self.do_wait_suspend(t, frame, 'exception', None)
+                add_exception_to_frame(frame, exception)
+                self.set_suspend(thread, CMD_ADD_EXCEPTION_BREAK)
+                self.do_wait_suspend(thread, frame, 'exception', None)
             except:
                 pydev_log.error("We've got an error while stopping in post-mortem: %s\n"%sys.exc_info()[0])
         finally:
-            additional_info.pydev_force_stop_at_exception = None
             pydevd_vars.remove_additional_frame_by_id(thread_id)
 
 

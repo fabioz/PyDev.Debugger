@@ -9,28 +9,46 @@ from _pydevd_bundle.pydevd_frame import PyDBFrame
 # PyDBAdditionalThreadInfo
 #=======================================================================================================================
 class PyDBAdditionalThreadInfo:
+
+    __slots__ = [
+        'pydev_state',
+        'pydev_step_stop',
+        'pydev_step_cmd',
+        'pydev_notify_kill',
+        'pydev_smart_step_stop',
+        'pydev_django_resolve_frame',
+        'is_tracing',
+        'conditional_breakpoint_exception',
+        'message',
+    ]
+
     def __init__(self):
         self.pydev_state = STATE_RUN
         self.pydev_step_stop = None
         self.pydev_step_cmd = None
         self.pydev_notify_kill = False
-        self.pydev_force_stop_at_exception = None
         self.pydev_smart_step_stop = None
         self.pydev_django_resolve_frame = None
         self.is_tracing = False
         self.conditional_breakpoint_exception = None
+        self.message = ''
 
 
     def iter_frames(self):
         #sys._current_frames(): dictionary with thread id -> topmost frame
         return sys._current_frames().values() #return a copy... don't know if it's changed if we did get an iterator
 
-    #just create the db frame directly
+    # IFDEF CYTHON
+    # def create_db_frame(self, *args, **kwargs):
+    #     raise AssertionError('This method should not be called on cython (PyDbFrame should be used directly).')
+    # ELSE
+    # just create the db frame directly
     create_db_frame = PyDBFrame
-
+    # ENDIF
 
     def __str__(self):
-        return 'State:%s Stop:%s Cmd: %s Kill:%s' % (self.pydev_state, self.pydev_step_stop, self.pydev_step_cmd, self.pydev_notify_kill)
+        return 'State:%s Stop:%s Cmd: %s Kill:%s' % (
+            self.pydev_state, self.pydev_step_stop, self.pydev_step_cmd, self.pydev_notify_kill)
 
 
 #=======================================================================================================================

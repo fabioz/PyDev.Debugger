@@ -114,15 +114,14 @@ def _excepthook(exctype, value, tb):
         frame = user_frame
     else:
         frame = frames[-1]
-    thread.additional_info.exception = (exctype, value, tb)
-    thread.additional_info.pydev_force_stop_at_exception = (frame, frames_byid)
+    exception = (exctype, value, tb)
     thread.additional_info.message = exception_breakpoint.qname
 
     pydevd_tracing.SetTrace(None) #no tracing from here
 
-    pydev_log.debug('Handling post-mortem stop on exception breakpoint %s'% exception_breakpoint.qname)
+    pydev_log.debug('Handling post-mortem stop on exception breakpoint %s' % exception_breakpoint.qname)
 
-    debugger.handle_post_mortem_stop(thread.additional_info, thread)
+    debugger.handle_post_mortem_stop(thread, frame, frames_byid, exception)
 
 #=======================================================================================================================
 # _set_pm_excepthook
