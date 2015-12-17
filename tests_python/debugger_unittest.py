@@ -54,8 +54,9 @@ class ReaderThread(threading.Thread):
                 buf += l
 
                 if '\n' in buf:
-                    self.last_received = buf
-                    buf = ''
+                    i = buf.index('\n')+1
+                    self.last_received = buf[:i]
+                    buf = buf[i:]
 
                 if SHOW_WRITES_AND_READS:
                     if last_printed != self.last_received.strip():
