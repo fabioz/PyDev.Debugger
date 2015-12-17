@@ -280,7 +280,7 @@ class AbstractWriterThread(threading.Thread):
                 return threadId, frameId, int(splitted[13])
             except:
                 raise AssertionError('Error with: %s, %s, %s.\nLast: %s.\n\nAll: %s\n\nSplitted: %s' % (
-                    threadId, frameId, splitted[13], last, '\n'.join(self.reader_thread.all_received, splitted)))
+                    threadId, frameId, splitted[13], last, '\n'.join(self.reader_thread.all_received), splitted))
 
         self.log.append('End(1): wait_for_breakpoint_hit')
         return threadId, frameId

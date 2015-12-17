@@ -302,7 +302,7 @@ def cmd_step_into(plugin, mainDebugger, frame, event, args, stop_info, stop):
         plugin_stop = stop_info['django_stop']
         stop = stop and _is_django_resolve_call(frame.f_back) and not _is_django_context_get_call(frame)
         if stop:
-            info.pydev_django_resolve_frame = 1 #we remember that we've go into python code from django rendering frame
+            info.pydev_django_resolve_frame = True # we remember that we've go into python code from django rendering frame
     return stop, plugin_stop
 
 
@@ -315,10 +315,10 @@ def cmd_step_over(plugin, mainDebugger, frame, event, args, stop_info, stop):
         stop = False
         return stop, plugin_stop
     else:
-        if event == 'return' and info.pydev_django_resolve_frame is not None and _is_django_resolve_call(frame.f_back):
+        if event == 'return' and info.pydev_django_resolve_frame and _is_django_resolve_call(frame.f_back):
             #we return to Django suspend mode and should not stop before django rendering frame
-            info.pydev_step_stop = info.pydev_django_resolve_frame
-            info.pydev_django_resolve_frame = None
+            info.pydev_step_stop = frame.f_back
+            info.pydev_django_resolve_frame = False
             thread.additional_info.suspend_type = DJANGO_SUSPEND
         stop = info.pydev_step_stop is frame and event in ('line', 'return')
     return stop, plugin_stop
@@ -375,7 +375,7 @@ def exception_break(plugin, mainDebugger, pydb_frame, frame, args, arg):
             if suspend_frame:
                 add_exception_to_frame(suspend_frame, (exception, value, trace))
                 flag = True
-                thread.additional_info.message = 'VariableDoesNotExist'
+                thread.additional_info.pydev_message = 'VariableDoesNotExist'
                 suspend_frame.f_back = frame
                 frame = suspend_frame
                 return (flag, frame)

@@ -618,7 +618,7 @@ class NetCommandFactory:
         make_valid_xml_value = pydevd_vars.make_valid_xml_value
 
         if message:
-            message = make_valid_xml_value(str(message))
+            message = make_valid_xml_value(message)
 
         append('<thread id="%s" stop_reason="%s" message="%s">' % (thread_id, stop_reason, message))
 
@@ -876,7 +876,7 @@ class InternalRunThread(InternalThreadCommand):
     def do_it(self, dbg):
         t = pydevd_find_thread_by_id(self.thread_id)
         if t:
-            t.additional_info.pydev_step_cmd = None
+            t.additional_info.pydev_step_cmd = -1
             t.additional_info.pydev_step_stop = None
             t.additional_info.pydev_state = STATE_RUN
 

@@ -99,7 +99,7 @@ class PyDBFrame:
                         if exception_breakpoint.notify_on_first_raise_only:
                             if mainDebugger.first_appearance_in_scope(trace):
                                 add_exception_to_frame(frame, (exception, value, trace))
-                                thread.additional_info.message = exception_breakpoint.qname
+                                thread.additional_info.pydev_message = exception_breakpoint.qname
                                 flag = True
                             else:
                                 pydev_log.debug("Ignore exception %s in library %s" % (exception, frame.f_code.co_filename))
@@ -107,7 +107,7 @@ class PyDBFrame:
                     else:
                         if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):
                             add_exception_to_frame(frame, (exception, value, trace))
-                            thread.additional_info.message = exception_breakpoint.qname
+                            thread.additional_info.pydev_message = exception_breakpoint.qname
                             flag = True
                         else:
                             flag = False
@@ -297,7 +297,7 @@ class PyDBFrame:
                     #we can skip if:
                     #- we have no stop marked
                     #- we should make a step return/step over and we're not in the current frame
-                    can_skip = (step_cmd is None and stop_frame is None)\
+                    can_skip = (step_cmd == -1 and stop_frame is None)\
                         or (step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and stop_frame is not frame)
 
                 if can_skip and plugin_manager is not None and main_debugger.has_plugin_line_breaks:
@@ -416,7 +416,7 @@ class PyDBFrame:
                                     val = sys.exc_info()[1]
                             finally:
                                 if val is not None:
-                                    thread.additional_info.message = val
+                                    thread.additional_info.pydev_message = str(val)
 
                         if not main_debugger.first_breakpoint_reached:
                             if event == 'call':
@@ -568,7 +568,7 @@ class PyDBFrame:
                         else:
                             #in jython we may not have a back frame
                             info.pydev_step_stop = None
-                            info.pydev_step_cmd = None
+                            info.pydev_step_cmd = -1
                             info.pydev_state = STATE_RUN
 
             except KeyboardInterrupt:
@@ -576,7 +576,7 @@ class PyDBFrame:
             except:
                 try:
                     traceback.print_exc()
-                    info.pydev_step_cmd = None
+                    info.pydev_step_cmd = -1
                 except:
                     return None
 

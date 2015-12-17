@@ -634,7 +634,7 @@ class PyDB:
         """
         self.process_internal_commands()
 
-        message = thread.additional_info.message
+        message = thread.additional_info.pydev_message
 
         cmd = self.cmd_factory.make_thread_suspend_message(get_thread_id(thread), frame, thread.stop_reason, message)
         self.writer.add_command(cmd)
@@ -738,7 +738,7 @@ class PyDB:
                 # (the previous frame would be the awt event, but this doesn't make part of 'jython', only 'java')
                 # so, if we're doing a step return in this situation, it's the same as just making it run
                 info.pydev_step_stop = None
-                info.pydev_step_cmd = None
+                info.pydev_step_cmd = -1
                 info.pydev_state = STATE_RUN
 
         del frame
