@@ -4,6 +4,7 @@ import re
 import os
 import pydevd
 
+
 class WriterThreadPerformance1(debugger_unittest.AbstractWriterThread):
 
     TEST_FILE = debugger_unittest._get_debugger_test_file('_performance_1.py')
@@ -122,6 +123,10 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
         self.obtain_results(WriterThreadPerformance4)
 
 if __name__ == '__main__':
+    debugger_unittest.SHOW_WRITES_AND_READS = False
+    debugger_unittest.SHOW_OTHER_DEBUG_INFO = False
+    debugger_unittest.SHOW_STDOUT = False
+
     check_debugger_performance = CheckDebuggerPerformance()
     check_debugger_performance.check_performance1()
     check_debugger_performance.check_performance2()

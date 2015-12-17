@@ -252,9 +252,6 @@ class PyDBFrame:
             if main_debugger._finish_debugging_session:
                 return None
 
-            if getattr(thread, 'pydev_do_not_trace', None):
-                return None
-
             if event == 'call' and main_debugger.signature_factory:
                 send_signature_call_trace(main_debugger, frame, filename)
 

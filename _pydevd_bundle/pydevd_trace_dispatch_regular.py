@@ -7,112 +7,133 @@ from _pydevd_bundle.pydevd_constants import get_thread_id
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_filename_and_base
+from _pydevd_bundle.pydevd_tracing import SetTrace
 
 
 threadingCurrentThread = threading.currentThread
 get_file_type = DONT_TRACE.get
 
 def trace_dispatch(py_db, frame, event, arg):
-    ''' This is the callback used when we enter some context in the debugger.
+    #try:
+    t = threadingCurrentThread()
+    #except:
+    #this could give an exception (python 2.5 bug), but should not be there anymore...
+    #see http://mail.python.org/pipermail/python-bugs-list/2007-June/038796.html
+    #and related bug: http://bugs.python.org/issue1733757
+    #frame.f_trace = py_db.trace_dispatch
+    #return py_db.trace_dispatch
 
-    We also decorate the thread we are in with info about the debugging.
-    The attributes added are:
-        pydev_state
-        pydev_step_stop
-        pydev_step_cmd
-        pydev_notify_kill
-
-    :param PyDB py_db:
-        This is the global debugger (this method should actually be added as a method to it).
-    '''
-    # IFDEF CYTHON
-    # cdef str filename;
-    # cdef str base;
-    # ENDIF
+    if getattr(t, 'pydev_do_not_trace', None):
+        return None
 
     try:
-        if py_db._finish_debugging_session and not py_db._termination_event_set:
-            #that was not working very well because jython gave some socket errors
-            try:
-                if py_db.output_checker is None:
-                    kill_all_pydev_threads()
-            except:
-                traceback.print_exc()
-            py_db._termination_event_set = True
-            return None
+        additional_info = t.additional_info
+        if additional_info is None:
+            raise AttributeError()
+    except:
+        additional_info = t.additional_info = PyDBAdditionalThreadInfo()
 
-        filename, base = get_filename_and_base(frame)
+    thread_tracer = ThreadTracer((py_db, t, additional_info))
+# IFDEF CYTHON
+#     t._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
+# ELSE
+# ENDIF
+    SetTrace(thread_tracer.__call__)
+    return thread_tracer.__call__(frame, event, arg)
 
-        if py_db.thread_analyser is not None:
-            py_db.thread_analyser.log_event(frame)
+# IFDEF CYTHON
+# cdef class ThreadTracer:
+#     cdef public tuple _args;
+#     def __init__(self, tuple args):
+#         self._args = args
+# ELSE
+class ThreadTracer:
+    def __init__(self, args):
+        self._args = args
+# ENDIF
 
-        if py_db.asyncio_analyser is not None:
-            py_db.asyncio_analyser.log_event(frame)
 
-        file_type = get_file_type(base) #we don't want to debug threading or anything related to pydevd
+    def __call__(self, frame, event, arg):
+        ''' This is the callback used when we enter some context in the debugger.
 
-        if file_type is not None:
-            if file_type == 1: # inlining LIB_FILE = 1
-                if py_db.not_in_scope(filename):
-                    # print('skipped: trace_dispatch (not in scope)', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
-                    return None
-            else:
-                # print('skipped: trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
+        We also decorate the thread we are in with info about the debugging.
+        The attributes added are:
+            pydev_state
+            pydev_step_stop
+            pydev_step_cmd
+            pydev_notify_kill
+
+        :param PyDB py_db:
+            This is the global debugger (this method should actually be added as a method to it).
+        '''
+        # IFDEF CYTHON
+        # cdef str filename;
+        # cdef str base;
+        # ENDIF
+        py_db, t, additional_info = self._args
+
+        try:
+            if py_db._finish_debugging_session:
+                if not py_db._termination_event_set:
+                    #that was not working very well because jython gave some socket errors
+                    try:
+                        if py_db.output_checker is None:
+                            kill_all_pydev_threads()
+                    except:
+                        traceback.print_exc()
+                    py_db._termination_event_set = True
                 return None
 
-        # print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
+            # if thread is not alive, cancel trace_dispatch processing
+            if not is_thread_alive(t):
+                py_db._process_thread_not_alive(get_thread_id(t))
+                return None  # suspend tracing
 
-        #try:
-        t = threadingCurrentThread()
-        #except:
-        #this could give an exception (python 2.5 bug), but should not be there anymore...
-        #see http://mail.python.org/pipermail/python-bugs-list/2007-June/038796.html
-        #and related bug: http://bugs.python.org/issue1733757
-        #frame.f_trace = py_db.trace_dispatch
-        #return py_db.trace_dispatch
+            filename, base = get_filename_and_base(frame)
 
-        try:
-            additional_info = t.additional_info
-            if additional_info is None:
-                raise AttributeError()
-        except:
-            additional_info = t.additional_info = PyDBAdditionalThreadInfo()
+            if py_db.thread_analyser is not None:
+                py_db.thread_analyser.log_event(frame)
 
-        if additional_info.is_tracing:
-            f = frame
-            while f is not None:
-                if 'trace_dispatch' == f.f_code.co_name:
-                    _fname, bs = get_filename_and_base(f)
-                    if bs == 'pydevd_frame.py':
-                        return None  #we don't wan't to trace code invoked from pydevd_frame.trace_dispatch
-                f = f.f_back
+            if py_db.asyncio_analyser is not None:
+                py_db.asyncio_analyser.log_event(frame)
 
-        # if thread is not alive, cancel trace_dispatch processing
-        if not is_thread_alive(t):
-            py_db._process_thread_not_alive(get_thread_id(t))
-            return None  # suspend tracing
+            file_type = get_file_type(base) #we don't want to debug threading or anything related to pydevd
 
-        # each new frame...
-        # IFDEF CYTHON
-        # # Note that on Cython we only support more modern idioms (no support for < Python 2.5)
-        # return PyDBFrame((py_db, filename, additional_info, t)).trace_dispatch(frame, event, arg)
-        # ELSE
-        return additional_info.create_db_frame((py_db, filename, additional_info, t, frame)).trace_dispatch(frame, event, arg)
-        # ENDIF
+            if file_type is not None:
+                if file_type == 1: # inlining LIB_FILE = 1
+                    if py_db.not_in_scope(filename):
+                        # print('skipped: trace_dispatch (not in scope)', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
+                        return None
+                else:
+                    # print('skipped: trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
+                    return None
 
-    except SystemExit:
-        return None
+            # print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
+            if additional_info.is_tracing:
+                return None  #we don't wan't to trace code invoked from pydevd_frame.trace_dispatch
 
-    except Exception:
-        if py_db._finish_debugging_session:
-            return None # Don't log errors when we're shutting down.
-        # Log it
-        try:
-            if traceback is not None:
-                # This can actually happen during the interpreter shutdown in Python 2.7
-                traceback.print_exc()
-        except:
-            # Error logging? We're really in the interpreter shutdown...
-            # (https://github.com/fabioz/PyDev.Debugger/issues/8)
-            pass
-        return None
+
+            # each new frame...
+            # IFDEF CYTHON
+            # # Note that on Cython we only support more modern idioms (no support for < Python 2.5)
+            # return PyDBFrame((py_db, filename, additional_info, t)).trace_dispatch(frame, event, arg)
+            # ELSE
+            return additional_info.create_db_frame((py_db, filename, additional_info, t, frame)).trace_dispatch(frame, event, arg)
+            # ENDIF
+
+        except SystemExit:
+            return None
+
+        except Exception:
+            if py_db._finish_debugging_session:
+                return None # Don't log errors when we're shutting down.
+            # Log it
+            try:
+                if traceback is not None:
+                    # This can actually happen during the interpreter shutdown in Python 2.7
+                    traceback.print_exc()
+            except:
+                # Error logging? We're really in the interpreter shutdown...
+                # (https://github.com/fabioz/PyDev.Debugger/issues/8)
+                pass
+            return None
