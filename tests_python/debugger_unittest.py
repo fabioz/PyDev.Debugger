@@ -53,15 +53,16 @@ class ReaderThread(threading.Thread):
                 self.all_received.append(l)
                 buf += l
 
-                if '\n' in buf:
+                while '\n' in buf:
+                    # Print each part...
                     i = buf.index('\n')+1
                     self.last_received = buf[:i]
                     buf = buf[i:]
 
-                if SHOW_WRITES_AND_READS:
-                    if last_printed != self.last_received.strip():
-                        last_printed = self.last_received.strip()
-                        print('Test Reader Thread Received %s' % last_printed)
+                    if SHOW_WRITES_AND_READS:
+                        if last_printed != self.last_received.strip():
+                            last_printed = self.last_received.strip()
+                            print('Test Reader Thread Received %s' % last_printed)
         except:
             pass  # ok, finished it
 
