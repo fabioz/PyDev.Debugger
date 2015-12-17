@@ -1,7 +1,7 @@
 import sys
 import weakref
 from _pydev_imps import _pydev_thread
-from _pydevd_bundle.pydevd_constants import STATE_RUN
+from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND
 from _pydevd_bundle.pydevd_frame import PyDBFrame
 
 
@@ -20,6 +20,7 @@ class PyDBAdditionalThreadInfo:
         'is_tracing',
         'conditional_breakpoint_exception',
         'message',
+        'suspend_type',
     ]
 
     def __init__(self):
@@ -32,6 +33,7 @@ class PyDBAdditionalThreadInfo:
         self.is_tracing = False
         self.conditional_breakpoint_exception = None
         self.message = ''
+        self.suspend_type = PYTHON_SUSPEND
 
 
     def iter_frames(self):

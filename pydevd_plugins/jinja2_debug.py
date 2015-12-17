@@ -1,12 +1,10 @@
 import traceback
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_name
-from _pydevd_bundle.pydevd_constants import get_thread_id, STATE_SUSPEND, dict_contains, dict_iter_items, dict_keys
-from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_STEP_OVER, CMD_ADD_EXCEPTION_BREAK
+from _pydevd_bundle.pydevd_constants import get_thread_id, STATE_SUSPEND, dict_contains, dict_iter_items, dict_keys, JINJA2_SUSPEND
+from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
 from _pydevd_bundle import pydevd_vars
 from pydevd_file_utils import get_file_name_and_base_from_file
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, FCode
-
-JINJA2_SUSPEND = 3
 
 class Jinja2LineBreakpoint(LineBreakpoint):
 
