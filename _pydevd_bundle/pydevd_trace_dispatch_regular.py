@@ -31,14 +31,14 @@ def trace_dispatch(py_db, frame, event, arg):
     # ENDIF
 
     try:
-        if py_db._finishDebuggingSession and not py_db._terminationEventSent:
+        if py_db._finish_debugging_session and not py_db._termination_event_set:
             #that was not working very well because jython gave some socket errors
             try:
                 if py_db.output_checker is None:
                     kill_all_pydev_threads()
             except:
                 traceback.print_exc()
-            py_db._terminationEventSent = True
+            py_db._termination_event_set = True
             return None
 
         filename, base = get_filename_and_base(frame)
@@ -101,7 +101,7 @@ def trace_dispatch(py_db, frame, event, arg):
         return None
 
     except Exception:
-        if py_db._finishDebuggingSession:
+        if py_db._finish_debugging_session:
             return None # Don't log errors when we're shutting down.
         # Log it
         try:

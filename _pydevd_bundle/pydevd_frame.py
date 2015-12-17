@@ -62,7 +62,7 @@ class PyDBFrame:
         # self._args = args # In the cython version we don't need to pass the frame
     # ELSE
     def __init__(self, args):
-        #args = mainDebugger, filename, base, info, t, frame
+        #args = main_debugger, filename, base, info, t, frame
         #yeap, much faster than putting in self and then getting it from self later on
         self._args = args[:-1] # Remove the frame (we don't want to have a reference to it).
     # ENDIF
@@ -84,7 +84,7 @@ class PyDBFrame:
         return self.trace_exception
 
     def should_stop_on_exception(self, frame, event, arg):
-        mainDebugger, _filename, info, thread = self._args
+        main_debugger, _filename, info, thread = self._args
         flag = False
 
         if info.pydev_state != STATE_SUSPEND:  #and breakpoint is not None:
@@ -92,12 +92,12 @@ class PyDBFrame:
 
             if trace is not None: #on jython trace is None on the first event
                 exception_breakpoint = get_exception_breakpoint(
-                    exception, mainDebugger.break_on_caught_exceptions)
+                    exception, main_debugger.break_on_caught_exceptions)
 
                 if exception_breakpoint is not None:
                     if exception_breakpoint.ignore_libraries:
                         if exception_breakpoint.notify_on_first_raise_only:
-                            if mainDebugger.first_appearance_in_scope(trace):
+                            if main_debugger.first_appearance_in_scope(trace):
                                 add_exception_to_frame(frame, (exception, value, trace))
                                 thread.additional_info.pydev_message = exception_breakpoint.qname
                                 flag = True
@@ -113,8 +113,8 @@ class PyDBFrame:
                             flag = False
                 else:
                     try:
-                        if mainDebugger.plugin is not None:
-                            result = mainDebugger.plugin.exception_break(mainDebugger, self, frame, self._args, arg)
+                        if main_debugger.plugin is not None:
+                            result = main_debugger.plugin.exception_break(main_debugger, self, frame, self._args, arg)
                             if result:
                                 (flag, frame) = result
                     except:
@@ -128,7 +128,7 @@ class PyDBFrame:
 
             # We have 3 things in arg: exception type, description, traceback object
             trace_obj = arg[2]
-            mainDebugger = self._args[0]
+            main_debugger = self._args[0]
 
             if not hasattr(trace_obj, 'tb_next'):
                 return  #Not always there on Jython...
@@ -137,7 +137,7 @@ class PyDBFrame:
             if trace_obj.tb_next is None and trace_obj.tb_frame is frame:
                 #I.e.: tb_next should be only None in the context it was thrown (trace_obj.tb_frame is frame is just a double check).
 
-                if mainDebugger.break_on_exceptions_thrown_in_same_context:
+                if main_debugger.break_on_exceptions_thrown_in_same_context:
                     #Option: Don't break if an exception is caught in the same function from which it is thrown
                     return
             else:
@@ -146,7 +146,7 @@ class PyDBFrame:
                     trace_obj = trace_obj.tb_next
 
 
-            if mainDebugger.ignore_exceptions_thrown_in_lines_with_ignore_exception:
+            if main_debugger.ignore_exceptions_thrown_in_lines_with_ignore_exception:
                 for check_trace_obj in (initial_trace_obj, trace_obj):
                     filename = get_filename_and_base(check_trace_obj.tb_frame)[0]
 
@@ -174,7 +174,7 @@ class PyDBFrame:
                             #Jython 2.1
                             linecache.checkcache()
 
-                    from_user_input = mainDebugger.filename_to_lines_where_exceptions_are_ignored.get(filename)
+                    from_user_input = main_debugger.filename_to_lines_where_exceptions_are_ignored.get(filename)
                     if from_user_input:
                         merged = {}
                         merged.update(lines_ignored)
@@ -222,17 +222,17 @@ class PyDBFrame:
                 thread_id = get_thread_id(thread)
                 pydevd_vars.add_additional_frame_by_id(thread_id, frame_id_to_frame)
                 try:
-                    mainDebugger.send_caught_exception_stack(thread, arg, id(frame))
+                    main_debugger.send_caught_exception_stack(thread, arg, id(frame))
                     self.set_suspend(thread, CMD_STEP_CAUGHT_EXCEPTION)
                     self.do_wait_suspend(thread, frame, event, arg)
-                    mainDebugger.send_caught_exception_stack_proceeded(thread)
+                    main_debugger.send_caught_exception_stack_proceeded(thread)
 
                 finally:
                     pydevd_vars.remove_additional_frame_by_id(thread_id)
             except:
                 traceback.print_exc()
 
-            mainDebugger.set_trace_for_frame_and_parents(frame)
+            main_debugger.set_trace_for_frame_and_parents(frame)
         finally:
             #Clear some local variables...
             trace_obj = None
@@ -240,7 +240,7 @@ class PyDBFrame:
             check_trace_obj = None
             f = None
             frame_id_to_frame = None
-            mainDebugger = None
+            main_debugger = None
             thread = None
 
     def trace_dispatch(self, frame, event, arg):
@@ -248,7 +248,7 @@ class PyDBFrame:
         try:
             info.is_tracing = True
 
-            if main_debugger._finishDebuggingSession:
+            if main_debugger._finish_debugging_session:
                 return None
 
             if getattr(thread, 'pydev_do_not_trace', None):

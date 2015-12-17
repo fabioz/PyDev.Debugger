@@ -28,7 +28,7 @@ class TestCase(unittest.TestCase):
         from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfoWithoutCurrentFramesSupport
         info = PyDBAdditionalThreadInfoWithoutCurrentFramesSupport()
 
-        mainDebugger = Null()
+        main_debugger = Null()
         filename = ''
         base = ''
         additional_info = Null()
@@ -37,14 +37,14 @@ class TestCase(unittest.TestCase):
 
         times = 10
         for i in range(times):
-            info.create_db_frame((mainDebugger, filename, additional_info, t, frame))
+            info.create_db_frame((main_debugger, filename, additional_info, t, frame))
 
         #we haven't kept any reference, so, they must have been garbage-collected already!
         self.assertEqual(0, len(info.iter_frames()))
 
         kept_frames = []
         for i in range(times):
-            kept_frames.append(info.create_db_frame((mainDebugger, filename, additional_info, t, frame)))
+            kept_frames.append(info.create_db_frame((main_debugger, filename, additional_info, t, frame)))
 
         for i in range(times):
             self.assertEqual(times, len(info.iter_frames()))

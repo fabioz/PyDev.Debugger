@@ -43,7 +43,7 @@ def process_net_command(py_db, cmd_id, seq, text):
         try:
             cmd = None
             if cmd_id == CMD_RUN:
-                py_db.readyToRun = True
+                py_db.ready_to_run = True
 
             elif cmd_id == CMD_VERSION:
                 # response is version number

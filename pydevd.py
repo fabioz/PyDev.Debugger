@@ -200,13 +200,13 @@ class PyDB:
         self.break_on_uncaught_exceptions = {}
         self.break_on_caught_exceptions = {}
 
-        self.readyToRun = False
+        self.ready_to_run = False
         self._main_lock = _pydev_thread.allocate_lock()
         self._lock_running_thread_ids = _pydev_thread.allocate_lock()
         self._py_db_command_thread_event = threading.Event()
         CustomFramesContainer._py_db_command_thread_event = self._py_db_command_thread_event
-        self._finishDebuggingSession = False
-        self._terminationEventSent = False
+        self._finish_debugging_session = False
+        self._termination_event_set = False
         self.signature_factory = None
         self.SetTrace = pydevd_tracing.SetTrace
         self.break_on_exceptions_thrown_in_same_context = False
@@ -286,7 +286,7 @@ class PyDB:
         return False
 
     def finish_debugging_session(self):
-        self._finishDebuggingSession = True
+        self._finish_debugging_session = True
 
 
     def initialize_network(self, sock):
@@ -657,7 +657,7 @@ class PyDB:
         imported = False
         info = thread.additional_info
 
-        if info.pydev_state == STATE_SUSPEND and not self._finishDebuggingSession:
+        if info.pydev_state == STATE_SUSPEND and not self._finish_debugging_session:
             # before every stop check if matplotlib modules were imported inside script code
             if len(self.mpl_modules_for_patching) > 0:
                 for module in dict_keys(self.mpl_modules_for_patching):
@@ -666,7 +666,7 @@ class PyDB:
                         activate_function()
                         self.mpl_in_use = True
 
-        while info.pydev_state == STATE_SUSPEND and not self._finishDebuggingSession:
+        while info.pydev_state == STATE_SUSPEND and not self._finish_debugging_session:
             if self.mpl_in_use:
                 # call input hooks if only matplotlib is in use
                 try:
@@ -882,7 +882,7 @@ class PyDB:
 
             self.prepare_to_run()
 
-            while not self.readyToRun:
+            while not self.ready_to_run:
                 time.sleep(0.1)  # busy wait until we receive run command
 
         if self.thread_analyser is not None:
@@ -1162,7 +1162,7 @@ def _locked_settrace(
             additional_info = PyDBAdditionalThreadInfo()
             t.additional_info = additional_info
 
-        while not debugger.readyToRun:
+        while not debugger.ready_to_run:
             time.sleep(0.1)  # busy wait until we receive run command
 
         # note that we do that through pydevd_tracing.SetTrace so that the tracing
