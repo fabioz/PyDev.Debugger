@@ -11,9 +11,10 @@ import sys
 
 CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION, CMD_ENABLE_DONT_TRACE = 133, 134, 135, 141
 
-SHOW_WRITES_AND_READS = False
-SHOW_OTHER_DEBUG_INFO = False
-SHOW_STDOUT = False
+# Always True (because otherwise when we do have an error, it's hard to diagnose).
+SHOW_WRITES_AND_READS = True
+SHOW_OTHER_DEBUG_INFO = True
+SHOW_STDOUT = True
 
 import pydevd
 PYDEVD_FILE = pydevd.__file__
@@ -109,7 +110,7 @@ class DebuggerRunner(object):
                     line = line.decode('utf-8')
 
                 if SHOW_STDOUT:
-                    print(line)
+                    sys.stdout.write('stdout: %s' % (line,))
                 buffer.append(line)
 
         start_new_thread(read, (process.stdout, stdout))
@@ -131,6 +132,8 @@ class DebuggerRunner(object):
                         if check == 20:
                             print('Warning: writer thread exited and process still did not.')
                         if check == 100:
+                            process.kill()
+                            time.sleep(.2)
                             self.fail_with_message(
                                 "The other process should've exited but still didn't (timeout for process to exit).",
                                 stdout, stderr, writer_thread

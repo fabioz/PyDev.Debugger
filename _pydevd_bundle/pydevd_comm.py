@@ -347,7 +347,8 @@ class ReaderThread(PyDBDaemonThread):
 
                 read_buffer += r
                 if DebugInfoHolder.DEBUG_RECORD_SOCKET_READS:
-                    pydev_log.debug('received >>%s<<\n' % (read_buffer,))
+                    sys.stderr.write('debugger: received >>%s<<\n' % (read_buffer,))
+                    sys.stderr.flush()
 
                 if len(read_buffer) == 0:
                     self.handle_except()

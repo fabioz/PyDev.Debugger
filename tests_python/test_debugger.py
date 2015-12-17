@@ -878,7 +878,7 @@ class DebuggerBase(debugger_unittest.DebuggerRunner):
 
 class TestPython(unittest.TestCase, DebuggerBase):
     def get_command_line(self):
-        return [PYTHON_EXE]
+        return [PYTHON_EXE, '-u']
 
 class TestJython(unittest.TestCase, DebuggerBase):
     def get_command_line(self):
