@@ -130,7 +130,7 @@ def generate_cython_module():
     remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_additional_thread_info_cython.pyd'))
     remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_trace_dispatch_cython.pyx'))
     remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_additional_thread_info_cython.pyx'))
-    
+
     target = os.path.join(root_dir, '_pydevd_bundle', 'pydevd_trace_dispatch_cython.pyx')
 
     from _pydevd_bundle import pydevd_frame, pydevd_trace_dispatch_regular

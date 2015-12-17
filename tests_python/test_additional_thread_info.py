@@ -25,7 +25,7 @@ class TestCase(unittest.TestCase):
     '''
 
     def test_met_no_frames_support(self):
-        from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfoWithoutCurrentFramesSupport
+        from _pydevd_bundle.pydevd_additional_thread_info_regular import PyDBAdditionalThreadInfoWithoutCurrentFramesSupport
         info = PyDBAdditionalThreadInfoWithoutCurrentFramesSupport()
 
         main_debugger = Null()
@@ -40,14 +40,14 @@ class TestCase(unittest.TestCase):
             info.create_db_frame((main_debugger, filename, additional_info, t, frame))
 
         #we haven't kept any reference, so, they must have been garbage-collected already!
-        self.assertEqual(0, len(info.iter_frames()))
+        self.assertEqual(0, len(info.iter_frames(t)))
 
         kept_frames = []
         for i in range(times):
             kept_frames.append(info.create_db_frame((main_debugger, filename, additional_info, t, frame)))
 
         for i in range(times):
-            self.assertEqual(times, len(info.iter_frames()))
+            self.assertEqual(times, len(info.iter_frames(t)))
 
 
     def test_start_new_thread(self):

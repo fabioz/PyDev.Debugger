@@ -1,6 +1,8 @@
 import sys
-from _pydevd_bundle.pydevd_constants import DebugInfoHolder
-from _pydevd_bundle.pydevd_constants import dict_contains
+from _pydevd_bundle.pydevd_constants import DebugInfoHolder, dict_contains
+from _pydev_imps import _pydev_threading
+currentThread = _pydev_threading.currentThread
+
 
 import traceback
 

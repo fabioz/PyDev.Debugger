@@ -37,6 +37,7 @@ from _pydevd_bundle.pydevd_trace_dispatch import trace_dispatch as _trace_dispat
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
+from pydevd_file_utils import get_filename_and_base
 
 
 __version_info__ = (1, 0, 1)
@@ -488,6 +489,9 @@ class PyDB:
         threads = threadingEnumerate()
         try:
             for t in threads:
+                if getattr(t, 'is_pydev_daemon_thread', False):
+                    continue
+
                 # TODO: optimize so that we only actually add that tracing if it's in
                 # the new breakpoint context.
                 additional_info = None
@@ -497,7 +501,7 @@ class PyDB:
                     pass  # that's ok, no info currently set
 
                 if additional_info is not None:
-                    for frame in additional_info.iter_frames():
+                    for frame in additional_info.iter_frames(t):
                         if frame is not ignore_frame:
                             self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=overwrite_prev_trace)
         finally:
@@ -1356,9 +1360,9 @@ if __name__ == '__main__':
     if os.getenv('PYCHARM_DEBUG') or os.getenv('PYDEV_DEBUG'):
         set_debug(setup)
 
-    DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = setup.get('DEBUG_RECORD_SOCKET_READS', False)
-    DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS = setup.get('DEBUG_TRACE_BREAKPOINTS', -1)
-    DebugInfoHolder.DEBUG_TRACE_LEVEL = setup.get('DEBUG_TRACE_LEVEL', -1)
+    DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = setup.get('DEBUG_RECORD_SOCKET_READS', DebugInfoHolder.DEBUG_RECORD_SOCKET_READS)
+    DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS = setup.get('DEBUG_TRACE_BREAKPOINTS', DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS)
+    DebugInfoHolder.DEBUG_TRACE_LEVEL = setup.get('DEBUG_TRACE_LEVEL', DebugInfoHolder.DEBUG_TRACE_LEVEL)
 
     port = setup['port']
     host = setup['client']

@@ -16,7 +16,8 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_SET_PY_EXCEPTION, CMD_GET_FILE_CONTENTS, CMD_SET_PROPERTY_TRACE, CMD_ADD_EXCEPTION_BREAK, \
     CMD_REMOVE_EXCEPTION_BREAK, CMD_LOAD_SOURCE, CMD_ADD_DJANGO_EXCEPTION_BREAK, CMD_REMOVE_DJANGO_EXCEPTION_BREAK, \
     CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, \
-    CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE
+    CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE,\
+    ID_TO_MEANING
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_contains, dict_keys, dict_pop
 import pydevd_file_utils
 
@@ -36,7 +37,7 @@ def process_net_command(py_db, cmd_id, seq, text):
     it may be worth refactoring it (actually, reordering the ifs so that the ones used mostly come before
     probably will give better performance).
     '''
-    #print(ID_TO_MEANING[str(cmd_id)], repr(text))
+    # print(ID_TO_MEANING[str(cmd_id)], repr(text))
 
     py_db._main_lock.acquire()
     try:
@@ -91,7 +92,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                         pass  # that's ok, no info currently set
 
                     if additional_info is not None:
-                        for frame in additional_info.iter_frames():
+                        for frame in additional_info.iter_frames(t):
                             py_db.set_trace_for_frame_and_parents(frame)
                             del frame
 

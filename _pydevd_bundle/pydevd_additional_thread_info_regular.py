@@ -1,7 +1,7 @@
 import sys
 import weakref
 from _pydev_imps import _pydev_thread
-from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND
+from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, dict_iter_items
 from _pydevd_bundle.pydevd_frame import PyDBFrame
 
 
@@ -53,9 +53,13 @@ class PyDBAdditionalThreadInfo:
         self.suspend_type = PYTHON_SUSPEND
 
 
-    def iter_frames(self):
+    def iter_frames(self, t):
         #sys._current_frames(): dictionary with thread id -> topmost frame
-        return sys._current_frames().values() #return a copy... don't know if it's changed if we did get an iterator
+        current_frames = sys._current_frames()
+        v = current_frames.get(t.ident)
+        if v is not None:
+            return [v]
+        return []
 
     # IFDEF CYTHON
     # def create_db_frame(self, *args, **kwargs):
@@ -139,7 +143,7 @@ class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(PyDBAdditionalThreadIn
         return db_frame
 
 
-    def iter_frames(self):
+    def iter_frames(self, t):
         #We cannot use yield (because of the lock)
         self._acquire_lock()
         try:
@@ -156,7 +160,7 @@ class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(PyDBAdditionalThreadIn
 
     def __str__(self):
         return 'State:%s Stop:%s Cmd: %s Kill:%s Frames:%s' % (
-            self.pydev_state, self.pydev_step_stop, self.pydev_step_cmd, self.pydev_notify_kill, len(self.iter_frames()))
+            self.pydev_state, self.pydev_step_stop, self.pydev_step_cmd, self.pydev_notify_kill, len(self.iter_frames(None)))
 
 #=======================================================================================================================
 # NOW, WE HAVE TO DEFINE WHICH THREAD INFO TO USE

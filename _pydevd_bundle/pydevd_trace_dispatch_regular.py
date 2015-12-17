@@ -51,13 +51,16 @@ def trace_dispatch(py_db, frame, event, arg):
 
         file_type = get_file_type(base) #we don't want to debug threading or anything related to pydevd
 
-        #print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, is_file_to_ignore)
         if file_type is not None:
             if file_type == 1: # inlining LIB_FILE = 1
                 if py_db.not_in_scope(filename):
+                    # print('skipped: trace_dispatch (not in scope)', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
                     return None
             else:
+                # print('skipped: trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
                 return None
+
+        # print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
 
         #try:
         t = threadingCurrentThread()

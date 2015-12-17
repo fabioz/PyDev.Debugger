@@ -4,7 +4,7 @@ import re
 import traceback  # @Reimport
 
 from _pydev_bundle import pydev_log
-from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint, get_exception_name
+from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
 from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
 from _pydevd_bundle.pydevd_constants import *  # @UnusedWildImport
@@ -32,7 +32,7 @@ TRACE_PROPERTY = 'pydevd_traceproperty.py'
 # PyDBFrame
 #=======================================================================================================================
 # IFDEF CYTHON
-# cdef class PyDBFrame:
+# class PyDBFrame: # No longer cdef because object was dying when only a reference to trace_dispatch was kept (need to check alternatives).
 # ELSE
 class PyDBFrame:
 # ENDIF
@@ -49,8 +49,9 @@ class PyDBFrame:
     filename_to_stat_info = {}
 
     # IFDEF CYTHON
-    # cdef public tuple _args;
-    # cdef public int should_skip;
+    # # cdef public tuple _args;
+    # # cdef public int should_skip;
+    # should_skip = -1  # Default value when non-cython (in cython it's set in the constructor).
     # ELSE
     should_skip = -1  # Default value when non-cython (in cython it's set in the constructor).
     # ENDIF
@@ -58,7 +59,6 @@ class PyDBFrame:
 
     # IFDEF CYTHON
     # def __init__(self, tuple args):
-        # self.should_skip = -1
         # self._args = args # In the cython version we don't need to pass the frame
     # ELSE
     def __init__(self, args):
@@ -246,6 +246,7 @@ class PyDBFrame:
     def trace_dispatch(self, frame, event, arg):
         main_debugger, filename, info, thread = self._args
         try:
+            # print 'frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, event
             info.is_tracing = True
 
             if main_debugger._finish_debugging_session:
