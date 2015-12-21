@@ -2,12 +2,12 @@ import sys
 import os
 import unittest
 try:
-    import pydev_monkey
+    from _pydev_bundle import pydev_monkey
 except:
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-    import pydev_monkey
+    from _pydev_bundle import pydev_monkey
 from pydevd import SetupHolder
-from pydev_monkey import pydev_src_dir
+from _pydev_bundle.pydev_monkey import pydev_src_dir
 
 
 
