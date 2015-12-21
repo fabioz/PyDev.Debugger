@@ -26,6 +26,7 @@ install:
   - "%PYTHON%\\python.exe -m pip install nose"
   - "%PYTHON%\\python.exe -m pip install ipython"
   - "%PYTHON%\\python.exe -m pip install django"
+  - "set PYTHONPATH=%PYTHONPATH%;%APPVEYOR_BUILD_FOLDER%"
   - "%PYTHON%\\python.exe build/build.py"
 
 build_script:
