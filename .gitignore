@@ -35,4 +35,3 @@ coverage.xml
 snippet.py
 *.c
 build/lib.*
-*.pyx
