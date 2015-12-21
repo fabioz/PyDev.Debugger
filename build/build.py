@@ -36,6 +36,9 @@ def get_environment_from_batch_command(env_cmd, initial=None):
     """
     if not isinstance(env_cmd, (list, tuple)):
         env_cmd = [env_cmd]
+    if not os.path.exists(env_cmd[0]):
+        raise RuntimeError('Error: %s does not exist' % (env_cmd[0],))
+
     # construct the command that will alter the environment
     env_cmd = subprocess.list2cmdline(env_cmd)
     # create a tag so we can tell in the output when the proc is done
@@ -47,9 +50,9 @@ def get_environment_from_batch_command(env_cmd, initial=None):
     # parse the output sent to stdout
     lines = proc.stdout
     # consume whatever output occurs until the tag is reached
-    consume(itertools.takewhile(lambda l: tag not in l, lines))
+    consume(itertools.takewhile(lambda l: tag not in l.decode('utf-8'), lines))
     # define a way to handle each KEY=VALUE line
-    handle_line = lambda l: l.rstrip().split('=', 1)
+    handle_line = lambda l: l.decode('utf-8').rstrip().split('=', 1)
     # parse key/values into pairs
     pairs = map(handle_line, lines)
     # make sure the pairs are valid
@@ -215,17 +218,55 @@ def build():
         # set DISTUTILS_USE_SDK=1
         # set VS90COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 9.0\Common7\Tools
 
-        if is_python_64bit():
-            env = get_environment_from_batch_command(
-                r"""C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat""",
-                initial=os.environ.copy())
+
+        env = os.environ.copy()
+        if sys.version_info[:2] == (2,7):
+            import setuptools # We have to import it first for the compiler to be found
+            from distutils import msvc9compiler
+            vcvarsall = msvc9compiler.find_vcvarsall(9.0)
+            if not os.path.exists(vcvarsall):
+                raise RuntimeError('Error finding vcvarsall.')
+
+            if is_python_64bit():
+                env.update(get_environment_from_batch_command(
+                    [vcvarsall, 'amd64'],
+                    initial=os.environ.copy()))
+            else:
+                env.update(get_environment_from_batch_command(
+                    [vcvarsall, 'x86'],
+                    initial=os.environ.copy()))
+
+        elif sys.version_info[:2] == (3,4):
+            if is_python_64bit():
+                env.update(get_environment_from_batch_command(
+                    [r"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd", '/x64'],
+                    initial=os.environ.copy()))
+            else:
+                env.update(get_environment_from_batch_command(
+                    [r"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd", '/x86'],
+                    initial=os.environ.copy()))
+
+        elif sys.version_info[:2] == (3, 5):
+            import setuptools # We have to import it first for the compiler to be found
+            from distutils import msvc9compiler
+            vcvarsall = msvc9compiler.find_vcvarsall(14.0)
+            if not os.path.exists(vcvarsall):
+                raise RuntimeError('Error finding vcvarsall.')
+
+            if is_python_64bit():
+                env.update(get_environment_from_batch_command(
+                    [vcvarsall, 'amd64'],
+                    initial=os.environ.copy()))
+            else:
+                env.update(get_environment_from_batch_command(
+                    [vcvarsall, 'x86'],
+                    initial=os.environ.copy()))
+
         else:
-            env = get_environment_from_batch_command(
-                r"""C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars32.bat""",
-                initial=os.environ.copy())
+            raise AssertionError('Unable to setup environment for Python: %s' % (sys.version,))
+
         env['MSSdk'] = '1'
         env['DISTUTILS_USE_SDK'] = '1'
-        env['VS90COMNTOOLS'] = r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\Common7\Tools'
 
     subprocess.check_call([
         sys.executable, os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'),
