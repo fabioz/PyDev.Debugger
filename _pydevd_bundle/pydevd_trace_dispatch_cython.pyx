@@ -12,7 +12,7 @@ from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
 from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
 from _pydevd_bundle.pydevd_constants import *  # @UnusedWildImport
-from pydevd_file_utils import get_filename_and_base
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
 
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised
 
@@ -152,7 +152,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
 
             if main_debugger.ignore_exceptions_thrown_in_lines_with_ignore_exception:
                 for check_trace_obj in (initial_trace_obj, trace_obj):
-                    filename = get_filename_and_base(check_trace_obj.tb_frame)[0]
+                    filename = get_abs_path_real_path_and_base_from_frame(check_trace_obj.tb_frame)[1]
 
 
                     filename_to_lines_where_exceptions_are_ignored = self.filename_to_lines_where_exceptions_are_ignored
@@ -427,7 +427,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                                     if back is not None:
                                         # When we start debug session, we call execfile in pydevd run function. It produces an additional
                                         # 'call' event for tracing and we stop on the first line of code twice.
-                                        back_filename, base = get_filename_and_base(back)
+                                        _, back_filename, base = get_abs_path_real_path_and_base_from_frame(back)
                                         if (base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]) or \
                                                 (base == DEBUG_START_PY3K[0] and back.f_code.co_name == DEBUG_START_PY3K[1]):
                                             stop = False
@@ -544,7 +544,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                             #When we get to the pydevd run function, the debugging has actually finished for the main thread
                             #(note that it can still go on for other threads, but for this one, we just make it finish)
                             #So, just setting it to None should be OK
-                            back_filename, base = get_filename_and_base(back)
+                            _, back_filename, base = get_abs_path_real_path_and_base_from_frame(back)
                             if base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]:
                                 back = None
 
@@ -601,7 +601,7 @@ from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInf
 from _pydevd_bundle.pydevd_constants import get_thread_id
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
-from pydevd_file_utils import get_filename_and_base
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 from _pydevd_bundle.pydevd_tracing import SetTrace
 
 
@@ -684,7 +684,11 @@ cdef class ThreadTracer:
                 py_db._process_thread_not_alive(get_thread_id(t))
                 return None  # suspend tracing
 
-            filename, base = get_filename_and_base(frame)
+            try:
+                # Make fast path faster!
+                abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
+            except:
+                abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
 
             if py_db.thread_analyser is not None:
                 py_db.thread_analyser.log_event(frame)
@@ -692,11 +696,11 @@ cdef class ThreadTracer:
             if py_db.asyncio_analyser is not None:
                 py_db.asyncio_analyser.log_event(frame)
 
-            file_type = get_file_type(base) #we don't want to debug threading or anything related to pydevd
+            file_type = get_file_type(abs_path_real_path_and_base[-1]) #we don't want to debug threading or anything related to pydevd
 
             if file_type is not None:
                 if file_type == 1: # inlining LIB_FILE = 1
-                    if py_db.not_in_scope(filename):
+                    if py_db.not_in_scope(abs_path_real_path_and_base[1]):
                         # print('skipped: trace_dispatch (not in scope)', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
                         return None
                 else:
@@ -711,9 +715,9 @@ cdef class ThreadTracer:
             # each new frame...
             # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
             # Note that on Cython we only support more modern idioms (no support for < Python 2.5)
-            return PyDBFrame((py_db, filename, additional_info, t)).trace_dispatch(frame, event, arg)
+            return PyDBFrame((py_db, abs_path_real_path_and_base[1], additional_info, t)).trace_dispatch(frame, event, arg)
             # ELSE
-#             return additional_info.create_db_frame((py_db, filename, additional_info, t, frame)).trace_dispatch(frame, event, arg)
+#             return additional_info.create_db_frame((py_db, abs_path_real_path_and_base[1], additional_info, t, frame)).trace_dispatch(frame, event, arg)
             # ENDIF
 
         except SystemExit:
