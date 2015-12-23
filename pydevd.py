@@ -37,7 +37,6 @@ from _pydevd_bundle.pydevd_trace_dispatch import trace_dispatch as _trace_dispat
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
-from pydevd_file_utils import get_filename_and_base
 
 
 __version_info__ = (1, 0, 1)

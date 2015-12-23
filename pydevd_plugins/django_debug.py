@@ -1,7 +1,7 @@
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
 import inspect
 from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_thread_id, dict_contains, dict_iter_items, DJANGO_SUSPEND
-from pydevd_file_utils import get_file_name_and_base_from_file
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_file
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_name
 from _pydevd_bundle import pydevd_vars
 import traceback
@@ -210,8 +210,8 @@ def _get_template_file_name(frame):
             pydev_log.debug("Source name is %s\n" % fname)
             return None
         else:
-            filename, base = get_file_name_and_base_from_file(fname)
-            return filename
+            abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_file(fname)
+            return abs_path_real_path_and_base[1]
     except:
         pydev_log.debug(traceback.format_exc())
         return None

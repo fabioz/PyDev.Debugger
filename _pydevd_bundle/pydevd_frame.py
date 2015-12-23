@@ -8,7 +8,7 @@ from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
 from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
 from _pydevd_bundle.pydevd_constants import *  # @UnusedWildImport
-from pydevd_file_utils import get_filename_and_base
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
 
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised
 
@@ -148,7 +148,7 @@ class PyDBFrame:
 
             if main_debugger.ignore_exceptions_thrown_in_lines_with_ignore_exception:
                 for check_trace_obj in (initial_trace_obj, trace_obj):
-                    filename = get_filename_and_base(check_trace_obj.tb_frame)[0]
+                    filename = get_abs_path_real_path_and_base_from_frame(check_trace_obj.tb_frame)[1]
 
 
                     filename_to_lines_where_exceptions_are_ignored = self.filename_to_lines_where_exceptions_are_ignored
@@ -423,7 +423,7 @@ class PyDBFrame:
                                     if back is not None:
                                         # When we start debug session, we call execfile in pydevd run function. It produces an additional
                                         # 'call' event for tracing and we stop on the first line of code twice.
-                                        back_filename, base = get_filename_and_base(back)
+                                        _, back_filename, base = get_abs_path_real_path_and_base_from_frame(back)
                                         if (base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]) or \
                                                 (base == DEBUG_START_PY3K[0] and back.f_code.co_name == DEBUG_START_PY3K[1]):
                                             stop = False
@@ -540,7 +540,7 @@ class PyDBFrame:
                             #When we get to the pydevd run function, the debugging has actually finished for the main thread
                             #(note that it can still go on for other threads, but for this one, we just make it finish)
                             #So, just setting it to None should be OK
-                            back_filename, base = get_filename_and_base(back)
+                            _, back_filename, base = get_abs_path_real_path_and_base_from_frame(back)
                             if base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]:
                                 back = None
 
