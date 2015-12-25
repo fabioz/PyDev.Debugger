@@ -29,8 +29,8 @@ install:
   - "set PYTHONPATH=%PYTHONPATH%;%APPVEYOR_BUILD_FOLDER%"
   - "%PYTHON%\\python.exe build/build.py"
 
-build_script:
-  - "build.cmd %PYTHON%\\python.exe -m nosetests --verbosity=3"
+# build_script:
+#  - "build.cmd %PYTHON%\\python.exe -m nosetests --verbosity=3"
 
 test_script:
   # Put your test command here.
