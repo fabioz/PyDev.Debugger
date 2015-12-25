@@ -74,11 +74,15 @@ def get_environment_from_batch_command(env_cmd, initial=None):
 
 
 def build():
-    remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_trace_dispatch_cython.pyd'))
-    remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_additional_thread_info_cython.pyd'))
+    remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_cython.pyd'))
+
+
+
     os.chdir(root_dir)
 
     if sys.platform == 'win32':
+        additional = 'cp%s%s-%s' % (sys.version_info[0], sys.version_info[1], 'win32')
+        remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_cython.%s.pyd' % additional))
 
         # "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
         # set MSSdk=1

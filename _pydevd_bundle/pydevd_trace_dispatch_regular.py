@@ -2,13 +2,17 @@ import traceback
 
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_imps import _pydev_threading as threading
-from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 from _pydevd_bundle.pydevd_constants import get_thread_id
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 from _pydevd_bundle.pydevd_tracing import SetTrace
 
+# IFDEF CYTHON
+# # In Cython, PyDBAdditionalThreadInfo is bundled in the file.
+# ELSE
+from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
+# ENDIF
 
 threadingCurrentThread = threading.currentThread
 get_file_type = DONT_TRACE.get
@@ -69,6 +73,8 @@ class ThreadTracer:
         # IFDEF CYTHON
         # cdef str filename;
         # cdef str base;
+        # cdef tuple abs_path_real_path_and_base;
+        # cdef PyDBAdditionalThreadInfo additional_info;
         # ENDIF
         py_db, t, additional_info = self._args
 
