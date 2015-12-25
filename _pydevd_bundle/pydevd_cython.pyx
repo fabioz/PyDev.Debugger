@@ -428,7 +428,6 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
         cdef int line;
         cdef str curr_func_name;
         cdef bint exist_result;
-        cdef bint stop;
     # ELSE
 #     def trace_dispatch(self, frame, event, arg):
     # ENDIF
