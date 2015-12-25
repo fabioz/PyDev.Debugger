@@ -27,10 +27,9 @@ install:
   - "%PYTHON%\\python.exe -m pip install ipython"
   - "%PYTHON%\\python.exe -m pip install django"
   - "set PYTHONPATH=%PYTHONPATH%;%APPVEYOR_BUILD_FOLDER%"
-  - "%PYTHON%\\python.exe build/build.py"
 
-# build_script:
-#  - "build.cmd %PYTHON%\\python.exe -m nosetests --verbosity=3"
+build_script:
+  - "%PYTHON%\\python.exe build/build.py"
 
 test_script:
   # Put your test command here.
