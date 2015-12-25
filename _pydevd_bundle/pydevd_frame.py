@@ -61,7 +61,12 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
     def do_wait_suspend(self, *args, **kwargs):
         self._args[0].do_wait_suspend(*args, **kwargs)
 
+    # IFDEF CYTHON
+    # def trace_exception(self, frame, str event, arg):
+    #     cdef bint flag;
+    # ELSE
     def trace_exception(self, frame, event, arg):
+    # ENDIF
         if event == 'exception':
             flag, frame = self.should_stop_on_exception(frame, event, arg)
 
@@ -71,7 +76,14 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
 
         return self.trace_exception
 
+    # IFDEF CYTHON
+    # def should_stop_on_exception(self, frame, str event, arg):
+    #     cdef PyDBAdditionalThreadInfo info;
+    #     cdef bint flag;
+    # ELSE
     def should_stop_on_exception(self, frame, event, arg):
+    # ENDIF
+
         # main_debugger, _filename, info, _thread = self._args
         main_debugger = self._args[0]
         info = self._args[2]
