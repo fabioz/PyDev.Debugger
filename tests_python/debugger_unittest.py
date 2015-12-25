@@ -12,9 +12,10 @@ import sys
 CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION, CMD_ENABLE_DONT_TRACE = 133, 134, 135, 141
 
 # Always True (because otherwise when we do have an error, it's hard to diagnose).
-SHOW_WRITES_AND_READS = True
-SHOW_OTHER_DEBUG_INFO = True
-SHOW_STDOUT = True
+# Note: set to False because we seem to be using too much memory (and subprocess uses fork which can throw an error on travis).
+SHOW_WRITES_AND_READS = False
+SHOW_OTHER_DEBUG_INFO = False
+SHOW_STDOUT = False
 
 import pydevd
 PYDEVD_FILE = pydevd.__file__
