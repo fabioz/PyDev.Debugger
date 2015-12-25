@@ -79,7 +79,6 @@ DONT_TRACE = {
     'pydevd_kill_all_pydevd_threads.py': PYDEV_FILE,
     'pydevd_plugin_utils.py': PYDEV_FILE,
     'pydevd_process_net_command.py': PYDEV_FILE,
-    'pydevd_psyco_stub.py': PYDEV_FILE,
     'pydevd_referrers.py': PYDEV_FILE,
     'pydevd_reload.py': PYDEV_FILE,
     'pydevd_resolver.py': PYDEV_FILE,

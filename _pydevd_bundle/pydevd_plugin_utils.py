@@ -1,9 +1,10 @@
+import os
 import types
 
 from _pydev_bundle import pydev_log
-from _pydevd_bundle import pydevd_trace_api
 from _pydev_imps._pydev_pluginbase import PluginBase
-from _pydevd_bundle.pydevd_constants import *  # @UnusedWildImport
+from _pydevd_bundle import pydevd_trace_api
+
 
 def load_plugins(package):
     plugin_base = PluginBase(package=package)

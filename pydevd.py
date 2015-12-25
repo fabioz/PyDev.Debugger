@@ -1473,20 +1473,6 @@ if __name__ == '__main__':
         # Run the dev_appserver
         debugger.run(setup['file'], None, None, is_module, set_trace=False)
     else:
-        # as to get here all our imports are already resolved, the psyco module can be
-        # changed and we'll still get the speedups in the debugger, as those functions
-        # are already compiled at this time.
-        try:
-            import psyco
-        except ImportError:
-            if hasattr(sys, 'exc_clear'):  # jython does not have it
-                sys.exc_clear()  # don't keep the traceback -- clients don't want to see it
-            pass  # that's ok, no need to mock psyco if it's not available anyways
-        else:
-            # if it's available, let's change it for a stub (pydev already made use of it)
-            from _pydevd_bundle import pydevd_psyco_stub
-            sys.modules['psyco'] = pydevd_psyco_stub
-
         if setup['save-signatures']:
             if pydevd_vm_type.get_vm_type() == pydevd_vm_type.PydevdVmType.JYTHON:
                 sys.stderr.write("Collecting run-time type information is not supported for Jython\n")
