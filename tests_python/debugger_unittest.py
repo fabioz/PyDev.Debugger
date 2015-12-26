@@ -77,10 +77,11 @@ class DebuggerRunner(object):
         raise NotImplementedError
 
     def check_case(self, writer_thread_class):
-        port = get_free_port()
-        writer_thread = writer_thread_class(port)
+        writer_thread = writer_thread_class()
         writer_thread.start()
-        time.sleep(1)
+        while not hasattr(writer_thread, 'port'):
+            time.sleep(.01)
+            port = int(writer_thread.port)
 
         localhost = pydev_localhost.get_localhost()
         args = self.get_command_line()
@@ -181,13 +182,12 @@ class DebuggerRunner(object):
 #=======================================================================================================================
 class AbstractWriterThread(threading.Thread):
 
-    def __init__(self, port):
+    def __init__(self):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.finished_ok = False
         self._next_breakpoint_id = 0
         self.log = []
-        self.port = port
 
 
     def do_kill(self):
@@ -218,7 +218,8 @@ class AbstractWriterThread(threading.Thread):
             print('start_socket')
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind(('', self.port))
+        s.bind(('', 0))
+        self.port = s.getsockname()[1]
         s.listen(1)
         if SHOW_WRITES_AND_READS:
             print('Waiting in socket.accept()')

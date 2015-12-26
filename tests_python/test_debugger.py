@@ -1016,6 +1016,7 @@ if __name__ == '__main__':
 
 #         suite.addTest(TestIronPython('test_case_18'))
 #         suite.addTest(TestIronPython('test_case_17'))
+#         suite.addTest(TestPython('test_case_10'))
 #         suite.addTest(TestIronPython('test_case_3'))
 #         suite.addTest(TestIronPython('test_case_7'))
 #
