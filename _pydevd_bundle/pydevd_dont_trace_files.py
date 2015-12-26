@@ -33,7 +33,6 @@ DONT_TRACE = {
     '_pydev_jy_imports_tipper.py': PYDEV_FILE,
     '_pydev_log.py': PYDEV_FILE,
     '_pydev_pkgutil_old.py': PYDEV_FILE,
-    '_pydev_pluginbase.py': PYDEV_FILE,
     '_pydev_select.py': PYDEV_FILE,
     '_pydev_socket.py': PYDEV_FILE,
     '_pydev_sys_patch.py': PYDEV_FILE,

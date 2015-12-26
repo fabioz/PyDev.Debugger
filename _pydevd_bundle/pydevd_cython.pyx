@@ -15,7 +15,7 @@ from _pydevd_bundle.pydevd_frame import PyDBFrame
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 cdef class PyDBAdditionalThreadInfo:
 # ELSE
-# class PyDBAdditionalThreadInfo:
+# class PyDBAdditionalThreadInfo(object):
 # ENDIF
 
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
@@ -29,6 +29,8 @@ cdef class PyDBAdditionalThreadInfo:
     cdef public tuple conditional_breakpoint_exception;
     cdef public str pydev_message;
     cdef public int suspend_type;
+    cdef public int pydev_next_line;
+    cdef public str pydev_func_name;
     # ELSE
 #     __slots__ = [
 #         'pydev_state',
@@ -41,6 +43,8 @@ cdef class PyDBAdditionalThreadInfo:
 #         'conditional_breakpoint_exception',
 #         'pydev_message',
 #         'suspend_type',
+#         'pydev_next_line',
+#         'pydev_func_name',
 #     ]
     # ENDIF
 
