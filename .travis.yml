@@ -16,7 +16,7 @@
 #   - pip install numpy
 #   - pip install nose
 #   - pip install ipython
-#   - pip install django
+#   - pip install django==1.7
 #
 # # Run test
 # script:
@@ -45,7 +45,7 @@ before_install:
 # Install packages
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy nose ipython
-  - pip install django
+  - pip install django==1.7
 
 # Run test
 script:

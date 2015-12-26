@@ -74,18 +74,17 @@ class ReaderThread(threading.Thread):
 class DebuggerRunner(object):
 
     def get_command_line(self):
+        '''
+        Returns the base command line (i.e.: ['python.exe', '-u'])
+        '''
         raise NotImplementedError
 
-    def check_case(self, writer_thread_class):
-        writer_thread = writer_thread_class()
-        writer_thread.start()
-        while not hasattr(writer_thread, 'port'):
-            time.sleep(.01)
+    def add_command_line_args(self, args):
+        writer_thread = self.writer_thread
         port = int(writer_thread.port)
 
         localhost = pydev_localhost.get_localhost()
-        args = self.get_command_line()
-        args += [
+        return args + [
             PYDEVD_FILE,
             '--DEBUG_RECORD_SOCKET_READS',
             '--qt-support',
@@ -94,8 +93,19 @@ class DebuggerRunner(object):
             '--port',
             str(port),
             '--file',
-            writer_thread.TEST_FILE,
-        ]
+        ] + writer_thread.get_command_line_args()
+        return args
+
+    def check_case(self, writer_thread_class):
+        writer_thread = writer_thread_class()
+        writer_thread.start()
+        while not hasattr(writer_thread, 'port'):
+            time.sleep(.01)
+        self.writer_thread = writer_thread
+
+        args = self.get_command_line()
+
+        args = self.add_command_line_args(args)
 
         if SHOW_OTHER_DEBUG_INFO:
             print('executing', ' '.join(args))
@@ -132,6 +142,10 @@ class DebuggerRunner(object):
             else:
                 if writer_thread is not None:
                     if not writer_thread.isAlive():
+                        if writer_thread.FORCE_KILL_PROCESS_WHEN_FINISHED_OK:
+                            process.kill()
+                            continue
+
                         check += 1
                         if check == 20:
                             print('Warning: writer thread exited and process still did not.')
@@ -155,8 +169,9 @@ class DebuggerRunner(object):
             self.fail_with_message(
                 "The other process may still be running -- and didn't give any output.", stdout, stderr, writer_thread)
 
-        if 'TEST SUCEEDED' not in ''.join(stdout):
-            self.fail_with_message("TEST SUCEEDED not found in stdout.", stdout, stderr, writer_thread)
+        if not writer_thread.FORCE_KILL_PROCESS_WHEN_FINISHED_OK:
+            if 'TEST SUCEEDED' not in ''.join(stdout):
+                self.fail_with_message("TEST SUCEEDED not found in stdout.", stdout, stderr, writer_thread)
 
         if writer_thread is not None:
             for i in xrange(100):
@@ -182,6 +197,8 @@ class DebuggerRunner(object):
 #=======================================================================================================================
 class AbstractWriterThread(threading.Thread):
 
+    FORCE_KILL_PROCESS_WHEN_FINISHED_OK = False
+
     def __init__(self):
         threading.Thread.__init__(self)
         self.setDaemon(True)
@@ -189,6 +206,8 @@ class AbstractWriterThread(threading.Thread):
         self._next_breakpoint_id = 0
         self.log = []
 
+    def get_command_line_args(self):
+        return [self.TEST_FILE]
 
     def do_kill(self):
         if hasattr(self, 'reader_thread'):

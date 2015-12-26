@@ -1,23 +1,23 @@
-import os
 import types
 
 from _pydev_bundle import pydev_log
-from _pydev_imps._pydev_pluginbase import PluginBase
 from _pydevd_bundle import pydevd_trace_api
 
 
 def load_plugins(package):
-    plugin_base = PluginBase(package=package)
-    plugin_source = plugin_base.make_plugin_source(searchpath=[os.path.dirname(os.path.realpath(__file__)) + '/' + package], persist=True)
     plugins = []
-    for plugin in plugin_source.list_plugins():
-        loaded_plugin = None
-        try:
-            loaded_plugin = plugin_source.load_plugin(plugin)
-        except:
-            pydev_log.error("Failed to load plugin %s" % plugin, True)
-        if loaded_plugin:
-            plugins.append(loaded_plugin)
+
+    try:
+        from pydevd_plugins import django_debug
+        plugins.append(django_debug)
+    except:
+        pydev_log.debug('Unable to load django_debug plugin')
+
+    try:
+        from pydevd_plugins import jinja2_debug
+        plugins.append(jinja2_debug)
+    except:
+        pydev_log.debug('Unable to load jinja2_debug plugin')
 
     return plugins
 
