@@ -161,18 +161,17 @@ class DebuggerRunner(object):
                             )
             time.sleep(.2)
 
-
-        poll = process.poll()
-        if poll < 0:
-            self.fail_with_message(
-                "The other process exited with error code: " + str(poll), stdout, stderr, writer_thread)
-
-
-        if stdout is None:
-            self.fail_with_message(
-                "The other process may still be running -- and didn't give any output.", stdout, stderr, writer_thread)
-
         if not writer_thread.FORCE_KILL_PROCESS_WHEN_FINISHED_OK:
+            poll = process.poll()
+            if poll < 0:
+                self.fail_with_message(
+                    "The other process exited with error code: " + str(poll), stdout, stderr, writer_thread)
+
+
+            if stdout is None:
+                self.fail_with_message(
+                    "The other process may still be running -- and didn't give any output.", stdout, stderr, writer_thread)
+
             if 'TEST SUCEEDED' not in ''.join(stdout):
                 self.fail_with_message("TEST SUCEEDED not found in stdout.", stdout, stderr, writer_thread)
 

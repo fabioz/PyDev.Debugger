@@ -3,8 +3,6 @@ import types
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_trace_api
 
-from pydevd_plugins import django_debug # TESTING (REMOVE)
-
 try:
     from pydevd_plugins import django_debug
 except:

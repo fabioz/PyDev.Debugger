@@ -6,7 +6,6 @@
     Note that it's a python script but it'll spawn a process to run as jython, ironpython and as python.
 '''
 from tests_python.debugger_unittest import get_free_port
-import urllib
 import threading
 
 
@@ -60,6 +59,10 @@ class WriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
 
         class T(threading.Thread):
             def run(self):
+                try:
+                    import urllib2 as urllib
+                except ImportError:
+                    import urllib
                 stream = urllib.urlopen('http://127.0.0.1:%s/my_app' % django_port)
                 self.contents = stream.read()
 
@@ -73,7 +76,7 @@ class WriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
         self.wait_for_var('v1')
 
         self.write_run_thread(thread_id)
-        
+
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
         assert line == 5, 'Expected return to be in line 5, was: %s' % line
         self.write_get_variable(thread_id, frame_id, 'entry')
