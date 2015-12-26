@@ -13,9 +13,9 @@ CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATIO
 
 # Always True (because otherwise when we do have an error, it's hard to diagnose).
 # Note: set to False because we seem to be using too much memory (and subprocess uses fork which can throw an error on travis).
-SHOW_WRITES_AND_READS = False
-SHOW_OTHER_DEBUG_INFO = False
-SHOW_STDOUT = False
+SHOW_WRITES_AND_READS = True
+SHOW_OTHER_DEBUG_INFO = True
+SHOW_STDOUT = True
 
 import pydevd
 PYDEVD_FILE = pydevd.__file__
@@ -112,9 +112,12 @@ class DebuggerRunner(object):
 
         return self.run_process(args, writer_thread)
 
-    def run_process(self, args, writer_thread):
+    def create_process(self, args):
         process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=os.path.dirname(PYDEVD_FILE))
+        return process
 
+    def run_process(self, args, writer_thread):
+        process = self.create_process(args)
         stdout = []
         stderr = []
 
