@@ -10,6 +10,7 @@ import threading
 
 
 
+
 CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION, CMD_ENABLE_DONT_TRACE = 133, 134, 135, 141
 PYTHON_EXE = None
 IRONPYTHON_EXE = None
@@ -22,6 +23,16 @@ import os
 import sys
 import time
 from tests_python import debugger_unittest
+
+TEST_DJANGO = False
+if sys.version_info[:2] == (2, 7):
+    # Only test on python 2.7 for now
+    try:
+        import django
+        TEST_DJANGO = True
+    except:
+        pass
+
 
 #=======================================================================================================================
 # WriterThreadCaseDjango
@@ -60,10 +71,10 @@ class WriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
         class T(threading.Thread):
             def run(self):
                 try:
-                    import urllib2 as urllib
+                    from urllib.request import urlopen
                 except ImportError:
-                    import urllib
-                stream = urllib.urlopen('http://127.0.0.1:%s/my_app' % django_port)
+                    from urllib import urlopen
+                stream = urlopen('http://127.0.0.1:%s/my_app' % django_port)
                 self.contents = stream.read()
 
         t = T()
@@ -929,7 +940,8 @@ class DebuggerBase(debugger_unittest.DebuggerRunner):
         self.check_case(WriterThreadCase19)
 
     def test_case_django(self):
-        self.check_case(WriterThreadCaseDjango)
+        if TEST_DJANGO:
+            self.check_case(WriterThreadCaseDjango)
 
     def _has_qt(self):
         try:
