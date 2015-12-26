@@ -4,19 +4,20 @@ from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_trace_api
 
 
-def load_plugins(package):
+def load_plugins():
     plugins = []
 
-    try:
-        from pydevd_plugins import django_debug
-        plugins.append(django_debug)
-    except:
-        pydev_log.debug('Unable to load django_debug plugin')
+#     try:
+    from pydevd_plugins import django_debug
+    plugins.append(django_debug)
+#     except:
+#         pydev_log.debug('Unable to load django_debug plugin')
 
     try:
         from pydevd_plugins import jinja2_debug
         plugins.append(jinja2_debug)
     except:
+        import traceback;traceback.print_exc()
         pydev_log.debug('Unable to load jinja2_debug plugin')
 
     return plugins
@@ -30,8 +31,9 @@ def bind_func_to_method(func, obj, method_name):
 
 
 class PluginManager(object):
+
     def __init__(self, main_debugger):
-        self.plugins = load_plugins('pydevd_plugins')
+        self.plugins = load_plugins()
         self.active_plugins = []
         self.main_debugger = main_debugger
         self.rebind_methods()
