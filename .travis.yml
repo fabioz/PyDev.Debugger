@@ -45,7 +45,7 @@ before_install:
 # Install packages
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy nose ipython
-  - pip install django>=1.7,<1.8
+  - pip install "django>=1.7,<1.8"
 
 # Run test
 script:
