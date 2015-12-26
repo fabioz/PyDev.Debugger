@@ -81,7 +81,7 @@ class DebuggerRunner(object):
         writer_thread.start()
         while not hasattr(writer_thread, 'port'):
             time.sleep(.01)
-            port = int(writer_thread.port)
+        port = int(writer_thread.port)
 
         localhost = pydev_localhost.get_localhost()
         args = self.get_command_line()
