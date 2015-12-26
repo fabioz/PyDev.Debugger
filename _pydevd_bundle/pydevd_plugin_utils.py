@@ -3,23 +3,27 @@ import types
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_trace_api
 
+from pydevd_plugins import django_debug # TESTING (REMOVE)
+
+try:
+    from pydevd_plugins import django_debug
+except:
+    django_debug = None
+    pydev_log.debug('Unable to load django_debug plugin')
+
+try:
+    from pydevd_plugins import jinja2_debug
+except:
+    jinja2_debug = None
+    pydev_log.debug('Unable to load jinja2_debug plugin')
 
 def load_plugins():
     plugins = []
+    if django_debug is not None:
+        plugins.append(django_debug)
 
-#     try:
-    from pydevd_plugins import django_debug
-    plugins.append(django_debug)
-#     except:
-#         pydev_log.debug('Unable to load django_debug plugin')
-
-    try:
-        from pydevd_plugins import jinja2_debug
+    if jinja2_debug is not None:
         plugins.append(jinja2_debug)
-    except:
-        import traceback;traceback.print_exc()
-        pydev_log.debug('Unable to load jinja2_debug plugin')
-
     return plugins
 
 
