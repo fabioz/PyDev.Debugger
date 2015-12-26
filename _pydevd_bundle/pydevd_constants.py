@@ -181,6 +181,11 @@ except NameError:
     class object:
         pass
 
+    import __builtin__
+
+    setattr(__builtin__, 'object', object)
+
+
 try:
     enumerate
 except:
