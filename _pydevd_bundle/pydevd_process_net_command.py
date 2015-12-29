@@ -37,7 +37,7 @@ def process_net_command(py_db, cmd_id, seq, text):
     it may be worth refactoring it (actually, reordering the ifs so that the ones used mostly come before
     probably will give better performance).
     '''
-    print(ID_TO_MEANING[str(cmd_id)], repr(text))
+    # print(ID_TO_MEANING[str(cmd_id)], repr(text))
 
     py_db._main_lock.acquire()
     try:
