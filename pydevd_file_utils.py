@@ -92,7 +92,7 @@ def set_ide_os(os):
     if os == 'UNIX':
         normcase = lambda f:f #Change to no-op if the client side is on unix/mac.
     else:
-        normcase = norm_case
+        normcase = os_normcase
 
     # After setting the ide OS, apply the normcase to the existing paths.
 
