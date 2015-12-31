@@ -8,6 +8,19 @@ import traceback
 from _pydev_bundle import pydev_log
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, FCode, just_raised
 
+IS_DJANGO18 = False
+IS_DJANGO19 = False
+IS_DJANGO19_OR_HIGHER = False
+try:
+    import django
+    version = django.VERSION
+    IS_DJANGO18 = version[0] == 1 and version[1] == 8
+    IS_DJANGO19 = version[0] == 1 and version[1] == 9
+    IS_DJANGO19_OR_HIGHER = ((version[0] == 1 and version[1] >= 9) or version[1] > 1)
+except:
+    pass
+
+
 class DjangoLineBreakpoint(LineBreakpoint):
     def __init__(self, file, line, condition, func_name, expression):
         self.file = file
@@ -174,14 +187,21 @@ def _offset_to_line_number(text, offset):
     return curLine
 
 
-def _get_source(frame):
+def _get_source_django_18_or_lower(frame):
+    # This method is usable only for the Django <= 1.8
     try:
         node = frame.f_locals['self']
         if hasattr(node, 'source'):
             return node.source
         else:
-            pydev_log.error_once("WARNING: Template path is not available. Please set TEMPLATE_DEBUG=True in your settings.py to make "
-                                 " django template breakpoints working")
+            if IS_DJANGO18:
+                # The debug setting was changed since Django 1.8
+                pydev_log.error_once("WARNING: Template path is not available. Set the 'debug' option in the OPTIONS of a DjangoTemplates "
+                                     "backend.")
+            else:
+                # The debug setting for Django < 1.8
+                pydev_log.error_once("WARNING: Template path is not available. Please set TEMPLATE_DEBUG=True in your settings.py to make "
+                                     "django template breakpoints working")
             return None
 
     except:
@@ -191,7 +211,16 @@ def _get_source(frame):
 
 def _get_template_file_name(frame):
     try:
-        source = _get_source(frame)
+        if IS_DJANGO19_OR_HIGHER:
+            # The Node source was removed since Django 1.9
+            if dict_contains(frame.f_locals, 'context'):
+                context = frame.f_locals['context']
+                if hasattr(context, 'template') and hasattr(context.template, 'origin') and \
+                        hasattr(context.template.origin, 'name'):
+                    return context.template.origin.name
+            return None
+
+        source = _get_source_django_18_or_lower(frame)
         if source is None:
             pydev_log.debug("Source is None\n")
             return None
@@ -209,7 +238,14 @@ def _get_template_file_name(frame):
 
 
 def _get_template_line(frame):
-    source = _get_source(frame)
+    if IS_DJANGO19_OR_HIGHER:
+        # The Node source was removed since Django 1.9
+        self = frame.f_locals['self']
+        if hasattr(self, 'token') and hasattr(self.token, 'lineno'):
+            return self.token.lineno
+        else:
+            return None
+    source = _get_source_django_18_or_lower(frame)
     file_name = _get_template_file_name(frame)
     try:
         return _offset_to_line_number(_read_file(file_name), source[1][0])

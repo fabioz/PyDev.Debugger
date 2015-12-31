@@ -53,11 +53,14 @@ if IS_JYTHON:
 # Python 3?
 #=======================================================================================================================
 IS_PY3K = False
+IS_PY34_OLDER = False
 IS_PY27 = False
 IS_PY24 = False
 try:
     if sys.version_info[0] >= 3:
         IS_PY3K = True
+        if (sys.version_info[0] == 3 and sys.version_info[1] >= 4) or sys.version_info[0] > 3:
+            IS_PY34_OLDER = True
     elif sys.version_info[0] == 2 and sys.version_info[1] == 7:
         IS_PY27 = True
     elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
@@ -221,6 +224,29 @@ class NextId:
 
 _nextThreadId = NextId()
 
+
+#=======================================================================================================================
+# get_pid
+#=======================================================================================================================
+def get_pid():
+    try:
+        return os.getpid()
+    except AttributeError:
+        try:
+            #Jython does not have it!
+            import java.lang.management.ManagementFactory  #@UnresolvedImport -- just for jython
+            pid = java.lang.management.ManagementFactory.getRuntimeMXBean().getName()
+            return pid.replace('@', '_')
+        except:
+            #ok, no pid available (will be unable to debug multiple processes)
+            return '000001'
+
+def clear_cached_thread_id(thread):
+    try:
+        del thread.__pydevd_id__
+    except AttributeError:
+        pass
+
 #=======================================================================================================================
 # get_thread_id
 #=======================================================================================================================
@@ -232,18 +258,7 @@ def get_thread_id(thread):
         try:
             #We do a new check with the lock in place just to be sure that nothing changed
             if not hasattr(thread, '__pydevd_id__'):
-                try:
-                    pid = os.getpid()
-                except AttributeError:
-                    try:
-                        #Jython does not have it!
-                        import java.lang.management.ManagementFactory  #@UnresolvedImport -- just for jython
-                        pid = java.lang.management.ManagementFactory.getRuntimeMXBean().getName()
-                        pid = pid.replace('@', '_')
-                    except:
-                        #ok, no pid available (will be unable to debug multiple processes)
-                        pid = '000001'
-
+                pid = get_pid()
                 thread.__pydevd_id__ = 'pid%s_seq%s' % (pid, _nextThreadId())
         finally:
             _nextThreadIdLock.release()

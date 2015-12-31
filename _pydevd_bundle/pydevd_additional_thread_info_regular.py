@@ -55,6 +55,8 @@ class PyDBAdditionalThreadInfo(object):
         self.conditional_breakpoint_exception = None
         self.pydev_message = ''
         self.suspend_type = PYTHON_SUSPEND
+        self.pydev_next_line = -1
+        self.pydev_func_name = '.invalid.' # Must match the type in cython
 
 
     def iter_frames(self, t):
@@ -84,13 +86,14 @@ class PyDBAdditionalThreadInfo(object):
 # IFDEF CYTHON
 # ELSE
 
+PyDBAdditionalThreadInfoOriginal = PyDBAdditionalThreadInfo
 #=======================================================================================================================
 # PyDBAdditionalThreadInfoWithoutCurrentFramesSupport
 #=======================================================================================================================
-class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(PyDBAdditionalThreadInfo):
+class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(PyDBAdditionalThreadInfoOriginal):
 
     def __init__(self):
-        PyDBAdditionalThreadInfo.__init__(self)
+        PyDBAdditionalThreadInfoOriginal.__init__(self)
         #That's where the last frame entered is kept. That's needed so that we're able to
         #trace contexts that were previously untraced and are currently active. So, the bad thing
         #is that the frame may be kept alive longer than it would if we go up on the frame stack,
