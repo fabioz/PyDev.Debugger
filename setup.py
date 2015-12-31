@@ -1,7 +1,12 @@
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+# Reference on wheels:
+# https://hynek.me/articles/sharing-your-labor-of-love-pypi-quick-and-dirty/
+# http://lucumr.pocoo.org/2014/1/27/python-on-wheels/
+from setuptools import setup
+from setuptools.dist import Distribution
+
+class BinaryDistribution(Distribution):
+    def is_pure(self):
+        return False
 
 args = dict(
     name='pydevd',
@@ -9,15 +14,18 @@ args = dict(
     description = 'PyDev.Debugger (used in PyDev and PyCharm)',
     author='Fabio Zadrozny and others',
     url='https://github.com/fabioz/PyDev.Debugger/',
-    license='EPL',
+    license='EPL (Eclipse Public License)',
     packages=[
         '_pydev_bundle',
         '_pydev_imps',
         '_pydev_runfiles',
         '_pydevd_bundle',
         'pydev_ipython',
-        'pydev_sitecustomize',
-        'pydevd_attach_to_process',
+
+        #'pydev_sitecustomize', -- Not actually a package
+
+        # 'pydevd_attach_to_process', -- Not actually a package
+
         'pydevd_concurrency_analyser',
         'pydevd_plugins',
     ],
@@ -46,6 +54,10 @@ args = dict(
         'Programming Language :: Python',
         'Topic :: Software Development :: Debuggers',
     ],
+    keywords=['pydev', 'pydevd', 'pydev.debugger'],
+    include_package_data=True,
+    zip_safe=False,
+    distclass=BinaryDistribution,
 )
 
 try:

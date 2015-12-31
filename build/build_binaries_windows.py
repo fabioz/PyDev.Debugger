@@ -12,31 +12,37 @@ Create the environments:
 C:\tools\Miniconda32\Scripts\conda create -y -f -n py27_32 python=2.7 cython numpy nose ipython pip
 C:\tools\Miniconda32\Scripts\activate py27_32
 pip install "django>=1.7,<1.8"
+pip install -U "pip>=1.4" "setuptools>=0.9" "wheel>=0.21" twine
 deactivate
 
 C:\tools\Miniconda32\Scripts\conda create -y -f -n py34_32 python=3.4 cython numpy nose ipython pip
 C:\tools\Miniconda32\Scripts\activate py34_32
 pip install "django>=1.9"
+pip install -U "pip>=1.4" "setuptools>=0.9" "wheel>=0.21" twine
 deactivate
 
 C:\tools\Miniconda32\Scripts\conda create -y -f -n py35_32 python=3.5 cython numpy nose ipython pip
 C:\tools\Miniconda32\Scripts\activate py35_32
 pip install "django>=1.9"
+pip install -U "pip>=1.4" "setuptools>=0.9" "wheel>=0.21" twine
 deactivate
 
 C:\tools\Miniconda\Scripts\conda create -y -f -n py27_64 python=2.7 cython numpy nose ipython pip
 C:\tools\Miniconda\Scripts\activate py27_64
 pip install "django>=1.7,<1.8"
+pip install -U "pip>=1.4" "setuptools>=0.9" "wheel>=0.21" twine
 deactivate
 
 C:\tools\Miniconda\Scripts\conda create -y -f -n py34_64 python=3.4 cython numpy nose ipython pip
 C:\tools\Miniconda\Scripts\activate py34_64
 pip install "django>=1.9"
+pip install -U "pip>=1.4" "setuptools>=0.9" "wheel>=0.21" twine
 deactivate
 
 C:\tools\Miniconda\Scripts\conda create -y -f -n py35_64 python=3.5 cython numpy nose ipython pip
 C:\tools\Miniconda\Scripts\activate py35_64
 pip install "django>=1.9"
+pip install -U "pip>=1.4" "setuptools>=0.9" "wheel>=0.21" twine
 deactivate
 
 
