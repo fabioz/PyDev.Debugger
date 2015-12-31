@@ -46,7 +46,6 @@ from __future__ import unicode_literals
 import os
 
 
-
 python_installations = [
     r'C:\tools\Miniconda32\envs\py27_32\python.exe',
     r'C:\tools\Miniconda32\envs\py34_32\python.exe',
