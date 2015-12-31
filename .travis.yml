@@ -48,7 +48,7 @@ before_install:
   - "sh -e /etc/init.d/xvfb start"
 # Install packages
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy nose ipython
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy nose ipython cython
   - pip install "django>=1.7,<1.8"
   - python build/build.py
 

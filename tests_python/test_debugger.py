@@ -33,6 +33,7 @@ if sys.version_info[:2] == (2, 7):
     except:
         pass
 
+TEST_CYTHON = os.getenv('PYDEVD_USE_CYTHON', None) == 'YES'
 
 #=======================================================================================================================
 # WriterThreadCaseDjango
@@ -939,9 +940,14 @@ class DebuggerBase(debugger_unittest.DebuggerRunner):
     def test_case_19(self):
         self.check_case(WriterThreadCase19)
 
-    def test_case_django(self):
-        if TEST_DJANGO:
+    if TEST_DJANGO:
+        def test_case_django(self):
             self.check_case(WriterThreadCaseDjango)
+
+    if TEST_CYTHON:
+        def test_cython(self):
+            from _pydevd_bundle import pydevd_cython
+            assert pydevd_cython.trace_dispatch is not None
 
     def _has_qt(self):
         try:
