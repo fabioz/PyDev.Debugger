@@ -1,6 +1,14 @@
 # Reference on wheels:
 # https://hynek.me/articles/sharing-your-labor-of-love-pypi-quick-and-dirty/
 # http://lucumr.pocoo.org/2014/1/27/python-on-wheels/
+
+# Another (no wheels): https://jamie.curle.io/blog/my-first-experience-adding-package-pypi/
+
+# New version: change version and then:
+# python setup.py sdist bdist_wheel
+# python setup.py register
+# twine upload -s dist/pydevd-4.1.0*
+
 from setuptools import setup
 from setuptools.dist import Distribution
 
@@ -62,8 +70,15 @@ args = dict(
 
 try:
     from Cython.Build import cythonize
+    import os
+    # If we don't have the pyx nor cython, compile the .c
+    if not os.path.exists(os.path.join(os.path.dirname(__file__), "_pydevd_bundle", "pydevd_cython.pyx")):
+        raise ImportError()
 except ImportError:
-    pass
+    from distutils.extension import Extension
+    args['ext_modules'] = Extension('_pydevd_bundle.pydevd_cython', [
+        "_pydevd_bundle/pydevd_cython.c",
+    ])
 else:
     args['ext_modules'] = cythonize([
         "_pydevd_bundle/pydevd_cython.pyx",
@@ -71,8 +86,5 @@ else:
 
 setup(**args)
 
-# Note: nice reference: https://jamie.curle.io/blog/my-first-experience-adding-package-pypi/
-# New version: change version and then:
-# python setup.py sdist
-# python setup.py sdist register upload
+
 
