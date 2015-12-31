@@ -210,22 +210,6 @@ except:
 
 
 #=======================================================================================================================
-# NextId
-#=======================================================================================================================
-class NextId:
-
-    def __init__(self):
-        self._id = 0
-
-    def __call__(self):
-        #No need to synchronize here
-        self._id += 1
-        return self._id
-
-_nextThreadId = NextId()
-
-
-#=======================================================================================================================
 # get_pid
 #=======================================================================================================================
 def get_pid():
@@ -252,18 +236,28 @@ def clear_cached_thread_id(thread):
 #=======================================================================================================================
 def get_thread_id(thread):
     try:
-        return thread.__pydevd_id__
+        tid = thread.__pydevd_id__
+        if tid is None:
+            # Fix for https://sw-brainwy.rhcloud.com/tracker/PyDev/645
+            # if __pydevd_id__ is None, recalculate it... also, use an heuristic
+            # that gives us always the same id for the thread (using thread.ident or id(thread)).
+            raise AttributeError()
     except AttributeError:
         _nextThreadIdLock.acquire()
         try:
             #We do a new check with the lock in place just to be sure that nothing changed
-            if not hasattr(thread, '__pydevd_id__'):
+            tid = getattr(thread, '__pydevd_id__', None)
+            if tid is None:
                 pid = get_pid()
-                thread.__pydevd_id__ = 'pid%s_seq%s' % (pid, _nextThreadId())
+                try:
+                    thread.__pydevd_id__ = 'pid%s_seq%s' % (pid, thread.ident)
+                except:
+                    # thread.ident isn't always there... (use id(thread) instead if it's not there).
+                    thread.__pydevd_id__ = 'pid%s_seq%s' % (pid, id(thread))
         finally:
             _nextThreadIdLock.release()
 
-    return thread.__pydevd_id__
+    return tid
 
 #===============================================================================
 # Null

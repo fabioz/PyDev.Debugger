@@ -63,13 +63,22 @@ connect(\\"127.0.0.1\\")
             SetupHolder.setup = {'client':'127.0.0.1', 'port': '0'}
             check=['C:\\bin\\python.exe', '-m', 'test']
             sys.original_argv = ['pydevd', '--multiprocess']
-            self.assertEqual(pydev_monkey.patch_args(check), [
-                'C:\\bin\\python.exe',
-                '"pydevd"',
-                '"--module"',
-                '"--multiprocess"',
-                'test',
-            ])
+            if sys.platform == 'win32':
+                self.assertEqual(pydev_monkey.patch_args(check), [
+                    'C:\\bin\\python.exe',
+                    '"pydevd"',
+                    '"--module"',
+                    '"--multiprocess"',
+                    'test',
+                ])
+            else:
+                self.assertEqual(pydev_monkey.patch_args(check), [
+                    'C:\\bin\\python.exe',
+                    'pydevd',
+                    '--module',
+                    '--multiprocess',
+                    'test',
+                ])
         finally:
             SetupHolder.setup = original
 
