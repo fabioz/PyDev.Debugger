@@ -59,6 +59,8 @@ cdef class PyDBAdditionalThreadInfo:
         self.conditional_breakpoint_exception = None
         self.pydev_message = ''
         self.suspend_type = PYTHON_SUSPEND
+        self.pydev_next_line = -1
+        self.pydev_func_name = '.invalid.' # Must match the type in cython
 
 
     def iter_frames(self, t):
@@ -88,13 +90,14 @@ cdef class PyDBAdditionalThreadInfo:
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 # ELSE
 # 
+# PyDBAdditionalThreadInfoOriginal = PyDBAdditionalThreadInfo
 # #=======================================================================================================================
 # # PyDBAdditionalThreadInfoWithoutCurrentFramesSupport
 # #=======================================================================================================================
-# class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(PyDBAdditionalThreadInfo):
+# class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(PyDBAdditionalThreadInfoOriginal):
 # 
 #     def __init__(self):
-#         PyDBAdditionalThreadInfo.__init__(self)
+#         PyDBAdditionalThreadInfoOriginal.__init__(self)
 #         #That's where the last frame entered is kept. That's needed so that we're able to
 #         #trace contexts that were previously untraced and are currently active. So, the bad thing
 #         #is that the frame may be kept alive longer than it would if we go up on the frame stack,
@@ -683,7 +686,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                 elif step_cmd == CMD_SMART_STEP_INTO:
                     stop = False
                     if info.pydev_smart_step_stop is frame:
-                        info.pydev_func_name = None
+                        info.pydev_func_name = '.invalid.' # Must match the type in cython
                         info.pydev_smart_step_stop = None
 
                     if event == 'line' or event == 'exception':

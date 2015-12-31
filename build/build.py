@@ -72,18 +72,18 @@ def get_environment_from_batch_command(env_cmd, initial=None):
     proc.communicate()
     return result
 
+def remove_binaries():
+    for f in os.listdir(os.path.join(root_dir, '_pydevd_bundle')):
+        if f.endswith('.pyd'):
+            remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', f))
 
 def build():
-    remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_cython.pyd'))
-
+    remove_binaries()
 
 
     os.chdir(root_dir)
 
     if sys.platform == 'win32':
-        additional = 'cp%s%s-%s' % (sys.version_info[0], sys.version_info[1], 'win32')
-        remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_cython.%s.pyd' % additional))
-
         # "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
         # set MSSdk=1
         # set DISTUTILS_USE_SDK=1
@@ -132,6 +132,16 @@ def build():
         'build_ext', '--inplace', ], env=env,)
 
 if __name__ == '__main__':
-    generate_dont_trace_files()
-    generate_cython_module()
-    build()
+    use_cython = os.getenv('PYDEVD_USE_CYTHON', None)
+    if use_cython == 'YES':
+        build()
+    elif use_cython == 'NO':
+        remove_binaries()
+    elif use_cython is None:
+        # Regular process
+        generate_dont_trace_files()
+        generate_cython_module()
+        build()
+    else:
+        raise RuntimeError('Unexpected value for PYDEVD_USE_CYTHON: %s (accepted: YES, NO)' % (use_cython,))
+

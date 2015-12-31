@@ -16,7 +16,7 @@ try:
     version = django.VERSION
     IS_DJANGO18 = version[0] == 1 and version[1] == 8
     IS_DJANGO19 = version[0] == 1 and version[1] == 9
-    IS_DJANGO19_OR_HIGHER = ((version[0] == 1 and version[1] >= 9) or version[1] > 1)
+    IS_DJANGO19_OR_HIGHER = ((version[0] == 1 and version[1] >= 9) or version[0] > 1)
 except:
     pass
 
