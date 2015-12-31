@@ -114,17 +114,30 @@ def patch_args(args):
             return args
 
         i = 1
+
+        # Original args should be something as:
+        # ['X:\\pysrc\\pydevd.py', '--multiprocess', '--print-in-debugger-startup',
+        #  '--vm_type', 'python', '--client', '127.0.0.1', '--port', '56352', '--file', 'x:\\snippet1.py']
+        original = sys.original_argv[:]
         while i < len(args):
-            if args[i].startswith('-'):
-                new_args.append(args[i])
+            if args[i] == '-m':
+                # Always insert at pos == 1 (i.e.: pydevd "--module" --multiprocess ...)
+                original.insert(1, '--module')
             else:
-                break
+                if args[i].startswith('-'):
+                    new_args.append(args[i])
+                else:
+                    break
             i += 1
 
+        # Note: undoing https://github.com/Elizaveta239/PyDev.Debugger/commit/053c9d6b1b455530bca267e7419a9f63bf51cddf
+        # (i >= len(args) instead of i < len(args))
+        # in practice it'd raise an exception here and would return original args, which is not what we want... providing
+        # a proper fix for https://youtrack.jetbrains.com/issue/PY-9767 elsewhere.
         if i < len(args) and _is_managed_arg(args[i]):  # no need to add pydevd twice
             return args
 
-        for x in sys.original_argv:  # @UndefinedVariable
+        for x in original:  # @UndefinedVariable
             if sys.platform == "win32" and not x.endswith('"'):
                 arg = '"%s"' % x
             else:
@@ -241,7 +254,8 @@ def str_to_args_windows(args):
 
 def patch_arg_str_win(arg_str):
     args = str_to_args_windows(arg_str)
-    if not is_python(args[0]):
+    # Fix https://youtrack.jetbrains.com/issue/PY-9767 (args may be empty)
+    if not args or not is_python(args[0]):
         return arg_str
     arg_str = args_to_str(patch_args(args))
     log_debug("New args: %s" % arg_str)
@@ -277,12 +291,12 @@ def create_warn_multiproc(original_name):
 
 def create_execl(original_name):
     def new_execl(path, *args):
-        '''
-os.execl(path, arg0, arg1, ...)
-os.execle(path, arg0, arg1, ..., env)
-os.execlp(file, arg0, arg1, ...)
-os.execlpe(file, arg0, arg1, ..., env)
-        '''
+        """
+        os.execl(path, arg0, arg1, ...)
+        os.execle(path, arg0, arg1, ..., env)
+        os.execlp(file, arg0, arg1, ...)
+        os.execlpe(file, arg0, arg1, ..., env)
+        """
         import os
         args = patch_args(args)
         return getattr(os, original_name)(path, *args)
@@ -291,10 +305,10 @@ os.execlpe(file, arg0, arg1, ..., env)
 
 def create_execv(original_name):
     def new_execv(path, args):
-        '''
-os.execv(path, args)
-os.execvp(file, args)
-        '''
+        """
+        os.execv(path, args)
+        os.execvp(file, args)
+        """
         import os
         return getattr(os, original_name)(path, patch_args(args))
     return new_execv
@@ -302,8 +316,8 @@ os.execvp(file, args)
 
 def create_execve(original_name):
     """
-os.execve(path, args, env)
-os.execvpe(file, args, env)
+    os.execve(path, args, env)
+    os.execvpe(file, args, env)
     """
     def new_execve(path, args, env):
         import os
@@ -313,10 +327,10 @@ os.execvpe(file, args, env)
 
 def create_spawnl(original_name):
     def new_spawnl(mode, path, *args):
-        '''
-os.spawnl(mode, path, arg0, arg1, ...)
-os.spawnlp(mode, file, arg0, arg1, ...)
-        '''
+        """
+        os.spawnl(mode, path, arg0, arg1, ...)
+        os.spawnlp(mode, file, arg0, arg1, ...)
+        """
         import os
         args = patch_args(args)
         return getattr(os, original_name)(mode, path, *args)
@@ -325,10 +339,10 @@ os.spawnlp(mode, file, arg0, arg1, ...)
 
 def create_spawnv(original_name):
     def new_spawnv(mode, path, args):
-        '''
-os.spawnv(mode, path, args)
-os.spawnvp(mode, file, args)
-        '''
+        """
+        os.spawnv(mode, path, args)
+        os.spawnvp(mode, file, args)
+        """
         import os
         return getattr(os, original_name)(mode, path, patch_args(args))
     return new_spawnv
@@ -336,8 +350,8 @@ os.spawnvp(mode, file, args)
 
 def create_spawnve(original_name):
     """
-os.spawnve(mode, path, args, env)
-os.spawnvpe(mode, file, args, env)
+    os.spawnve(mode, path, args, env)
+    os.spawnvpe(mode, file, args, env)
     """
     def new_spawnve(mode, path, args, env):
         import os
@@ -347,7 +361,7 @@ os.spawnvpe(mode, file, args, env)
 
 def create_fork_exec(original_name):
     """
-_posixsubprocess.fork_exec(args, executable_list, close_fds, ... (13 more))
+    _posixsubprocess.fork_exec(args, executable_list, close_fds, ... (13 more))
     """
     def new_fork_exec(args, *other_args):
         import _posixsubprocess  # @UnresolvedImport
@@ -356,22 +370,36 @@ _posixsubprocess.fork_exec(args, executable_list, close_fds, ... (13 more))
     return new_fork_exec
 
 
+def create_warn_fork_exec(original_name):
+    """
+    _posixsubprocess.fork_exec(args, executable_list, close_fds, ... (13 more))
+    """
+    def new_warn_fork_exec(*args):
+        try:
+            import _posixsubprocess
+            warn_multiproc()
+            return getattr(_posixsubprocess, original_name)(*args)
+        except:
+            pass
+    return new_warn_fork_exec
+
+
 def create_CreateProcess(original_name):
     """
-CreateProcess(*args, **kwargs)
+    CreateProcess(*args, **kwargs)
     """
-    def new_CreateProcess(appName, commandLine, *args):
+    def new_CreateProcess(app_name, cmd_line, *args):
         try:
             import _subprocess
         except ImportError:
             import _winapi as _subprocess
-        return getattr(_subprocess, original_name)(appName, patch_arg_str_win(commandLine), *args)
+        return getattr(_subprocess, original_name)(app_name, patch_arg_str_win(cmd_line), *args)
     return new_CreateProcess
 
 
 def create_CreateProcessWarnMultiproc(original_name):
     """
-CreateProcess(*args, **kwargs)
+    CreateProcess(*args, **kwargs)
     """
     def new_CreateProcess(*args):
         try:
@@ -467,7 +495,7 @@ def patch_new_process_functions_with_warning():
         monkey_patch_os('fork', create_warn_multiproc)
         try:
             import _posixsubprocess
-            monkey_patch_module(_posixsubprocess, 'fork_exec', create_warn_multiproc)
+            monkey_patch_module(_posixsubprocess, 'fork_exec', create_warn_fork_exec)
         except ImportError:
             pass
     else:

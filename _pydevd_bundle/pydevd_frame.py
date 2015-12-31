@@ -495,7 +495,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                 elif step_cmd == CMD_SMART_STEP_INTO:
                     stop = False
                     if info.pydev_smart_step_stop is frame:
-                        info.pydev_func_name = None
+                        info.pydev_func_name = '.invalid.' # Must match the type in cython
                         info.pydev_smart_step_stop = None
 
                     if event == 'line' or event == 'exception':

@@ -28,8 +28,9 @@ from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CM
     set_global_debugger, WriterThread, pydevd_find_thread_by_id, pydevd_log, \
     start_client, start_server, InternalGetBreakpointException, InternalSendCurrExceptionTrace, \
     InternalSendCurrExceptionTraceProceeded
-from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, get_thread_id, dict_keys, dict_pop, dict_contains, \
-    dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange
+from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OLDER, get_thread_id, dict_keys, dict_pop, dict_contains, \
+    dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange,\
+    clear_cached_thread_id
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
@@ -253,7 +254,7 @@ class PyDB:
         return self.plugin
 
     def not_in_scope(self, filename):
-        return pydevd_utils.is_in_project_roots(filename)
+        return pydevd_utils.not_in_project_roots(filename)
 
     def first_appearance_in_scope(self, trace):
         if trace is None or self.not_in_scope(trace.tb_frame.f_code.co_filename):
@@ -407,14 +408,33 @@ class PyDB:
             self._lock_running_thread_ids.acquire()
             try:
                 for t in all_threads:
-                    thread_id = get_thread_id(t)
-
                     if getattr(t, 'is_pydev_daemon_thread', False):
                         pass # I.e.: skip the DummyThreads created from pydev daemon threads
                     elif isinstance(t, PyDBDaemonThread):
                         pydev_log.error_once('Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
 
                     elif is_thread_alive(t):
+                        if not self._running_thread_ids:
+                            # Fix multiprocessing debug with breakpoints in both main and child processes
+                            # (https://youtrack.jetbrains.com/issue/PY-17092) When the new process is created, the main
+                            # thread in the new process already has the attribute 'pydevd_id', so the new thread doesn't
+                            # get new id with its process number and the debugger loses access to both threads.
+                            # Therefore we should update thread_id for every main thread in the new process.
+
+                            # TODO: Investigate: should we do this for all threads in threading.enumerate()?
+                            # (i.e.: if a fork happens on Linux, this seems likely).
+                            old_thread_id = get_thread_id(t)
+
+                            clear_cached_thread_id(t)
+                            clear_cached_thread_id(threadingCurrentThread())
+
+                            thread_id = get_thread_id(t)
+                            curr_thread_id = get_thread_id(threadingCurrentThread())
+                            if pydevd_vars.has_additional_frames_by_id(old_thread_id):
+                                frames_by_id = pydevd_vars.get_additional_frames_by_id(old_thread_id)
+                                pydevd_vars.add_additional_frame_by_id(thread_id, frames_by_id)
+                        else:
+                            thread_id = get_thread_id(t)
                         program_threads_alive[thread_id] = t
 
                         if not dict_contains(self._running_thread_ids, thread_id):
@@ -1485,7 +1505,7 @@ if __name__ == '__main__':
         if setup['save-threading']:
             debugger.thread_analyser = ThreadingLogger()
         if setup['save-asyncio']:
-            if IS_PY3K:
+            if IS_PY34_OLDER:
                 debugger.asyncio_analyser = AsyncioLogger()
 
         try:
