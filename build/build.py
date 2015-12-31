@@ -83,6 +83,7 @@ def build():
 
     os.chdir(root_dir)
 
+    env=None
     if sys.platform == 'win32':
         # "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
         # set MSSdk=1
