@@ -1,3 +1,12 @@
+'''
+Helper to build pydevd.
+
+It should:
+    * recreate our generated files
+    * compile cython deps (properly setting up the environment first).
+
+Note that it's used in the CI to build the cython deps based on the PYDEVD_USE_CYTHON environment variable.
+'''
 from __future__ import print_function
 
 import os

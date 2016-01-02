@@ -1,5 +1,6 @@
 '''
-This module should be run to recreate the files that we generate automatically.
+This module should be run to recreate the files that we generate automatically
+(i.e.: modules that shouldn't be traced and cython .pyx)
 '''
 
 from __future__ import print_function
@@ -110,6 +111,14 @@ if IS_PY3K:
     pydev_files = []
 
     for root, dirs, files in os.walk(root_dir):
+        try:
+            dirs.remove('build')
+        except:
+            pass
+        try:
+            dirs.remove('dist')
+        except:
+            pass
         if os.path.basename(root) in (
             'PyDev.Debugger',
             '_pydev_bundle',
