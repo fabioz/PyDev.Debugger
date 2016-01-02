@@ -87,7 +87,8 @@ def remove_binaries():
             remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', f))
 
 def build():
-    remove_binaries()
+    if '--no-remove-binaries' not in sys.argv:
+        remove_binaries()
 
 
     os.chdir(root_dir)

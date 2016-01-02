@@ -8,6 +8,11 @@ environment:
     # isn't covered by this document) at the time of writing.
 
     - PYTHON: "C:\\Python27"
+      PYDEVD_USE_CYTHON: YES
+
+    - PYTHON: "C:\\Python27"
+      PYDEVD_USE_CYTHON: NO
+
     #- PYTHON: "C:\\Python33"
     #- PYTHON: "C:\\Python34"
     #- PYTHON: "C:\\Python35"
@@ -29,7 +34,7 @@ install:
   - "set PYTHONPATH=%PYTHONPATH%;%APPVEYOR_BUILD_FOLDER%"
 
 build_script:
-  - "%PYTHON%\\python.exe build/build.py"
+  - "%PYTHON%\\python.exe build_tools/build.py"
 
 test_script:
   # Put your test command here.

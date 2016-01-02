@@ -50,6 +50,7 @@ deactivate
 
 from __future__ import unicode_literals
 import os
+import subprocess
 
 
 python_installations = [
@@ -62,6 +63,12 @@ python_installations = [
     r'C:\tools\Miniconda\envs\py35_64\python.exe',
 ]
 
+root_dir = os.path.dirname(os.path.dirname(__file__))
+def list_binaries():
+    for f in os.listdir(os.path.join(root_dir, '_pydevd_bundle')):
+        if f.endswith('.pyd'):
+            yield f
+
 def main():
     from generate_code import generate_dont_trace_files
     from generate_code import generate_cython_module
@@ -72,6 +79,16 @@ def main():
 
     for python_install in python_installations:
         assert os.path.exists(python_install)
+
+    from build import remove_binaries
+    remove_binaries()
+
+    for f in list_binaries():
+        raise AssertionError('Binary not removed: %s' % (f,))
+
+    for python_install in python_installations:
+        subprocess.check_call([
+            python_install, os.path.join(root_dir, 'build', 'build.py'), '--no-remove-binaries'])
 
 
 if __name__ == '__main__':
