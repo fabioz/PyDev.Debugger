@@ -6,7 +6,7 @@ use_cython = os.getenv('PYDEVD_USE_CYTHON', None)
 
 if use_cython == 'YES':
     # We must import the cython version if forcing cython
-    from _pydevd_bundle.pydevd_cython import trace_dispatch as _trace_dispatch
+    from _pydevd_bundle.pydevd_cython_wrapper import trace_dispatch as _trace_dispatch
     def trace_dispatch(py_db, frame, event, arg):
         return _trace_dispatch(py_db, frame, event, arg)
 
@@ -17,7 +17,7 @@ elif use_cython == 'NO':
 elif use_cython is None:
     # Regular: use fallback if not found and give message to user
     try:
-        from _pydevd_bundle.pydevd_cython import trace_dispatch as _trace_dispatch
+        from _pydevd_bundle.pydevd_cython_wrapper import trace_dispatch as _trace_dispatch
         def trace_dispatch(py_db, frame, event, arg):
             return _trace_dispatch(py_db, frame, event, arg)
 

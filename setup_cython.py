@@ -5,6 +5,15 @@ It should be used as:
 
 python setup_cython build_ext --inplace
 '''
+
+import sys
+target_pydevd_name = 'pydevd_cython'
+for i, arg in sys.argv[:]:
+    if arg.startswith('--target-pyd-name='):
+        del sys.argv[i]
+        raise AssertionError('finish this')
+
+
 from setuptools import setup
 
 try:

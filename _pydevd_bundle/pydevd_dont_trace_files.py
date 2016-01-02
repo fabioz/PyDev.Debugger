@@ -67,6 +67,7 @@ DONT_TRACE = {
     'pydevd_console.py': PYDEV_FILE,
     'pydevd_constants.py': PYDEV_FILE,
     'pydevd_custom_frames.py': PYDEV_FILE,
+    'pydevd_cython_wrapper.py': PYDEV_FILE,
     'pydevd_dont_trace.py': PYDEV_FILE,
     'pydevd_dont_trace_files.py': PYDEV_FILE,
     'pydevd_exec.py': PYDEV_FILE,

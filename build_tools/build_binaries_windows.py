@@ -12,37 +12,43 @@ Create the environments:
 C:\tools\Miniconda32\Scripts\conda create -y -f -n py27_32 python=2.7 cython numpy nose ipython pip
 C:\tools\Miniconda32\Scripts\activate py27_32
 pip install "django>=1.7,<1.8"
-pip install -U "pip>=1.4" "setuptools>=0.9" "wheel>=0.21" twine
+pip install -U "setuptools>=0.9"
+pip install -U "pip>=1.4" "wheel>=0.21" twine
 deactivate
 
 C:\tools\Miniconda32\Scripts\conda create -y -f -n py34_32 python=3.4 cython numpy nose ipython pip
 C:\tools\Miniconda32\Scripts\activate py34_32
 pip install "django>=1.9"
-pip install -U "pip>=1.4" "setuptools>=0.9" "wheel>=0.21" twine
+pip install -U "setuptools>=0.9"
+pip install -U "pip>=1.4" "wheel>=0.21" twine
 deactivate
 
 C:\tools\Miniconda32\Scripts\conda create -y -f -n py35_32 python=3.5 cython numpy nose ipython pip
 C:\tools\Miniconda32\Scripts\activate py35_32
 pip install "django>=1.9"
-pip install -U "pip>=1.4" "setuptools>=0.9" "wheel>=0.21" twine
+pip install -U "setuptools>=0.9"
+pip install -U "pip>=1.4" "wheel>=0.21" twine
 deactivate
 
 C:\tools\Miniconda\Scripts\conda create -y -f -n py27_64 python=2.7 cython numpy nose ipython pip
 C:\tools\Miniconda\Scripts\activate py27_64
 pip install "django>=1.7,<1.8"
-pip install -U "pip>=1.4" "setuptools>=0.9" "wheel>=0.21" twine
+pip install -U "setuptools>=0.9"
+pip install -U "pip>=1.4" "wheel>=0.21" twine
 deactivate
 
 C:\tools\Miniconda\Scripts\conda create -y -f -n py34_64 python=3.4 cython numpy nose ipython pip
 C:\tools\Miniconda\Scripts\activate py34_64
 pip install "django>=1.9"
-pip install -U "pip>=1.4" "setuptools>=0.9" "wheel>=0.21" twine
+pip install -U "setuptools>=0.9"
+pip install -U "pip>=1.4" "wheel>=0.21" twine
 deactivate
 
 C:\tools\Miniconda\Scripts\conda create -y -f -n py35_64 python=3.5 cython numpy nose ipython pip
 C:\tools\Miniconda\Scripts\activate py35_64
 pip install "django>=1.9"
-pip install -U "pip>=1.4" "setuptools>=0.9" "wheel>=0.21" twine
+pip install -U "setuptools>=0.9"
+pip install -U "pip>=1.4" "wheel>=0.21" twine
 deactivate
 
 
@@ -51,6 +57,7 @@ deactivate
 from __future__ import unicode_literals
 import os
 import subprocess
+import sys
 
 
 python_installations = [
@@ -69,6 +76,10 @@ def list_binaries():
         if f.endswith('.pyd'):
             yield f
 
+def extract_version(python_install):
+    return python_install.split('\\')[-2][2:]
+
+
 def main():
     from generate_code import generate_dont_trace_files
     from generate_code import generate_cython_module
@@ -86,11 +97,22 @@ def main():
     for f in list_binaries():
         raise AssertionError('Binary not removed: %s' % (f,))
 
-    for python_install in python_installations:
-        subprocess.check_call([
-            python_install, os.path.join(root_dir, 'build', 'build.py'), '--no-remove-binaries'])
+    for i, python_install in enumerate(python_installations):
+        new_name = 'pydevd_cython_%s_%s.pyd' % (sys.platform, extract_version(python_install))
+        args = [
+            python_install, os.path.join(root_dir, 'build_tools', 'build.py'), '--no-remove-binaries', '--target-pyd-name=%s' % new_name]
+        if i != 0:
+            args.append('--no-regenerate-files')
+        subprocess.check_call(args)
+
 
 
 if __name__ == '__main__':
     main()
 
+'''
+To run do:
+cdd x:\PyDev.Debugger
+set PYTHONPATH=x:\PyDev.Debugger
+C:\tools\Miniconda32\envs\py27_32\python build_tools\build_binaries_windows.py
+'''

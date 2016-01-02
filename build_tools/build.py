@@ -138,9 +138,12 @@ def build():
         env['MSSdk'] = '1'
         env['DISTUTILS_USE_SDK'] = '1'
 
+    additional_args = []
+    for arg in sys.argv:
+        if arg.startswith('--target-pyd-name='):
+            additional_args.append(arg)
     subprocess.check_call([
-        sys.executable, os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'),
-        'build_ext', '--inplace', ], env=env,)
+        sys.executable, os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'), 'build_ext', '--inplace', ]+additional_args, env=env,)
 
 if __name__ == '__main__':
     use_cython = os.getenv('PYDEVD_USE_CYTHON', None)
@@ -150,8 +153,9 @@ if __name__ == '__main__':
         remove_binaries()
     elif use_cython is None:
         # Regular process
-        generate_dont_trace_files()
-        generate_cython_module()
+        if not '--no-regenerate-files':
+            generate_dont_trace_files()
+            generate_cython_module()
         build()
     else:
         raise RuntimeError('Unexpected value for PYDEVD_USE_CYTHON: %s (accepted: YES, NO)' % (use_cython,))

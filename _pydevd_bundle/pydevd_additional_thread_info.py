@@ -5,7 +5,7 @@ use_cython = os.getenv('PYDEVD_USE_CYTHON', None)
 
 if use_cython == 'YES':
     # We must import the cython version if forcing cython
-    from _pydevd_bundle.pydevd_cython import PyDBAdditionalThreadInfo  # @UnusedImport
+    from _pydevd_bundle.pydevd_cython_wrapper import PyDBAdditionalThreadInfo  # @UnusedImport
 
 elif use_cython == 'NO':
     # Use the regular version if not forcing cython
@@ -14,7 +14,7 @@ elif use_cython == 'NO':
 elif use_cython is None:
     # Regular: use fallback if not found and give message to user
     try:
-        from _pydevd_bundle.pydevd_cython import PyDBAdditionalThreadInfo
+        from _pydevd_bundle.pydevd_cython_wrapper import PyDBAdditionalThreadInfo
     except ImportError:
         from _pydevd_bundle.pydevd_additional_thread_info_regular import PyDBAdditionalThreadInfo  # @UnusedImport
 else:

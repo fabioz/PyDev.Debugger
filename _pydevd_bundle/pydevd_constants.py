@@ -69,15 +69,6 @@ except AttributeError:
     pass  #Not all versions have sys.version_info
 
 try:
-    IS_64_BITS = sys.maxsize > 2 ** 32
-except AttributeError:
-    try:
-        import struct
-        IS_64_BITS = struct.calcsize("P") * 8 > 32
-    except:
-        IS_64_BITS = False
-
-try:
     SUPPORT_GEVENT = os.getenv('GEVENT_SUPPORT', 'False') == 'True'
 except:
     # Jython 2.1 doesn't accept that construct
