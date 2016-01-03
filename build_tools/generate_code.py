@@ -150,10 +150,18 @@ def generate_cython_module():
     remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_cython.pyx'))
 
     target = os.path.join(root_dir, '_pydevd_bundle', 'pydevd_cython.pyx')
+    curr = os.environ.get('PYDEVD_USE_CYTHON')
+    try:
+        os.environ['PYDEVD_USE_CYTHON'] = 'NO'
 
-    from _pydevd_bundle import pydevd_additional_thread_info_regular
-    from _pydevd_bundle import pydevd_frame, pydevd_trace_dispatch_regular
-    _generate_cython_from_files(target, [pydevd_additional_thread_info_regular, pydevd_frame, pydevd_trace_dispatch_regular])
+        from _pydevd_bundle import pydevd_additional_thread_info_regular
+        from _pydevd_bundle import pydevd_frame, pydevd_trace_dispatch_regular
+        _generate_cython_from_files(target, [pydevd_additional_thread_info_regular, pydevd_frame, pydevd_trace_dispatch_regular])
+    finally:
+        if curr is None:
+            del os.environ['PYDEVD_USE_CYTHON']
+        else:
+            os.environ['PYDEVD_USE_CYTHON'] = curr
 
 if __name__ == '__main__':
     generate_dont_trace_files()

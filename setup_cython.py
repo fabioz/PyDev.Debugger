@@ -11,28 +11,55 @@ target_pydevd_name = 'pydevd_cython'
 for i, arg in enumerate(sys.argv[:]):
     if arg.startswith('--target-pyd-name='):
         del sys.argv[i]
-        raise AssertionError('finish this')
+        target_pydevd_name = arg[len('--target-pyd-name='):]
 
+
+target_pydevd_name
 
 from setuptools import setup
 
-try:
-    from Cython.Build import cythonize
-    import os
-    # If we don't have the pyx nor cython, compile the .c
-    if not os.path.exists(os.path.join(os.path.dirname(__file__), "_pydevd_bundle", "pydevd_cython.pyx")):
-        raise ImportError()
-except ImportError:
-    from distutils.extension import Extension
-    ext_modules = [Extension('_pydevd_bundle.pydevd_cython', [
-        "_pydevd_bundle/pydevd_cython.c",
-    ])]
-else:
-    ext_modules = cythonize([
-        "_pydevd_bundle/pydevd_cython.pyx",
-    ])
+import os
+pyx_file = os.path.join(os.path.dirname(__file__), "_pydevd_bundle", "pydevd_cython.pyx")
+c_file = os.path.join(os.path.dirname(__file__), "_pydevd_bundle", "pydevd_cython.c")
 
-setup(
-    name='Cythonize',
-    ext_modules=ext_modules
-)
+if target_pydevd_name != 'pydevd_cython':
+    import shutil
+    from Cython.Build import cythonize # It MUST be there in this case! @UnusedImport
+    new_pyx_file = os.path.join(os.path.dirname(__file__), "_pydevd_bundle", "%s.pyx" % (target_pydevd_name,))
+    new_c_file = os.path.join(os.path.dirname(__file__), "_pydevd_bundle", "%s.c" % (target_pydevd_name,))
+    shutil.copy(pyx_file, new_pyx_file)
+    pyx_file = new_pyx_file
+    assert os.path.exists(pyx_file)
+
+try:
+    try:
+        from Cython.Build import cythonize
+        # If we don't have the pyx nor cython, compile the .c
+        if not os.path.exists(pyx_file):
+            raise ImportError()
+    except ImportError:
+        from distutils.extension import Extension
+        ext_modules = [Extension('_pydevd_bundle.%s' % (target_pydevd_name,), [
+            "_pydevd_bundle/%s.c" % (target_pydevd_name,),
+        ])]
+    else:
+        ext_modules = cythonize([
+            "_pydevd_bundle/%s.pyx" % (target_pydevd_name,),
+        ])
+
+    setup(
+        name='Cythonize',
+        ext_modules=ext_modules
+    )
+finally:
+    if target_pydevd_name != 'pydevd_cython':
+        try:
+            os.remove(new_pyx_file)
+        except:
+            import traceback
+            traceback.print_exc()
+        try:
+            os.remove(new_c_file)
+        except:
+            import traceback
+            traceback.print_exc()

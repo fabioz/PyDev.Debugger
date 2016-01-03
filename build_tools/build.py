@@ -142,8 +142,12 @@ def build():
     for arg in sys.argv:
         if arg.startswith('--target-pyd-name='):
             additional_args.append(arg)
-    subprocess.check_call([
-        sys.executable, os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'), 'build_ext', '--inplace', ]+additional_args, env=env,)
+
+    args = [
+        sys.executable, os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'), 'build_ext', '--inplace',
+    ]+additional_args
+    print('Calling args: %s' % (args,))
+    subprocess.check_call(args, env=env,)
 
 if __name__ == '__main__':
     use_cython = os.getenv('PYDEVD_USE_CYTHON', None)
