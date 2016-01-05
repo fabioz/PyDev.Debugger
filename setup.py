@@ -34,20 +34,23 @@ data_files = []
 
 def accept_file(f):
     f = f.lower()
-    for ext in '.py .dll .so .dylib .txt .cpp .h .bat .c .sh'.split():
+    for ext in '.py .dll .so .dylib .txt .cpp .h .bat .c .sh .md .txt'.split():
         if f.endswith(ext):
             return True
 
-    return f in ['reamde', 'makefile']
+    return f in ['readme', 'makefile']
 
 data_files.append(('pydevd_attach_to_process', [os.path.join('pydevd_attach_to_process', f) for f in os.listdir('pydevd_attach_to_process') if accept_file(f)]))
 for root, dirs, files in os.walk("pydevd_attach_to_process"):
     for d in dirs:
         data_files.append((os.path.join(root, d), [os.path.join(root, d, f) for f in os.listdir(os.path.join(root, d)) if accept_file(f)]))
 
+import pydevd
+version = pydevd.__version__
+
 setup(
     name='pydevd',
-    version='0.0.1',
+    version=version,
     description = 'PyDev.Debugger (used in PyDev and PyCharm)',
     author='Fabio Zadrozny and others',
     url='https://github.com/fabioz/PyDev.Debugger/',
