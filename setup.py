@@ -48,7 +48,7 @@ for root, dirs, files in os.walk("pydevd_attach_to_process"):
 import pydevd
 version = pydevd.__version__
 
-setup(
+args = dict(
     name='pydevd',
     version=version,
     description = 'PyDev.Debugger (used in PyDev and PyCharm)',
@@ -87,7 +87,11 @@ setup(
         'Development Status :: 6 - Mature',
         'Environment :: Console',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: Eclipse Public License',
+
+        # It seems that the license is not recognized by Pypi, so, not categorizing it for now.
+        # https://bitbucket.org/pypa/pypi/issues/369/the-eclipse-public-license-superseeded
+        # 'License :: OSI Approved :: Eclipse Public License',
+
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX',
@@ -98,13 +102,23 @@ setup(
     keywords=['pydev', 'pydevd', 'pydev.debugger'],
     include_package_data=True,
     zip_safe=False,
-    distclass=BinaryDistribution,
-    ext_modules=[
-        # In this setup, don't even m
-        Extension('_pydevd_bundle.pydevd_cython', ["_pydevd_bundle/pydevd_cython.c",])
-    ]
 )
 
 
 
-
+import sys
+try:
+    args_with_binaries = args.copy()
+    args_with_binaries.update(dict(
+        distclass=BinaryDistribution,
+        ext_modules=[
+            # In this setup, don't even try to compile with cython, just go with the .c file which should've
+            # been properly generated from a tested version.
+            Extension('_pydevd_bundle.pydevd_cython', ["_pydevd_bundle/pydevd_cython.c",])
+        ]
+    ))
+    setup(**args_with_binaries)
+    sys.stdout.write('pydevd installed with cython speedups.\n')
+except:
+    setup(**args)
+    sys.stdout.write('Plain-python version of pydevd installed.\n')
