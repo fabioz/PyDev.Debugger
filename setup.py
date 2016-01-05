@@ -118,7 +118,6 @@ try:
         ]
     ))
     setup(**args_with_binaries)
-    sys.stdout.write('pydevd installed with cython speedups.\n')
 except:
     setup(**args)
-    sys.stdout.write('Plain-python version of pydevd installed.\n')
+    sys.stdout.write('Plain-python version of pydevd installed (cython speedups not available).\n')
