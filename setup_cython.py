@@ -14,11 +14,14 @@ for i, arg in enumerate(sys.argv[:]):
         target_pydevd_name = arg[len('--target-pyd-name='):]
 
 
-target_pydevd_name
+
 
 from setuptools import setup
 
 import os
+os.chdir(os.path.dirname(__file__))
+
+
 pyx_file = os.path.join(os.path.dirname(__file__), "_pydevd_bundle", "pydevd_cython.pyx")
 c_file = os.path.join(os.path.dirname(__file__), "_pydevd_bundle", "pydevd_cython.c")
 
