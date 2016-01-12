@@ -22,7 +22,7 @@ to `cythonize` the files. To update and compile the cython sources (and generate
 
 To see performance changes, see: 
 
-[https://www.speedtin.com/reports/7_pydevd_cython](https://www.speedtin.com/reports/8_pydevd_pure_python) (performance results with cython).
+[https://www.speedtin.com/reports/7_pydevd_cython](https://www.speedtin.com/reports/7_pydevd_cython) (performance results with cython).
 [https://www.speedtin.com/reports/8_pydevd_pure_python](https://www.speedtin.com/reports/8_pydevd_pure_python) (performance results without cython).
 
 To generate a distribution with the precompiled binaries for the IDE, `build_binaries_windows.py` should be run (
