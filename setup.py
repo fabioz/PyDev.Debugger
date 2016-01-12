@@ -16,7 +16,7 @@ Another (no wheels): https://jamie.curle.io/blog/my-first-experience-adding-pack
 
 New version: change version and then:
 
-rm dist\pydevd*
+rm dist/pydevd*
 
 C:\tools\Miniconda32\Scripts\activate py27_32
 python setup.py bdist_wheel sdist
