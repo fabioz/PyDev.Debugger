@@ -24,7 +24,8 @@ elif use_cython is None:
     except ImportError:
         from _pydevd_bundle.pydevd_additional_thread_info_regular import PyDBAdditionalThreadInfo  # @UnusedImport
         from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch  # @UnusedImport
-        from pydevd_constants import CYTHON_SUPPORTED
+        from _pydevd_bundle.pydevd_constants import CYTHON_SUPPORTED
+
         if CYTHON_SUPPORTED:
             from _pydev_bundle.pydev_monkey import log_error_once
             log_error_once('warning: Debugger speedups using cython not found. Run "python %s build_ext --inplace" to build.' % (
