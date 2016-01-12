@@ -40,7 +40,7 @@ from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogge
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
 
 
-__version_info__ = (0, 0, 3)
+__version_info__ = (0, 0, 4)
 __version__ = '.'.join(str(x) for x in __version_info__)
 
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
