@@ -23,19 +23,37 @@ import os
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
+pyx_file = os.path.join(os.path.dirname(__file__), "_pydevd_bundle", "pydevd_cython.pyx")
 c_file = os.path.join(os.path.dirname(__file__), "_pydevd_bundle", "pydevd_cython.c")
 
+force_cython = False
 if target_pydevd_name != 'pydevd_cython':
+    # It MUST be there in this case!
+    # (otherwise we'll have unresolved externals because the .c file had another name initially).
     import shutil
+    from Cython.Build import cythonize # @UnusedImport
+
+    # We must force cython in this case (but only in this case -- for the regular setup in the user machine, we
+    # should always compile the .c file).
+    force_cython = True
+
+    new_pyx_file = os.path.join(os.path.dirname(__file__), "_pydevd_bundle", "%s.pyx" % (target_pydevd_name,))
     new_c_file = os.path.join(os.path.dirname(__file__), "_pydevd_bundle", "%s.c" % (target_pydevd_name,))
-    shutil.copy(c_file, new_c_file)
+    shutil.copy(pyx_file, new_pyx_file)
+    pyx_file = new_pyx_file
+    assert os.path.exists(pyx_file)
 
 try:
-    # Always compile the .c (and not the .pyx) file (which we should keep up-to-date by running build_tools/build.py).
-    from distutils.extension import Extension
-    ext_modules = [Extension('_pydevd_bundle.%s' % (target_pydevd_name,), [
-        "_pydevd_bundle/%s.c" % (target_pydevd_name,),
-    ])]
+    if force_cython:
+        ext_modules = cythonize([
+            "_pydevd_bundle/%s.pyx" % (target_pydevd_name,),
+        ])
+    else:
+        # Always compile the .c (and not the .pyx) file (which we should keep up-to-date by running build_tools/build.py).
+        from distutils.extension import Extension
+        ext_modules = [Extension('_pydevd_bundle.%s' % (target_pydevd_name,), [
+            "_pydevd_bundle/%s.c" % (target_pydevd_name,),
+        ])]
 
     setup(
         name='Cythonize',
@@ -43,6 +61,11 @@ try:
     )
 finally:
     if target_pydevd_name != 'pydevd_cython':
+        try:
+            os.remove(new_pyx_file)
+        except:
+            import traceback
+            traceback.print_exc()
         try:
             os.remove(new_c_file)
         except:
