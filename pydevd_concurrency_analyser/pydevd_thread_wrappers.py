@@ -1,5 +1,4 @@
 from _pydev_imps import _pydev_threading as threading
-import functools
 
 
 def wrapper(fun):
@@ -22,6 +21,7 @@ class ObjectWrapper(object):
     def __init__(self, obj):
         self.wrapped_object = obj
         try:
+            import functools
             functools.update_wrapper(self, obj)
         except:
             pass

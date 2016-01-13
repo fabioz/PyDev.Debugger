@@ -4,7 +4,11 @@ except ImportError:
     try:
         import struct
         import sys
-        is_python_64bit = (struct.calcsize('P') == 8)
+        try:
+            is_python_64bit = (struct.calcsize('P') == 8)
+        except:
+            # In Jython this call fails, but this is Ok, we don't support Jython for speedups anyways.
+            raise ImportError
         plat = '32'
         if is_python_64bit:
             plat = '64'
