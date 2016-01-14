@@ -896,6 +896,11 @@ class InternalStepThread(InternalThreadCommand):
             t.additional_info.pydev_step_cmd = self.cmd_id
             t.additional_info.pydev_state = STATE_RUN
 
+try:
+    unicode_type = unicode
+except:
+    unicode_type = str
+
 #=======================================================================================================================
 # InternalSetNextStatementThread
 #=======================================================================================================================
@@ -904,6 +909,8 @@ class InternalSetNextStatementThread(InternalThreadCommand):
         self.thread_id = thread_id
         self.cmd_id = cmd_id
         self.line = line
+        if isinstance(func_name, unicode_type):
+            func_name = func_name.encode('utf-8') # Must be a str for cython
         self.func_name = func_name
 
     def do_it(self, dbg):
