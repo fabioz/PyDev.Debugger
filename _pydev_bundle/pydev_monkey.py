@@ -414,9 +414,29 @@ def create_CreateProcessWarnMultiproc(original_name):
 def create_fork(original_name):
     def new_fork():
         import os
+        
+        # A simple fork will result in a new python process
+        is_new_python_process = True 
+        frame = sys._getframe()
+        
+        while frame is not None:
+            if frame.f_code.co_name == '_execute_child' and 'subprocess' in frame.f_code.co_filename:
+                # If we're actually in subprocess.Popen creating a child, it may
+                # result in something which is not a Python process, (so, we
+                # don't want to connect with it in the forked version).
+                is_new_python_process = False
+                executable = frame.f_locals.get('executable')
+                if executable is not None:
+                    if is_python(executable):
+                        is_new_python_process = True
+                break
+                
+            frame = frame.f_back
+        
         child_process = getattr(os, original_name)()  # fork
         if not child_process:
-            _on_forked_process()
+            if is_new_python_process:
+                _on_forked_process()
         return child_process
     return new_fork
 
