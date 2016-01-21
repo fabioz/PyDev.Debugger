@@ -103,7 +103,6 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
         simple_trace_time = self._get_time_from_result(self.run_process(args+['--regular-trace'], writer_thread=None))
         print(writer_thread_class.BENCHMARK_NAME, time_when_debugged, regular_time, simple_trace_time)
 
-        assert 'SPEEDTIN_AUTHORIZATION_KEY' in os.environ
         if 'SPEEDTIN_AUTHORIZATION_KEY' in os.environ:
 
             SPEEDTIN_AUTHORIZATION_KEY = os.environ['SPEEDTIN_AUTHORIZATION_KEY']
