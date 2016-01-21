@@ -701,7 +701,7 @@ class PyDB:
                         inputhook()
                 except:
                     pass
-
+                
             self.process_internal_commands()
             time.sleep(0.01)
 
