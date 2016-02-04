@@ -208,8 +208,7 @@ task setupMinicondaEnvWin() {
             ["django>=1.9",
              ["-U", "setuptools>=0.9"],
              ["-U", "pip>=1.4", "wheel>=0.21", "twine"]]
-        }
-                condaCreate(project, "py35_32", "3.5") {
+        }, condaCreate(project, "py35_32", "3.5") {
                     ["django>=1.9",
                      ["-U", "setuptools>=0.9"],
                      ["-U", "pip>=1.4", "wheel>=0.21", "twine"]]
