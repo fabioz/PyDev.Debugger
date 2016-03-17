@@ -803,29 +803,51 @@ class PydevTestRunner(object):
 
 
 try:
-    from django.test.simple import DjangoTestSuiteRunner
-except:
-    class DjangoTestSuiteRunner:
-        def __init__(self):
+    # django >= 1.8
+    import django
+    from django.test.runner import DiscoverRunner
+    
+    class MyDjangoTestSuiteRunner(DiscoverRunner):
+    
+        def __init__(self, on_run_suite):
+            django.setup()
+            DiscoverRunner.__init__(self)
+            self.on_run_suite = on_run_suite
+    
+        def build_suite(self, *args, **kwargs):
             pass
-
-        def run_tests(self, *args, **kwargs):
-            raise AssertionError("Unable to run suite with DjangoTestSuiteRunner because it couldn't be imported.")
-
-class MyDjangoTestSuiteRunner(DjangoTestSuiteRunner):
-
-    def __init__(self, on_run_suite):
-        DjangoTestSuiteRunner.__init__(self)
-        self.on_run_suite = on_run_suite
-
-    def build_suite(self, *args, **kwargs):
-        pass
-
-    def suite_result(self, *args, **kwargs):
-        pass
-
-    def run_suite(self, *args, **kwargs):
-        self.on_run_suite()
+    
+        def suite_result(self, *args, **kwargs):
+            pass
+    
+        def run_suite(self, *args, **kwargs):
+            self.on_run_suite()
+except:
+    # django < 1.8
+    try:
+        from django.test.simple import DjangoTestSuiteRunner
+    except:
+        class DjangoTestSuiteRunner:
+            def __init__(self):
+                pass
+    
+            def run_tests(self, *args, **kwargs):
+                raise AssertionError("Unable to run suite with django.test.runner.DiscoverRunner nor django.test.simple.DjangoTestSuiteRunner because it couldn't be imported.")
+    
+    class MyDjangoTestSuiteRunner(DjangoTestSuiteRunner):
+    
+        def __init__(self, on_run_suite):
+            DjangoTestSuiteRunner.__init__(self)
+            self.on_run_suite = on_run_suite
+    
+        def build_suite(self, *args, **kwargs):
+            pass
+    
+        def suite_result(self, *args, **kwargs):
+            pass
+    
+        def run_suite(self, *args, **kwargs):
+            self.on_run_suite()
 
 
 #=======================================================================================================================
