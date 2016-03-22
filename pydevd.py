@@ -40,7 +40,7 @@ from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogge
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
 
 
-__version_info__ = (0, 0, 5)
+__version_info__ = (0, 0, 6)
 __version_info_str__ = []
 for v in __version_info__:
     __version_info_str__.append(str(v))
