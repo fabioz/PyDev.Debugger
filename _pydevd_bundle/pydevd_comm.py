@@ -58,10 +58,12 @@ each command has a format:
     * PYDB - pydevd, the python end
 '''
 
-from _pydev_imps import _pydev_threading as threading
-from _pydev_imps import _pydev_time as time, _pydev_thread
-from _pydev_imps._pydev_socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
 from _pydev_bundle.pydev_imports import _queue
+from _pydev_imps._pydev_saved_modules import time
+from _pydev_imps._pydev_saved_modules import thread
+from _pydev_imps._pydev_saved_modules import threading
+from _pydev_imps._pydev_saved_modules import socket
+from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
 from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
 
 try:
@@ -814,7 +816,7 @@ class ReloadCodeCommand(InternalThreadCommand):
         self.thread_id = thread_id
         self.module_name = module_name
         self.executed = False
-        self.lock = _pydev_thread.allocate_lock()
+        self.lock = thread.allocate_lock()
 
 
     def can_be_executed_by(self, thread_id):
