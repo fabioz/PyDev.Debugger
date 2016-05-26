@@ -1,6 +1,6 @@
+from _pydev_runfiles import pydev_runfiles_xml_rpc
 import pickle, zlib, base64, os
 import py
-from _pydev_runfiles import pydev_runfiles_xml_rpc
 from pydevd_file_utils import _NormFile
 import pytest
 import sys
@@ -50,10 +50,10 @@ except ImportError:
 # Mocking to get clickable file representations
 #===================================================================================================
 def _MockFileRepresentation():
-    for code in _mock_code:    
+    for code in _mock_code:
         code.ReprFileLocation._original_toterminal = code.ReprFileLocation.toterminal
-    
-    
+
+
         def toterminal(self, tw):
             # filename and lineno output for each entry,
             # using an output format that most editors understand
@@ -61,31 +61,43 @@ def _MockFileRepresentation():
             i = msg.find("\n")
             if i != -1:
                 msg = msg[:i]
-    
+
             path = os.path.abspath(self.path)
-    
+
             if PY2:
                 if not isinstance(path, unicode):  # Note: it usually is NOT unicode...
                     path = path.decode(sys.getfilesystemencoding(), 'replace')
-    
+
                 if not isinstance(msg, unicode):  # Note: it usually is unicode...
                     msg = msg.decode('utf-8', 'replace')
                 unicode_line = unicode('File "%s", line %s\n%s') % (path, self.lineno, msg)
                 tw.line(unicode_line)
             else:
                 tw.line('File "%s", line %s\n%s' % (path, self.lineno, msg))
-    
+
         code.ReprFileLocation.toterminal = toterminal
 
 
 def _UninstallMockFileRepresentation():
-    for code in _mock_code:    
+    for code in _mock_code:
         code.ReprFileLocation.toterminal = code.ReprFileLocation._original_toterminal #@UndefinedVariable
 
 
 class State:
     numcollected = 0
     start_time = time.time()
+    buf_err = None
+    buf_out = None
+
+def start_redirect():
+    if State.buf_out is not None:
+        return
+    from _pydevd_bundle import pydevd_io
+    State.buf_err = pydevd_io.start_redirect(keep_original_redirection=True, std='stderr')
+    State.buf_out = pydevd_io.start_redirect(keep_original_redirection=True, std='stdout')
+
+def get_curr_output():
+    return State.buf_out.getvalue(), State.buf_err.getvalue()
 
 
 def pytest_configure(*args, **kwargs):
@@ -93,14 +105,13 @@ def pytest_configure(*args, **kwargs):
 
 
 def pytest_collectreport(report):
-
     i = 0
     for x in report.result:
         if isinstance(x, pytest.Item):
             try:
                 # Call our setup (which may do a skip, in which
                 # case we won't count it).
-                pytest_runtest_setup(x)
+                pytest_runtest_setup(x, notify_start=False)
                 i += 1
             except:
                 continue
@@ -118,14 +129,6 @@ def pytest_unconfigure(*args, **kwargs):
     pydev_runfiles_xml_rpc.notifyTestRunFinished('Finished in: %.2f secs.' % (time.time() - State.start_time,))
 
 
-def pytest_runtest_setup(item):
-    filename = item.fspath.strpath
-    test = item.location[2]
-    State.start_test_time = time.time()
-
-    pydev_runfiles_xml_rpc.notifyStartTest(filename, test)
-
-
 def report_test(cond, filename, test, captured_output, error_contents, delta):
     '''
     @param filename: 'D:\\src\\mod1\\hello.py'
@@ -140,6 +143,15 @@ def pytest_runtest_makereport(item, call):
     report_when = call.when
     report_duration = call.stop-call.start
     excinfo = call.excinfo
+
+    # This will work if pytest is not capturing it, if it is, nothing will come from here...
+    captured_output, error_contents = get_curr_output()
+    for when_section, type_section, value in item._report_sections:
+        if value:
+            if type_section == 'stderr':
+                error_contents += value
+            else:
+                captured_output += value
 
     if not call.excinfo:
         evalxfail = getattr(item, '_evalxfail', None)
@@ -178,7 +190,7 @@ def pytest_runtest_makereport(item, call):
             report_outcome = "skipped"
             r = excinfo._getreprcrash()
             report_longrepr = None #(str(r.path), r.lineno, r.message)
-            
+
         elif not isinstance(excinfo, py.code.ExceptionInfo):  # @UndefinedVariable
             report_outcome = "failed"
             report_longrepr = excinfo
@@ -195,8 +207,6 @@ def pytest_runtest_makereport(item, call):
     test = item.location[2]
 
     status = 'ok'
-    captured_output = ''
-    error_contents = ''
 
     if report_outcome in ('passed', 'skipped'):
         #passed or skipped: no need to report if in setup or teardown (only on the actual test if it passed).
@@ -220,15 +230,20 @@ def pytest_runtest_makereport(item, call):
 
     if call.excinfo:
         rep = report_longrepr
+        done = False
         if hasattr(rep, 'reprcrash'):
+            done = True
             reprcrash = rep.reprcrash
             error_contents += str(reprcrash)
             error_contents += '\n'
 
+
         if hasattr(rep, 'reprtraceback'):
+            done = True
             error_contents += str(rep.reprtraceback)
 
         if hasattr(rep, 'sections'):
+            done = True
             for name, content, sep in rep.sections:
                 error_contents += sep * 40
                 error_contents += name
@@ -236,6 +251,10 @@ def pytest_runtest_makereport(item, call):
                 error_contents += '\n'
                 error_contents += content
                 error_contents += '\n'
+
+        if not done:
+            # New pytest broke API.
+            error_contents += str(rep)
     else:
         if report_longrepr:
             error_contents += str(report_longrepr)
@@ -243,15 +262,23 @@ def pytest_runtest_makereport(item, call):
     if status != 'skip': #I.e.: don't event report skips...
         report_test(status, filename, test, captured_output, error_contents, report_duration)
 
+def _notify_start_test(item):
+    filename = item.fspath.strpath
+    test = item.location[2]
+    State.start_test_time = time.time()
 
+    pydev_runfiles_xml_rpc.notifyStartTest(filename, test)
 
 @pytest.mark.tryfirst
-def pytest_runtest_setup(item):  # @DuplicatedSignature
+def pytest_runtest_setup(item, notify_start=True):  # @DuplicatedSignature
     '''
     Skips tests. With xdist will be on a secondary process.
     '''
+    start_redirect()
     _load_filters()
     if not py_test_accept_filter:
+        if notify_start:
+            _notify_start_test(item)
         return #Keep on going (nothing to filter)
 
     f = _NormFile(str(item.parent.fspath))
@@ -273,13 +300,19 @@ def pytest_runtest_setup(item):  # @DuplicatedSignature
             name = name[:i]
         if test == name:
             #Direct match of the test (just go on with the default loading)
+            if notify_start:
+                _notify_start_test(item)
             return
 
         if class_name is not None:
             if test == class_name + '.' + name:
+                if notify_start:
+                    _notify_start_test(item)
                 return
 
             if class_name == test:
+                if notify_start:
+                    _notify_start_test(item)
                 return
 
     # If we had a match it'd have returned already.
