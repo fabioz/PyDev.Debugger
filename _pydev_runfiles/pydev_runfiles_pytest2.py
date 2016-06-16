@@ -1,5 +1,8 @@
 from _pydev_runfiles import pydev_runfiles_xml_rpc
-import pickle, zlib, base64, os
+import pickle
+import zlib
+import base64
+import os
 import py
 from pydevd_file_utils import _NormFile
 import pytest
@@ -7,32 +10,51 @@ import sys
 import time
 
 
-#===================================================================================================
+#=========================================================================
 # Load filters with tests we should skip
-#===================================================================================================
+#=========================================================================
 py_test_accept_filter = None
+
 
 def _load_filters():
     global py_test_accept_filter
     if py_test_accept_filter is None:
         py_test_accept_filter = os.environ.get('PYDEV_PYTEST_SKIP')
         if py_test_accept_filter:
-            py_test_accept_filter = pickle.loads(zlib.decompress(base64.b64decode(py_test_accept_filter)))
+            py_test_accept_filter = pickle.loads(
+                zlib.decompress(base64.b64decode(py_test_accept_filter)))
         else:
             py_test_accept_filter = {}
 
 
-def connect_to_server_for_communication_to_xml_rpc_on_xdist():
+def is_in_xdist_node():
     main_pid = os.environ.get('PYDEV_MAIN_PID')
     if main_pid and main_pid != str(os.getpid()):
+        return True
+    return False
+
+
+connected = False
+def connect_to_server_for_communication_to_xml_rpc_on_xdist():
+    global connected
+    if connected:
+        return
+    connected = True
+    if is_in_xdist_node():
         port = os.environ.get('PYDEV_PYTEST_SERVER')
         if not port:
-            sys.stderr.write('Error: no PYDEV_PYTEST_SERVER environment variable defined.\n')
+            sys.stderr.write(
+                'Error: no PYDEV_PYTEST_SERVER environment variable defined.\n')
         else:
             pydev_runfiles_xml_rpc.initialize_server(int(port), daemon=True)
 
+
 PY2 = sys.version_info[0] <= 2
 PY3 = not PY2
+
+#=========================================================================
+# Mocking to get clickable file representations
+#=========================================================================
 
 _mock_code = []
 try:
@@ -46,13 +68,9 @@ try:
 except ImportError:
     pass
 
-#===================================================================================================
-# Mocking to get clickable file representations
-#===================================================================================================
 def _MockFileRepresentation():
     for code in _mock_code:
         code.ReprFileLocation._original_toterminal = code.ReprFileLocation.toterminal
-
 
         def toterminal(self, tw):
             # filename and lineno output for each entry,
@@ -65,12 +83,15 @@ def _MockFileRepresentation():
             path = os.path.abspath(self.path)
 
             if PY2:
-                if not isinstance(path, unicode):  # Note: it usually is NOT unicode...
+                # Note: it usually is NOT unicode...
+                if not isinstance(path, unicode):
                     path = path.decode(sys.getfilesystemencoding(), 'replace')
 
-                if not isinstance(msg, unicode):  # Note: it usually is unicode...
+                # Note: it usually is unicode...
+                if not isinstance(msg, unicode):
                     msg = msg.decode('utf-8', 'replace')
-                unicode_line = unicode('File "%s", line %s\n%s') % (path, self.lineno, msg)
+                unicode_line = unicode('File "%s", line %s\n%s') % (
+                    path, self.lineno, msg)
                 tw.line(unicode_line)
             else:
                 tw.line('File "%s", line %s\n%s' % (path, self.lineno, msg))
@@ -80,14 +101,18 @@ def _MockFileRepresentation():
 
 def _UninstallMockFileRepresentation():
     for code in _mock_code:
-        code.ReprFileLocation.toterminal = code.ReprFileLocation._original_toterminal #@UndefinedVariable
+        # @UndefinedVariable
+        code.ReprFileLocation.toterminal = code.ReprFileLocation._original_toterminal
 
+#=========================================================================
+# End mocking to get clickable file representations
+#=========================================================================
 
 class State:
-    numcollected = 0
     start_time = time.time()
     buf_err = None
     buf_out = None
+
 
 def start_redirect():
     if State.buf_out is not None:
@@ -96,226 +121,169 @@ def start_redirect():
     State.buf_err = pydevd_io.start_redirect(keep_original_redirection=True, std='stderr')
     State.buf_out = pydevd_io.start_redirect(keep_original_redirection=True, std='stdout')
 
+
 def get_curr_output():
     return State.buf_out.getvalue(), State.buf_err.getvalue()
 
 
-def pytest_configure(*args, **kwargs):
+def pytest_configure():
     _MockFileRepresentation()
 
 
-def pytest_collectreport(report):
-    i = 0
-    for x in report.result:
-        if isinstance(x, pytest.Item):
-            try:
-                # Call our setup (which may do a skip, in which
-                # case we won't count it).
-                pytest_runtest_setup(x, notify_start=False)
-                i += 1
-            except:
-                continue
-    State.numcollected += i
-
-
-def pytest_collection_modifyitems():
-    connect_to_server_for_communication_to_xml_rpc_on_xdist()
-    pydev_runfiles_xml_rpc.notifyTestsCollected(State.numcollected)
-    State.numcollected = 0
-
-
-def pytest_unconfigure(*args, **kwargs):
+def pytest_unconfigure():
     _UninstallMockFileRepresentation()
-    pydev_runfiles_xml_rpc.notifyTestRunFinished('Finished in: %.2f secs.' % (time.time() - State.start_time,))
+    if is_in_xdist_node():
+        return
+    # Only report that it finished when on the main node (we don't want to report
+    # the finish on each separate node).
+    pydev_runfiles_xml_rpc.notifyTestRunFinished(
+        'Finished in: %.2f secs.' % (time.time() - State.start_time,))
 
 
-def report_test(cond, filename, test, captured_output, error_contents, delta):
-    '''
-    @param filename: 'D:\\src\\mod1\\hello.py'
-    @param test: 'TestCase.testMet1'
-    @param cond: fail, error, ok
-    '''
-    time_str = '%.2f' % (delta,)
-    pydev_runfiles_xml_rpc.notifyTest(cond, captured_output, error_contents, filename, test, time_str)
+def pytest_collection_modifyitems(session, config, items):
+    # A note: in xdist, this is not called on the main process, only in the
+    # secondary nodes, so, we'll actually make the filter and report it multiple
+    # times.
+    connect_to_server_for_communication_to_xml_rpc_on_xdist()
 
+    _load_filters()
+    if not py_test_accept_filter:
+        return  # Keep on going (nothing to filter)
 
-def pytest_runtest_makereport(item, call):
-    report_when = call.when
-    report_duration = call.stop-call.start
-    excinfo = call.excinfo
+    new_items = []
+    for item in items:
+        f = _NormFile(str(item.parent.fspath))
+        name = item.name
 
-    # This will work if pytest is not capturing it, if it is, nothing will come from here...
-    captured_output, error_contents = get_curr_output()
-    for when_section, type_section, value in item._report_sections:
-        if value:
-            if type_section == 'stderr':
-                error_contents += value
-            else:
-                captured_output += value
+        if f not in py_test_accept_filter:
+            continue  # Skip the file
 
-    if not call.excinfo:
-        evalxfail = getattr(item, '_evalxfail', None)
-        if evalxfail and report_when == 'call' and (not hasattr(evalxfail, 'expr') or evalxfail.expr):
-            # I.e.: a method marked with xfail passed... let the user know.
-            report_outcome = "failed"
-            report_longrepr = "XFAIL: Unexpected pass"
+        accept_tests = py_test_accept_filter[f]
 
+        if item.cls is not None:
+            class_name = item.cls.__name__
         else:
-            report_outcome = "passed"
-            report_longrepr = None
-    else:
-        excinfo = call.excinfo
+            class_name = None
+        for test in accept_tests:
+            # This happens when parameterizing pytest tests.
+            i = name.find('[')
+            if i > 0:
+                name = name[:i]
+            if test == name:
+                # Direct match of the test (just go on with the default
+                # loading)
+                new_items.append(item)
+                continue
 
-        handled = False
+            if class_name is not None:
+                if test == class_name + '.' + name:
+                    new_items.append(item)
+                    continue
 
-        if not (call.excinfo and
-            call.excinfo.errisinstance(pytest.xfail.Exception)):
-            evalxfail = getattr(item, '_evalxfail', None)
-            # Something which had an xfail failed: this is expected.
-            if evalxfail and (not hasattr(evalxfail, 'expr') or evalxfail.expr):
-                report_outcome = "passed"
-                report_longrepr = None
-                handled = True
+                if class_name == test:
+                    new_items.append(item)
+                    continue
 
-        if handled:
-            pass
+    # Modify the original list
+    items[:] = new_items
+    pydev_runfiles_xml_rpc.notifyTestsCollected(len(items))
 
-        if excinfo.errisinstance(pytest.xfail.Exception):
-            # Case where an explicit xfail is raised (i.e.: pytest.xfail("reason") is called
-            # programatically).
-            report_outcome = "passed"
-            report_longrepr = None
 
-        elif excinfo.errisinstance(py.test.skip.Exception):  # @UndefinedVariable
-            report_outcome = "skipped"
-            r = excinfo._getreprcrash()
-            report_longrepr = None #(str(r.path), r.lineno, r.message)
+from py.io import TerminalWriter
 
-        elif not isinstance(excinfo, py.code.ExceptionInfo):  # @UndefinedVariable
-            report_outcome = "failed"
-            report_longrepr = excinfo
 
-        else:
-            report_outcome = "failed"
-            if call.when == "call":
-                report_longrepr = item.repr_failure(excinfo)
+def pytest_runtest_logreport(report):
+    if is_in_xdist_node():
+        # When running with xdist, we don't want the report to be called from the node, only
+        # from the main process.
+        return
+    report_duration = report.duration
+    report_when = report.when
+    report_outcome = report.outcome
 
-            else: # exception in setup or teardown
-                report_longrepr = item._repr_failure_py(excinfo, style=item.config.option.tbstyle)
+    if hasattr(report, 'wasxfail'):
+        if report_outcome != 'skipped':
+            report_outcome = 'passed'
 
-    filename = item.fspath.strpath
-    test = item.location[2]
-
-    status = 'ok'
-
-    if report_outcome in ('passed', 'skipped'):
-        #passed or skipped: no need to report if in setup or teardown (only on the actual test if it passed).
+    if report_outcome == 'passed':
+        # passed on setup/teardown: no need to report if in setup or teardown
+        # (only on the actual test if it passed).
         if report_when in ('setup', 'teardown'):
             return
 
-    else:
-        #It has only passed, skipped and failed (no error), so, let's consider error if not on call.
-        if report_when == 'setup':
-            if status == 'ok':
-                status = 'error'
+        status = 'ok'
 
-        elif report_when == 'teardown':
-            if status == 'ok':
-                status = 'error'
+    elif report_outcome == 'skipped':
+        status = 'skip'
+
+    else:
+        # It has only passed, skipped and failed (no error), so, let's consider
+        # error if not on call.
+        if report_when in ('setup', 'teardown'):
+            status = 'error'
 
         else:
-            #any error in the call (not in setup or teardown) is considered a regular failure.
+            # any error in the call (not in setup or teardown) is considered a
+            # regular failure.
             status = 'fail'
 
+    # This will work if pytest is not capturing it, if it is, nothing will
+    # come from here...
+    captured_output, error_contents = report.pydev_captured_output, report.pydev_error_contents
+    for type_section, value in report.sections:
+        if value:
+            if type_section in ('err', 'stderr', 'Captured stderr call'):
+                error_contents += str(value)
+            else:
+                captured_output += str(value)
 
-    if call.excinfo:
-        rep = report_longrepr
-        done = False
-        if hasattr(rep, 'reprcrash'):
-            done = True
-            reprcrash = rep.reprcrash
-            error_contents += str(reprcrash)
-            error_contents += '\n'
+    filename = report.pydev_fspath_strpath
+    test = report.location[2]
+
+    if report_outcome != 'skipped':
+        # On skipped, we'll have a traceback for the skip, which is not what we
+        # want.
+        tw = TerminalWriter(stringio=True)
+        tw.hasmarkup = False
+        report.toterminal(tw)
+        exc = tw.stringio.getvalue()
+        if exc.strip():
+            if error_contents:
+                error_contents += '----------------------------- Exceptions -----------------------------\n'
+            error_contents += exc
+
+    report_test(status, filename, test, captured_output, error_contents, report_duration)
 
 
-        if hasattr(rep, 'reprtraceback'):
-            done = True
-            error_contents += str(rep.reprtraceback)
+def report_test(status, filename, test, captured_output, error_contents, duration):
+    '''
+    @param filename: 'D:\\src\\mod1\\hello.py'
+    @param test: 'TestCase.testMet1'
+    @param status: fail, error, ok
+    '''
+    time_str = '%.2f' % (duration,)
+    pydev_runfiles_xml_rpc.notifyTest(
+        status, captured_output, error_contents, filename, test, time_str)
 
-        if hasattr(rep, 'sections'):
-            done = True
-            for name, content, sep in rep.sections:
-                error_contents += sep * 40
-                error_contents += name
-                error_contents += sep * 40
-                error_contents += '\n'
-                error_contents += content
-                error_contents += '\n'
 
-        if not done:
-            # New pytest broke API.
-            error_contents += str(rep)
-    else:
-        if report_longrepr:
-            error_contents += str(report_longrepr)
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    report = outcome.get_result()
+    report.pydev_fspath_strpath = item.fspath.strpath
+    report.pydev_captured_output, report.pydev_error_contents = get_curr_output()
 
-    if status != 'skip': #I.e.: don't event report skips...
-        report_test(status, filename, test, captured_output, error_contents, report_duration)
-
-def _notify_start_test(item):
-    filename = item.fspath.strpath
-    test = item.location[2]
-    State.start_test_time = time.time()
-
-    pydev_runfiles_xml_rpc.notifyStartTest(filename, test)
 
 @pytest.mark.tryfirst
-def pytest_runtest_setup(item, notify_start=True):  # @DuplicatedSignature
+def pytest_runtest_setup(item):
     '''
-    Skips tests. With xdist will be on a secondary process.
+    Note: with xdist will be on a secondary process.
     '''
+    # We have our own redirection: if xdist does its redirection, we'll have
+    # nothing in our contents (which is OK), but if it does, we'll get nothing
+    # from pytest but will get our own here.
     start_redirect()
-    _load_filters()
-    if not py_test_accept_filter:
-        if notify_start:
-            _notify_start_test(item)
-        return #Keep on going (nothing to filter)
+    filename = item.fspath.strpath
+    test = item.location[2]
 
-    f = _NormFile(str(item.parent.fspath))
-    name = item.name
-
-    if f not in py_test_accept_filter:
-        pytest.skip() # Skip the file
-
-    accept_tests = py_test_accept_filter[f]
-
-    if item.cls is not None:
-        class_name = item.cls.__name__
-    else:
-        class_name = None
-    for test in accept_tests:
-        # This happens when parameterizing pytest tests.
-        i = name.find('[')
-        if i > 0:
-            name = name[:i]
-        if test == name:
-            #Direct match of the test (just go on with the default loading)
-            if notify_start:
-                _notify_start_test(item)
-            return
-
-        if class_name is not None:
-            if test == class_name + '.' + name:
-                if notify_start:
-                    _notify_start_test(item)
-                return
-
-            if class_name == test:
-                if notify_start:
-                    _notify_start_test(item)
-                return
-
-    # If we had a match it'd have returned already.
-    pytest.skip() # Skip the test
-
-
+    pydev_runfiles_xml_rpc.notifyStartTest(filename, test)
