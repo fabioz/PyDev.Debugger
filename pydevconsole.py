@@ -378,7 +378,7 @@ def get_completions(text, token, globals, locals):
 # Debugger integration
 #===============================================================================
 
-def exec_code(code, globals, locals):
+def exec_code(code, globals, locals, debugger):
     interpreterInterface = get_interpreter()
     interpreterInterface.interpreter.update(globals, locals)
 
@@ -387,7 +387,7 @@ def exec_code(code, globals, locals):
     if res:
         return True
 
-    interpreterInterface.add_exec(code)
+    interpreterInterface.add_exec(code, debugger)
 
     return False
 
@@ -447,7 +447,7 @@ class ConsoleWriter(InteractiveInterpreter):
             tblist = tb = None
         sys.stderr.write(''.join(lines))
 
-def console_exec(thread_id, frame_id, expression):
+def console_exec(thread_id, frame_id, expression, dbg):
     """returns 'False' in case expression is partially correct
     """
     frame = pydevd_vars.find_frame(thread_id, frame_id)
@@ -462,7 +462,7 @@ def console_exec(thread_id, frame_id, expression):
     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
     if IPYTHON:
-        need_more =  exec_code(CodeFragment(expression), updated_globals, frame.f_locals)
+        need_more =  exec_code(CodeFragment(expression), updated_globals, frame.f_locals, dbg)
         if not need_more:
             pydevd_save_locals.save_locals(frame)
         return need_more
