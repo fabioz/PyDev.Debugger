@@ -58,19 +58,19 @@ class Null:
 # BaseStdIn
 #=======================================================================================================================
 class BaseStdIn:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, original_stdin=sys.stdin, *args, **kwargs):
         try:
             self.encoding = sys.stdin.encoding
         except:
             #Not sure if it's available in all Python versions...
             pass
-            
+        self.original_stdin = original_stdin
+
         try:
             self.errors = sys.stdin.errors  # Who knew? sys streams have an errors attribute!
         except:
             #Not sure if it's available in all Python versions...
             pass
-
 
     def readline(self, *args, **kwargs):
         #sys.stderr.write('Cannot readline out of the console evaluation\n') -- don't show anything
@@ -94,6 +94,12 @@ class BaseStdIn:
     def close(self, *args, **kwargs):
         pass #expected in StdIn
 
+    def __getattr__(self, item):
+        # it's called if the attribute wasn't found
+        if hasattr(self.original_stdin, item):
+            return getattr(self.original_stdin, item)
+        raise AttributeError("%s has no attribute %s" % (self.original_stdin, item))
+
 
 #=======================================================================================================================
 # StdIn
@@ -103,8 +109,8 @@ class StdIn(BaseStdIn):
         Object to be added to stdin (to emulate it as non-blocking while the next line arrives)
     '''
 
-    def __init__(self, interpreter, host, client_port):
-        BaseStdIn.__init__(self)
+    def __init__(self, interpreter, host, client_port, original_stdin=sys.stdin):
+        BaseStdIn.__init__(self, original_stdin)
         self.interpreter = interpreter
         self.client_port = client_port
         self.host = host
@@ -133,9 +139,8 @@ class DebugConsoleStdIn(BaseStdIn):
     '''
 
     def __init__(self, dbg, original_stdin):
-        BaseStdIn.__init__(self)
+        BaseStdIn.__init__(self, original_stdin)
         self.debugger = dbg
-        self.original_stdin = original_stdin
 
     def readline(self, *args, **kwargs):
         # Notify Java side about input and call original function
@@ -183,12 +188,12 @@ class BaseInterpreterInterface:
             # At this point, it should always be single.
             # If we don't do this, things as:
             #
-            #     for i in range(10): print(i) 
+            #     for i in range(10): print(i)
             #
             # (in a single line) don't work.
             # Note that it won't give an error and code will be None (so, it'll
             # use execMultipleLines in the next call in this case).
-            symbol = 'single' 
+            symbol = 'single'
             code = self.interpreter.compile(source, '<input>', symbol)
         except (OverflowError, SyntaxError, ValueError):
             # Case 1
@@ -210,7 +215,7 @@ class BaseInterpreterInterface:
 
     def create_std_in(self, debugger=None, original_std_in=None):
         if debugger is None:
-            return StdIn(self, self.host, self.client_port)
+            return StdIn(self, self.host, self.client_port, original_stdin=original_std_in)
         else:
             return DebugConsoleStdIn(dbg=debugger, original_stdin=original_std_in)
 
