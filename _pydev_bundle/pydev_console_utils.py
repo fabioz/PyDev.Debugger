@@ -1,6 +1,6 @@
 from _pydev_bundle.pydev_imports import xmlrpclib, _queue, Exec
 import sys
-from _pydevd_bundle.pydevd_constants import IS_JYTHON
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_PY2
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_vars
@@ -62,6 +62,13 @@ class BaseStdIn:
         except:
             #Not sure if it's available in all Python versions...
             pass
+            
+        try:
+            self.errors = sys.stdin.errors  # Who knew? sys streams have an errors attribute!
+        except:
+            #Not sure if it's available in all Python versions...
+            pass
+
 
     def readline(self, *args, **kwargs):
         #sys.stderr.write('Cannot readline out of the console evaluation\n') -- don't show anything
@@ -107,6 +114,9 @@ class StdIn(BaseStdIn):
             requested_input = server.RequestInput()
             if not requested_input:
                 return '\n' #Yes, a readline must return something (otherwise we can get an EOFError on the input() call).
+            else:
+                # readline should end with '\n' (not doing so makes IPython 5 remove the last *valid* character).
+                requested_input += '\n'
             return requested_input
         except:
             return '\n'

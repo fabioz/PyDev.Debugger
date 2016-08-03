@@ -24,6 +24,11 @@ class Test(unittest.TestCase):
     def test_console_hello(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
+        try:
+            sys.stdout.encoding = sys.stdin.encoding
+        except AttributeError:
+            # In Python 3 encoding is not writable (whereas in Python 2 it doesn't exist).
+            pass
 
         try:
             client_port, _server_port = self.get_free_addresses()
