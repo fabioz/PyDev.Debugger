@@ -833,7 +833,7 @@ from _pydevd_bundle.pydevd_constants import get_thread_id
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
-from _pydevd_bundle.pydevd_tracing import SetTrace
+from pydevd_tracing import SetTrace
 
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 # In Cython, PyDBAdditionalThreadInfo is bundled in the file.

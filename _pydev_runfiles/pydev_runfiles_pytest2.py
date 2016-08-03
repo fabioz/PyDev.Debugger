@@ -148,6 +148,7 @@ def pytest_collection_modifyitems(session, config, items):
 
     _load_filters()
     if not py_test_accept_filter:
+        pydev_runfiles_xml_rpc.notifyTestsCollected(len(items))
         return  # Keep on going (nothing to filter)
 
     new_items = []
@@ -190,6 +191,23 @@ def pytest_collection_modifyitems(session, config, items):
 
 
 from py.io import TerminalWriter
+
+def _get_error_contents_from_report(report):
+    if report.longrepr is not None:
+        tw = TerminalWriter(stringio=True)
+        tw.hasmarkup = False
+        report.toterminal(tw)
+        exc = tw.stringio.getvalue()
+        s = exc.strip()
+        if s:
+            return s
+        
+    return ''
+
+def pytest_collectreport(report):
+    error_contents = _get_error_contents_from_report(report)
+    if error_contents:
+        report_test('fail', '<collect errors>', '<collect errors>', '', error_contents, 0.0)
 
 
 def pytest_runtest_logreport(report):
@@ -243,11 +261,8 @@ def pytest_runtest_logreport(report):
     if report_outcome != 'skipped':
         # On skipped, we'll have a traceback for the skip, which is not what we
         # want.
-        tw = TerminalWriter(stringio=True)
-        tw.hasmarkup = False
-        report.toterminal(tw)
-        exc = tw.stringio.getvalue()
-        if exc.strip():
+        exc = _get_error_contents_from_report(report)
+        if exc:
             if error_contents:
                 error_contents += '----------------------------- Exceptions -----------------------------\n'
             error_contents += exc

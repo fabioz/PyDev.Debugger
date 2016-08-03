@@ -1,5 +1,5 @@
 from _pydevd_bundle.pydevd_constants import *
-from _pydevd_bundle import pydevd_tracing
+import pydevd_tracing
 import sys
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_import_class

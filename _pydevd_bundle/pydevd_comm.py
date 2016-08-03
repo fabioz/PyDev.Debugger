@@ -72,7 +72,7 @@ except:
     from urllib.parse import quote_plus, unquote, unquote_plus  #@Reimport @UnresolvedImport
 import pydevconsole
 from _pydevd_bundle import pydevd_vars
-from _pydevd_bundle import pydevd_tracing
+import pydevd_tracing
 from _pydevd_bundle import pydevd_vm_type
 import pydevd_file_utils
 import traceback
@@ -80,7 +80,7 @@ from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_att
 from _pydev_bundle import pydev_log
 from _pydev_bundle import _pydev_completer
 
-from _pydevd_bundle.pydevd_tracing import get_exception_traceback_str
+from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle import pydevd_console
 from _pydev_bundle.pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
 

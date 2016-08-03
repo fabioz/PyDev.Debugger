@@ -5,7 +5,7 @@ import sys
 import traceback
 
 from _pydev_bundle import _pydev_completer
-from _pydevd_bundle.pydevd_tracing import get_exception_traceback_str
+from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle.pydevd_vars import make_valid_xml_value
 from _pydev_bundle.pydev_imports import Exec
 from _pydevd_bundle.pydevd_io import IOBuf
