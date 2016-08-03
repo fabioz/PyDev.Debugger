@@ -160,7 +160,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
                              self.user_global_ns,
                              self.readline_omit__names,
                              self.alias_manager.alias_table,
-                             self.has_readline)
+                             False)
 
 
     def _new_completer_012(self):
@@ -168,7 +168,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
                              namespace=self.user_ns,
                              global_namespace=self.user_global_ns,
                              alias_table=self.alias_manager.alias_table,
-                             use_readline=self.has_readline,
+                             use_readline=False,
                              config=self.config,
                              )
         self.configurables.append(completer)
@@ -180,7 +180,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
                              namespace=self.user_ns,
                              global_namespace=self.user_global_ns,
                              alias_table=self.alias_manager.alias_table,
-                             use_readline=self.has_readline,
+                             use_readline=False,
                              parent=self,
                              )
         self.configurables.append(completer)
@@ -191,7 +191,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
         completer = PyDevIPCompleter(shell=self,
                              namespace=self.user_ns,
                              global_namespace=self.user_global_ns,
-                             use_readline=self.has_readline,
+                             use_readline=False,
                              parent=self,
                              )
         self.configurables.append(completer)
@@ -240,7 +240,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
         # Only configure readline if we truly are using readline.  IPython can
         # do tab-completion over the network, in GUIs, etc, where readline
         # itself may be absent
-        if self.has_readline:
+        if False: # has_readline
             self.set_readline_completer()
 
 
