@@ -385,10 +385,11 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg):
                 frame.f_globals[attr] = eval(expression, frame.f_globals, frame.f_locals)
                 return frame.f_globals[attr]
         else:
-            if pydevd_save_locals.is_save_locals_available():
-                frame.f_locals[attr] = eval(expression, frame.f_globals, frame.f_locals)
-                pydevd_save_locals.save_locals(frame)
-                return frame.f_locals[attr]
+            if '.' not in attr:  # i.e.: if we have a '.', we're changing some attribute of a local var.
+                if pydevd_save_locals.is_save_locals_available():
+                    frame.f_locals[attr] = eval(expression, frame.f_globals, frame.f_locals)
+                    pydevd_save_locals.save_locals(frame)
+                    return frame.f_locals[attr]
 
             #default way (only works for changing it in the topmost frame)
             result = eval(expression, frame.f_globals, frame.f_locals)
