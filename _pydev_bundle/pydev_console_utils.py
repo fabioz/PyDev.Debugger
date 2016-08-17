@@ -153,7 +153,16 @@ class BaseInterpreterInterface:
         if hasattr(self.interpreter, 'is_complete'):
             return not self.interpreter.is_complete(source)
         try:
-            code = self.interpreter.compile(source, '<input>', 'exec')
+            # At this point, it should always be single.
+            # If we don't do this, things as:
+            #
+            #     for i in range(10): print(i) 
+            #
+            # (in a single line) don't work.
+            # Note that it won't give an error and code will be None (so, it'll
+            # use execMultipleLines in the next call in this case).
+            symbol = 'single' 
+            code = self.interpreter.compile(source, '<input>', symbol)
         except (OverflowError, SyntaxError, ValueError):
             # Case 1
             return False
@@ -341,8 +350,10 @@ class BaseInterpreterInterface:
 
     def execMultipleLines(self, lines):
         if IS_JYTHON:
+            more = False
             for line in lines.split('\n'):
-                self.do_exec_code(line, True)
+                more = self.do_exec_code(line, True)
+            return more
         else:
             return self.do_exec_code(lines, False)
 

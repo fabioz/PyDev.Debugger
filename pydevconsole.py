@@ -2,6 +2,7 @@
 Entry point module to start the interactive console.
 '''
 from _pydev_imps._pydev_saved_modules import thread
+from _pydevd_bundle.pydevd_constants import IS_JYTHON
 start_new_thread = thread.start_new_thread
 
 try:
@@ -70,7 +71,10 @@ class Command:
         if code_fragment.is_single_line:
             symbol = 'single'
         else:
-            symbol = 'exec' # Jython doesn't support this
+            if IS_JYTHON:
+                symbol = 'single' # Jython doesn't support exec
+            else:
+                symbol = 'exec' 
         return symbol
     symbol_for_fragment = staticmethod(symbol_for_fragment)
 
