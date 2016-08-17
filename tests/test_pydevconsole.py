@@ -70,7 +70,10 @@ class Test(unittest.TestCase):
             try:
                 self.assertEqual(['50', 'input_request'], found)
             except:
-                self.assertEqual(['input_request'], found)  #IPython
+                try:
+                    self.assertEqual(['input_request'], found)  #IPython
+                except:
+                    self.assertEqual([u'Out[5]:', u'50', u'input_request'], found) # IPython 5.1
 
             comps = interpreter.getCompletions('foo.', 'foo.')
             self.assert_(
@@ -265,5 +268,6 @@ class Test(unittest.TestCase):
 # main
 #=======================================================================================================================
 if __name__ == '__main__':
+    print sys.executable
     unittest.main()
 
