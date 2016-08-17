@@ -269,6 +269,5 @@ class Test(unittest.TestCase):
 # main
 #=======================================================================================================================
 if __name__ == '__main__':
-    print sys.executable
     unittest.main()
 
