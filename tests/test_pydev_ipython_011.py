@@ -2,7 +2,6 @@ import sys
 import unittest
 import threading
 import os
-from nose.tools import eq_
 from _pydev_bundle.pydev_imports import SimpleXMLRPCServer
 from _pydev_bundle.pydev_localhost import get_localhost
 from _pydev_bundle.pydev_console_utils import StdIn
@@ -16,6 +15,9 @@ try:
 except:
     xrange = range
 
+def eq_(a, b):
+    if a != b:
+        raise AssertionError('%s != %s' % (a, b))
 
 class TestBase(unittest.TestCase):
 
