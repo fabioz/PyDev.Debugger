@@ -2,13 +2,14 @@ import threading
 import unittest
 import sys
 import os
+from _pydevd_bundle import pydevd_io
 
 try:
     import pydevconsole
 except:
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
     import pydevconsole
-from _pydev_bundle.pydev_imports import xmlrpclib, SimpleXMLRPCServer, StringIO
+from _pydev_bundle.pydev_imports import xmlrpclib, SimpleXMLRPCServer
 
 try:
     raw_input
@@ -23,7 +24,7 @@ class Test(unittest.TestCase):
 
     def test_console_hello(self):
         self.original_stdout = sys.stdout
-        sys.stdout = StringIO()
+        sys.stdout = pydevd_io.IOBuf()
         try:
             sys.stdout.encoding = sys.stdin.encoding
         except AttributeError:
@@ -47,7 +48,7 @@ class Test(unittest.TestCase):
 
     def test_console_requests(self):
         self.original_stdout = sys.stdout
-        sys.stdout = StringIO()
+        sys.stdout = pydevd_io.IOBuf()
 
         try:
             client_port, _server_port = self.get_free_addresses()
@@ -59,7 +60,7 @@ class Test(unittest.TestCase):
             from _pydev_bundle.pydev_console_utils import CodeFragment
 
             interpreter = pydevconsole.InterpreterInterface(pydev_localhost.get_localhost(), client_port, threading.currentThread())
-            sys.stdout = StringIO()
+            sys.stdout = pydevd_io.IOBuf()
             interpreter.add_exec(CodeFragment('class Foo:\n    CONSTANT=1\n'))
             interpreter.add_exec(CodeFragment('foo=Foo()'))
             interpreter.add_exec(CodeFragment('foo.__doc__=None'))
@@ -221,7 +222,7 @@ class Test(unittest.TestCase):
 
     def test_server(self):
         self.original_stdout = sys.stdout
-        sys.stdout = StringIO()
+        sys.stdout = pydevd_io.IOBuf()
         try:
             client_port, server_port = self.get_free_addresses()
             class ServerThread(threading.Thread):
@@ -241,7 +242,7 @@ class Test(unittest.TestCase):
 
             import time
             time.sleep(.3)  #let's give it some time to start the threads
-            sys.stdout = StringIO()
+            sys.stdout = pydevd_io.IOBuf()
 
             from _pydev_bundle import pydev_localhost
             server = xmlrpclib.Server('http://%s:%s' % (pydev_localhost.get_localhost(), server_port))
@@ -257,11 +258,13 @@ class Test(unittest.TestCase):
                     raise AssertionError('Did not get the return asked before the timeout.')
                 time.sleep(.1)
 
-            while ['input_request'] != sys.stdout.getvalue().split():
+            found = sys.stdout.getvalue()
+            while ['input_request'] != found.split():
+                found += sys.stdout.getvalue()
                 if time.time() - initial > 2:
                     break
                 time.sleep(.1)
-            self.assertEqual(['input_request'], sys.stdout.getvalue().split())
+            self.assertEqual(['input_request'], found.split())
         finally:
             sys.stdout = self.original_stdout
 
