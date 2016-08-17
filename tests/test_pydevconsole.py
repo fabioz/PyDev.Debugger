@@ -73,7 +73,8 @@ class Test(unittest.TestCase):
                 try:
                     self.assertEqual(['input_request'], found)  #IPython
                 except:
-                    self.assertEqual([u'Out[5]:', u'50', u'input_request'], found) # IPython 5.1
+                    self.assertEqual([u'50', u'input_request'], found[1:]) # IPython 5.1
+                    self.assertTrue(found[0].startswith(u'Out'))
 
             comps = interpreter.getCompletions('foo.', 'foo.')
             self.assert_(

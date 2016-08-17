@@ -3,12 +3,13 @@ import unittest
 import threading
 import os
 from nose.tools import eq_
-from _pydev_bundle.pydev_imports import StringIO, SimpleXMLRPCServer
+from _pydev_bundle.pydev_imports import SimpleXMLRPCServer
 from _pydev_bundle.pydev_localhost import get_localhost
 from _pydev_bundle.pydev_console_utils import StdIn
 import socket
 from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
 import time
+from _pydevd_bundle import pydevd_io
 
 try:
     xrange
@@ -40,7 +41,7 @@ class TestBase(unittest.TestCase):
         from IPython.utils import io
 
         self.original_stdout = sys.stdout
-        sys.stdout = io.stdout = StringIO()
+        sys.stdout = io.stdout = pydevd_io.IOBuf()
 
     def restore_stdout(self):
         from IPython.utils import io
