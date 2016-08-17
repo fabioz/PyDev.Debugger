@@ -28,7 +28,7 @@ install:
   - "%PYTHON%\\python.exe -m pip install wheel"
   - "%PYTHON%\\python.exe -m pip install cython"
   - "%PYTHON%\\python.exe -m pip install numpy"
-  - "%PYTHON%\\python.exe -m pip install nose"
+  - "%PYTHON%\\python.exe -m pip install nose2"
   - "%PYTHON%\\python.exe -m pip install ipython"
   - "%PYTHON%\\python.exe -m pip install django>=1.7,<1.8"
   - "set PYTHONPATH=%PYTHONPATH%;%APPVEYOR_BUILD_FOLDER%"
@@ -45,7 +45,9 @@ test_script:
   # the interpreter you're using - Appveyor does not do anything special
   # to put the Python version you want to use on PATH.
   # - "build.cmd %PYTHON%\\python.exe setup.py test"
-  - "build.cmd %PYTHON%\\python.exe -m nose --verbosity=3"
+  # Note: IPython 5.1 is not compatible for testing with pytest or nose (only nose2 works
+  # because of how the sys.stdin/stdout/stderr streams are setup).
+  - "build.cmd %PYTHON%\\python.exe -m nose2"
 
 # after_test:
   # This step builds your wheels.

@@ -14,13 +14,13 @@
 # # Install packages
 # install:
 #   - pip install numpy
-#   - pip install nose
+#   - pip install nose2
 #   - pip install ipython
 #   - pip install django>=1.7,<1.8
 #
 # # Run test
 # script:
-#   - nosetests --verbosity=3
+#   - nose2
 
 
 # IPython only works with 2.7/3.3, so, test only on those.
@@ -48,10 +48,10 @@ before_install:
   - "sh -e /etc/init.d/xvfb start"
 # Install packages
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy nose ipython cython
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy nose2 ipython cython
   - pip install "django>=1.7,<1.8"
   - python build_tools/build.py
 
 # Run test
 script:
-  - nosetests --verbosity=3
+  - nose2
