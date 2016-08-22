@@ -21,14 +21,24 @@ def log_error_once(msg):
 
 pydev_src_dir = os.path.dirname(os.path.dirname(__file__))
 
+def _get_pydevd_args():
+    new_args = []
+    for x in sys.original_argv:
+        new_args.append(x)
+        if x == '--file':
+            break
+    return new_args
+
 def _get_python_c_args(host, port, indC, args):
     return ("import sys; sys.path.append(r'%s'); import pydevd; "
-            "pydevd.settrace(host='%s', port=%s, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); %s"
+            "pydevd.settrace(host='%s', port=%s, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); "
+            "sys.original_argv = %s; print(sys.argv); %s"
             ) % (
-        pydev_src_dir,
-        host,
-        port,
-        args[indC + 1])
+               pydev_src_dir,
+               host,
+               port,
+               _get_pydevd_args(),
+               args[indC + 1])
 
 def _get_host_port():
     import pydevd
@@ -424,11 +434,11 @@ def create_CreateProcessWarnMultiproc(original_name):
 def create_fork(original_name):
     def new_fork():
         import os
-        
+
         # A simple fork will result in a new python process
-        is_new_python_process = True 
+        is_new_python_process = True
         frame = sys._getframe()
-        
+
         while frame is not None:
             if frame.f_code.co_name == '_execute_child' and 'subprocess' in frame.f_code.co_filename:
                 # If we're actually in subprocess.Popen creating a child, it may
@@ -440,10 +450,10 @@ def create_fork(original_name):
                     if is_python(executable):
                         is_new_python_process = True
                 break
-                
+
             frame = frame.f_back
         frame = None  # Just make sure we don't hold on to it.
-        
+
         child_process = getattr(os, original_name)()  # fork
         if not child_process:
             if is_new_python_process:
