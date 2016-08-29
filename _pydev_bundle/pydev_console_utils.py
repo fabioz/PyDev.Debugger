@@ -1,13 +1,13 @@
-import os
-
 from _pydev_bundle.pydev_imports import xmlrpclib, _queue, Exec
 import sys
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_PY2
+from  _pydev_bundle._pydev_calltip_util import get_description
 from _pydev_imps._pydev_saved_modules import thread
-from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_vars
+from _pydevd_bundle import pydevd_xml
+from _pydevd_bundle.pydevd_constants import IS_JYTHON
 from _pydevd_bundle.pydevd_utils import *  # @UnusedWildImport
-import traceback
+
 
 #=======================================================================================================================
 # Null
@@ -73,26 +73,26 @@ class BaseStdIn:
             pass
 
     def readline(self, *args, **kwargs):
-        #sys.stderr.write('Cannot readline out of the console evaluation\n') -- don't show anything
-        #This could happen if the user had done input('enter number).<-- upon entering this, that message would appear,
-        #which is not something we want.
+        # sys.stderr.write('Cannot readline out of the console evaluation\n') -- don't show anything
+        # This could happen if the user had done input('enter number).<-- upon entering this, that message would appear,
+        # which is not something we want.
         return '\n'
 
     def isatty(self):
-        return False #not really a file
+        return False # not really a file
 
     def write(self, *args, **kwargs):
-        pass #not available StdIn (but it can be expected to be in the stream interface)
+        pass # not available StdIn (but it can be expected to be in the stream interface)
 
     def flush(self, *args, **kwargs):
-        pass #not available StdIn (but it can be expected to be in the stream interface)
+        pass # not available StdIn (but it can be expected to be in the stream interface)
 
     def read(self, *args, **kwargs):
-        #in the interactive interpreter, a read and a readline are the same.
+        # in the interactive interpreter, a read and a readline are the same.
         return self.readline()
 
     def close(self, *args, **kwargs):
-        pass #expected in StdIn
+        pass # expected in StdIn
 
     def __getattr__(self, item):
         # it's called if the attribute wasn't found
@@ -101,9 +101,9 @@ class BaseStdIn:
         raise AttributeError("%s has no attribute %s" % (self.original_stdin, item))
 
 
-#=======================================================================================================================
+# =======================================================================================================================
 # StdIn
-#=======================================================================================================================
+# =======================================================================================================================
 class StdIn(BaseStdIn):
     '''
         Object to be added to stdin (to emulate it as non-blocking while the next line arrives)
@@ -116,7 +116,7 @@ class StdIn(BaseStdIn):
         self.host = host
 
     def readline(self, *args, **kwargs):
-        #Ok, callback into the client to get the new input
+        # Ok, callback into the client to get the new input
         try:
             server = xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
             requested_input = server.RequestInput()
@@ -129,6 +129,8 @@ class StdIn(BaseStdIn):
         except:
             return '\n'
 
+    def close(self, *args, **kwargs):
+        pass  # expected in StdIn
 
 #=======================================================================================================================
 # DebugConsoleStdIn
@@ -164,9 +166,10 @@ class CodeFragment:
         if not code_fragment.is_single_line:
             self.is_single_line = False
 
-#=======================================================================================================================
+
+# =======================================================================================================================
 # BaseInterpreterInterface
-#=======================================================================================================================
+# =======================================================================================================================
 class BaseInterpreterInterface:
     def __init__(self, mainThread):
         self.mainThread = mainThread
@@ -224,15 +227,15 @@ class BaseInterpreterInterface:
         try:
             help = None
             if 'pydoc' in sys.modules:
-                pydoc = sys.modules['pydoc'] #Don't import it if it still is not there.
+                pydoc = sys.modules['pydoc']  # Don't import it if it still is not there.
 
                 if hasattr(pydoc, 'help'):
-                    #You never know how will the API be changed, so, let's code defensively here
+                    # You never know how will the API be changed, so, let's code defensively here
                     help = pydoc.help
                     if not hasattr(help, 'input'):
                         help = None
         except:
-            #Just ignore any error here
+            # Just ignore any error here
             pass
 
         more = False
@@ -240,7 +243,7 @@ class BaseInterpreterInterface:
             sys.stdin = self.create_std_in(debugger, original_in)
             try:
                 if help is not None:
-                    #This will enable the help() function to work.
+                    # This will enable the help() function to work.
                     try:
                         try:
                             help.input = sys.stdin
@@ -286,7 +289,6 @@ class BaseInterpreterInterface:
 
         return more
 
-
     def do_add_exec(self, codeFragment):
         '''
         Subclasses should override.
@@ -294,7 +296,6 @@ class BaseInterpreterInterface:
         @return: more (True if more input is needed to complete the statement and False if the statement is complete).
         '''
         raise NotImplementedError()
-
 
     def get_namespace(self):
         '''
@@ -304,66 +305,48 @@ class BaseInterpreterInterface:
         '''
         raise NotImplementedError()
 
+    def __resolve_reference__(self, text):
+        """
 
-    def getDescription(self, text):
-        try:
-            obj = None
-            if '.' not in text:
+        :type text: str
+        """
+        obj = None
+        if '.' not in text:
+            try:
+                obj = self.get_namespace()[text]
+            except KeyError:
+                pass
+
+            if obj is None:
                 try:
-                    obj = self.get_namespace()[text]
-                except KeyError:
-                    return ''
-
-            else:
-                try:
-                    splitted = text.split('.')
-                    obj = self.get_namespace()[splitted[0]]
-                    for t in splitted[1:]:
-                        obj = getattr(obj, t)
-                except:
-                    return ''
-
-            if obj is not None:
-                try:
-                    if sys.platform.startswith("java"):
-                        #Jython
-                        doc = obj.__doc__
-                        if doc is not None:
-                            return doc
-
-                        from _pydev_bundle import _pydev_jy_imports_tipper
-
-                        is_method, infos = _pydev_jy_imports_tipper.ismethod(obj)
-                        ret = ''
-                        if is_method:
-                            for info in infos:
-                                ret += info.get_as_doc()
-                            return ret
-
-                    else:
-                        #Python and Iron Python
-                        import inspect #@UnresolvedImport
-
-                        doc = inspect.getdoc(obj)
-                        if doc is not None:
-                            return doc
+                    obj = self.get_namespace()['__builtins__'][text]
                 except:
                     pass
 
-            try:
-                #if no attempt succeeded, try to return repr()...
-                return repr(obj)
-            except:
+            if obj is None:
                 try:
-                    #otherwise the class
-                    return str(obj.__class__)
+                    obj = getattr(self.get_namespace()['__builtins__'], text, None)
                 except:
-                    #if all fails, go to an empty string
-                    return ''
-        except:
-            traceback.print_exc()
-            return ''
+                    pass
 
+        else:
+            try:
+                last_dot = text.rindex('.')
+                parent_context = text[0:last_dot]
+                res = pydevd_vars.eval_in_context(parent_context, self.get_namespace(), self.get_namespace())
+                obj = getattr(res, text[last_dot + 1:])
+            except:
+                pass
+        return obj
+
+    def getDescription(self, text):
+        try:
+            obj = self.__resolve_reference__(text)
+            if obj is None:
+                return ''
+            return get_description(obj)
+        except:
+            return ''
 
     def do_exec_code(self, code, is_single_line):
         try:
@@ -382,7 +365,6 @@ class BaseInterpreterInterface:
     def execLine(self, line):
         return self.do_exec_code(line, True)
 
-
     def execMultipleLines(self, lines):
         if IS_JYTHON:
             more = False
@@ -392,9 +374,8 @@ class BaseInterpreterInterface:
         else:
             return self.do_exec_code(lines, False)
 
-
     def interrupt(self):
-        self.buffer = None # Also clear the buffer when it's interrupted.
+        self.buffer = None  # Also clear the buffer when it's interrupted.
         try:
             if self.interruptable:
                 called = False
@@ -432,10 +413,10 @@ class BaseInterpreterInterface:
                     pass
 
                 if not called:
-                    if hasattr(thread, 'interrupt_main'): #Jython doesn't have it
+                    if hasattr(thread, 'interrupt_main'):  # Jython doesn't have it
                         thread.interrupt_main()
                     else:
-                        self.mainThread._thread.interrupt() #Jython
+                        self.mainThread._thread.interrupt()  # Jython
             return True
         except:
             traceback.print_exc()
@@ -515,11 +496,11 @@ class BaseInterpreterInterface:
         Used to show console with variables connection.
         Always return a frame where the locals map to our internal namespace.
         '''
-        VIRTUAL_FRAME_ID = "1" # matches PyStackFrameConsole.java
-        VIRTUAL_CONSOLE_ID = "console_main" # matches PyThreadConsole.java
+        VIRTUAL_FRAME_ID = "1"  # matches PyStackFrameConsole.java
+        VIRTUAL_CONSOLE_ID = "console_main"  # matches PyThreadConsole.java
         if thread_id == VIRTUAL_CONSOLE_ID and frame_id == VIRTUAL_FRAME_ID:
             f = FakeFrame()
-            f.f_globals = {} #As globals=locals here, let's simply let it empty (and save a bit of network traffic).
+            f.f_globals = {}  # As globals=locals here, let's simply let it empty (and save a bit of network traffic).
             f.f_locals = self.get_namespace()
             return f
         else:
@@ -547,7 +528,7 @@ class BaseInterpreterInterface:
             except:
                 # This happens on Jython embedded in host eclipse
                 traceback.print_exc()
-                sys.stderr.write('pydevd is not available, cannot connect\n',)
+                sys.stderr.write('pydevd is not available, cannot connect\n', )
 
             from _pydev_bundle import pydev_localhost
             threading.currentThread().__pydevd_id__ = "console_main"
@@ -609,9 +590,10 @@ class BaseInterpreterInterface:
         # it to run in the main thread.
         self.exec_queue.put(do_enable_gui)
 
-#=======================================================================================================================
+
+# =======================================================================================================================
 # FakeFrame
-#=======================================================================================================================
+# =======================================================================================================================
 class FakeFrame:
     '''
     Used to show console with variables connection.
