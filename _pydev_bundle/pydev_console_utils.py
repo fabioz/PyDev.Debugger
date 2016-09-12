@@ -78,21 +78,18 @@ class BaseStdIn:
         # which is not something we want.
         return '\n'
 
-    def isatty(self):
-        return False # not really a file
-
     def write(self, *args, **kwargs):
-        pass # not available StdIn (but it can be expected to be in the stream interface)
+        pass  # not available StdIn (but it can be expected to be in the stream interface)
 
     def flush(self, *args, **kwargs):
-        pass # not available StdIn (but it can be expected to be in the stream interface)
+        pass  # not available StdIn (but it can be expected to be in the stream interface)
 
     def read(self, *args, **kwargs):
         # in the interactive interpreter, a read and a readline are the same.
         return self.readline()
 
     def close(self, *args, **kwargs):
-        pass # expected in StdIn
+        pass  # expected in StdIn
 
     def __getattr__(self, item):
         # it's called if the attribute wasn't found
