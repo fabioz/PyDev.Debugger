@@ -1,3 +1,6 @@
+import os
+import sys
+import traceback
 from _pydev_bundle.pydev_imports import xmlrpclib, _queue, Exec
 import sys
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_PY2
@@ -6,7 +9,7 @@ from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle.pydevd_constants import IS_JYTHON
-from _pydevd_bundle.pydevd_utils import *  # @UnusedWildImport
+from _pydevd_bundle.pydevd_utils import to_string
 
 
 #=======================================================================================================================
