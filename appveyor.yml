@@ -21,17 +21,24 @@ environment:
     #  DISTUTILS_USE_SDK: "1"
     #- PYTHON: "C:\\Python34-x64"
     #  DISTUTILS_USE_SDK: "1"
-    #- PYTHON: "C:\\Python35-x64"
+    - PYTHON: "C:\\Python35-x64"
+      PYDEVD_USE_CYTHON: YES
+
+    - PYTHON: "C:\\Python35-x64"
+      PYDEVD_USE_CYTHON: NO
 
 install:
   # We need wheel installed to build wheels
-  - "%PYTHON%\\python.exe -m pip install wheel"
-  - "%PYTHON%\\python.exe -m pip install cython"
-  - "%PYTHON%\\python.exe -m pip install numpy"
-  - "%PYTHON%\\python.exe -m pip install nose2"
-  - "%PYTHON%\\python.exe -m pip install ipython"
-  - "%PYTHON%\\python.exe -m pip install django>=1.7,<1.8"
-  - "set PYTHONPATH=%PYTHONPATH%;%APPVEYOR_BUILD_FOLDER%"
+  - cmd: "%PYTHON%\\python.exe -m pip install wheel"
+  - cmd: "%PYTHON%\\python.exe -m pip install cython"
+  - cmd: "%PYTHON%\\python.exe -m pip install numpy"
+  - cmd: "%PYTHON%\\python.exe -m pip install nose2"
+  - cmd: "%PYTHON%\\python.exe -m pip install ipython"
+  - ps: |
+      if ($env:PYTHON -eq "C:\\Python27"){
+          "%PYTHON%\\python.exe -m pip install django>=1.7,<1.8"
+      }
+  - cmd: "set PYTHONPATH=%PYTHONPATH%;%APPVEYOR_BUILD_FOLDER%"
 
 build_script:
   - "%PYTHON%\\python.exe build_tools/build.py"
