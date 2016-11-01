@@ -16,7 +16,7 @@ from _pydevd_bundle.pydevd_frame import PyDBFrame
 cdef class PyDBAdditionalThreadInfo:
 # ELSE
 # class PyDBAdditionalThreadInfo(object):
-    # ENDIF
+# ENDIF
 
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
     cdef public int pydev_state;
@@ -213,14 +213,13 @@ from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised
 from _pydevd_bundle.pydevd_utils import get_clsname_for_code
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
-
 try:
     from inspect import CO_GENERATOR
 except:
     CO_GENERATOR = 0
 
 try:
-    from _pydevd_bundle.pydevd_signature import send_signature_call_trace, send_signature_return_trace
+    from _pydevd_bundle.pydevd_signature import send_signature_call_trace
 except ImportError:
     def send_signature_call_trace(*args, **kwargs):
         pass
@@ -281,12 +280,6 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                 return self.trace_dispatch
 
         return self.trace_exception
-
-    def trace_return(self, frame, event, arg):
-        if event == 'return':
-            main_debugger, filename, info, thread = self._args
-            send_signature_return_trace(main_debugger, frame, filename, arg)
-        return self.trace_return
 
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
     def should_stop_on_exception(self, frame, str event, arg):
@@ -518,15 +511,12 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
         try:
             # print 'frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, event
             info.is_tracing = True
-            need_trace_return = False
 
             if main_debugger._finish_debugging_session:
                 return None
 
             if event == 'call' and main_debugger.signature_factory:
-                need_trace_return = send_signature_call_trace(main_debugger, frame, filename)
-            if event == 'return' and main_debugger.signature_factory:
-                send_signature_return_trace(main_debugger, frame, filename, arg)
+                send_signature_call_trace(main_debugger, frame, filename)
 
             plugin_manager = main_debugger.plugin
 
@@ -549,7 +539,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
 
             if is_exception_event:
                 breakpoints_for_file = None
-                if stop_frame and stop_frame is not frame and step_cmd is CMD_STEP_OVER and \
+                if stop_frame and stop_frame is not frame and step_cmd == CMD_STEP_OVER and \
                                 arg[0] in (StopIteration, GeneratorExit) and arg[2] is None:
                     info.pydev_step_cmd = CMD_STEP_INTO
                     info.pydev_step_stop = None
@@ -560,7 +550,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                 # to make a step in or step over at that location).
                 # Note: this is especially troublesome when we're skipping code with the
                 # @DontTrace comment.
-                if stop_frame is frame and event is 'return' and step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER):
+                if stop_frame is frame and event == 'return' and step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER):
                     if not frame.f_code.co_flags & CO_GENERATOR:
                         info.pydev_step_cmd = CMD_STEP_INTO
                         info.pydev_step_stop = None
@@ -593,10 +583,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                         if has_exception_breakpoints:
                             return self.trace_exception
                         else:
-                            if need_trace_return:
-                                return self.trace_return
-                            else:
-                                return None
+                            return None
 
                 else:
                     #checks the breakpoint to see if there is a context match in some function
@@ -616,10 +603,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                             if has_exception_breakpoints:
                                 return self.trace_exception
                             else:
-                                if need_trace_return:
-                                    return self.trace_return
-                                else:
-                                    return None
+                                return None
 
 
             #We may have hit a breakpoint or we are already in step mode. Either way, let's check what we should do in this frame
@@ -777,7 +761,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                     stop = stop_frame is frame and event in ('line', 'return')
 
                     if frame.f_code.co_flags & CO_GENERATOR:
-                        if event is 'return':
+                        if event == 'return':
                             stop = False
 
                     if plugin_manager is not None:
@@ -909,7 +893,7 @@ from _pydevd_bundle.pydevd_constants import get_thread_id
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
-from _pydevd_bundle.pydevd_tracing import SetTrace
+from pydevd_tracing import SetTrace
 
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 # In Cython, PyDBAdditionalThreadInfo is bundled in the file.
