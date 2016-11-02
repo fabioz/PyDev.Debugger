@@ -65,7 +65,7 @@ class Command:
             if IS_JYTHON:
                 symbol = 'single' # Jython doesn't support exec
             else:
-                symbol = 'exec' 
+                symbol = 'exec'
         return symbol
     symbol_for_fragment = staticmethod(symbol_for_fragment)
 
