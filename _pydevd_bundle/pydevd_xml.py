@@ -276,7 +276,7 @@ def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False, i
     xml = '<var name="%s" type="%s" ' % (make_valid_xml_value(name), make_valid_xml_value(typeName))
 
     if type_qualifier:
-        xmlQualifier = ' qualifier="%s" ' % make_valid_xml_value(type_qualifier)
+        xmlQualifier = 'qualifier="%s"' % make_valid_xml_value(type_qualifier)
     else:
         xmlQualifier = ''
 
