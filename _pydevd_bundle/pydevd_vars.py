@@ -2,7 +2,7 @@
     resolution/conversion to XML.
 """
 import pickle
-from _pydevd_bundle.pydevd_constants import dict_contains, get_frame, get_thread_id
+from _pydevd_bundle.pydevd_constants import dict_contains, get_frame, get_thread_id, xrange
 
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
