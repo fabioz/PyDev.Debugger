@@ -79,23 +79,28 @@ try:
 except ImportError:
     CTYPES_AVAILABLE = False
 
-
-def convert_to_long_pathname(filename):
-    if CTYPES_AVAILABLE:
-        buf = ctypes.create_unicode_buffer(260)
-        GetLongPathName = ctypes.windll.kernel32.GetLongPathNameW
-        if IS_PY2:
-            filename = unicode(filename)
-        rv = GetLongPathName(filename, buf, 260)
-        if rv != 0 and rv <= 260:
-            return buf.value.encode(getfilesystemencoding())
-    return filename
+convert_to_long_pathname = None
+if sys.platform == 'win32':
+    try:
+        import ctypes
+    except ImportError:
+        pass
+    else:
+        def convert_to_long_pathname(filename):
+            buf = ctypes.create_unicode_buffer(260)
+            GetLongPathName = ctypes.windll.kernel32.GetLongPathNameW
+            if IS_PY2:
+                filename = unicode(filename, getfilesystemencoding())
+            rv = GetLongPathName(filename, buf, 260)
+            if rv != 0 and rv <= 260:
+                return buf.value
+            return filename
 
 
 def norm_case(filename):
     # `normcase` doesn't lower case on Python 2 for non-English locale, but Java side does it,
     # so we should do it manually
-    if '~' in filename:
+    if '~' in filename and convert_to_long_pathname:
         filename = convert_to_long_pathname(filename)
 
     filename = os_normcase(filename)

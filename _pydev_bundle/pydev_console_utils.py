@@ -2,13 +2,11 @@ import os
 import sys
 import traceback
 from _pydev_bundle.pydev_imports import xmlrpclib, _queue, Exec
-import sys
-from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_PY2
 from  _pydev_bundle._pydev_calltip_util import get_description
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_xml
-from _pydevd_bundle.pydevd_constants import IS_JYTHON
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
 from _pydevd_bundle.pydevd_utils import to_string
 
 
@@ -533,7 +531,7 @@ class BaseInterpreterInterface:
             debugger_options = {}
         env_key = "PYDEVD_EXTRA_ENVS"
         if env_key in debugger_options:
-            for (env_name, value) in debugger_options[env_key].items():
+            for (env_name, value) in dict_iter_items(debugger_options[env_key]):
                 os.environ[env_name] = value
             del debugger_options[env_key]
         def do_connect_to_debugger():
