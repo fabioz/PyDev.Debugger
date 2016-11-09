@@ -403,6 +403,23 @@ class PyDB:
                             "matplotlib.pyplot": activate_pyplot,
                             "pylab": activate_pylab }
 
+    def _activate_mpl_if_needed(self):
+        if len(self.mpl_modules_for_patching) > 0:
+            for module in dict_keys(self.mpl_modules_for_patching):
+                if module in sys.modules:
+                    activate_function = dict_pop(self.mpl_modules_for_patching, module)
+                    activate_function()
+                    self.mpl_in_use = True
+
+    def _call_mpl_hook(self):
+        try:
+            from pydev_ipython.inputhook import get_inputhook
+            inputhook = get_inputhook()
+            if inputhook:
+                inputhook()
+        except:
+            pass
+
     def suspend_all_other_threads(self, thread_suspended_at_bp):
         all_threads = threadingEnumerate()
         for t in all_threads:
@@ -464,7 +481,7 @@ class PyDB:
                                 # (otherwise we may no longer be able to get its variables -- see: https://www.brainwy.com/tracker/PyDev/776).
                                 clear_cached_thread_id(t)
                                 clear_cached_thread_id(threadingCurrentThread())
-    
+
                             thread_id = get_thread_id(t)
                             curr_thread_id = get_thread_id(threadingCurrentThread())
                             if pydevd_vars.has_additional_frames_by_id(old_thread_id):
@@ -728,25 +745,12 @@ class PyDB:
 
         if info.pydev_state == STATE_SUSPEND and not self._finish_debugging_session:
             # before every stop check if matplotlib modules were imported inside script code
-            if len(self.mpl_modules_for_patching) > 0:
-                for module in dict_keys(self.mpl_modules_for_patching):
-                    if module in sys.modules:
-                        activate_function = self.mpl_modules_for_patching.pop(module)
-                        activate_function()
-                        self.mpl_in_use = True
+            self._activate_mpl_if_needed()
 
         while info.pydev_state == STATE_SUSPEND and not self._finish_debugging_session:
             if self.mpl_in_use:
                 # call input hooks if only matplotlib is in use
-                try:
-                    if not imported:
-                        from pydev_ipython.inputhook import get_inputhook
-                        imported = True
-                    inputhook = get_inputhook()
-                    if inputhook:
-                        inputhook()
-                except:
-                    pass
+                self._call_mpl_hook()
 
             self.process_internal_commands()
             time.sleep(0.01)
@@ -1001,6 +1005,8 @@ class PyDB:
         self.writer.add_command(cmd)
 
     def wait_for_commands(self, globals):
+        self._activate_mpl_if_needed()
+
         thread = threading.currentThread()
         from _pydevd_bundle import pydevd_frame_utils
         frame = pydevd_frame_utils.Frame(None, -1, pydevd_frame_utils.FCode("Console",
@@ -1012,6 +1018,9 @@ class PyDB:
         self.writer.add_command(cmd)
 
         while True:
+            if self.mpl_in_use:
+                # call input hooks if only matplotlib is in use
+                self._call_mpl_hook()
             self.process_internal_commands()
             time.sleep(0.01)
 
