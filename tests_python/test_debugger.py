@@ -33,6 +33,16 @@ if sys.version_info[:2] == (2, 7):
     except:
         pass
 
+IS_PY2 = False
+if sys.version_info[0] == 2:
+    IS_PY2 = True
+
+if IS_PY2:
+    builtin_qualifier = "__builtin__"
+else:
+    builtin_qualifier = "builtins"
+
+
 TEST_CYTHON = os.getenv('PYDEVD_USE_CYTHON', None) == 'YES'
 
 #=======================================================================================================================
@@ -52,7 +62,7 @@ class WriterThreadCaseSetNextStatement(debugger_unittest.AbstractWriterThread):
         assert line == 6, 'Expected return to be in line 6, was: %s' % line
 
         self.write_evaluate_expression('%s\t%s\t%s' % (thread_id, frame_id, 'LOCAL'), 'a')
-        self.wait_for_evaluation('<var name="a" type="int" value="int: 2"')
+        self.wait_for_evaluation('<var name="a" type="int" qualifier="{}" value="int: 2"'.format(builtin_qualifier))
         self.write_set_next_statement(thread_id, 2, 'method')
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
         assert line == 2, 'Expected return to be in line 2, was: %s' % line
@@ -61,7 +71,7 @@ class WriterThreadCaseSetNextStatement(debugger_unittest.AbstractWriterThread):
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('108', True)
 
         self.write_evaluate_expression('%s\t%s\t%s' % (thread_id, frame_id, 'LOCAL'), 'a')
-        self.wait_for_evaluation('<var name="a" type="int" value="int: 1"')
+        self.wait_for_evaluation('<var name="a" type="int" qualifier="{}" value="int: 1"'.format(builtin_qualifier))
 
         self.write_remove_breakpoint(breakpoint_id)
         self.write_run_thread(thread_id)
@@ -160,7 +170,7 @@ class WriterThreadCase19(debugger_unittest.AbstractWriterThread):
         assert line == 8, 'Expected return to be in line 8, was: %s' % line
 
         self.write_evaluate_expression('%s\t%s\t%s' % (thread_id, frame_id, 'LOCAL'), 'a.__var')
-        self.wait_for_evaluation('<var name="a.__var" type="int" value="int')
+        self.wait_for_evaluation('<var name="a.__var" type="int" qualifier="{}" value="int'.format(builtin_qualifier))
         self.write_run_thread(thread_id)
 
 
@@ -258,9 +268,9 @@ class WriterThreadCase16(debugger_unittest.AbstractWriterThread):
 
         # First pass check is that we have all three expected variables defined
         self.write_get_frame(thread_id, frame_id)
-        self.wait_for_vars('<var name="smallarray" type="ndarray" value="ndarray%253A %255B  0.%252B1.j   1.%252B1.j   2.%252B1.j   3.%252B1.j   4.%252B1.j   5.%252B1.j   6.%252B1.j   7.%252B1.j%250A   8.%252B1.j   9.%252B1.j  10.%252B1.j  11.%252B1.j  12.%252B1.j  13.%252B1.j  14.%252B1.j  15.%252B1.j%250A  16.%252B1.j  17.%252B1.j  18.%252B1.j  19.%252B1.j  20.%252B1.j  21.%252B1.j  22.%252B1.j  23.%252B1.j%250A  24.%252B1.j  25.%252B1.j  26.%252B1.j  27.%252B1.j  28.%252B1.j  29.%252B1.j  30.%252B1.j  31.%252B1.j%250A  32.%252B1.j  33.%252B1.j  34.%252B1.j  35.%252B1.j  36.%252B1.j  37.%252B1.j  38.%252B1.j  39.%252B1.j%250A  40.%252B1.j  41.%252B1.j  42.%252B1.j  43.%252B1.j  44.%252B1.j  45.%252B1.j  46.%252B1.j  47.%252B1.j%250A  48.%252B1.j  49.%252B1.j  50.%252B1.j  51.%252B1.j  52.%252B1.j  53.%252B1.j  54.%252B1.j  55.%252B1.j%250A  56.%252B1.j  57.%252B1.j  58.%252B1.j  59.%252B1.j  60.%252B1.j  61.%252B1.j  62.%252B1.j  63.%252B1.j%250A  64.%252B1.j  65.%252B1.j  66.%252B1.j  67.%252B1.j  68.%252B1.j  69.%252B1.j  70.%252B1.j  71.%252B1.j%250A  72.%252B1.j  73.%252B1.j  74.%252B1.j  75.%252B1.j  76.%252B1.j  77.%252B1.j  78.%252B1.j  79.%252B1.j%250A  80.%252B1.j  81.%252B1.j  82.%252B1.j  83.%252B1.j  84.%252B1.j  85.%252B1.j  86.%252B1.j  87.%252B1.j%250A  88.%252B1.j  89.%252B1.j  90.%252B1.j  91.%252B1.j  92.%252B1.j  93.%252B1.j  94.%252B1.j  95.%252B1.j%250A  96.%252B1.j  97.%252B1.j  98.%252B1.j  99.%252B1.j%255D" isContainer="True" />')
-        self.wait_for_vars('<var name="bigarray" type="ndarray" value="ndarray%253A %255B%255B    0     1     2 ...%252C  9997  9998  9999%255D%250A %255B10000 10001 10002 ...%252C 19997 19998 19999%255D%250A %255B20000 20001 20002 ...%252C 29997 29998 29999%255D%250A ...%252C %250A %255B70000 70001 70002 ...%252C 79997 79998 79999%255D%250A %255B80000 80001 80002 ...%252C 89997 89998 89999%255D%250A %255B90000 90001 90002 ...%252C 99997 99998 99999%255D%255D" isContainer="True" />')
-        self.wait_for_vars('<var name="hugearray" type="ndarray" value="ndarray%253A %255B      0       1       2 ...%252C 9999997 9999998 9999999%255D" isContainer="True" />')
+        self.wait_for_vars('<var name="smallarray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B  0.%252B1.j   1.%252B1.j   2.%252B1.j   3.%252B1.j   4.%252B1.j   5.%252B1.j   6.%252B1.j   7.%252B1.j%250A   8.%252B1.j   9.%252B1.j  10.%252B1.j  11.%252B1.j  12.%252B1.j  13.%252B1.j  14.%252B1.j  15.%252B1.j%250A  16.%252B1.j  17.%252B1.j  18.%252B1.j  19.%252B1.j  20.%252B1.j  21.%252B1.j  22.%252B1.j  23.%252B1.j%250A  24.%252B1.j  25.%252B1.j  26.%252B1.j  27.%252B1.j  28.%252B1.j  29.%252B1.j  30.%252B1.j  31.%252B1.j%250A  32.%252B1.j  33.%252B1.j  34.%252B1.j  35.%252B1.j  36.%252B1.j  37.%252B1.j  38.%252B1.j  39.%252B1.j%250A  40.%252B1.j  41.%252B1.j  42.%252B1.j  43.%252B1.j  44.%252B1.j  45.%252B1.j  46.%252B1.j  47.%252B1.j%250A  48.%252B1.j  49.%252B1.j  50.%252B1.j  51.%252B1.j  52.%252B1.j  53.%252B1.j  54.%252B1.j  55.%252B1.j%250A  56.%252B1.j  57.%252B1.j  58.%252B1.j  59.%252B1.j  60.%252B1.j  61.%252B1.j  62.%252B1.j  63.%252B1.j%250A  64.%252B1.j  65.%252B1.j  66.%252B1.j  67.%252B1.j  68.%252B1.j  69.%252B1.j  70.%252B1.j  71.%252B1.j%250A  72.%252B1.j  73.%252B1.j  74.%252B1.j  75.%252B1.j  76.%252B1.j  77.%252B1.j  78.%252B1.j  79.%252B1.j%250A  80.%252B1.j  81.%252B1.j  82.%252B1.j  83.%252B1.j  84.%252B1.j  85.%252B1.j  86.%252B1.j  87.%252B1.j%250A  88.%252B1.j  89.%252B1.j  90.%252B1.j  91.%252B1.j  92.%252B1.j  93.%252B1.j  94.%252B1.j  95.%252B1.j%250A  96.%252B1.j  97.%252B1.j  98.%252B1.j  99.%252B1.j%255D" isContainer="True" />')
+        self.wait_for_vars('<var name="bigarray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B%255B    0     1     2 ...%252C  9997  9998  9999%255D%250A %255B10000 10001 10002 ...%252C 19997 19998 19999%255D%250A %255B20000 20001 20002 ...%252C 29997 29998 29999%255D%250A ...%252C %250A %255B70000 70001 70002 ...%252C 79997 79998 79999%255D%250A %255B80000 80001 80002 ...%252C 89997 89998 89999%255D%250A %255B90000 90001 90002 ...%252C 99997 99998 99999%255D%255D" isContainer="True" />')
+        self.wait_for_vars('<var name="hugearray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B      0       1       2 ...%252C 9999997 9999998 9999999%255D" isContainer="True" />')
 
         # For each variable, check each of the resolved (meta data) attributes...
         self.write_get_variable(thread_id, frame_id, 'smallarray')
@@ -275,14 +285,14 @@ class WriterThreadCase16(debugger_unittest.AbstractWriterThread):
 
         self.write_get_variable(thread_id, frame_id, 'bigarray')
         self.wait_for_var([
-            '<var name="min" type="int64" value="int64%253A 0" />',
-            '<var name="min" type="int64" value="int64%3A 0" />',
-            '<var name="size" type="int" value="int%3A 100000" />',
+            '<var name="min" type="int64" qualifier="numpy" value="int64%253A 0" />',
+            '<var name="min" type="int64" qualifier="numpy" value="int64%3A 0" />',
+            '<var name="size" type="int" qualifier="{}" value="int%3A 100000" />'.format(builtin_qualifier),
         ])
         self.wait_for_var([
-            '<var name="max" type="int64" value="int64%253A 99999" />',
-            '<var name="max" type="int32" value="int32%253A 99999" />',
-            '<var name="max" type="int64" value="int64%3A 99999"'
+            '<var name="max" type="int64" qualifier="numpy" value="int64%253A 99999" />',
+            '<var name="max" type="int32" qualifier="numpy" value="int32%253A 99999" />',
+            '<var name="max" type="int64" qualifier="numpy" value="int64%3A 99999"'
         ])
         self.wait_for_var('<var name="shape" type="tuple"')
         self.wait_for_var('<var name="dtype" type="dtype"')
@@ -294,12 +304,12 @@ class WriterThreadCase16(debugger_unittest.AbstractWriterThread):
         # the min/max
         self.write_get_variable(thread_id, frame_id, 'hugearray')
         self.wait_for_var([
-            '<var name="min" type="str" value="str%253A ndarray too big%252C calculating min would slow down debugging" />',
-            '<var name="min" type="str" value="str%3A ndarray too big%252C calculating min would slow down debugging" />',
+            '<var name="min" type="str" qualifier={} value="str%253A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="min" type="str" qualifier={} value="str%3A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
         ])
         self.wait_for_var([
-            '<var name="max" type="str" value="str%253A ndarray too big%252C calculating max would slow down debugging" />',
-            '<var name="max" type="str" value="str%3A ndarray too big%252C calculating max would slow down debugging" />',
+            '<var name="max" type="str" qualifier={} value="str%253A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="max" type="str" qualifier={} value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
         ])
         self.wait_for_var('<var name="shape" type="tuple"')
         self.wait_for_var('<var name="dtype" type="dtype"')
@@ -623,13 +633,13 @@ class WriterThreadCase7(debugger_unittest.AbstractWriterThread):
 
         self.write_get_frame(thread_id, frame_id)
 
-        self.wait_for_vars('<xml><var name="variable_for_test_1" type="int" value="int%253A 10" />%0A</xml>')
+        self.wait_for_vars('<xml><var name="variable_for_test_1" type="int" qualifier="{}" value="int%253A 10" />%0A</xml>'.format(builtin_qualifier))
 
         self.write_step_over(thread_id)
 
         self.write_get_frame(thread_id, frame_id)
 
-        self.wait_for_vars('<xml><var name="variable_for_test_1" type="int" value="int%253A 10" />%0A<var name="variable_for_test_2" type="int" value="int%253A 20" />%0A</xml>')
+        self.wait_for_vars('<xml><var name="variable_for_test_1" type="int" qualifier="{0}" value="int%253A 10" />%0A<var name="variable_for_test_2" type="int" qualifier="{0}" value="int%253A 20" />%0A</xml>'.format(builtin_qualifier))
 
         self.write_run_thread(thread_id)
 
