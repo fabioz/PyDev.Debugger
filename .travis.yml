@@ -27,7 +27,7 @@
 language: python
 python:
   - 2.7
-  - 3.4
+  - 3.5
 
 env:
   - PYDEVD_USE_CYTHON=YES
@@ -48,7 +48,8 @@ before_install:
   - "sh -e /etc/init.d/xvfb start"
 # Install packages
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION
+  - conda create --yes -n build_env python=$TRAVIS_PYTHON_VERSION
+  - source activate build_env
   - conda install --yes numpy ipython cython
   - pip install nose2
   - pip install "django>=1.7,<1.8"
