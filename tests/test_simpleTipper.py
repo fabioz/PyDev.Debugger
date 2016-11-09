@@ -32,7 +32,7 @@ if sys.platform.find('java') == -1:
         def test_imports3(self):
             tip = _pydev_imports_tipper.generate_tip('os')
             ret = self.assert_in('path', tip)
-            self.assertEquals('', ret[2])
+            self.assertEqual('', ret[2])
 
         def test_imports2(self):
             try:
@@ -72,7 +72,7 @@ if sys.platform.find('java') == -1:
             else:
                 tips = _pydev_imports_tipper.generate_tip('%s' % BUILTIN_MOD)
                 t = self.assert_in('file' , tips)
-                self.assert_('->' in t[1].strip() or 'file' in t[1])
+                self.assertTrue('->' in t[1].strip() or 'file' in t[1])
 
         def test_imports2c(self):
             try:
@@ -82,7 +82,7 @@ if sys.platform.find('java') == -1:
             else:
                 tips = _pydev_imports_tipper.generate_tip('%s.file' % BUILTIN_MOD)
                 t = self.assert_in('readlines' , tips)
-                self.assert_('->' in t[1] or 'sizehint' in t[1])
+                self.assertTrue('->' in t[1] or 'sizehint' in t[1])
 
         def test_imports(self):
             '''
@@ -126,13 +126,13 @@ if sys.platform.find('java') == -1:
             #self.check_args(t, '(x, y)', '(object x, object y)', '(x: object, y: object)') #args
 
             t = self.assert_in('isinstance' , tip)
-            self.check_args(t, '(object, class_or_type_or_tuple)', '(object o, type typeinfo)', '(o: object, typeinfo: type)') #args
+            self.check_args(t, '(object, class_or_type_or_tuple)', '(object o, type typeinfo)', '(o: object, typeinfo: type)', '(obj, class_or_tuple)') #args
 
             t = self.assert_in('compile' , tip)
-            self.check_args(t, '(source, filename, mode)', '()', '(o: object, name: str, val: object)') #args
+            self.check_args(t, '(source, filename, mode)', '()', '(o: object, name: str, val: object)', '(source, filename, mode, flags, dont_inherit, optimize)') #args
 
             t = self.assert_in('setattr' , tip)
-            self.check_args(t, '(object, name, value)', '(object o, str name, object val)', '(o: object, name: str, val: object)') #args
+            self.check_args(t, '(object, name, value)', '(object o, str name, object val)', '(o: object, name: str, val: object)', '(obj, name, value)') #args
 
             try:
                 import compiler
@@ -166,7 +166,7 @@ if sys.platform.find('java') == -1:
         def assert_args(self, tok, args, tips):
             for a in tips[1]:
                 if tok == a[0]:
-                    self.assertEquals(args, a[2])
+                    self.assertEqual(args, a[2])
                     return
             raise AssertionError('%s not in %s', tok, tips)
 
@@ -180,7 +180,7 @@ if sys.platform.find('java') == -1:
         def test_search(self):
             s = _pydev_imports_tipper.search_definition('inspect.ismodule')
             (f, line, col), foundAs = s
-            self.assert_(line > 0)
+            self.assertTrue(line > 0)
 
 
         def test_dot_net_libraries(self):
