@@ -83,7 +83,7 @@ from _pydev_bundle import _pydev_completer
 from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle import pydevd_console
 from _pydev_bundle.pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
-
+from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 
 
 CMD_RUN = 101
@@ -563,7 +563,7 @@ class NetCommandFactory:
             cmd_text = ["<xml>"]
             append = cmd_text.append
             for i in t:
-                if t.isAlive():
+                if is_thread_alive(i):
                     append(self._thread_to_xml(i))
             append("</xml>")
             return NetCommand(CMD_RETURN, seq, ''.join(cmd_text))
