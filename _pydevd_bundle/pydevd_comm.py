@@ -563,7 +563,7 @@ class NetCommandFactory:
             cmd_text = ["<xml>"]
             append = cmd_text.append
             for i in t:
-                if t.isAlive():
+                if i.isAlive():
                     append(self._thread_to_xml(i))
             append("</xml>")
             return NetCommand(CMD_RETURN, seq, ''.join(cmd_text))
