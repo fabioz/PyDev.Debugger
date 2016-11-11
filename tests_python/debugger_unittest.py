@@ -178,6 +178,7 @@ class DebuggerRunner(object):
             args,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
+            close_fds=False if sys.platform == 'win32' else True,
             cwd=writer_thread.get_cwd() if writer_thread is not None else '.',
             env=writer_thread.get_environ() if writer_thread is not None else None,
         )
