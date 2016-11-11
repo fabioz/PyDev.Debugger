@@ -3,11 +3,11 @@ try:
 except ImportError:
     from urllib.parse import quote, quote_plus, unquote_plus #@UnresolvedImport
 
-import gc
 import socket
 import os
 import threading
 import time
+import psutil
 from _pydev_bundle import pydev_localhost
 import subprocess
 import sys
@@ -174,7 +174,8 @@ class DebuggerRunner(object):
         return self.run_process(args, writer_thread)
 
     def create_process(self, args, writer_thread):
-        gc.collect()
+        print(psutil.virtual_memory())
+        print(psutil.swap_memory())
         process = subprocess.Popen(
             args,
             stdout=subprocess.PIPE,

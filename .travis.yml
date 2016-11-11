@@ -50,6 +50,7 @@ before_install:
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy ipython cython
   - pip install nose2
+  - pip install psutil
   - pip install "django>=1.7,<1.8"
   - python build_tools/build.py
 
