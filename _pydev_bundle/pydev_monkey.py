@@ -128,7 +128,7 @@ def patch_args(args):
                 # Assumes the first non `-<flag>` argument is what we need to check.
                 # There's probably a better way to determine this but it works for most cases.
                 continue_next = False
-                for i in range(1, len(args)):
+                for i in xrange(1, len(args)):
                     if continue_next:
                         continue_next = False
                         continue
