@@ -158,7 +158,7 @@ def get_type(o):
 def return_values_from_dict_to_xml(return_dict):
     res = ""
     for name, val in dict_iter_items(return_dict):
-        res += var_to_xml(val, name, additionalInXml=' isRetVal="True"')
+        res += var_to_xml(val, name, additional_in_xml=' isRetVal="True"')
     return res
 
 
@@ -173,28 +173,37 @@ def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
         keys.sort() #Python 3.0 does not have it
     else:
         keys = sorted(keys) #Jython 2.1 does not have it
+        
+    return_values_xml = ''
 
     for k in keys:
         try:
             v = frame_f_locals[k]
             if k == RETURN_VALUES_DICT:
-                xml += return_values_from_dict_to_xml(v)
+                for name, val in dict_iter_items(v):
+                    return_values_xml += var_to_xml(val, name, additional_in_xml=' isRetVal="True"')
+
             else:
                 if hidden_ns is not None and dict_contains(hidden_ns, k):
-                    xml += var_to_xml(v, str(k), additionalInXml=' isIPythonHidden="True"')
+                    xml += var_to_xml(v, str(k), additional_in_xml=' isIPythonHidden="True"')
                 else:
                     xml += var_to_xml(v, str(k))
         except Exception:
             traceback.print_exc()
             pydev_log.error("Unexpected error, recovered safely.\n")
 
-    return xml
+    # Show return values as the first entry.
+    return return_values_xml + xml
 
 
-def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False, ipython_hidden=False):
+def var_to_xml(val, name, doTrim=True, additional_in_xml=''):
     """ single variable or dictionary to xml representation """
 
-    is_exception_on_eval = isinstance(val, ExceptionOnEvaluate)
+    try:
+        # This should be faster than isinstance (but we have to protect against not having a '__class__' attribute).
+        is_exception_on_eval = val.__class__ == ExceptionOnEvaluate
+    except:
+        is_exception_on_eval = False
 
     if is_exception_on_eval:
         v = val.result
@@ -249,9 +258,9 @@ def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False, i
     xml = '<var name="%s" type="%s" ' % (make_valid_xml_value(name), make_valid_xml_value(typeName))
 
     if type_qualifier:
-        xmlQualifier = 'qualifier="%s"' % make_valid_xml_value(type_qualifier)
+        xml_qualifier = 'qualifier="%s"' % make_valid_xml_value(type_qualifier)
     else:
-        xmlQualifier = ''
+        xml_qualifier = ''
 
     if value:
         #cannot be too big... communication may not handle it.
@@ -270,17 +279,17 @@ def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False, i
         except TypeError: #in java, unicode is a function
             pass
 
-        xmlValue = ' value="%s"' % (make_valid_xml_value(quote(value, '/>_= ')))
+        xml_value = ' value="%s"' % (make_valid_xml_value(quote(value, '/>_= ')))
     else:
-        xmlValue = ''
+        xml_value = ''
 
     if is_exception_on_eval:
-        xmlCont = ' isErrorOnEval="True"'
+        xml_container = ' isErrorOnEval="True"'
     else:
         if resolver is not None:
-            xmlCont = ' isContainer="True"'
+            xml_container = ' isContainer="True"'
         else:
-            xmlCont = ''
+            xml_container = ''
 
-    return ''.join((xml, xmlQualifier, xmlValue, xmlCont, additionalInXml, ' />\n'))
+    return ''.join((xml, xml_qualifier, xml_value, xml_container, additional_in_xml, ' />\n'))
 
