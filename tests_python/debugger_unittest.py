@@ -103,12 +103,13 @@ class ReaderThread(threading.Thread):
         self.sock = sock
         self.last_received = ''
         self.all_received = []
+        self._kill = False
 
     def run(self):
         last_printed = None
         try:
             buf = ''
-            while True:
+            while not self._kill:
                 l = self.sock.recv(1024)
                 if IS_PY3K:
                     l = l.decode('utf-8')
@@ -127,8 +128,11 @@ class ReaderThread(threading.Thread):
                             print('Test Reader Thread Received %s' % last_printed)
         except:
             pass  # ok, finished it
+        finally:
+            del self.all_received[:]
 
     def do_kill(self):
+        self._kill = True
         self.sock.close()
 
 
@@ -159,19 +163,24 @@ class DebuggerRunner(object):
 
     def check_case(self, writer_thread_class):
         writer_thread = writer_thread_class()
-        writer_thread.start()
-        while not hasattr(writer_thread, 'port'):
-            time.sleep(.01)
-        self.writer_thread = writer_thread
+        try:
+            writer_thread.start()
+            while not hasattr(writer_thread, 'port'):
+                time.sleep(.01)
+            self.writer_thread = writer_thread
 
-        args = self.get_command_line()
+            args = self.get_command_line()
 
-        args = self.add_command_line_args(args)
+            args = self.add_command_line_args(args)
 
-        if SHOW_OTHER_DEBUG_INFO:
-            print('executing', ' '.join(args))
+            if SHOW_OTHER_DEBUG_INFO:
+                print('executing', ' '.join(args))
 
-        return self.run_process(args, writer_thread)
+            ret = self.run_process(args, writer_thread)
+        finally:
+            writer_thread.do_kill()
+            writer_thread.log = []
+        return ret
 
     def create_process(self, args, writer_thread):
         process = subprocess.Popen(
@@ -187,78 +196,88 @@ class DebuggerRunner(object):
         process = self.create_process(args, writer_thread)
         stdout = []
         stderr = []
+        finish = [False]
 
-        def read(stream, buffer):
-            for line in stream.readlines():
-                if IS_PY3K:
-                    line = line.decode('utf-8')
+        try:
+            def read(stream, buffer):
+                for line in stream.readlines():
+                    if finish[0]:
+                        return
+                    if IS_PY3K:
+                        line = line.decode('utf-8')
 
-                if SHOW_STDOUT:
-                    sys.stdout.write('stdout: %s' % (line,))
-                buffer.append(line)
+                    if SHOW_STDOUT:
+                        sys.stdout.write('stdout: %s' % (line,))
+                    buffer.append(line)
 
-        start_new_thread(read, (process.stdout, stdout))
+            start_new_thread(read, (process.stdout, stdout))
 
 
-        if SHOW_OTHER_DEBUG_INFO:
-            print('Both processes started')
+            if SHOW_OTHER_DEBUG_INFO:
+                print('Both processes started')
 
-        # polls can fail (because the process may finish and the thread still not -- so, we give it some more chances to
-        # finish successfully).
-        check = 0
-        while True:
-            if process.poll() is not None:
-                break
-            else:
-                if writer_thread is not None:
-                    if not writer_thread.isAlive():
-                        if writer_thread.FORCE_KILL_PROCESS_WHEN_FINISHED_OK:
-                            process.kill()
-                            continue
+            # polls can fail (because the process may finish and the thread still not -- so, we give it some more chances to
+            # finish successfully).
+            check = 0
+            while True:
+                if process.poll() is not None:
+                    break
+                else:
+                    if writer_thread is not None:
+                        if not writer_thread.isAlive():
+                            if writer_thread.FORCE_KILL_PROCESS_WHEN_FINISHED_OK:
+                                process.kill()
+                                continue
 
+                            check += 1
+                            if check == 20:
+                                print('Warning: writer thread exited and process still did not.')
+                            if check == 100:
+                                process.kill()
+                                time.sleep(.2)
+                                self.fail_with_message(
+                                    "The other process should've exited but still didn't (timeout for process to exit).",
+                                    stdout, stderr, writer_thread
+                                )
+                time.sleep(.2)
+
+
+            if writer_thread is not None:
+                if not writer_thread.FORCE_KILL_PROCESS_WHEN_FINISHED_OK:
+                    poll = process.poll()
+                    if poll < 0:
+                        self.fail_with_message(
+                            "The other process exited with error code: " + str(poll), stdout, stderr, writer_thread)
+
+
+                    if stdout is None:
+                        self.fail_with_message(
+                            "The other process may still be running -- and didn't give any output.", stdout, stderr, writer_thread)
+
+                    check = 0
+                    while 'TEST SUCEEDED' not in ''.join(stdout):
                         check += 1
-                        if check == 20:
-                            print('Warning: writer thread exited and process still did not.')
-                        if check == 100:
-                            process.kill()
-                            time.sleep(.2)
-                            self.fail_with_message(
-                                "The other process should've exited but still didn't (timeout for process to exit).",
-                                stdout, stderr, writer_thread
-                            )
-            time.sleep(.2)
+                        if check == 50:
+                            self.fail_with_message("TEST SUCEEDED not found in stdout.", stdout, stderr, writer_thread)
+                        time.sleep(.1)
 
+                for _i in xrange(100):
+                    if not writer_thread.finished_ok:
+                        time.sleep(.1)
 
-        if writer_thread is not None:
-            if not writer_thread.FORCE_KILL_PROCESS_WHEN_FINISHED_OK:
-                poll = process.poll()
-                if poll < 0:
-                    self.fail_with_message(
-                        "The other process exited with error code: " + str(poll), stdout, stderr, writer_thread)
-
-
-                if stdout is None:
-                    self.fail_with_message(
-                        "The other process may still be running -- and didn't give any output.", stdout, stderr, writer_thread)
-
-                if 'TEST SUCEEDED' not in ''.join(stdout):
-                    self.fail_with_message("TEST SUCEEDED not found in stdout.", stdout, stderr, writer_thread)
-
-            for i in xrange(100):
                 if not writer_thread.finished_ok:
-                    time.sleep(.1)
-
-            if not writer_thread.finished_ok:
-                self.fail_with_message(
-                    "The thread that was doing the tests didn't finish successfully.", stdout, stderr, writer_thread)
+                    self.fail_with_message(
+                        "The thread that was doing the tests didn't finish successfully.", stdout, stderr, writer_thread)
+        finally:
+            finish[0] = True
 
         return {'stdout':stdout, 'stderr':stderr}
 
     def fail_with_message(self, msg, stdout, stderr, writerThread):
         raise AssertionError(msg+
-            "\nStdout: \n"+'\n'.join(stdout)+
-            "\nStderr:"+'\n'.join(stderr)+
-            "\nLog:\n"+'\n'.join(getattr(writerThread, 'log', [])))
+            "\n\n===========================\nStdout: \n"+''.join(stdout)+
+            "\n\n===========================\nStderr:"+''.join(stderr)+
+            "\n\n===========================\nLog:\n"+'\n'.join(getattr(writerThread, 'log', [])))
 
 
 
@@ -297,6 +316,7 @@ class AbstractWriterThread(threading.Thread):
         self.sock.close()
 
     def write(self, s):
+        self.log.append('write: %s' % (s,))
 
         last = self.reader_thread.last_received
         if SHOW_WRITES_AND_READS:
@@ -382,14 +402,14 @@ class AbstractWriterThread(threading.Thread):
         thread_id = splitted[1]
         frameId = splitted[7]
         if get_line:
-            self.log.append('End(0): wait_for_breakpoint_hit')
+            self.log.append('End(0): wait_for_breakpoint_hit: %s' % (last,))
             try:
                 return thread_id, frameId, int(splitted[13])
             except:
                 raise AssertionError('Error with: %s, %s, %s.\nLast: %s.\n\nAll: %s\n\nSplitted: %s' % (
                     thread_id, frameId, splitted[13], last, '\n'.join(self.reader_thread.all_received), splitted))
 
-        self.log.append('End(1): wait_for_breakpoint_hit')
+        self.log.append('End(1): wait_for_breakpoint_hit: %s' % (last,))
         return thread_id, frameId
 
     def wait_for_custom_operation(self, expected):
