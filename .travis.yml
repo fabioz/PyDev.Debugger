@@ -1,33 +1,9 @@
-# language: python
-# python:
-#   - 2.6
-#   - 2.7
-#   - 3.2
-#   - 3.3
-#   - "pypy"
-#
-# # Setup anaconda
-# before_install:
-#   # Fix issue with testGui
-#   - "export DISPLAY=:99.0"
-#   - "sh -e /etc/init.d/xvfb start"
-# # Install packages
-# install:
-#   - pip install numpy
-#   - pip install nose2
-#   - pip install ipython
-#   - pip install django>=1.7,<1.8
-#
-# # Run test
-# script:
-#   - nose2
-
-
 # IPython only works with 2.7/3.3, so, test only on those.
 language: python
 python:
   - 2.7
   - 3.5
+#   - "pypy"
 
 env:
   - PYDEVD_USE_CYTHON=YES
@@ -50,11 +26,11 @@ before_install:
 install:
   - conda create --yes -n build_env python=$TRAVIS_PYTHON_VERSION
   - source activate build_env
-  - conda install --yes numpy ipython cython
-  - pip install nose2
+  - conda install --yes numpy ipython cython pytest psutil
   - pip install "django>=1.7,<1.8"
+  - pip install Pympler
   - python build_tools/build.py
 
 # Run test
 script:
-  - nose2
+  - py.test

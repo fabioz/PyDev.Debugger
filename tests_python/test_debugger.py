@@ -477,8 +477,10 @@ class WriterThreadCase11(debugger_unittest.AbstractWriterThread):
         self.write_add_breakpoint(2, 'Method1')
         self.write_make_initial_run()
 
-        thread_id, frame_id = self.wait_for_breakpoint_hit('111')
+        thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
 
+        assert line == 2, 'Expected return to be in line 2, was: %s' % line
+        
         self.write_step_over(thread_id)
 
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('108', True)
