@@ -73,12 +73,6 @@ PATHS_FROM_ECLIPSE_TO_PYTHON = []
 
 normcase = os_normcase # May be rebound on set_ide_os
 
-CTYPES_AVAILABLE = True
-try:
-    import ctypes
-except ImportError:
-    CTYPES_AVAILABLE = False
-
 convert_to_long_pathname = None
 if sys.platform == 'win32':
     try:
