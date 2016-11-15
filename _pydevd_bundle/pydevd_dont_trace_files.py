@@ -23,6 +23,7 @@ DONT_TRACE = {
     '_pydev_BaseHTTPServer.py': PYDEV_FILE,
     '_pydev_SimpleXMLRPCServer.py': PYDEV_FILE,
     '_pydev_SocketServer.py': PYDEV_FILE,
+    '_pydev_calltip_util.py': PYDEV_FILE,
     '_pydev_completer.py': PYDEV_FILE,
     '_pydev_execfile.py': PYDEV_FILE,
     '_pydev_filesystem_encoding.py': PYDEV_FILE,

@@ -146,6 +146,7 @@ if IS_PY3K:
                     'setup.py',
                     'setup_cython.py',
                     'interpreterInfo.py',
+                    'conftest.py',
                     ):
                     pydev_files.append("    '%s': PYDEV_FILE," % (f,))
 

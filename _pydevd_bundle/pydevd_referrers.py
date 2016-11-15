@@ -1,6 +1,6 @@
 from _pydevd_bundle.pydevd_constants import dict_contains
 import sys
-from _pydevd_bundle import pydevd_vars
+from _pydevd_bundle import pydevd_xml
 from os.path import basename
 import traceback
 try:
@@ -72,10 +72,10 @@ def get_referrer_info(searched_obj):
                 ret = ['<xml>\n']
 
                 ret.append('<for>\n')
-                ret.append(pydevd_vars.var_to_xml(
+                ret.append(pydevd_xml.var_to_xml(
                     searched_obj,
                     'Skipping getting referrers for None',
-                    additionalInXml=' id="%s"' % (id(searched_obj),)))
+                    additional_in_xml=' id="%s"' % (id(searched_obj),)))
                 ret.append('</for>\n')
                 ret.append('</xml>')
                 ret = ''.join(ret)
@@ -93,10 +93,10 @@ def get_referrer_info(searched_obj):
                 ret = ['<xml>\n']
 
                 ret.append('<for>\n')
-                ret.append(pydevd_vars.var_to_xml(
+                ret.append(pydevd_xml.var_to_xml(
                     searched_obj,
                     'Exception raised while trying to get_referrers.',
-                    additionalInXml=' id="%s"' % (id(searched_obj),)))
+                    additional_in_xml=' id="%s"' % (id(searched_obj),)))
                 ret.append('</for>\n')
                 ret.append('</xml>')
                 ret = ''.join(ret)
@@ -123,7 +123,7 @@ def get_referrer_info(searched_obj):
             if DEBUG:
                 sys.stderr.write('Searching Referrers of obj with id="%s"\n' % (obj_id,))
 
-            ret.append(pydevd_vars.var_to_xml(
+            ret.append(pydevd_xml.var_to_xml(
                 searched_obj,
                 'Referrers of obj with id="%s"' % (obj_id,)))
             ret.append('</for>\n')
@@ -200,12 +200,12 @@ def get_referrer_info(searched_obj):
                 if found_as:
                     if not isinstance(found_as, str):
                         found_as = str(found_as)
-                    found_as = ' found_as="%s"' % (pydevd_vars.make_valid_xml_value(found_as),)
+                    found_as = ' found_as="%s"' % (pydevd_xml.make_valid_xml_value(found_as),)
 
-                ret.append(pydevd_vars.var_to_xml(
+                ret.append(pydevd_xml.var_to_xml(
                     r,
                     representation,
-                    additionalInXml=' id="%s"%s' % (r_id, found_as)))
+                    additional_in_xml=' id="%s"%s' % (r_id, found_as)))
         finally:
             if DEBUG:
                 sys.stderr.write('Done searching for references.\n')
@@ -225,10 +225,10 @@ def get_referrer_info(searched_obj):
         ret = ['<xml>\n']
 
         ret.append('<for>\n')
-        ret.append(pydevd_vars.var_to_xml(
+        ret.append(pydevd_xml.var_to_xml(
             searched_obj,
             'Error getting referrers for:',
-            additionalInXml=' id="%s"' % (id(searched_obj),)))
+            additional_in_xml=' id="%s"' % (id(searched_obj),)))
         ret.append('</for>\n')
         ret.append('</xml>')
         ret = ''.join(ret)

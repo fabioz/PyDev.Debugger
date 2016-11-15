@@ -379,7 +379,7 @@ class AbstractWriterThread(threading.Thread):
         thread_id = splitted[3]
         return thread_id
 
-    def wait_for_breakpoint_hit(self, reason='111', get_line=False):
+    def wait_for_breakpoint_hit(self, reason='111', get_line=False, get_name=False):
         '''
             108 is over
             109 is return
@@ -397,20 +397,27 @@ class AbstractWriterThread(threading.Thread):
                 raise AssertionError('After %s seconds, a break with reason: %s was not hit. Found: %s' % \
                     (i, reason, last))
 
-        # we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" ...
+        # we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" name="encode" ...
         splitted = last.split('"')
         thread_id = splitted[1]
         frameId = splitted[7]
+        name = splitted[9]
         if get_line:
             self.log.append('End(0): wait_for_breakpoint_hit: %s' % (last,))
             try:
-                return thread_id, frameId, int(splitted[13])
+                if not get_name:
+                    return thread_id, frameId, int(splitted[13])
+                else:
+                    return thread_id, frameId, int(splitted[13]), name
             except:
                 raise AssertionError('Error with: %s, %s, %s.\nLast: %s.\n\nAll: %s\n\nSplitted: %s' % (
                     thread_id, frameId, splitted[13], last, '\n'.join(self.reader_thread.all_received), splitted))
 
         self.log.append('End(1): wait_for_breakpoint_hit: %s' % (last,))
-        return thread_id, frameId
+        if not get_name:
+            return thread_id, frameId
+        else:
+            return thread_id, frameId, name
 
     def wait_for_custom_operation(self, expected):
         i = 0
