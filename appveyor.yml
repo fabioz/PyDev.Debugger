@@ -32,7 +32,8 @@ install:
   - cmd: "%PYTHON%\\python.exe -m pip install wheel"
   - cmd: "%PYTHON%\\python.exe -m pip install cython"
   - cmd: "%PYTHON%\\python.exe -m pip install numpy"
-  - cmd: "%PYTHON%\\python.exe -m pip install nose2"
+  - cmd: "%PYTHON%\\python.exe -m pip install pytest"
+  - cmd: "%PYTHON%\\python.exe -m pip install psutil"
   - cmd: "%PYTHON%\\python.exe -m pip install ipython"
   - ps: |
       if ($env:PYTHON -eq "C:\\Python27"){
@@ -52,9 +53,7 @@ test_script:
   # the interpreter you're using - Appveyor does not do anything special
   # to put the Python version you want to use on PATH.
   # - "build.cmd %PYTHON%\\python.exe setup.py test"
-  # Note: IPython 5.1 is not compatible for testing with pytest or nose (only nose2 works
-  # because of how the sys.stdin/stdout/stderr streams are setup).
-  - "build.cmd %PYTHON%\\python.exe -m nose2"
+  - "build.cmd %PYTHON%\\python.exe -m pytest"
 
 # after_test:
   # This step builds your wheels.

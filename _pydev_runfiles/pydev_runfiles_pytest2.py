@@ -157,6 +157,7 @@ def pytest_collection_modifyitems(session, config, items):
         name = item.name
 
         if f not in py_test_accept_filter:
+            # print('Skip file: %s' % (f,))
             continue  # Skip the file
 
         accept_tests = py_test_accept_filter[f]
@@ -174,16 +175,19 @@ def pytest_collection_modifyitems(session, config, items):
                 # Direct match of the test (just go on with the default
                 # loading)
                 new_items.append(item)
-                continue
+                break
 
             if class_name is not None:
                 if test == class_name + '.' + name:
                     new_items.append(item)
-                    continue
+                    break
 
                 if class_name == test:
                     new_items.append(item)
-                    continue
+                    break
+        else:
+            pass
+            # print('Skip test: %s.%s. Accept: %s' % (class_name, name, accept_tests))
 
     # Modify the original list
     items[:] = new_items

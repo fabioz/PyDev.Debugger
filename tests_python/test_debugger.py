@@ -239,10 +239,13 @@ class WriterThreadCase17a(debugger_unittest.AbstractWriterThread):
         self.write_make_initial_run()
 
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
+        assert line == 2, 'Expected return to be in line 2, was: %s' % line
 
         self.write_step_in(thread_id)
-        thread_id, frame_id, line = self.wait_for_breakpoint_hit('107', True)
+        thread_id, frame_id, line, name = self.wait_for_breakpoint_hit('107', get_line=True, get_name=True)
+        
         # Should Skip step into properties setter
+        assert name == 'm3'
         assert line == 10, 'Expected return to be in line 10, was: %s' % line
         self.write_run_thread(thread_id)
 
@@ -284,15 +287,17 @@ class WriterThreadCase16(debugger_unittest.AbstractWriterThread):
         self.wait_for_var('<var name="%27size%27')
 
         self.write_get_variable(thread_id, frame_id, 'bigarray')
+        # isContainer could be true on some numpy versions, so, we only check for the var begin.
         self.wait_for_var([
-            '<var name="min" type="int64" qualifier="numpy" value="int64%253A 0" />',
-            '<var name="min" type="int64" qualifier="numpy" value="int64%3A 0" />',
-            '<var name="size" type="int" qualifier="{}" value="int%3A 100000" />'.format(builtin_qualifier),
+            '<var name="min" type="int64" qualifier="numpy" value="int64%253A 0"',
+            '<var name="min" type="int64" qualifier="numpy" value="int64%3A 0"',
+            '<var name="size" type="int" qualifier="{}" value="int%3A 100000"'.format(builtin_qualifier),
         ])
         self.wait_for_var([
-            '<var name="max" type="int64" qualifier="numpy" value="int64%253A 99999" />',
-            '<var name="max" type="int32" qualifier="numpy" value="int32%253A 99999" />',
-            '<var name="max" type="int64" qualifier="numpy" value="int64%3A 99999"'
+            '<var name="max" type="int64" qualifier="numpy" value="int64%253A 99999"',
+            '<var name="max" type="int32" qualifier="numpy" value="int32%253A 99999"',
+            '<var name="max" type="int64" qualifier="numpy" value="int64%3A 99999"', 
+            '<var name="max" type="int32" qualifier="numpy" value="int32%253A 99999"',
         ])
         self.wait_for_var('<var name="shape" type="tuple"')
         self.wait_for_var('<var name="dtype" type="dtype"')
@@ -306,10 +311,14 @@ class WriterThreadCase16(debugger_unittest.AbstractWriterThread):
         self.wait_for_var([
             '<var name="min" type="str" qualifier={} value="str%253A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
             '<var name="min" type="str" qualifier={} value="str%3A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="min" type="str" qualifier="{}" value="str%253A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="min" type="str" qualifier="{}" value="str%3A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
         ])
         self.wait_for_var([
             '<var name="max" type="str" qualifier={} value="str%253A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
             '<var name="max" type="str" qualifier={} value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="max" type="str" qualifier="{}" value="str%253A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="max" type="str" qualifier="{}" value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
         ])
         self.wait_for_var('<var name="shape" type="tuple"')
         self.wait_for_var('<var name="dtype" type="dtype"')
@@ -1026,7 +1035,7 @@ class TestPython(unittest.TestCase, DebuggerBase):
     def test_case_set_next_statement(self):
         # Set next only for Python.
         self.check_case(WriterThreadCaseSetNextStatement)
-
+        
 class TestJython(unittest.TestCase, DebuggerBase):
     def get_command_line(self):
         return [
