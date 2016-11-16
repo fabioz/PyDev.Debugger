@@ -1,4 +1,3 @@
-import time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import ObjectWrapper, wrap_attr
 
 import pydevd_file_utils
