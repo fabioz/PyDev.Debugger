@@ -82,6 +82,9 @@ class BaseStdIn:
     def write(self, *args, **kwargs):
         pass  # not available StdIn (but it can be expected to be in the stream interface)
 
+    def isatty(self):
+        return self.original_stdin.isatty()
+
     def flush(self, *args, **kwargs):
         pass  # not available StdIn (but it can be expected to be in the stream interface)
 
