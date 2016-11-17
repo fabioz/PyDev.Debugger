@@ -790,7 +790,7 @@ class PydevTestRunner(object):
                 runner.run(test_suite)
 
         if self.configuration.django:
-            MyDjangoTestSuiteRunner(run_tests).run_tests([])
+            get_django_test_suite_runner()(run_tests).run_tests([])
         else:
             run_tests()
 
@@ -802,52 +802,61 @@ class PydevTestRunner(object):
         pydev_runfiles_xml_rpc.notifyTestRunFinished(total_time)
 
 
-try:
-    # django >= 1.8
-    import django
-    from django.test.runner import DiscoverRunner
-    
-    class MyDjangoTestSuiteRunner(DiscoverRunner):
-    
-        def __init__(self, on_run_suite):
-            django.setup()
-            DiscoverRunner.__init__(self)
-            self.on_run_suite = on_run_suite
-    
-        def build_suite(self, *args, **kwargs):
-            pass
-    
-        def suite_result(self, *args, **kwargs):
-            pass
-    
-        def run_suite(self, *args, **kwargs):
-            self.on_run_suite()
-except:
-    # django < 1.8
+DJANGO_TEST_SUITE_RUNNER = None
+
+def get_django_test_suite_runner():
+    global DJANGO_TEST_SUITE_RUNNER
+    if DJANGO_TEST_SUITE_RUNNER:
+        return DJANGO_TEST_SUITE_RUNNER
     try:
-        from django.test.simple import DjangoTestSuiteRunner
-    except:
-        class DjangoTestSuiteRunner:
-            def __init__(self):
+        # django >= 1.8
+        import django
+        from django.test.runner import DiscoverRunner
+
+        class MyDjangoTestSuiteRunner(DiscoverRunner):
+
+            def __init__(self, on_run_suite):
+                django.setup()
+                DiscoverRunner.__init__(self)
+                self.on_run_suite = on_run_suite
+
+            def build_suite(self, *args, **kwargs):
                 pass
-    
-            def run_tests(self, *args, **kwargs):
-                raise AssertionError("Unable to run suite with django.test.runner.DiscoverRunner nor django.test.simple.DjangoTestSuiteRunner because it couldn't be imported.")
-    
-    class MyDjangoTestSuiteRunner(DjangoTestSuiteRunner):
-    
-        def __init__(self, on_run_suite):
-            DjangoTestSuiteRunner.__init__(self)
-            self.on_run_suite = on_run_suite
-    
-        def build_suite(self, *args, **kwargs):
-            pass
-    
-        def suite_result(self, *args, **kwargs):
-            pass
-    
-        def run_suite(self, *args, **kwargs):
-            self.on_run_suite()
+
+            def suite_result(self, *args, **kwargs):
+                pass
+
+            def run_suite(self, *args, **kwargs):
+                self.on_run_suite()
+    except:
+        # django < 1.8
+        try:
+            from django.test.simple import DjangoTestSuiteRunner
+        except:
+            class DjangoTestSuiteRunner:
+                def __init__(self):
+                    pass
+
+                def run_tests(self, *args, **kwargs):
+                    raise AssertionError("Unable to run suite with django.test.runner.DiscoverRunner nor django.test.simple.DjangoTestSuiteRunner because it couldn't be imported.")
+
+        class MyDjangoTestSuiteRunner(DjangoTestSuiteRunner):
+
+            def __init__(self, on_run_suite):
+                DjangoTestSuiteRunner.__init__(self)
+                self.on_run_suite = on_run_suite
+
+            def build_suite(self, *args, **kwargs):
+                pass
+
+            def suite_result(self, *args, **kwargs):
+                pass
+
+            def run_suite(self, *args, **kwargs):
+                self.on_run_suite()
+
+    DJANGO_TEST_SUITE_RUNNER = MyDjangoTestSuiteRunner
+    return DJANGO_TEST_SUITE_RUNNER
 
 
 #=======================================================================================================================

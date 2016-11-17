@@ -41,7 +41,7 @@
 
 
 
-from _pydevd_bundle.pydevd_constants import *  #@UnusedWildImport
+from _pydevd_bundle.pydevd_constants import IS_PY2, IS_PY3K
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 import os.path
 import sys
@@ -73,10 +73,30 @@ PATHS_FROM_ECLIPSE_TO_PYTHON = []
 
 normcase = os_normcase # May be rebound on set_ide_os
 
+convert_to_long_pathname = None
+if sys.platform == 'win32':
+    try:
+        import ctypes
+    except ImportError:
+        pass
+    else:
+        def convert_to_long_pathname(filename):
+            buf = ctypes.create_unicode_buffer(260)
+            GetLongPathName = ctypes.windll.kernel32.GetLongPathNameW
+            if IS_PY2:
+                filename = unicode(filename, getfilesystemencoding())
+            rv = GetLongPathName(filename, buf, 260)
+            if rv != 0 and rv <= 260:
+                return buf.value
+            return filename
+
 
 def norm_case(filename):
     # `normcase` doesn't lower case on Python 2 for non-English locale, but Java side does it,
     # so we should do it manually
+    if '~' in filename and convert_to_long_pathname:
+        filename = convert_to_long_pathname(filename)
+
     filename = os_normcase(filename)
     enc = getfilesystemencoding()
     if IS_PY3K or enc is None or enc.lower() == "utf-8":
@@ -143,7 +163,7 @@ def _NormPaths(filename):
 
 
 def _NormPath(filename, normpath):
-    r = normcase(normpath(filename))
+    r = normpath(filename)
     #cache it for fast access later
     ind = r.find('.zip')
     if ind == -1:
@@ -156,7 +176,9 @@ def _NormPath(filename, normpath):
         inner_path = r[ind:]
         if inner_path.startswith('/') or inner_path.startswith('\\'):
             inner_path = inner_path[1:]
-        r = join(zip_path, inner_path)
+        r = join(normcase(zip_path), inner_path)
+    else:
+        r = normcase(r)
     return r
 
 
@@ -366,11 +388,11 @@ def get_abs_path_real_path_and_base_from_frame(frame):
     except:
         #This one is just internal (so, does not need any kind of client-server translation)
         f = frame.f_code.co_filename
-        if f is not None and f.startswith('build/bdist.'):
+        if f is not None and f.startswith (('build/bdist.','build\\bdist.')):
             # files from eggs in Python 2.7 have paths like build/bdist.linux-x86_64/egg/<path-inside-egg>
             f = frame.f_globals['__file__']
-            if f.endswith('.pyc'):
-                f = f[:-1]
+        if f is not None and f.endswith('.pyc'):
+            f = f[:-1]
         ret = get_abs_path_real_path_and_base_from_file(f)
         # Also cache based on the frame.f_code.co_filename (if we had it inside build/bdist it can make a difference).
         NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename] = ret

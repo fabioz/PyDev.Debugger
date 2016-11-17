@@ -26,7 +26,7 @@ class IORedirector:
     def __getattr__(self, name):
         for r in self._redirectTo:
             if hasattr(r, name):
-                return r.__getattribute__(name)
+                return getattr(r, name)
         raise AttributeError(name)
 
 class IOBuf:

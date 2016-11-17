@@ -300,6 +300,8 @@ class RunfilesTest(unittest.TestCase):
         )
 
     def test_xml_rpc_communication(self):
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'samples'))
         notifications = []
         class Server:
 

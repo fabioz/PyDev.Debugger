@@ -115,7 +115,7 @@ def execute_tests_in_parallel(tests, jobs, split, verbosity, coverage_files, cov
 
     providers = []
     clients = []
-    for i in range(jobs):
+    for i in xrange(jobs):
         test_cases_provider = CommunicationThread(queue)
         providers.append(test_cases_provider)
 

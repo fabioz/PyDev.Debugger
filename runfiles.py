@@ -53,18 +53,18 @@ def main():
         raise
     pydev_runfiles_xml_rpc.initialize_server(configuration.port)  # Note that if the port is None, a Null server will be initialized.
 
-    NOSE_FRAMEWORK = 1
-    PY_TEST_FRAMEWORK = 2
+    NOSE_FRAMEWORK = "nose"
+    PY_TEST_FRAMEWORK = "py.test"
+    test_framework = None  # Default (pydev)
     try:
         if found_other_test_framework_param:
-            test_framework = 0  # Default (pydev)
             if found_other_test_framework_param == NOSE_PARAMS:
-                import nose
                 test_framework = NOSE_FRAMEWORK
+                import nose
 
             elif found_other_test_framework_param == PY_TEST_PARAMS:
-                import pytest
                 test_framework = PY_TEST_FRAMEWORK
+                import pytest
 
             else:
                 raise ImportError()
@@ -75,16 +75,19 @@ def main():
     except ImportError:
         if found_other_test_framework_param:
             sys.stderr.write('Warning: Could not import the test runner: %s. Running with the default pydev unittest runner instead.\n' % (
-                found_other_test_framework_param,))
+                test_framework,))
+            if DEBUG:
+                import traceback
+                traceback.print_exception(sys.exc_info()[1])
 
-        test_framework = 0
+        test_framework = None
 
     # Clear any exception that may be there so that clients don't see it.
     # See: https://sourceforge.net/tracker/?func=detail&aid=3408057&group_id=85796&atid=577329
     if hasattr(sys, 'exc_clear'):
         sys.exc_clear()
 
-    if test_framework == 0:
+    if not test_framework:
 
         return pydev_runfiles.main(configuration)  # Note: still doesn't return a proper value.
 

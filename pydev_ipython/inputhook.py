@@ -25,6 +25,7 @@ import select
 GUI_WX = 'wx'
 GUI_QT = 'qt'
 GUI_QT4 = 'qt4'
+GUI_QT5 = 'qt5'
 GUI_GTK = 'gtk'
 GUI_TK = 'tk'
 GUI_OSX = 'osx'
@@ -207,6 +208,21 @@ class InputHookManager(object):
         """
         if GUI_QT4 in self._apps:
             self._apps[GUI_QT4]._in_event_loop = False
+        self.clear_inputhook()
+
+    def enable_qt5(self, app=None):
+        from pydev_ipython.inputhookqt5 import create_inputhook_qt5
+        app, inputhook_qt5 = create_inputhook_qt5(self, app)
+        self.set_inputhook(inputhook_qt5)
+
+        self._current_gui = GUI_QT5
+        app._in_event_loop = True
+        self._apps[GUI_QT5] = app
+        return app
+
+    def disable_qt5(self):
+        if GUI_QT5 in self._apps:
+            self._apps[GUI_QT5]._in_event_loop = False
         self.clear_inputhook()
 
     def enable_gtk(self, app=None):
@@ -434,6 +450,8 @@ enable_wx = inputhook_manager.enable_wx
 disable_wx = inputhook_manager.disable_wx
 enable_qt4 = inputhook_manager.enable_qt4
 disable_qt4 = inputhook_manager.disable_qt4
+enable_qt5 = inputhook_manager.enable_qt5
+disable_qt5 = inputhook_manager.disable_qt5
 enable_gtk = inputhook_manager.enable_gtk
 disable_gtk = inputhook_manager.disable_gtk
 enable_tk = inputhook_manager.enable_tk
@@ -494,6 +512,7 @@ def enable_gui(gui=None, app=None):
             GUI_WX: enable_wx,
             GUI_QT: enable_qt4,  # qt3 not supported
             GUI_QT4: enable_qt4,
+            GUI_QT5: enable_qt5,
             GUI_GLUT: enable_glut,
             GUI_PYGLET: enable_pyglet,
             GUI_GTK3: enable_gtk3,
@@ -512,6 +531,7 @@ __all__ = [
     "GUI_WX",
     "GUI_QT",
     "GUI_QT4",
+    "GUI_QT5",
     "GUI_GTK",
     "GUI_TK",
     "GUI_OSX",
@@ -532,6 +552,8 @@ __all__ = [
     "disable_wx",
     "enable_qt4",
     "disable_qt4",
+    "enable_qt5",
+    "disable_qt5",
     "enable_gtk",
     "disable_gtk",
     "enable_tk",

@@ -140,7 +140,11 @@ if sys.platform.find('java') == -1:
                 send(socket, '@@SEARCH%sEND@@' % msg)  #math completions
                 found = self.read_msg()
                 self.assert_('inspect.py' in found)
-                self.assert_('33' in found or '34' in found or '51' in found or '50' in found, 'Could not find 33, 34, 50 or 51 in %s' % found)
+                for i in range(33, 100):
+                    if str(i) in found:
+                        break
+                else:
+                    self.fail('Could not find the ismodule line in %s' % (found,))
     
                 #now, test search
                 msg = quote_plus('inspect.CO_NEWLOCALS')

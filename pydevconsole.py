@@ -2,6 +2,7 @@
 Entry point module to start the interactive console.
 '''
 from _pydev_imps._pydev_saved_modules import thread
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
 start_new_thread = thread.start_new_thread
 
 try:
@@ -21,7 +22,7 @@ import traceback
 from _pydev_bundle import fix_getpass
 fix_getpass.fix_getpass()
 
-from _pydevd_bundle import pydevd_vars
+from _pydevd_bundle import pydevd_vars, pydevd_save_locals
 
 from _pydev_bundle.pydev_imports import Exec, _queue
 
@@ -70,7 +71,10 @@ class Command:
         if code_fragment.is_single_line:
             symbol = 'single'
         else:
-            symbol = 'exec' # Jython doesn't support this
+            if IS_JYTHON:
+                symbol = 'single' # Jython doesn't support exec
+            else:
+                symbol = 'exec' 
         return symbol
     symbol_for_fragment = staticmethod(symbol_for_fragment)
 
@@ -287,7 +291,8 @@ def start_console_server(host, port, interpreter):
             server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
 
     except:
-        sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, interpreter.client_port))
+        sys.stderr.write('Error starting server with host: "%s", port: "%s", client_port: "%s"\n' % (host, port, interpreter.client_port))
+        sys.stderr.flush()
         raise
 
     # Tell UMD the proper default namespace
@@ -352,12 +357,36 @@ def start_server(host, port, client_port):
     process_exec_queue(interpreter)
 
 
+def get_ipython_hidden_vars_dict():
+    useful_ipython_vars = ['_', '__']
+
+    try:
+        if IPYTHON and hasattr(__builtin__, 'interpreter'):
+            pydev_interpreter = get_interpreter().interpreter
+            if hasattr(pydev_interpreter, 'ipython') and hasattr(pydev_interpreter.ipython, 'user_ns_hidden'):
+                user_ns_hidden = pydev_interpreter.ipython.user_ns_hidden
+                if isinstance(user_ns_hidden, dict):
+                    # Since IPython 2 dict `user_ns_hidden` contains hidden variables and values
+                    user_hidden_dict = user_ns_hidden
+                else:
+                    # In IPython 1.x `user_ns_hidden` used to be a set with names of hidden variables
+                    user_hidden_dict = dict([(key, val) for key, val in dict_iter_items(pydev_interpreter.ipython.user_ns)
+                                    if key in user_ns_hidden])
+                return dict([(key, val) for key, val in dict_iter_items(user_hidden_dict) if key not in useful_ipython_vars])
+        return None
+    except Exception:
+        traceback.print_exc()
+        return None
+
+
 def get_interpreter():
     try:
         interpreterInterface = getattr(__builtin__, 'interpreter')
     except AttributeError:
         interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
         setattr(__builtin__, 'interpreter', interpreterInterface)
+        sys.stderr.write(interpreterInterface.get_greeting_msg())
+        sys.stderr.flush()
 
     return interpreterInterface
 
@@ -373,7 +402,7 @@ def get_completions(text, token, globals, locals):
 # Debugger integration
 #===============================================================================
 
-def exec_code(code, globals, locals):
+def exec_code(code, globals, locals, debugger):
     interpreterInterface = get_interpreter()
     interpreterInterface.interpreter.update(globals, locals)
 
@@ -382,7 +411,7 @@ def exec_code(code, globals, locals):
     if res:
         return True
 
-    interpreterInterface.add_exec(code)
+    interpreterInterface.add_exec(code, debugger)
 
     return False
 
@@ -442,7 +471,7 @@ class ConsoleWriter(InteractiveInterpreter):
             tblist = tb = None
         sys.stderr.write(''.join(lines))
 
-def console_exec(thread_id, frame_id, expression):
+def console_exec(thread_id, frame_id, expression, dbg):
     """returns 'False' in case expression is partially correct
     """
     frame = pydevd_vars.find_frame(thread_id, frame_id)
@@ -457,7 +486,11 @@ def console_exec(thread_id, frame_id, expression):
     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
     if IPYTHON:
-        return exec_code(CodeFragment(expression), updated_globals, frame.f_locals)
+        need_more =  exec_code(CodeFragment(expression), updated_globals, frame.f_locals, dbg)
+        if not need_more:
+            pydevd_save_locals.save_locals(frame)
+        return need_more
+
 
     interpreter = ConsoleWriter()
 
@@ -481,7 +514,8 @@ def console_exec(thread_id, frame_id, expression):
         raise
     except:
         interpreter.showtraceback()
-
+    else:
+        pydevd_save_locals.save_locals(frame)
     return False
 
 #=======================================================================================================================
@@ -494,7 +528,7 @@ if __name__ == '__main__':
     #See: https://sw-brainwy.rhcloud.com/tracker/PyDev/446:
     #'Variables' and 'Expressions' views stopped working when debugging interactive console
     import pydevconsole
-    sys.stdin = pydevconsole.BaseStdIn()
+    sys.stdin = pydevconsole.BaseStdIn(sys.stdin)
     port, client_port = sys.argv[1:3]
     from _pydev_bundle import pydev_localhost
 
