@@ -213,6 +213,36 @@ def pytest_collectreport(report):
     if error_contents:
         report_test('fail', '<collect errors>', '<collect errors>', '', error_contents, 0.0)
 
+def append_strings(s1, s2):
+    if s1.__class__ == s2.__class__:
+        return s1 + s2
+    
+    if sys.version_info[0] == 2:
+        if not isinstance(s1, basestring):
+            s1 = str(s1)
+            
+        if not isinstance(s2, basestring):
+            s2 = str(s2)
+            
+        # Prefer bytes
+        if isinstance(s1, unicode):
+            s1 = s1.encode('utf-8')
+            
+        if isinstance(s2, unicode):
+            s2 = s2.encode('utf-8')
+            
+        return s1 + s2
+    else:
+        # Prefer str
+        if isinstance(s1, bytes):
+            s1 = s1.decode('utf-8', 'replace')
+            
+        if isinstance(s2, bytes):
+            s2 = s2.decode('utf-8', 'replace')
+            
+        return s1 + s2
+            
+            
 
 def pytest_runtest_logreport(report):
     if is_in_xdist_node():
@@ -255,9 +285,9 @@ def pytest_runtest_logreport(report):
     for type_section, value in report.sections:
         if value:
             if type_section in ('err', 'stderr', 'Captured stderr call'):
-                error_contents += str(value)
+                error_contents = append_strings(error_contents, value)
             else:
-                captured_output += str(value)
+                captured_output = append_strings(error_contents, value)
 
     filename = report.pydev_fspath_strpath
     test = report.location[2]
@@ -268,8 +298,8 @@ def pytest_runtest_logreport(report):
         exc = _get_error_contents_from_report(report)
         if exc:
             if error_contents:
-                error_contents += '----------------------------- Exceptions -----------------------------\n'
-            error_contents += exc
+                error_contents = append_strings(error_contents, '----------------------------- Exceptions -----------------------------\n')
+            error_contents = append_strings(error_contents, exc)
 
     report_test(status, filename, test, captured_output, error_contents, report_duration)
 
