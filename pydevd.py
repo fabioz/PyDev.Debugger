@@ -1188,6 +1188,10 @@ def _locked_settrace(
         else:
             pydev_monkey.patch_new_process_functions()
 
+    if host is None:
+        from _pydev_bundle import pydev_localhost
+        host = pydev_localhost.get_localhost()
+
     global connected
     global bufferStdOutToServer
     global bufferStdErrToServer
