@@ -997,7 +997,6 @@ class PyDB:
         frame = pydevd_frame_utils.Frame(None, -1, pydevd_frame_utils.FCode("Console",
                                                                             os.path.abspath(os.path.dirname(__file__))), globals, globals)
         thread_id = get_thread_id(thread)
-        from _pydevd_bundle import pydevd_vars
         pydevd_vars.add_additional_frame_by_id(thread_id, {id(frame): frame})
 
         cmd = self.cmd_factory.make_show_console_message(thread_id, frame)
@@ -1020,86 +1019,10 @@ def enable_qt_support():
     pydev_monkey_qt.patch_qt()
 
 
-def process_command_line(argv):
-    """ parses the arguments.
-        removes our arguments from the command line """
-    setup = {}
-    setup['client'] = None
-    setup['server'] = False
-    setup['port'] = 0
-    setup['file'] = ''
-    setup['multiproc'] = False #Used by PyCharm (reuses connection: ssh tunneling)
-    setup['multiprocess'] = False # Used by PyDev (creates new connection to ide)
-    setup['save-signatures'] = False
-    setup['save-threading'] = False
-    setup['save-asyncio'] = False
-    setup['qt-support'] = False
-    setup['print-in-debugger-startup'] = False
-    setup['cmd-line'] = False
-    setup['module'] = False
-    i = 0
-    del argv[0]
-    while (i < len(argv)):
-        if argv[i] == '--port':
-            del argv[i]
-            setup['port'] = int(argv[i])
-            del argv[i]
-        elif argv[i] == '--vm_type':
-            del argv[i]
-            setup['vm_type'] = argv[i]
-            del argv[i]
-        elif argv[i] == '--client':
-            del argv[i]
-            setup['client'] = argv[i]
-            del argv[i]
-        elif argv[i] == '--server':
-            del argv[i]
-            setup['server'] = True
-        elif argv[i] == '--file':
-            del argv[i]
-            setup['file'] = argv[i]
-            i = len(argv) # pop out, file is our last argument
-        elif argv[i] == '--DEBUG_RECORD_SOCKET_READS':
-            del argv[i]
-            setup['DEBUG_RECORD_SOCKET_READS'] = True
-        elif argv[i] == '--DEBUG':
-            del argv[i]
-            set_debug(setup)
-        elif argv[i] == '--multiproc':
-            del argv[i]
-            setup['multiproc'] = True
-        elif argv[i] == '--multiprocess':
-            del argv[i]
-            setup['multiprocess'] = True
-        elif argv[i] == '--save-signatures':
-            del argv[i]
-            setup['save-signatures'] = True
-        elif argv[i] == '--save-threading':
-            del argv[i]
-            setup['save-threading'] = True
-        elif argv[i] == '--save-asyncio':
-            del argv[i]
-            setup['save-asyncio'] = True
-        elif argv[i] == '--qt-support':
-            del argv[i]
-            setup['qt-support'] = True
-
-        elif argv[i] == '--print-in-debugger-startup':
-            del argv[i]
-            setup['print-in-debugger-startup'] = True
-        elif (argv[i] == '--cmd-line'):
-            del argv[i]
-            setup['cmd-line'] = True
-        elif (argv[i] == '--module'):
-            del argv[i]
-            setup['module'] = True
-        else:
-            raise ValueError("unexpected option " + argv[i])
-    return setup
 
 def usage(doExit=0):
     sys.stdout.write('Usage:\n')
-    sys.stdout.write('pydevd.py --port=N [(--client hostname) | --server] --file executable [file_options]\n')
+    sys.stdout.write('pydevd.py --port N [(--client hostname) | --server] --file executable [file_options]\n')
     if doExit:
         sys.exit(0)
 
@@ -1442,6 +1365,7 @@ if __name__ == '__main__':
     # parse the command line. --file is our last argument that is required
     try:
         sys.original_argv = sys.argv[:]
+        from _pydevd_bundle.pydevd_command_line_handling import process_command_line
         setup = process_command_line(sys.argv)
         SetupHolder.setup = setup
     except ValueError:
