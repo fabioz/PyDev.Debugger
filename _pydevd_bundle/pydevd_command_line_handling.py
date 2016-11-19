@@ -68,6 +68,13 @@ ACCEPTED_ARG_HANDLERS = [
 ARGV_REP_TO_HANDLER = {}
 for handler in ACCEPTED_ARG_HANDLERS:
     ARGV_REP_TO_HANDLER[handler.arg_v_rep] = handler
+    
+def get_pydevd_file():
+    import pydevd
+    f = pydevd.__file__
+    if f.endswith('.pyc'):
+        f = f[:-1]
+    return f
 
 def setup_to_argv(setup):
     '''
@@ -76,11 +83,7 @@ def setup_to_argv(setup):
         
     :note: does not handle --file nor --DEBUG.
     '''
-    import pydevd
-    f = pydevd.__file__
-    if f.endswith('.pyc'):
-        f = f[:-1]
-    ret = [f]
+    ret = [get_pydevd_file()]
     
     for handler in ACCEPTED_ARG_HANDLERS:
         if handler.arg_name in setup:

@@ -1134,13 +1134,14 @@ def _locked_settrace(
     if not connected:
         pydevd_vm_type.setup_type()
 
-        setup = {'client': host,  # dispatch expects client to be set to the host address when server is False
-                 'server': False,
-                 'port': int(port)}
         if SetupHolder.setup is None:
+            setup = {
+                'client': host,  # dispatch expects client to be set to the host address when server is False
+                'server': False,
+                'port': int(port),
+                'multiprocess': patch_multiprocessing,
+            }
             SetupHolder.setup = setup
-        else:
-            SetupHolder.setup.update(setup)
 
         debugger = PyDB()
         debugger.connect(host, port)  # Note: connect can raise error.
@@ -1372,7 +1373,6 @@ if __name__ == '__main__':
 
     # parse the command line. --file is our last argument that is required
     try:
-        sys.original_argv = sys.argv[:]
         from _pydevd_bundle.pydevd_command_line_handling import process_command_line
         setup = process_command_line(sys.argv)
         SetupHolder.setup = setup
