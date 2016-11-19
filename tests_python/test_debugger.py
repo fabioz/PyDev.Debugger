@@ -976,6 +976,35 @@ class WriterThreadCaseMSwitch(debugger_unittest.AbstractWriterThread):
         self.log.append('asserted')
 
         self.finished_ok = True
+        
+#=======================================================================================================================
+# WriterThreadCaseRemoteDebugger
+#=======================================================================================================================
+class WriterThreadCaseRemoteDebugger(debugger_unittest.AbstractWriterThread):
+    
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_remote.py')
+
+    def run(self):
+        self.start_socket(8787)
+
+        self.log.append('making initial run')
+        self.write_make_initial_run()
+
+        self.log.append('waiting for breakpoint hit')
+        thread_id, frame_id = self.wait_for_breakpoint_hit('105')
+
+        self.log.append('run thread')
+        self.write_run_thread(thread_id)
+
+        self.log.append('asserting')
+        try:
+            assert 5 == self._sequence, 'Expected 5. Had: %s' % self._sequence
+        except:
+            self.log.append('assert failed!')
+            raise
+        self.log.append('asserted')
+
+        self.finished_ok = True
 
 #=======================================================================================================================
 # DebuggerBase
@@ -1080,6 +1109,18 @@ class DebuggerBase(debugger_unittest.DebuggerRunner):
 
 
 
+class TestPythonRemoteDebugger(unittest.TestCase, debugger_unittest.DebuggerRunner):
+
+    def get_command_line(self):
+        return [PYTHON_EXE, '-u']
+    
+    def add_command_line_args(self, args):
+        return args + [self.writer_thread.TEST_FILE]
+    
+    def test_remote_debugger(self):
+        self.check_case(WriterThreadCaseRemoteDebugger)
+    
+    
 class TestPython(unittest.TestCase, DebuggerBase):
     def get_command_line(self):
         return [PYTHON_EXE, '-u']

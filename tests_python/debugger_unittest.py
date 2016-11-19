@@ -133,7 +133,8 @@ class ReaderThread(threading.Thread):
 
     def do_kill(self):
         self._kill = True
-        self.sock.close()
+        if hasattr(self, 'sock'):
+            self.sock.close()
 
 
 class DebuggerRunner(object):
@@ -169,7 +170,9 @@ class DebuggerRunner(object):
         writer_thread = writer_thread_class()
         try:
             writer_thread.start()
-            while not hasattr(writer_thread, 'port'):
+            for _i in xrange(40000):
+                if hasattr(writer_thread, 'port'):
+                    break
                 time.sleep(.01)
             self.writer_thread = writer_thread
 
@@ -318,7 +321,8 @@ class AbstractWriterThread(threading.Thread):
         if hasattr(self, 'reader_thread'):
             # if it's not created, it's not there...
             self.reader_thread.do_kill()
-        self.sock.close()
+        if hasattr(self, 'sock'):
+            self.sock.close()
 
     def write(self, s):
         self.log.append('write: %s' % (s,))
@@ -338,12 +342,12 @@ class AbstractWriterThread(threading.Thread):
             time.sleep(0.1)
 
 
-    def start_socket(self):
+    def start_socket(self, port=0):
         if SHOW_WRITES_AND_READS:
             print('start_socket')
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind(('', 0))
+        s.bind(('', port))
         self.port = s.getsockname()[1]
         s.listen(1)
         if SHOW_WRITES_AND_READS:
