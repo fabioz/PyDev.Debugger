@@ -1208,8 +1208,16 @@ def _locked_settrace(
     global bufferStdOutToServer
     global bufferStdErrToServer
 
-    if not connected :
+    if not connected:
         pydevd_vm_type.setup_type()
+
+        setup = {'client': host,  # dispatch expects client to be set to the host address when server is False
+                 'server': False,
+                 'port': int(port)}
+        if SetupHolder.setup is None:
+            SetupHolder.setup = setup
+        else:
+            SetupHolder.setup.update(setup)
 
         debugger = PyDB()
         debugger.connect(host, port)  # Note: connect can raise error.
