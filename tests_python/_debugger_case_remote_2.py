@@ -1,5 +1,7 @@
 if __name__ == '__main__':
     print('Run as main: %s' % (__file__,))
-    import sys;sys.path.append(r'X:\pydev\plugins\org.python.pydev\pysrc')
-    import pydevd;pydevd.settrace()
+    import pydevd
+    # Just check that we're already connected
+    assert pydevd.GetGlobalDebugger() is not None
     print('finish')
+    print('TEST SUCEEDED!')

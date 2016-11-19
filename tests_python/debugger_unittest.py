@@ -318,6 +318,9 @@ class AbstractWriterThread(threading.Thread):
         return [self.TEST_FILE]
 
     def do_kill(self):
+        if hasattr(self, 'server_socket'):
+            self.server_socket.close()
+            
         if hasattr(self, 'reader_thread'):
             # if it's not created, it's not there...
             self.reader_thread.do_kill()
@@ -352,6 +355,7 @@ class AbstractWriterThread(threading.Thread):
         s.listen(1)
         if SHOW_WRITES_AND_READS:
             print('Waiting in socket.accept()')
+        self.server_socket = s
         newSock, addr = s.accept()
         if SHOW_WRITES_AND_READS:
             print('Test Writer Thread Socket:', newSock, addr)

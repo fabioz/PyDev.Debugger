@@ -1005,6 +1005,73 @@ class WriterThreadCaseRemoteDebugger(debugger_unittest.AbstractWriterThread):
         self.log.append('asserted')
 
         self.finished_ok = True
+        
+#=======================================================================================================================
+# _SecondaryMultiProcProcessWriterThread
+#=======================================================================================================================
+class _SecondaryMultiProcProcessWriterThread(debugger_unittest.AbstractWriterThread):
+    
+    def __init__(self, server_socket):
+        debugger_unittest.AbstractWriterThread.__init__(self)
+        self.server_socket = server_socket
+        
+    def run(self):
+        print('waiting for second process')
+        self.sock, addr = self.server_socket.accept()
+        print('accepted second process')
+
+        from tests_python.debugger_unittest import ReaderThread
+        self.reader_thread = ReaderThread(self.sock)
+
+        self._sequence = -1
+        # initial command is always the version
+        self.write_version()
+        self.log.append('start_socket')
+        self.write_make_initial_run()
+        self.finished_ok = True
+
+#=======================================================================================================================
+# WriterThreadCaseRemoteDebuggerMultiProc
+#=======================================================================================================================
+class WriterThreadCaseRemoteDebuggerMultiProc(debugger_unittest.AbstractWriterThread):
+    
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_remote_1.py')
+
+    def run(self):
+        self.start_socket(8787)
+
+        self.log.append('making initial run')
+        self.write_make_initial_run()
+
+        self.log.append('waiting for breakpoint hit')
+        thread_id, frame_id = self.wait_for_breakpoint_hit('105')
+
+        secondary_multi_proc_process_writer_thread = _SecondaryMultiProcProcessWriterThread(self.server_socket)
+        secondary_multi_proc_process_writer_thread.start()
+        
+        self.log.append('run thread')
+        self.write_run_thread(thread_id)
+        
+        while not secondary_multi_proc_process_writer_thread.finished_ok:
+            time.sleep(.1)
+
+        self.log.append('asserting')
+        try:
+            assert 5 == self._sequence, 'Expected 5. Had: %s' % self._sequence
+        except:
+            self.log.append('assert failed!')
+            raise
+        self.log.append('asserted')
+
+        self.finished_ok = True
+        
+    def do_kill(self):
+        debugger_unittest.AbstractWriterThread.do_kill(self)
+        if hasattr(self, 'second_process_reader_thread'):
+            self.second_process_reader_thread.do_kill()
+
+        if hasattr(self, 'second_process_sock'):
+            self.second_process_sock.close()
 
 #=======================================================================================================================
 # DebuggerBase
@@ -1119,6 +1186,9 @@ class TestPythonRemoteDebugger(unittest.TestCase, debugger_unittest.DebuggerRunn
     
     def test_remote_debugger(self):
         self.check_case(WriterThreadCaseRemoteDebugger)
+    
+    def test_remote_debugger2(self):
+        self.check_case(WriterThreadCaseRemoteDebuggerMultiProc)
     
     
 class TestPython(unittest.TestCase, DebuggerBase):
