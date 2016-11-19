@@ -902,8 +902,10 @@ class PyDB:
                     return meth(mod_name)
         return None
 
-    def run(self, file, globals=None, locals=None, module=False, set_trace=True):
-        if module:
+    def run(self, file, globals=None, locals=None, is_module=False, set_trace=True):
+        module_name = None
+        if is_module:
+            module_name = file
             filename = self.get_fullname(file)
             if filename is None:
                 sys.stderr.write("No module named %s\n" % file)
@@ -942,11 +944,12 @@ class PyDB:
                 # print >> sys.stderr, 'Deleting: ', sys.path[0]
                 del sys.path[0]
 
-            # now, the local directory has to be added to the pythonpath
-            # sys.path.insert(0, os.getcwd())
-            # Changed: it's not the local directory, but the directory of the file launched
-            # The file being run ust be in the pythonpath (even if it was not before)
-            sys.path.insert(0, os.path.split(file)[0])
+            if not is_module:
+                # now, the local directory has to be added to the pythonpath
+                # sys.path.insert(0, os.getcwd())
+                # Changed: it's not the local directory, but the directory of the file launched
+                # The file being run must be in the pythonpath (even if it was not before)
+                sys.path.insert(0, os.path.split(file)[0])
 
             self.prepare_to_run()
 
@@ -969,7 +972,16 @@ class PyDB:
             sys.stderr.write("Matplotlib support in debugger failed\n")
             traceback.print_exc()
 
-        pydev_imports.execfile(file, globals, locals)  # execute the script
+        if not is_module:
+            pydev_imports.execfile(file, globals, locals)  # execute the script
+        else:
+            # Run with the -m switch
+            import runpy
+            if hasattr(runpy, '_run_module_as_main'):
+                # Newer versions of Python actually use this when the -m switch is used.
+                runpy._run_module_as_main(module_name, alter_argv=False)
+            else:
+                runpy.run_module(module_name)
         return globals
 
     def exiting(self):

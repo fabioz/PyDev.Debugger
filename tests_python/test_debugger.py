@@ -928,6 +928,54 @@ class WriterThreadCase1(debugger_unittest.AbstractWriterThread):
         self.log.append('asserted')
 
         self.finished_ok = True
+        
+#=======================================================================================================================
+# WriterThreadCaseMSwitch
+#=======================================================================================================================
+class WriterThreadCaseMSwitch(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = 'tests_python._debugger_case_m_switch'
+    IS_MODULE = True
+    
+    def get_environ(self):
+        env = os.environ.copy()
+        curr_pythonpath = env.get('PYTHONPATH', '')
+        
+        root_dirname = os.path.dirname(os.path.dirname(__file__))
+        
+        curr_pythonpath += root_dirname + os.pathsep
+        env['PYTHONPATH'] = curr_pythonpath
+        return env
+    
+    def get_main_filename(self):
+        return debugger_unittest._get_debugger_test_file('_debugger_case_m_switch.py')
+
+    def run(self):
+        self.start_socket()
+
+        self.log.append('writing add breakpoint')
+        breakpoint_id = self.write_add_breakpoint(1, None)
+
+        self.log.append('making initial run')
+        self.write_make_initial_run()
+
+        self.log.append('waiting for breakpoint hit')
+        thread_id, frame_id = self.wait_for_breakpoint_hit()
+        
+        self.write_remove_breakpoint(breakpoint_id)
+
+        self.log.append('run thread')
+        self.write_run_thread(thread_id)
+
+        self.log.append('asserting')
+        try:
+            assert 9 == self._sequence, 'Expected 9. Had: %s' % self._sequence
+        except:
+            self.log.append('assert failed!')
+            raise
+        self.log.append('asserted')
+
+        self.finished_ok = True
 
 #=======================================================================================================================
 # DebuggerBase
@@ -1026,6 +1074,10 @@ class DebuggerBase(debugger_unittest.DebuggerRunner):
     def test_case_qthread3(self):
         if self._has_qt():
             self.check_case(WriterThreadCaseQThread3)
+            
+    def test_m_switch(self):
+        self.check_case(WriterThreadCaseMSwitch)
+
 
 
 class TestPython(unittest.TestCase, DebuggerBase):
