@@ -17,6 +17,10 @@ IRONPYTHON_EXE = None
 JYTHON_JAR_LOCATION = None
 JAVA_LOCATION = None
 
+try:
+    xrange
+except:
+    xrange = range
 
 import unittest
 import os
@@ -1022,12 +1026,14 @@ class _SecondaryMultiProcProcessWriterThread(debugger_unittest.AbstractWriterThr
 
         from tests_python.debugger_unittest import ReaderThread
         self.reader_thread = ReaderThread(self.sock)
+        self.reader_thread.start()
 
         self._sequence = -1
         # initial command is always the version
         self.write_version()
         self.log.append('start_socket')
         self.write_make_initial_run()
+        time.sleep(.5)
         self.finished_ok = True
 
 #=======================================================================================================================
@@ -1046,14 +1052,20 @@ class WriterThreadCaseRemoteDebuggerMultiProc(debugger_unittest.AbstractWriterTh
         self.log.append('waiting for breakpoint hit')
         thread_id, frame_id = self.wait_for_breakpoint_hit('105')
 
-        secondary_multi_proc_process_writer_thread = _SecondaryMultiProcProcessWriterThread(self.server_socket)
+        self.secondary_multi_proc_process_writer_thread  = secondary_multi_proc_process_writer_thread = \
+            _SecondaryMultiProcProcessWriterThread(self.server_socket)
         secondary_multi_proc_process_writer_thread.start()
         
         self.log.append('run thread')
         self.write_run_thread(thread_id)
         
-        while not secondary_multi_proc_process_writer_thread.finished_ok:
+        for _i in xrange(400):
+            if secondary_multi_proc_process_writer_thread.finished_ok:
+                break
             time.sleep(.1)
+        else:
+            self.log.append('Secondary process not finished ok!')
+            raise AssertionError('Secondary process not finished ok!')
 
         self.log.append('asserting')
         try:
@@ -1067,11 +1079,8 @@ class WriterThreadCaseRemoteDebuggerMultiProc(debugger_unittest.AbstractWriterTh
         
     def do_kill(self):
         debugger_unittest.AbstractWriterThread.do_kill(self)
-        if hasattr(self, 'second_process_reader_thread'):
-            self.second_process_reader_thread.do_kill()
-
-        if hasattr(self, 'second_process_sock'):
-            self.second_process_sock.close()
+        if hasattr(self, 'secondary_multi_proc_process_writer_thread'):
+            self.secondary_multi_proc_process_writer_thread.do_kill()
 
 #=======================================================================================================================
 # DebuggerBase
