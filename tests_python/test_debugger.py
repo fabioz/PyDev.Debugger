@@ -1067,7 +1067,7 @@ class WriterThreadCaseRemoteDebuggerMultiProc(debugger_unittest.AbstractWriterTh
             self.log.append('Secondary process not finished ok!')
             raise AssertionError('Secondary process not finished ok!')
 
-        self.log.append('asserting')
+        self.log.append('Secondary process finished!')
         try:
             assert 5 == self._sequence, 'Expected 5. Had: %s' % self._sequence
         except:
