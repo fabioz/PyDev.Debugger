@@ -1014,6 +1014,8 @@ class WriterThreadCaseRemoteDebugger(debugger_unittest.AbstractWriterThread):
 # _SecondaryMultiProcProcessWriterThread
 #=======================================================================================================================
 class _SecondaryMultiProcProcessWriterThread(debugger_unittest.AbstractWriterThread):
+
+    FORCE_KILL_PROCESS_WHEN_FINISHED_OK = True
     
     def __init__(self, server_socket):
         debugger_unittest.AbstractWriterThread.__init__(self)
@@ -1041,6 +1043,11 @@ class _SecondaryMultiProcProcessWriterThread(debugger_unittest.AbstractWriterThr
 #=======================================================================================================================
 class WriterThreadCaseRemoteDebuggerMultiProc(debugger_unittest.AbstractWriterThread):
     
+    # It seems sometimes it becomes flaky on the ci because the process outlives the writer thread...
+    # As we're only interested in knowing if a second connection was received, just kill the related
+    # process.
+    FORCE_KILL_PROCESS_WHEN_FINISHED_OK = True
+
     TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_remote_1.py')
 
     def run(self):
