@@ -67,6 +67,7 @@ def trace_dispatch(py_db, frame, event, arg):
 class ThreadTracer:
     def __init__(self, args):
         self._args = args
+        self._cache = {}
 # ENDIF
 
 
@@ -113,6 +114,11 @@ class ThreadTracer:
                 abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
             except:
                 abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
+                
+            cache_key = (abs_path_real_path_and_base, frame.f_lineno, frame.f_code.co_name)
+            ret = self._cache.get(cache_key)
+            if ret is not None:
+                return ret[0]
 
             if py_db.thread_analyser is not None:
                 py_db.thread_analyser.log_event(frame)
@@ -150,7 +156,10 @@ class ThreadTracer:
             # ret = PyDBFrame((py_db, abs_path_real_path_and_base[1], additional_info, t)).trace_dispatch(frame, event, arg)
             # return SafeCallWrapper(ret) if ret is not None else None
             # ELSE
-            return additional_info.create_db_frame((py_db, abs_path_real_path_and_base[1], additional_info, t, frame)).trace_dispatch(frame, event, arg)
+            ret = additional_info.create_db_frame((py_db, abs_path_real_path_and_base[1], additional_info, t, frame)).trace_dispatch(frame, event, arg)
+            if ret is None:
+                self._cache[cache_key] = (None,)
+            return ret
             # ENDIF
 
         except SystemExit:
