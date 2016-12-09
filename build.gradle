@@ -11,8 +11,10 @@ envs {
   packages = ["cython", "numpy", "nose", "ipython", "pip"]
 
   conda "py27_64", "2.7", ["django>=1.7,<1.8", ["-U", "setuptools>=0.9"], ["-U", "wheel>=0.21", "twine"]]
+  conda "py26_64", "2.6", ["django>=1.7,<1.8", ["-U", "setuptools>=0.9"], ["-U", "wheel>=0.21", "twine"]]
   conda "py34_64", "3.4", ["django>=1.9", ["-U", "setuptools>=0.9"], ["-U", "wheel>=0.21", "twine"]]
   conda "py35_64", "3.5", ["django>=1.9", ["-U", "setuptools>=0.9"], ["-U", "wheel>=0.21", "twine"]]
+  conda "py26_32", "2.6", ["django>=1.7,<1.8", ["-U", "setuptools>=0.9"], ["-U", "wheel>=0.21", "twine"]]
   conda "py27_32", "2.7", ["django>=1.7,<1.8", ["-U", "setuptools>=0.9"], ["-U", "wheel>=0.21", "twine"]]
   conda "py34_32", "3.4", ["django>=1.9", ["-U", "setuptools>=0.9"], ["-U", "wheel>=0.21", "twine"]]
   conda "py35_32", "3.5", ["django>=1.9", ["-U", "setuptools>=0.9"], ["-U", "wheel>=0.21", "twine"]]
