@@ -6,8 +6,10 @@ import sys
 import weakref
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, dict_iter_items
-from _pydevd_bundle.pydevd_frame import PyDBFrame
-
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+# ELSE
+# from _pydevd_bundle.pydevd_frame import PyDBFrame
+# ENDIF
 
 #=======================================================================================================================
 # PyDBAdditionalThreadInfo
@@ -236,11 +238,16 @@ get_file_type = DONT_TRACE.get
 #=======================================================================================================================
 # PyDBFrame
 #=======================================================================================================================
-class PyDBFrame: # No longer cdef because object was dying when only a reference to trace_dispatch was kept (need to check alternatives).
-    '''This makes the tracing for a given frame, so, the trace_dispatch
-    is used initially when we enter into a new context ('call') and then
-    is reused for the entire context.
-    '''
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+cdef class PyDBFrame:
+# ELSE
+# class PyDBFrame:
+#     '''This makes the tracing for a given frame, so, the trace_dispatch
+#     is used initially when we enter into a new context ('call') and then
+#     is reused for the entire context.
+#     '''
+# ENDIF
+
 
     #Note: class (and not instance) attributes.
 
@@ -248,12 +255,15 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
     #considers the user input (so, the actual result must be a join of both).
     filename_to_lines_where_exceptions_are_ignored = {}
     filename_to_stat_info = {}
-    should_skip = -1
 
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
-    def __init__(self, args):
+    cdef tuple _args
+    cdef int should_skip
+    def __init__(self, tuple args):
         self._args = args # In the cython version we don't need to pass the frame
+        self.should_skip = -1
     # ELSE
+#     should_skip = -1
 #     def __init__(self, args):
 #         #args = main_debugger, filename, base, info, t, frame
 #         #yeap, much faster than putting in self and then getting it from self later on
@@ -492,7 +502,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
             traceback.print_exc()
 
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
-    def trace_dispatch(self, frame, str event, arg):
+    cpdef trace_dispatch(self, frame, str event, arg):
         cdef str filename;
         cdef bint is_exception_event;
         cdef bint has_exception_breakpoints;
@@ -893,9 +903,10 @@ from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 from pydevd_tracing import SetTrace
-
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 # In Cython, PyDBAdditionalThreadInfo is bundled in the file.
+from cpython.object cimport PyObject
+from cpython.ref cimport Py_INCREF, Py_XDECREF
 # ELSE
 # from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 # ENDIF
@@ -932,6 +943,18 @@ def trace_dispatch(py_db, frame, event, arg):
     return thread_tracer.__call__(frame, event, arg)
 
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+cdef class SafeCallWrapper:
+  cdef method_object
+  def __init__(self, method_object):
+      self.method_object = method_object
+  def  __call__(self, *args):
+      #Cannot use 'self' once inside the delegate call since we are borrowing the self reference f_trace field
+      #in the frame, and that reference might get destroyed by set trace on frame and parents
+      cdef PyObject* method_obj = <PyObject*> self.method_object
+      Py_INCREF(<object>method_obj)
+      ret = (<object>method_obj)(*args)
+      Py_XDECREF (method_obj)
+      return SafeCallWrapper(ret) if ret is not None else None
 cdef class ThreadTracer:
     cdef public tuple _args;
     def __init__(self, tuple args):
@@ -1020,7 +1043,8 @@ cdef class ThreadTracer:
             # each new frame...
             # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
             # Note that on Cython we only support more modern idioms (no support for < Python 2.5)
-            return PyDBFrame((py_db, abs_path_real_path_and_base[1], additional_info, t)).trace_dispatch(frame, event, arg)
+            ret = PyDBFrame((py_db, abs_path_real_path_and_base[1], additional_info, t)).trace_dispatch(frame, event, arg)
+            return SafeCallWrapper(ret) if ret is not None else None
             # ELSE
 #             return additional_info.create_db_frame((py_db, abs_path_real_path_and_base[1], additional_info, t, frame)).trace_dispatch(frame, event, arg)
             # ENDIF
