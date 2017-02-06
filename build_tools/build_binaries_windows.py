@@ -52,6 +52,22 @@ pip install -U "pip>=1.4" "wheel>=0.21" twine
 deactivate
 
 
+C:\tools\Miniconda32\Scripts\conda create -y -f -n py36_32 python=3.6 cython numpy nose ipython pip
+C:\tools\Miniconda32\Scripts\activate py36_32
+pip install "django>=1.9"
+pip install -U "setuptools>=0.9"
+pip install -U "pip>=1.4" "wheel>=0.21" twine
+deactivate
+
+
+C:\tools\Miniconda\Scripts\conda create -y -f -n py36_64 python=3.6 cython numpy nose ipython pip
+C:\tools\Miniconda\Scripts\activate py36_64
+pip install "django>=1.9"
+pip install -U "setuptools>=0.9"
+pip install -U "pip>=1.4" "wheel>=0.21" twine
+deactivate
+
+
 '''
 
 from __future__ import unicode_literals
@@ -66,10 +82,12 @@ python_installations = [
     r'%s\py27_32\python.exe' % miniconda32_envs,
     r'%s\py34_32\python.exe' % miniconda32_envs,
     r'%s\py35_32\python.exe' % miniconda32_envs,
+    r'%s\py36_32\python.exe' % miniconda32_envs,
 
     r'%s\py27_64\python.exe' % miniconda64_envs,
     r'%s\py34_64\python.exe' % miniconda64_envs,
     r'%s\py35_64\python.exe' % miniconda64_envs,
+    r'%s\py36_64\python.exe' % miniconda64_envs,
 ]
 
 root_dir = os.path.dirname(os.path.dirname(__file__))

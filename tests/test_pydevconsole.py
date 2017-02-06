@@ -2,7 +2,6 @@ import threading
 import unittest
 import sys
 import os
-from _pydevd_bundle import pydevd_io
 
 try:
     import pydevconsole
@@ -10,6 +9,7 @@ except:
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
     import pydevconsole
 from _pydev_bundle.pydev_imports import xmlrpclib, SimpleXMLRPCServer
+from _pydevd_bundle import pydevd_io
 
 try:
     raw_input
