@@ -39,11 +39,16 @@ get_file_type = DONT_TRACE.get
 #=======================================================================================================================
 # PyDBFrame
 #=======================================================================================================================
-class PyDBFrame: # No longer cdef because object was dying when only a reference to trace_dispatch was kept (need to check alternatives).
+# IFDEF CYTHON
+# cdef class PyDBFrame:
+# ELSE
+class PyDBFrame:
     '''This makes the tracing for a given frame, so, the trace_dispatch
     is used initially when we enter into a new context ('call') and then
     is reused for the entire context.
     '''
+# ENDIF
+
 
     #Note: class (and not instance) attributes.
 
@@ -51,12 +56,15 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
     #considers the user input (so, the actual result must be a join of both).
     filename_to_lines_where_exceptions_are_ignored = {}
     filename_to_stat_info = {}
-    should_skip = -1
 
     # IFDEF CYTHON
-    # def __init__(self, args):
+    # cdef tuple _args
+    # cdef int should_skip
+    # def __init__(self, tuple args):
         # self._args = args # In the cython version we don't need to pass the frame
+        # self.should_skip = -1
     # ELSE
+    should_skip = -1
     def __init__(self, args):
         #args = main_debugger, filename, base, info, t, frame
         #yeap, much faster than putting in self and then getting it from self later on
@@ -295,7 +303,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
             traceback.print_exc()
 
     # IFDEF CYTHON
-    # def trace_dispatch(self, frame, str event, arg):
+    # cpdef trace_dispatch(self, frame, str event, arg):
     #     cdef str filename;
     #     cdef bint is_exception_event;
     #     cdef bint has_exception_breakpoints;
