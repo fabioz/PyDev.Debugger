@@ -261,9 +261,10 @@ cdef class PyDBFrame:
     cdef int should_skip
     def __init__(self, tuple args):
         self._args = args # In the cython version we don't need to pass the frame
-        self.should_skip = -1
+        self.should_skip = -1  # On cythonized version, put in instance.
     # ELSE
-#     should_skip = -1
+#     should_skip = -1  # Default value in class (put in instance on set).
+#     
 #     def __init__(self, args):
 #         #args = main_debugger, filename, base, info, t, frame
 #         #yeap, much faster than putting in self and then getting it from self later on

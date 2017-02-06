@@ -68,6 +68,43 @@ pip install -U "pip>=1.4" "wheel>=0.21" twine
 deactivate
 
 
+
+
+### UPDATE CYTHON
+
+C:\tools\Miniconda32\Scripts\activate py27_32
+conda update -y cython
+deactivate
+
+C:\tools\Miniconda32\Scripts\activate py34_32
+conda update -y cython
+deactivate
+
+C:\tools\Miniconda32\Scripts\activate py35_32
+conda update -y cython
+deactivate
+
+C:\tools\Miniconda\Scripts\activate py27_64
+conda update -y cython
+deactivate
+
+C:\tools\Miniconda\Scripts\activate py34_64
+conda update -y cython
+deactivate
+
+C:\tools\Miniconda\Scripts\activate py35_64
+conda update -y cython
+deactivate
+
+C:\tools\Miniconda32\Scripts\activate py36_32
+conda update -y cython
+deactivate
+
+C:\tools\Miniconda\Scripts\activate py36_64
+conda update -y cython
+deactivate
+
+
 '''
 
 from __future__ import unicode_literals
@@ -118,6 +155,10 @@ def main():
         raise AssertionError('Binary not removed: %s' % (f,))
 
     for i, python_install in enumerate(python_installations):
+        print()
+        print('*'*80)
+        print('*'*80)
+        print()
         new_name = 'pydevd_cython_%s_%s' % (sys.platform, extract_version(python_install))
         args = [
             python_install, os.path.join(root_dir, 'build_tools', 'build.py'), '--no-remove-binaries', '--target-pyd-name=%s' % new_name, '--force-cython']
