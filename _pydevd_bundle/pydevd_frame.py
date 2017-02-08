@@ -314,6 +314,7 @@ class PyDBFrame:
     # ENDIF
 
         main_debugger, filename, info, thread = self._args
+        # print('frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, event, info.pydev_step_cmd)
         try:
             info.is_tracing = True
 
@@ -321,7 +322,6 @@ class PyDBFrame:
                 return None
 
             is_line = event == 'line'
-            # print('frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, event, info.pydev_step_cmd)
             
             plugin_manager = main_debugger.plugin
 
