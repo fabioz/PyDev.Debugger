@@ -564,11 +564,13 @@ class PyDB:
 
 
     def consolidate_breakpoints(self, file, id_to_breakpoint, breakpoints):
+        from _pydevd_bundle.pydevd_trace_dispatch import global_cache_skips
         break_dict = {}
         for breakpoint_id, pybreakpoint in dict_iter_items(id_to_breakpoint):
             break_dict[pybreakpoint.line] = pybreakpoint
 
         breakpoints[file] = break_dict
+        global_cache_skips.clear()
 
     def add_break_on_exception(
         self,

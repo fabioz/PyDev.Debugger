@@ -82,6 +82,30 @@ class WriterThreadPerformance4(PerformanceWriterThread):
         self.write_make_initial_run()
         self.finished_ok = True
 
+class WriterThreadPerformance5(PerformanceWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_performance_2.py')
+    BENCHMARK_NAME = 'global_scope_1_with_breakpoint'
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(23, None)
+
+        self.write_make_initial_run()
+        self.finished_ok = True
+        
+class WriterThreadPerformance6(PerformanceWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_performance_3.py')
+    BENCHMARK_NAME = 'global_scope_2_with_breakpoint'
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(17, None)
+
+        self.write_make_initial_run()
+        self.finished_ok = True
+
 
 class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
 
@@ -107,7 +131,7 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
 
             SPEEDTIN_AUTHORIZATION_KEY = os.environ['SPEEDTIN_AUTHORIZATION_KEY']
 
-            # sys.path.append(r'X:\speedtin\pyspeedtin')
+            sys.path.append(r'X:\speedtin\pyspeedtin')
             import pyspeedtin # If the authorization key is there, pyspeedtin must be available
             import pydevd
             pydevd_cython_project_id, pydevd_pure_python_project_id = 6, 7
@@ -155,6 +179,12 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
 
     def check_performance4(self):
         self.obtain_results(WriterThreadPerformance4)
+        
+    def check_performance5(self):
+        self.obtain_results(WriterThreadPerformance5)
+        
+    def check_performance6(self):
+        self.obtain_results(WriterThreadPerformance6)
 
 if __name__ == '__main__':
     debugger_unittest.SHOW_WRITES_AND_READS = False
@@ -173,3 +203,5 @@ if __name__ == '__main__':
         check_debugger_performance.check_performance2()
         check_debugger_performance.check_performance3()
         check_debugger_performance.check_performance4()
+        check_debugger_performance.check_performance5()
+        check_debugger_performance.check_performance6()
