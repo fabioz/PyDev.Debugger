@@ -1,5 +1,9 @@
 import sys
 from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND
+# IFDEF CYTHON
+# ELSE
+from _pydevd_bundle.pydevd_frame import PyDBFrame
+# ENDIF
 
 #=======================================================================================================================
 # PyDBAdditionalThreadInfo
@@ -68,6 +72,14 @@ class PyDBAdditionalThreadInfo(object):
         if v is not None:
             return [v]
         return []
+
+    # IFDEF CYTHON
+    # def create_db_frame(self, *args, **kwargs):
+    #     raise AssertionError('This method should not be called on cython (PyDbFrame should be used directly).')
+    # ELSE
+    # just create the db frame directly
+    create_db_frame = PyDBFrame
+    # ENDIF
 
     def __str__(self):
         return 'State:%s Stop:%s Cmd: %s Kill:%s' % (

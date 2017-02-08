@@ -63,7 +63,7 @@ class PyDBFrame:
     def __init__(self, args):
         #args = main_debugger, filename, base, info, t, frame
         #yeap, much faster than putting in self and then getting it from self later on
-        self._args = args[:-1] # Remove the frame (we don't want to have a reference to it).
+        self._args = args # Remove the frame (we don't want to have a reference to it).
     # ENDIF
 
     def set_suspend(self, *args, **kwargs):
@@ -306,6 +306,7 @@ class PyDBFrame:
     #     cdef PyDBAdditionalThreadInfo info;
     #     cdef int step_cmd;
     #     cdef int line;
+    #     cdef bint is_line;
     #     cdef str curr_func_name;
     #     cdef bint exist_result;
     # ELSE

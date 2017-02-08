@@ -7,14 +7,8 @@ from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 from pydevd_tracing import SetTrace
-try:
-    from _pydevd_bundle.pydevd_signature import send_signature_call_trace
-except ImportError:
-    def send_signature_call_trace(*args, **kwargs):
-        pass
-
 # IFDEF CYTHON
-# # In Cython, PyDBAdditionalThreadInfo and PyDBFrame are bundled in the file.
+# # In Cython, PyDBAdditionalThreadInfo is bundled in the file.
 # from cpython.object cimport PyObject
 # from cpython.ref cimport Py_INCREF, Py_XDECREF
 # ELSE
@@ -44,7 +38,7 @@ def trace_dispatch(py_db, frame, event, arg):
     except:
         additional_info = thread.additional_info = PyDBAdditionalThreadInfo()
 
-    thread_tracer = ThreadTracer((py_db, thread, additional_info), global_cache_skips)
+    thread_tracer = ThreadTracer((py_db, thread, additional_info, global_cache_skips))
 # IFDEF CYTHON
 #     thread._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
 # ELSE
@@ -67,15 +61,13 @@ def trace_dispatch(py_db, frame, event, arg):
 #       return SafeCallWrapper(ret) if ret is not None else None
 # cdef class ThreadTracer:
 #     cdef public tuple _args;
-#     cdef public dict _cache_skips;
-#     def __init__(self, tuple args, dict cache_skips):
+#     def __init__(self, tuple args):
 #         self._args = args
 # ELSE
 class ThreadTracer:
-    def __init__(self, args, cache_skips):
+    def __init__(self, args):
         self._args = args
 # ENDIF
-        self._cache_skips = cache_skips
 
 
     def __call__(self, frame, event, arg):
@@ -96,11 +88,12 @@ class ThreadTracer:
         # cdef str base;
         # cdef int pydev_step_cmd;
         # cdef tuple cache_key;
+        # cdef dict cache_skips;
         # cdef bint is_stepping;
         # cdef tuple abs_path_real_path_and_base;
         # cdef PyDBAdditionalThreadInfo additional_info;
         # ENDIF
-        py_db, thread, additional_info = self._args
+        py_db, t, additional_info, cache_skips = self._args
         pydev_step_cmd = additional_info.pydev_step_cmd
         is_stepping = pydev_step_cmd != -1
 
@@ -117,8 +110,8 @@ class ThreadTracer:
                 return None
 
             # if thread is not alive, cancel trace_dispatch processing
-            if not is_thread_alive(thread):
-                py_db._process_thread_not_alive(get_thread_id(thread))
+            if not is_thread_alive(t):
+                py_db._process_thread_not_alive(get_thread_id(t))
                 return None  # suspend tracing
 
             try:
@@ -126,7 +119,6 @@ class ThreadTracer:
                 abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
             except:
                 abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
-                
 
             if py_db.thread_analyser is not None:
                 py_db.thread_analyser.log_event(frame)
@@ -135,7 +127,7 @@ class ThreadTracer:
                 py_db.asyncio_analyser.log_event(frame)
                 
             cache_key = (abs_path_real_path_and_base, frame.f_lineno)
-            if not is_stepping and cache_key in self._cache_skips:
+            if not is_stepping and cache_key in cache_skips:
                 return None
 
             file_type = get_file_type(abs_path_real_path_and_base[-1]) #we don't want to debug threading or anything related to pydevd
@@ -144,11 +136,11 @@ class ThreadTracer:
                 if file_type == 1: # inlining LIB_FILE = 1
                     if py_db.not_in_scope(abs_path_real_path_and_base[1]):
                         # print('skipped: trace_dispatch (not in scope)', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
-                        self._cache_skips[cache_key] = 1
+                        cache_skips[cache_key] = 1
                         return None
                 else:
                     # print('skipped: trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
-                    self._cache_skips[cache_key] = 1
+                    cache_skips[cache_key] = 1
                     return None
 
             if is_stepping:
@@ -170,9 +162,10 @@ class ThreadTracer:
 
             # Just create PyDBFrame directly (removed support for Python versions < 2.5, which required keeping a weak
             # reference to the frame).
-            ret = PyDBFrame((py_db, abs_path_real_path_and_base[1], additional_info, thread)).trace_dispatch(frame, event, arg)
+            ret = PyDBFrame((py_db, abs_path_real_path_and_base[1], additional_info, t)).trace_dispatch(frame, event, arg)
             if ret is None:
-                self._cache_skips[cache_key] = 1
+                print('Cached skip for: %s %s' % (abs_path_real_path_and_base[1], frame.f_code.co_name))
+                cache_skips[cache_key] = 1
                 return None
             
             # IFDEF CYTHON
