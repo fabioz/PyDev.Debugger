@@ -336,7 +336,7 @@ class PyDBFrame:
                         return self.trace_dispatch
 
             elif not is_line and event not in ('call', 'return'):
-                #I believe this can only happen in jython on some frontiers on jython and java code, which we don't want to trace.
+                # I believe this can only happen in jython on some frontiers on jython and java code, which we don't want to trace.
                 return None
 
             stop_frame = info.pydev_step_stop
@@ -381,8 +381,8 @@ class PyDBFrame:
 
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
                 # we will return nothing for the next trace
-                #also, after we hit a breakpoint and go to some other debugging state, we have to force the set trace anyway,
-                #so, that's why the additional checks are there.
+                # also, after we hit a breakpoint and go to some other debugging state, we have to force the set trace anyway,
+                # so, that's why the additional checks are there.
                 if not breakpoints_for_file:
                     if can_skip:
                         if has_exception_breakpoints:

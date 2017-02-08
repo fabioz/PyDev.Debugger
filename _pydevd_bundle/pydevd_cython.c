@@ -9839,7 +9839,7 @@ static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_trace_dispa
  *                         return self.trace_dispatch
  * 
  *             elif not is_line and event not in ('call', 'return'):             # <<<<<<<<<<<<<<
- *                 #I believe this can only happen in jython on some frontiers on jython and java code, which we don't want to trace.
+ *                 # I believe this can only happen in jython on some frontiers on jython and java code, which we don't want to trace.
  *                 return None
  */
     __pyx_t_8 = ((!(__pyx_v_is_line != 0)) != 0);
@@ -9869,7 +9869,7 @@ static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_trace_dispa
 
       /* "_pydevd_bundle/pydevd_cython.pyx":431
  *             elif not is_line and event not in ('call', 'return'):
- *                 #I believe this can only happen in jython on some frontiers on jython and java code, which we don't want to trace.
+ *                 # I believe this can only happen in jython on some frontiers on jython and java code, which we don't want to trace.
  *                 return None             # <<<<<<<<<<<<<<
  * 
  *             stop_frame = info.pydev_step_stop
@@ -9883,7 +9883,7 @@ static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_trace_dispa
  *                         return self.trace_dispatch
  * 
  *             elif not is_line and event not in ('call', 'return'):             # <<<<<<<<<<<<<<
- *                 #I believe this can only happen in jython on some frontiers on jython and java code, which we don't want to trace.
+ *                 # I believe this can only happen in jython on some frontiers on jython and java code, which we don't want to trace.
  *                 return None
  */
     }
@@ -10522,8 +10522,8 @@ static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_trace_dispa
       }
 
       /* "_pydevd_bundle/pydevd_cython.pyx":477
- *                 #also, after we hit a breakpoint and go to some other debugging state, we have to force the set trace anyway,
- *                 #so, that's why the additional checks are there.
+ *                 # also, after we hit a breakpoint and go to some other debugging state, we have to force the set trace anyway,
+ *                 # so, that's why the additional checks are there.
  *                 if not breakpoints_for_file:             # <<<<<<<<<<<<<<
  *                     if can_skip:
  *                         if has_exception_breakpoints:
@@ -10533,7 +10533,7 @@ static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_trace_dispa
       if (__pyx_t_8) {
 
         /* "_pydevd_bundle/pydevd_cython.pyx":478
- *                 #so, that's why the additional checks are there.
+ *                 # so, that's why the additional checks are there.
  *                 if not breakpoints_for_file:
  *                     if can_skip:             # <<<<<<<<<<<<<<
  *                         if has_exception_breakpoints:
@@ -10590,7 +10590,7 @@ static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_trace_dispa
           }
 
           /* "_pydevd_bundle/pydevd_cython.pyx":478
- *                 #so, that's why the additional checks are there.
+ *                 # so, that's why the additional checks are there.
  *                 if not breakpoints_for_file:
  *                     if can_skip:             # <<<<<<<<<<<<<<
  *                         if has_exception_breakpoints:
@@ -10599,8 +10599,8 @@ static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_trace_dispa
         }
 
         /* "_pydevd_bundle/pydevd_cython.pyx":477
- *                 #also, after we hit a breakpoint and go to some other debugging state, we have to force the set trace anyway,
- *                 #so, that's why the additional checks are there.
+ *                 # also, after we hit a breakpoint and go to some other debugging state, we have to force the set trace anyway,
+ *                 # so, that's why the additional checks are there.
  *                 if not breakpoints_for_file:             # <<<<<<<<<<<<<<
  *                     if can_skip:
  *                         if has_exception_breakpoints:
