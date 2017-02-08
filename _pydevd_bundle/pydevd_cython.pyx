@@ -405,6 +405,7 @@ cdef class PyDBFrame:
     # ENDIF
 
         main_debugger, filename, info, thread = self._args
+        # print('frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, event, info.pydev_step_cmd)
         try:
             info.is_tracing = True
 
@@ -412,7 +413,6 @@ cdef class PyDBFrame:
                 return None
 
             is_line = event == 'line'
-            # print('frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, event, info.pydev_step_cmd)
             
             plugin_manager = main_debugger.plugin
 
@@ -888,6 +888,7 @@ cdef class ThreadTracer:
         cdef tuple abs_path_real_path_and_base;
         cdef PyDBAdditionalThreadInfo additional_info;
         # ENDIF
+        # print('ENTER: trace_dispatch', frame.f_code.co_filename, frame.f_lineno, event, frame.f_code.co_name)
         py_db, t, additional_info, cache_skips = self._args
         pydev_step_cmd = additional_info.pydev_step_cmd
         is_stepping = pydev_step_cmd != -1
@@ -922,8 +923,11 @@ cdef class ThreadTracer:
                 py_db.asyncio_analyser.log_event(frame)
                 
             filename = abs_path_real_path_and_base[1]
-            cache_key = (filename, frame.f_lineno)
+            # Note: it's important that the context name is also given because we may hit something once
+            # in the global context and another in the local context.
+            cache_key = (filename, frame.f_lineno, frame.f_code.co_name)
             if not is_stepping and cache_key in cache_skips:
+                # print('skipped: trace_dispatch (cache hit)', cache_key, frame.f_lineno, event, frame.f_code.co_name)
                 return None
 
             file_type = get_file_type(abs_path_real_path_and_base[-1]) #we don't want to debug threading or anything related to pydevd
@@ -931,11 +935,11 @@ cdef class ThreadTracer:
             if file_type is not None:
                 if file_type == 1: # inlining LIB_FILE = 1
                     if py_db.not_in_scope(filename):
-                        # print('skipped: trace_dispatch (not in scope)', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
+                        # print('skipped: trace_dispatch (not in scope)', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
                         cache_skips[cache_key] = 1
                         return None
                 else:
-                    # print('skipped: trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
+                    # print('skipped: trace_dispatch', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
                     cache_skips[cache_key] = 1
                     return None
 
