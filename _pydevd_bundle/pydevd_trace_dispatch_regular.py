@@ -25,6 +25,12 @@ except ImportError:
 threadingCurrentThread = threading.currentThread
 get_file_type = DONT_TRACE.get
 
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+# cdef dict global_cache_skips
+# ELSE
+# ENDIF
+
+
 # Cache where we should keep that we completely skipped entering some context.
 # It needs to be invalidated when:
 # - Breakpoints are changed

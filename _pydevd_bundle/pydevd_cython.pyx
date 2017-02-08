@@ -4,6 +4,10 @@
 # DO NOT edit manually!
 import sys
 from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+# ELSE
+# from _pydevd_bundle.pydevd_frame import PyDBFrame
+# ENDIF
 
 #=======================================================================================================================
 # PyDBAdditionalThreadInfo
@@ -72,6 +76,14 @@ cdef class PyDBAdditionalThreadInfo:
         if v is not None:
             return [v]
         return []
+
+    # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+    def create_db_frame(self, *args, **kwargs):
+        raise AssertionError('This method should not be called on cython (PyDbFrame should be used directly).')
+    # ELSE
+#     # just create the db frame directly
+#     create_db_frame = PyDBFrame
+    # ENDIF
 
     def __str__(self):
         return 'State:%s Stop:%s Cmd: %s Kill:%s' % (
@@ -142,7 +154,7 @@ cdef class PyDBFrame:
 #     def __init__(self, args):
 #         #args = main_debugger, filename, base, info, t, frame
 #         #yeap, much faster than putting in self and then getting it from self later on
-#         self._args = args[:-1] # Remove the frame (we don't want to have a reference to it).
+#         self._args = args
     # ENDIF
 
     def set_suspend(self, *args, **kwargs):
@@ -385,6 +397,7 @@ cdef class PyDBFrame:
         cdef PyDBAdditionalThreadInfo info;
         cdef int step_cmd;
         cdef int line;
+        cdef bint is_line;
         cdef str curr_func_name;
         cdef bint exist_result;
     # ELSE
@@ -777,14 +790,8 @@ from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 from pydevd_tracing import SetTrace
-try:
-    from _pydevd_bundle.pydevd_signature import send_signature_call_trace
-except ImportError:
-    def send_signature_call_trace(*args, **kwargs):
-        pass
-
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
-# In Cython, PyDBAdditionalThreadInfo and PyDBFrame are bundled in the file.
+# In Cython, PyDBAdditionalThreadInfo is bundled in the file.
 from cpython.object cimport PyObject
 from cpython.ref cimport Py_INCREF, Py_XDECREF
 # ELSE
@@ -792,8 +799,20 @@ from cpython.ref cimport Py_INCREF, Py_XDECREF
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
+try:
+    from _pydevd_bundle.pydevd_signature import send_signature_call_trace
+except ImportError:
+    def send_signature_call_trace(*args, **kwargs):
+        pass
+
 threadingCurrentThread = threading.currentThread
 get_file_type = DONT_TRACE.get
+
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+# cdef dict global_cache_skips
+# ELSE
+# ENDIF
+
 
 # Cache where we should keep that we completely skipped entering some context.
 # It needs to be invalidated when:
@@ -802,21 +821,21 @@ get_file_type = DONT_TRACE.get
 global_cache_skips = {}
 
 def trace_dispatch(py_db, frame, event, arg):
-    thread = threadingCurrentThread()
+    t = threadingCurrentThread()
 
-    if getattr(thread, 'pydev_do_not_trace', None):
+    if getattr(t, 'pydev_do_not_trace', None):
         return None
 
     try:
-        additional_info = thread.additional_info
+        additional_info = t.additional_info
         if additional_info is None:
             raise AttributeError()
     except:
-        additional_info = thread.additional_info = PyDBAdditionalThreadInfo()
+        additional_info = t.additional_info = PyDBAdditionalThreadInfo()
 
-    thread_tracer = ThreadTracer((py_db, thread, additional_info), global_cache_skips)
+    thread_tracer = ThreadTracer((py_db, t, additional_info, global_cache_skips))
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
-    thread._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
+    t._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
 # ELSE
 # ENDIF
     SetTrace(thread_tracer.__call__)
@@ -837,15 +856,13 @@ cdef class SafeCallWrapper:
       return SafeCallWrapper(ret) if ret is not None else None
 cdef class ThreadTracer:
     cdef public tuple _args;
-    cdef public dict _cache_skips;
-    def __init__(self, tuple args, dict cache_skips):
+    def __init__(self, tuple args):
         self._args = args
 # ELSE
 # class ThreadTracer:
-#     def __init__(self, args, cache_skips):
+#     def __init__(self, args):
 #         self._args = args
 # ENDIF
-        self._cache_skips = cache_skips
 
 
     def __call__(self, frame, event, arg):
@@ -866,11 +883,12 @@ cdef class ThreadTracer:
         cdef str base;
         cdef int pydev_step_cmd;
         cdef tuple cache_key;
+        cdef dict cache_skips;
         cdef bint is_stepping;
         cdef tuple abs_path_real_path_and_base;
         cdef PyDBAdditionalThreadInfo additional_info;
         # ENDIF
-        py_db, thread, additional_info = self._args
+        py_db, t, additional_info, cache_skips = self._args
         pydev_step_cmd = additional_info.pydev_step_cmd
         is_stepping = pydev_step_cmd != -1
 
@@ -887,8 +905,8 @@ cdef class ThreadTracer:
                 return None
 
             # if thread is not alive, cancel trace_dispatch processing
-            if not is_thread_alive(thread):
-                py_db._process_thread_not_alive(get_thread_id(thread))
+            if not is_thread_alive(t):
+                py_db._process_thread_not_alive(get_thread_id(t))
                 return None  # suspend tracing
 
             try:
@@ -896,7 +914,6 @@ cdef class ThreadTracer:
                 abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
             except:
                 abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
-                
 
             if py_db.thread_analyser is not None:
                 py_db.thread_analyser.log_event(frame)
@@ -904,28 +921,29 @@ cdef class ThreadTracer:
             if py_db.asyncio_analyser is not None:
                 py_db.asyncio_analyser.log_event(frame)
                 
-            cache_key = (abs_path_real_path_and_base, frame.f_lineno)
-            if not is_stepping and cache_key in self._cache_skips:
+            filename = abs_path_real_path_and_base[1]
+            cache_key = (filename, frame.f_lineno)
+            if not is_stepping and cache_key in cache_skips:
                 return None
 
             file_type = get_file_type(abs_path_real_path_and_base[-1]) #we don't want to debug threading or anything related to pydevd
 
             if file_type is not None:
                 if file_type == 1: # inlining LIB_FILE = 1
-                    if py_db.not_in_scope(abs_path_real_path_and_base[1]):
+                    if py_db.not_in_scope(filename):
                         # print('skipped: trace_dispatch (not in scope)', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
-                        self._cache_skips[cache_key] = 1
+                        cache_skips[cache_key] = 1
                         return None
                 else:
                     # print('skipped: trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
-                    self._cache_skips[cache_key] = 1
+                    cache_skips[cache_key] = 1
                     return None
 
             if is_stepping:
-                if py_db.is_filter_enabled and py_db.is_ignored_by_filters(abs_path_real_path_and_base[1]):
+                if py_db.is_filter_enabled and py_db.is_ignored_by_filters(filename):
                     # ignore files matching stepping filters
                     return None
-                if py_db.is_filter_libraries and py_db.not_in_scope(abs_path_real_path_and_base[1]):
+                if py_db.is_filter_libraries and py_db.not_in_scope(filename):
                     # ignore library files while stepping
                     return None
 
@@ -935,19 +953,19 @@ cdef class ThreadTracer:
 
             if event == 'call' and py_db.signature_factory:
                 # We can only have a call when entering a context, so, check at this level, not at the PyDBFrame.
-                # filename = abs_path_real_path_and_base[1]
-                send_signature_call_trace(py_db, frame, abs_path_real_path_and_base[1])
+                send_signature_call_trace(py_db, frame, filename)
 
             # Just create PyDBFrame directly (removed support for Python versions < 2.5, which required keeping a weak
             # reference to the frame).
-            ret = PyDBFrame((py_db, abs_path_real_path_and_base[1], additional_info, thread)).trace_dispatch(frame, event, arg)
+            ret = PyDBFrame((py_db, filename, additional_info, t)).trace_dispatch(frame, event, arg)
             if ret is None:
-                self._cache_skips[cache_key] = 1
+                cache_skips[cache_key] = 1
                 return None
             
             # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
             return SafeCallWrapper(ret)
             # ELSE
+#             return ret
             # ENDIF
 
         except SystemExit:
