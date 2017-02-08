@@ -141,6 +141,7 @@ class ThreadTracer:
             filename = abs_path_real_path_and_base[1]
             cache_key = (filename, frame.f_lineno)
             if not is_stepping and cache_key in cache_skips:
+                # print('skipped: trace_dispatch (cache hit)', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name)
                 return None
 
             file_type = get_file_type(abs_path_real_path_and_base[-1]) #we don't want to debug threading or anything related to pydevd
@@ -148,11 +149,11 @@ class ThreadTracer:
             if file_type is not None:
                 if file_type == 1: # inlining LIB_FILE = 1
                     if py_db.not_in_scope(filename):
-                        # print('skipped: trace_dispatch (not in scope)', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
+                        # print('skipped: trace_dispatch (not in scope)', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
                         cache_skips[cache_key] = 1
                         return None
                 else:
-                    # print('skipped: trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
+                    # print('skipped: trace_dispatch', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
                     cache_skips[cache_key] = 1
                     return None
 
