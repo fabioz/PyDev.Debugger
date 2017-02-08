@@ -21,12 +21,6 @@ try:
 except:
     CO_GENERATOR = 0
 
-try:
-    from _pydevd_bundle.pydevd_signature import send_signature_call_trace
-except ImportError:
-    def send_signature_call_trace(*args, **kwargs):
-        pass
-
 basename = os.path.basename
 
 IGNORE_EXCEPTION_TAG = re.compile('[^#]*#.*@IgnoreException')
@@ -70,7 +64,6 @@ class PyDBFrame:
         #args = main_debugger, filename, base, info, t, frame
         #yeap, much faster than putting in self and then getting it from self later on
         self._args = args[:-1] # Remove the frame (we don't want to have a reference to it).
-        self._cache = {}
     # ENDIF
 
     def set_suspend(self, *args, **kwargs):
@@ -327,17 +320,8 @@ class PyDBFrame:
                 return None
 
             is_line = event == 'line'
-            if is_line:
-                cached = self._cache.get(frame.f_lineno)
-                if cached is not None:
-                    return self.trace_dispatch
-                    
-            is_call = event == 'call'
-            print('frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, event, info.pydev_step_cmd)
+            # print('frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, event, info.pydev_step_cmd)
             
-            if is_call and main_debugger.signature_factory:
-                send_signature_call_trace(main_debugger, frame, filename)
-
             plugin_manager = main_debugger.plugin
 
             is_exception_event = event == 'exception'
@@ -350,7 +334,7 @@ class PyDBFrame:
                         self.handle_exception(frame, event, arg)
                         return self.trace_dispatch
 
-            elif not is_line and not is_call and event != 'return':
+            elif not is_line and event not in ('call', 'return'):
                 #I believe this can only happen in jython on some frontiers on jython and java code, which we don't want to trace.
                 return None
 
@@ -427,7 +411,7 @@ class PyDBFrame:
 
 
             #We may have hit a breakpoint or we are already in step mode. Either way, let's check what we should do in this frame
-            print('NOT skipped', frame.f_lineno, frame.f_code.co_name, event)
+            # print('NOT skipped', frame.f_lineno, frame.f_code.co_name, event)
 
             try:
                 line = frame.f_lineno
@@ -540,10 +524,6 @@ class PyDBFrame:
                 # if thread has a suspend flag, we suspend with a busy wait
                 if info.pydev_state == STATE_SUSPEND:
                     self.do_wait_suspend(thread, frame, event, arg)
-                    return self.trace_dispatch
-                
-                if step_cmd == -1:
-                    self._cache[frame.f_lineno] = 1
                     return self.trace_dispatch
 
             except:
