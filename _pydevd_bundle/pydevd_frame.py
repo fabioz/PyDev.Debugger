@@ -8,6 +8,13 @@ from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_dont_trace
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
+# IFDEF CYTHON
+# cdef int CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
+# CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
+# cdef int PYDEV_FILE
+# cdef int STATE_SUSPEND, STATE_RUN
+# cdef bint IS_PY3K
+# ENDIF
 from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
 from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_contains, get_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
