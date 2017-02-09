@@ -17,6 +17,7 @@ import os
 import sys
 
 from _pydev_imps._pydev_saved_modules import threading
+from _pydevd_bundle.pydevd_constants import INTERACTIVE_MODE_AVAILABLE
 
 import traceback
 from _pydev_bundle import fix_getpass
@@ -171,6 +172,9 @@ def init_mpl_in_console(interpreter):
         return False
 
     set_return_control_callback(return_control)
+
+    if not INTERACTIVE_MODE_AVAILABLE:
+        return
 
     from _pydev_bundle.pydev_import_hook import import_hook_manager
     from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot
