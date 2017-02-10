@@ -5,7 +5,6 @@
 import sys
 import weakref
 from _pydev_imps._pydev_saved_modules import thread
-from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, dict_iter_items
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 # ELSE
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
@@ -55,7 +54,7 @@ cdef class PyDBAdditionalThreadInfo:
     # ENDIF
 
     def __init__(self):
-        self.pydev_state = STATE_RUN
+        self.pydev_state = 1 # STATE_RUN
         self.pydev_step_stop = None
         self.pydev_step_cmd = -1 # Something as CMD_STEP_INTO, CMD_STEP_OVER, etc.
         self.pydev_notify_kill = False
@@ -66,7 +65,7 @@ cdef class PyDBAdditionalThreadInfo:
         self.is_tracing = False
         self.conditional_breakpoint_exception = None
         self.pydev_message = ''
-        self.suspend_type = PYTHON_SUSPEND
+        self.suspend_type = 1 # PYTHON SUSPEND
         self.pydev_next_line = -1
         self.pydev_func_name = '.invalid.' # Must match the type in cython
 
@@ -207,6 +206,13 @@ from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_dont_trace
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+cdef int CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
+CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
+cdef int PYDEV_FILE
+cdef int STATE_SUSPEND, STATE_RUN
+cdef bint IS_PY3K
+# ENDIF
 from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
 from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_contains, get_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
@@ -897,7 +903,6 @@ cdef class PyDBFrame:
 
 import traceback
 
-from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_constants import get_thread_id
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
@@ -912,6 +917,24 @@ from cpython.ref cimport Py_INCREF, Py_XDECREF
 # from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 # ENDIF
 
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+_temp = threading.Thread()
+cdef str thread_stopped_attr = None
+for check_attr in ('_is_stopped' , '_Thread__stopped','__stopped' ):
+  if hasattr(_temp, check_attr ):
+      thread_stopped_attr = check_attr
+      break
+cdef bint is_thread_alive(t) except -1:
+  if thread_stopped_attr is not None:
+      try:
+          return not getattr(t, thread_stopped_attr)
+      except:
+          return t.isAlive()
+  else:
+      return t.isAlive()
+# ELSE
+# from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
+# ENDIF
 threadingCurrentThread = threading.currentThread
 get_file_type = DONT_TRACE.get
 
