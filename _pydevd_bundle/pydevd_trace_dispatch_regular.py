@@ -1,6 +1,5 @@
 import traceback
 
-from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_constants import get_thread_id
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
@@ -15,6 +14,24 @@ from pydevd_tracing import SetTrace
 from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 # ENDIF
 
+# IFDEF CYTHON
+# _temp = threading.Thread()
+# cdef str thread_stopped_attr = None
+# for check_attr in ('_is_stopped' , '_Thread__stopped','__stopped' ):
+#   if hasattr(_temp, check_attr ):
+#       thread_stopped_attr = check_attr
+#       break
+# cdef bint is_thread_alive(t) except -1:
+#   if thread_stopped_attr is not None:
+#       try:
+#           return not getattr(t, thread_stopped_attr)
+#       except:
+#           return t.isAlive()
+#   else:
+#       return t.isAlive()
+# ELSE
+from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
+# ENDIF
 threadingCurrentThread = threading.currentThread
 get_file_type = DONT_TRACE.get
 
