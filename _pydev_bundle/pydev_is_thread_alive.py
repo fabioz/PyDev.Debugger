@@ -17,6 +17,13 @@ elif hasattr(_temp, '_Thread__stopped'): # Python 2.7 has this
         except:
             return t.isAlive()
 
+elif hasattr(_temp, '__stopped'): # Python 2.6 has this
+    def is_thread_alive(t):
+        try:
+            return not t.__stopped
+        except:
+            return t.isAlive()
+
 else: # Haven't checked all other versions, so, let's use the regular isAlive call in this case.
     def is_thread_alive(t):
         return t.isAlive()

@@ -1,7 +1,6 @@
 import sys
 import weakref
 from _pydev_imps._pydev_saved_modules import thread
-from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, dict_iter_items
 # IFDEF CYTHON
 # ELSE
 from _pydevd_bundle.pydevd_frame import PyDBFrame
@@ -51,7 +50,7 @@ class PyDBAdditionalThreadInfo(object):
     # ENDIF
 
     def __init__(self):
-        self.pydev_state = STATE_RUN
+        self.pydev_state = 1 # STATE_RUN
         self.pydev_step_stop = None
         self.pydev_step_cmd = -1 # Something as CMD_STEP_INTO, CMD_STEP_OVER, etc.
         self.pydev_notify_kill = False
@@ -62,7 +61,7 @@ class PyDBAdditionalThreadInfo(object):
         self.is_tracing = False
         self.conditional_breakpoint_exception = None
         self.pydev_message = ''
-        self.suspend_type = PYTHON_SUSPEND
+        self.suspend_type = 1 # PYTHON SUSPEND
         self.pydev_next_line = -1
         self.pydev_func_name = '.invalid.' # Must match the type in cython
 
