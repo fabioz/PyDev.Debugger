@@ -83,6 +83,30 @@ class WriterThreadPerformance4(PerformanceWriterThread):
         self.write_make_initial_run()
         self.finished_ok = True
 
+class WriterThreadPerformance5(PerformanceWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_performance_2.py')
+    BENCHMARK_NAME = 'global_scope_1_with_breakpoint'
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(23, None)
+
+        self.write_make_initial_run()
+        self.finished_ok = True
+        
+class WriterThreadPerformance6(PerformanceWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_performance_3.py')
+    BENCHMARK_NAME = 'global_scope_2_with_breakpoint'
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(17, None)
+
+        self.write_make_initial_run()
+        self.finished_ok = True
+
 
 class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
 
