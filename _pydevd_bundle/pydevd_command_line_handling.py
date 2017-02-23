@@ -59,7 +59,6 @@ ACCEPTED_ARG_HANDLERS = [
     ArgHandlerBool('save-signatures'),
     ArgHandlerBool('save-threading'),
     ArgHandlerBool('save-asyncio'),
-    ArgHandlerBool('qt-support'),
     ArgHandlerBool('print-in-debugger-startup'),
     ArgHandlerBool('cmd-line'),
     ArgHandlerBool('module'),
@@ -97,6 +96,7 @@ def process_command_line(argv):
     for handler in ACCEPTED_ARG_HANDLERS:
         setup[handler.arg_name] = handler.default_val
     setup['file'] = ''
+    setup['qt-support'] = ''
 
     i = 0
     del argv[0]
@@ -104,6 +104,30 @@ def process_command_line(argv):
         handler = ARGV_REP_TO_HANDLER.get(argv[i])
         if handler is not None:
             handler.handle_argv(argv, i, setup)
+            
+        elif argv[i].startswith('--qt-support'):
+            # The --qt-support is special because we want to keep backward compatibility: 
+            # Previously, just passing '--qt-support' meant that we should use the auto-discovery mode
+            # whereas now, if --qt-support is passed, it should be passed as --qt-support=<mode>, where
+            # mode can be one of 'auto', 'none', 'pyqt5', 'pyqt4', 'pyside'.
+            if argv[i] == '--qt-support':
+                setup['qt-support'] = 'auto'
+                
+            elif argv[i].startswith('--qt-support='):
+                qt_support = argv[i][len('--qt-support='):]
+                valid_modes = ('none', 'auto', 'pyqt5', 'pyqt4', 'pyside')
+                if qt_support not in valid_modes:
+                    raise ValueError("qt-support mode invalid: " + qt_support)
+                if qt_support == 'none':
+                    # On none, actually set an empty string to evaluate to False.
+                    setup['qt-support'] = ''
+                else:
+                    setup['qt-support'] = qt_support
+            else:
+                raise ValueError("Unexpected definition for qt-support flag: " + argv[i])
+            
+            del argv[i]
+            
             
         elif argv[i] == '--file':
             # --file is special because it's the last one (so, no handler for it).
@@ -117,5 +141,5 @@ def process_command_line(argv):
             set_debug(setup)
 
         else:
-            raise ValueError("unexpected option " + argv[i])
+            raise ValueError("Unexpected option: " + argv[i])
     return setup

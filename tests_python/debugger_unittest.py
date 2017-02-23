@@ -187,6 +187,10 @@ class DebuggerRunner(object):
         finally:
             writer_thread.do_kill()
             writer_thread.log = []
+            
+        stdout = ret['stdout']
+        stderr = ret['stderr']
+        writer_thread.additional_output_checks(''.join(stdout), ''.join(stderr))
         return ret
 
     def create_process(self, args, writer_thread):
@@ -302,6 +306,9 @@ class AbstractWriterThread(threading.Thread):
         self.finished_ok = False
         self._next_breakpoint_id = 0
         self.log = []
+        
+    def additional_output_checks(self, stdout, stderr):
+        pass
 
     def get_environ(self):
         return None

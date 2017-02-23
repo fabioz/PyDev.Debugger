@@ -893,6 +893,37 @@ class WriterThreadCaseQThread3(debugger_unittest.AbstractWriterThread):
         self.finished_ok = True
 
 #=======================================================================================================================
+# WriterThreadCaseQThread4
+#=======================================================================================================================
+class WriterThreadCaseQThread4(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_qthread4.py')
+
+    def run(self):
+        self.start_socket()
+        breakpoint_id = self.write_add_breakpoint(24, 'on_start')
+        self.write_make_initial_run()
+
+        thread_id, frame_id = self.wait_for_breakpoint_hit()
+
+        self.write_remove_breakpoint(breakpoint_id)
+        self.write_run_thread(thread_id)
+
+        self.log.append('Checking sequence. Found: %s' % (self._sequence))
+        assert 9 == self._sequence, 'Expected 9. Had: %s' % self._sequence
+
+        self.log.append('Marking finished ok.')
+        self.finished_ok = True
+        
+    def additional_output_checks(self, stdout, stderr):
+        if 'On start called' not in stdout:
+            raise AssertionError('Expected "On start called" to be in stdout:\n%s' % (stdout,))
+        if 'Done sleeping' not in stdout:
+            raise AssertionError('Expected "Done sleeping" to be in stdout:\n%s' % (stdout,))
+        if 'native Qt signal is not callable' in stderr:
+            raise AssertionError('Did not expect "native Qt signal is not callable" to be in stderr:\n%s' % (stderr,))
+
+#=======================================================================================================================
 # WriterThreadCase1
 #=======================================================================================================================
 class WriterThreadCase1(debugger_unittest.AbstractWriterThread):
@@ -1186,6 +1217,10 @@ class DebuggerBase(debugger_unittest.DebuggerRunner):
     def test_case_qthread3(self):
         if self._has_qt():
             self.check_case(WriterThreadCaseQThread3)
+
+    def test_case_qthread4(self):
+        if self._has_qt():
+            self.check_case(WriterThreadCaseQThread4)
             
     def test_m_switch(self):
         self.check_case(WriterThreadCaseMSwitch)
@@ -1344,7 +1379,7 @@ if __name__ == '__main__':
 #
 #         suite.addTests(unittest.makeSuite(TestIronPython))
 #
-        suite.addTests(unittest.makeSuite(TestPython))
+#         suite.addTests(unittest.makeSuite(TestPython))
 
 
 
@@ -1368,6 +1403,6 @@ if __name__ == '__main__':
 #         unittest.TextTestRunner(verbosity=3).run(suite)
     #     suite.addTest(TestPython('test_case_17'))
     #     suite.addTest(TestPython('test_case_18'))
-    #     suite.addTest(TestPython('test_case_19'))
+        suite.addTest(TestPython('test_case_qthread4'))
 
         unittest.TextTestRunner(verbosity=3).run(suite)
