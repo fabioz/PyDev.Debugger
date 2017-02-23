@@ -26,7 +26,8 @@ before_install:
 install:
   - conda create --yes -n build_env python=$TRAVIS_PYTHON_VERSION
   - source activate build_env
-  - conda install --yes numpy ipython cython pytest psutil
+  - chmod +x ./.travis_install.sh
+  - ./.travis_install.sh
   - pip install "django>=1.7,<1.8"
   - pip install Pympler
   - python build_tools/build.py
