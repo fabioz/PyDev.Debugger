@@ -45,8 +45,7 @@ def default_should_trace_hook(frame, filename):
         #     pass
         ignored_lines = {}
         lines = linecache.getlines(filename)
-        i_line = 0  # Could use enumerate, but not there on all versions...
-        for line in lines:
+        for i_line, line in enumerate(lines):
             j = line.find('#')
             if j >= 0:
                 comment = line[j:]
@@ -70,8 +69,6 @@ def default_should_trace_hook(frame, filename):
                         else:
                             break
                         
-            i_line += 1
-                    
 
         _filename_to_ignored_lines[filename] = ignored_lines
 
