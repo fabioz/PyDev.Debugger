@@ -2,7 +2,7 @@ from _pydev_bundle import pydev_log
 import traceback
 from _pydevd_bundle import pydevd_resolver
 import sys
-from _pydevd_bundle.pydevd_constants import dict_contains, dict_iter_items, dict_keys, IS_PY3K, \
+from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
     MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT
 
 from _pydev_bundle.pydev_imports import quote
@@ -184,7 +184,7 @@ def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
                     return_values_xml += var_to_xml(val, name, additional_in_xml=' isRetVal="True"')
 
             else:
-                if hidden_ns is not None and dict_contains(hidden_ns, k):
+                if hidden_ns is not None and k in hidden_ns:
                     xml += var_to_xml(v, str(k), additional_in_xml=' isIPythonHidden="True"')
                 else:
                     xml += var_to_xml(v, str(k))

@@ -19,7 +19,7 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, \
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
     CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription
-from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_contains, dict_keys, \
+from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, \
     STATE_RUN
 
 
@@ -317,7 +317,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                     pydev_log.debug('Added breakpoint:%s - line:%s - func_name:%s\n' % (file, line, func_name.encode('utf-8')))
                     sys.stderr.flush()
 
-                if dict_contains(file_to_id_to_breakpoint, file):
+                if file in file_to_id_to_breakpoint:
                     id_to_pybreakpoint = file_to_id_to_breakpoint[file]
                 else:
                     id_to_pybreakpoint = file_to_id_to_breakpoint[file] = {}
