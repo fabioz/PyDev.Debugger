@@ -121,7 +121,7 @@ if sys.platform.find('java') == -1:
                 #math is a builtin and because of that, it starts with None as a file
                 start = '@@COMPLETIONS(None,(__doc__,'
                 start_2 = '@@COMPLETIONS(None,(__name__,'
-                if '/math.so,' in completions or '/math.cpython-33m.so,' in completions or '/math.cpython-34m.so,' in completions:
+                if '/math.so,' in completions or '/math.cpython-33m.so,' in completions or '/math.cpython-34m.so,' in completions or 'math.cpython-35m' in completions:
                     return
                 self.assert_(completions.startswith(start) or completions.startswith(start_2), '%s DOESNT START WITH %s' % (completions, (start, start_2)))
         
