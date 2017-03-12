@@ -901,7 +901,7 @@ class WriterThreadCaseQThread4(debugger_unittest.AbstractWriterThread):
 
     def run(self):
         self.start_socket()
-        breakpoint_id = self.write_add_breakpoint(24, 'on_start')
+        breakpoint_id = self.write_add_breakpoint(27, 'on_start')
         self.write_make_initial_run()
 
         thread_id, frame_id = self.wait_for_breakpoint_hit()
@@ -1203,7 +1203,11 @@ class DebuggerBase(debugger_unittest.DebuggerRunner):
                 from PyQt4 import QtCore
                 return True
             except:
-                pass
+                try:
+                    from PyQt5 import QtCore
+                    return True
+                except:
+                    pass
         return False
 
     def test_case_qthread1(self):
