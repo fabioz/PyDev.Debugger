@@ -24,7 +24,8 @@ class TestThread(QtCore.QThread):
         print('Done sleeping')
 
 def on_start():
-    print('On start called')
+    print('On start called1')
+    print('On start called2')
 
 app = QtCore.QCoreApplication([])
 some_thread = TestThread()
