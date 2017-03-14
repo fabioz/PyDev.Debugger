@@ -20,7 +20,7 @@ class TestObject(QtCore.QObject):
 class TestThread(QtCore.QThread):
 
     def run(self):
-        QtCore.QThread.sleep(2)
+        QtCore.QThread.sleep(4)
         print('Done sleeping')
 
 def on_start():

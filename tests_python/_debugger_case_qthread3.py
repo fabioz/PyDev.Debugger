@@ -19,7 +19,7 @@ class Runnable(QtCore.QRunnable):
         count = 0
         app = QtCore.QCoreApplication.instance()
         while count < 5:
-            print "Increasing"
+            print("Increasing")
             time.sleep(.5)
             count += 1
         app.quit()

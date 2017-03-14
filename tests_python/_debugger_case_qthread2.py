@@ -22,7 +22,7 @@ class SomeObject(QtCore.QObject):
         count = 0
         while count < 5:
             time.sleep(.5)
-            print "Increasing"
+            print("Increasing")
             count += 1
         self.finished.emit()
 
