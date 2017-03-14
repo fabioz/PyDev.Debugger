@@ -111,9 +111,9 @@ class ReaderThread(threading.Thread):
         
     def get_next_message(self, context_messag):
         try:
-            msg = self._queue.get(block=True, timeout=5)
+            msg = self._queue.get(block=True, timeout=15)
         except:
-            raise AssertionError('No message was written in 20 seconds. Error message:\n%s' % (context_messag,))
+            raise AssertionError('No message was written in 15 seconds. Error message:\n%s' % (context_messag,))
         else:
             frame = sys._getframe().f_back
             frame_info = ' --  File "%s", line %s, in %s\n' % (frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name)

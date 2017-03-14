@@ -131,6 +131,7 @@ class WriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
                         continue
 
         t = T()
+        time.sleep(2) # Give django some time to get to startup before requesting the page
         t.start()
 
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
