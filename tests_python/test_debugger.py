@@ -122,8 +122,13 @@ class WriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
                     from urllib.request import urlopen
                 except ImportError:
                     from urllib import urlopen
-                stream = urlopen('http://127.0.0.1:%s/my_app' % django_port)
-                self.contents = stream.read()
+                for _ in xrange(10):
+                    try:
+                        stream = urlopen('http://127.0.0.1:%s/my_app' % django_port)
+                        self.contents = stream.read()
+                        break
+                    except IOError:
+                        continue
 
         t = T()
         t.start()
@@ -131,20 +136,24 @@ class WriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
         assert line == 5, 'Expected return to be in line 5, was: %s' % line
         self.write_get_variable(thread_id, frame_id, 'entry')
-        self.wait_for_var('<var name="key" type="str"')
-        self.wait_for_var('v1')
+        self.wait_for_vars([
+            '<var name="key" type="str"',
+            'v1'
+        ])
 
         self.write_run_thread(thread_id)
 
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
         assert line == 5, 'Expected return to be in line 5, was: %s' % line
         self.write_get_variable(thread_id, frame_id, 'entry')
-        self.wait_for_var('<var name="key" type="str"')
-        self.wait_for_var('v2')
+        self.wait_for_vars([
+            '<var name="key" type="str"', 
+            'v2'
+        ])
 
         self.write_run_thread(thread_id)
 
-        for i in xrange(10):
+        for _ in xrange(10):
             if hasattr(t, 'contents'):
                 break
             time.sleep(.3)
