@@ -4,7 +4,10 @@ import sys
 try:
     from PySide import QtCore  # @UnresolvedImport
 except:
-    from PyQt4 import QtCore
+    try:
+        from PyQt4 import QtCore
+    except:
+        from PyQt5 import QtCore
 
 # Subclassing QObject and using moveToThread
 # http://labs.qt.nokia.com/2007/07/05/qthreads-no-longer-abstract/

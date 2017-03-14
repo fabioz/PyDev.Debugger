@@ -4,7 +4,10 @@ import sys
 try:
     from PySide import QtCore  # @UnresolvedImport
 except:
-    from PyQt4 import QtCore
+    try:
+        from PyQt4 import QtCore
+    except:
+        from PyQt5 import QtCore
 
 # Using a QRunnable
 # http://doc.qt.nokia.com/latest/qthreadpool.html

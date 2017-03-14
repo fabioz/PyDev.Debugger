@@ -832,7 +832,7 @@ class WriterThreadCaseQThread1(debugger_unittest.AbstractWriterThread):
 
     def run(self):
         self.start_socket()
-        breakpoint_id = self.write_add_breakpoint(16, 'run')
+        breakpoint_id = self.write_add_breakpoint(19, 'run')
         self.write_make_initial_run()
 
         thread_id, frame_id = self.wait_for_breakpoint_hit()
@@ -855,7 +855,7 @@ class WriterThreadCaseQThread2(debugger_unittest.AbstractWriterThread):
 
     def run(self):
         self.start_socket()
-        breakpoint_id = self.write_add_breakpoint(21, 'long_running')
+        breakpoint_id = self.write_add_breakpoint(24, 'long_running')
         self.write_make_initial_run()
 
         thread_id, frame_id = self.wait_for_breakpoint_hit()
@@ -878,7 +878,7 @@ class WriterThreadCaseQThread3(debugger_unittest.AbstractWriterThread):
 
     def run(self):
         self.start_socket()
-        breakpoint_id = self.write_add_breakpoint(19, 'run')
+        breakpoint_id = self.write_add_breakpoint(22, 'run')
         self.write_make_initial_run()
 
         thread_id, frame_id = self.wait_for_breakpoint_hit()
