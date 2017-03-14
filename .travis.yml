@@ -29,7 +29,6 @@ install:
   - source activate build_env
   - chmod +x ./.travis_install.sh
   - ./.travis_install.sh
-  - pip install "django>=1.7,<1.8"
   - pip install Pympler
   - python build_tools/build.py
 

@@ -66,7 +66,7 @@ class WriterThreadCaseSetNextStatement(debugger_unittest.AbstractWriterThread):
         assert line == 6, 'Expected return to be in line 6, was: %s' % line
 
         self.write_evaluate_expression('%s\t%s\t%s' % (thread_id, frame_id, 'LOCAL'), 'a')
-        self.wait_for_evaluation('<var name="a" type="int" qualifier="{}" value="int: 2"'.format(builtin_qualifier))
+        self.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="int: 2"'.format(builtin_qualifier))
         self.write_set_next_statement(thread_id, 2, 'method')
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
         assert line == 2, 'Expected return to be in line 2, was: %s' % line
@@ -75,7 +75,7 @@ class WriterThreadCaseSetNextStatement(debugger_unittest.AbstractWriterThread):
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('108', True)
 
         self.write_evaluate_expression('%s\t%s\t%s' % (thread_id, frame_id, 'LOCAL'), 'a')
-        self.wait_for_evaluation('<var name="a" type="int" qualifier="{}" value="int: 1"'.format(builtin_qualifier))
+        self.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="int: 1"'.format(builtin_qualifier))
 
         self.write_remove_breakpoint(breakpoint_id)
         self.write_run_thread(thread_id)
@@ -174,7 +174,7 @@ class WriterThreadCase19(debugger_unittest.AbstractWriterThread):
         assert line == 8, 'Expected return to be in line 8, was: %s' % line
 
         self.write_evaluate_expression('%s\t%s\t%s' % (thread_id, frame_id, 'LOCAL'), 'a.__var')
-        self.wait_for_evaluation('<var name="a.__var" type="int" qualifier="{}" value="int'.format(builtin_qualifier))
+        self.wait_for_evaluation('<var name="a.__var" type="int" qualifier="{0}" value="int'.format(builtin_qualifier))
         self.write_run_thread(thread_id)
 
 
@@ -295,7 +295,7 @@ class WriterThreadCase16(debugger_unittest.AbstractWriterThread):
         self.wait_for_var([
             '<var name="min" type="int64" qualifier="numpy" value="int64%253A 0"',
             '<var name="min" type="int64" qualifier="numpy" value="int64%3A 0"',
-            '<var name="size" type="int" qualifier="{}" value="int%3A 100000"'.format(builtin_qualifier),
+            '<var name="size" type="int" qualifier="{0}" value="int%3A 100000"'.format(builtin_qualifier),
         ])
         self.wait_for_var([
             '<var name="max" type="int64" qualifier="numpy" value="int64%253A 99999"',
@@ -313,16 +313,16 @@ class WriterThreadCase16(debugger_unittest.AbstractWriterThread):
         # the min/max
         self.write_get_variable(thread_id, frame_id, 'hugearray')
         self.wait_for_var([
-            '<var name="min" type="str" qualifier={} value="str%253A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
-            '<var name="min" type="str" qualifier={} value="str%3A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
-            '<var name="min" type="str" qualifier="{}" value="str%253A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
-            '<var name="min" type="str" qualifier="{}" value="str%3A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="min" type="str" qualifier={0} value="str%253A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="min" type="str" qualifier={0} value="str%3A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="min" type="str" qualifier="{0}" value="str%253A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="min" type="str" qualifier="{0}" value="str%3A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
         ])
         self.wait_for_var([
-            '<var name="max" type="str" qualifier={} value="str%253A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
-            '<var name="max" type="str" qualifier={} value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
-            '<var name="max" type="str" qualifier="{}" value="str%253A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
-            '<var name="max" type="str" qualifier="{}" value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="max" type="str" qualifier={0} value="str%253A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="max" type="str" qualifier={0} value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="max" type="str" qualifier="{0}" value="str%253A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="max" type="str" qualifier="{0}" value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
         ])
         self.wait_for_var('<var name="shape" type="tuple"')
         self.wait_for_var('<var name="dtype" type="dtype"')
@@ -648,7 +648,7 @@ class WriterThreadCase7(debugger_unittest.AbstractWriterThread):
 
         self.write_get_frame(thread_id, frame_id)
 
-        self.wait_for_vars('<xml><var name="variable_for_test_1" type="int" qualifier="{}" value="int%253A 10" />%0A</xml>'.format(builtin_qualifier))
+        self.wait_for_vars('<xml><var name="variable_for_test_1" type="int" qualifier="{0}" value="int%253A 10" />%0A</xml>'.format(builtin_qualifier))
 
         self.write_step_over(thread_id)
 
@@ -1373,6 +1373,7 @@ if __name__ == '__main__':
         assert os.path.exists(JAVA_LOCATION), 'The location: %s is not valid' % (JAVA_LOCATION,)
 
     if True:
+        print('Running with :%s (%s)' % (PYTHON_EXE, sys.version_info))
         #try:
         #    os.remove(r'X:\pydev\plugins\org.python.pydev\pysrc\pydevd.pyc')
         #except:
@@ -1383,7 +1384,7 @@ if __name__ == '__main__':
 #
 #         suite.addTests(unittest.makeSuite(TestIronPython))
 #
-#         suite.addTests(unittest.makeSuite(TestPython))
+        suite.addTests(unittest.makeSuite(TestPython))
 
 
 
@@ -1406,7 +1407,7 @@ if __name__ == '__main__':
 #         suite.addTest(TestPython('test_case_2'))
 #         unittest.TextTestRunner(verbosity=3).run(suite)
     #     suite.addTest(TestPython('test_case_17'))
-    #     suite.addTest(TestPython('test_case_18'))
-        suite.addTest(TestPython('test_case_qthread4'))
+#         suite.addTest(TestPython('test_case_16'))
+#         suite.addTest(TestPython('test_case_qthread4'))
 
         unittest.TextTestRunner(verbosity=3).run(suite)
