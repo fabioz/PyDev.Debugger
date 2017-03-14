@@ -172,9 +172,13 @@ def main():
 if __name__ == '__main__':
     main()
 
+# C:\tools\Miniconda32\envs\py27_32\python build_tools\build.py: generates the .pyx and .c
+# C:\tools\Miniconda32\envs\py27_32\python build_tools\build_binaries_windows.py: builds for multiple python versions
+
 '''
 To run do:
 cd /D x:\PyDev.Debugger
 set PYTHONPATH=x:\PyDev.Debugger
+C:\tools\Miniconda32\envs\py27_32\python build_tools\build.py
 C:\tools\Miniconda32\envs\py27_32\python build_tools\build_binaries_windows.py
 '''
