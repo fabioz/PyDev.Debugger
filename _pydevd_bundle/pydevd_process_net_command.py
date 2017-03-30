@@ -679,7 +679,10 @@ def process_net_command(py_db, cmd_id, seq, text):
 
         except Exception:
             traceback.print_exc()
-            from _pydev_bundle.pydev_imports import StringIO
+            try:
+                from StringIO import StringIO
+            except ImportError:
+                from io import StringIO
             stream = StringIO()
             traceback.print_exc(file=stream)
             cmd = py_db.cmd_factory.make_error_message(

@@ -38,7 +38,7 @@ from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CM
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
-from _pydevd_bundle.pydevd_trace_dispatch import trace_dispatch as _trace_dispatch
+from _pydevd_bundle.pydevd_trace_dispatch import trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
@@ -568,7 +568,6 @@ class PyDB:
 
 
     def consolidate_breakpoints(self, file, id_to_breakpoint, breakpoints):
-        from _pydevd_bundle.pydevd_trace_dispatch import global_cache_skips, global_cache_frame_skips
         break_dict = {}
         for breakpoint_id, pybreakpoint in dict_iter_items(id_to_breakpoint):
             break_dict[pybreakpoint.line] = pybreakpoint

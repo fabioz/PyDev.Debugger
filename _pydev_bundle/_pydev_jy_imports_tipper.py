@@ -452,7 +452,7 @@ def generate_imports_tip_for_module(obj_to_complete, dir_comps=None, getattr=get
         else:
 
             isMet = ismethod(obj)
-            if isMet[0]:
+            if isMet[0] and isMet[1]:
                 info = isMet[1][0]
                 try:
                     args, vargs, kwargs = info.args, info.varargs, info.kwargs
