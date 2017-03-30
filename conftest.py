@@ -17,11 +17,11 @@ def bytes2human(n, format='%(value).1f %(symbol)s', symbols='customary'):
     Bytes-to-human / human-to-bytes converter.
     Based on: http://goo.gl/kTQMs
     Working with Python 2.x and 3.x.
-    
+
     Author: Giampaolo Rodola' <g.rodola [AT] gmail [DOT] com>
     License: MIT
     """
-    
+
     """
     Convert n bytes into a human readable string based on format.
     symbols can be either "customary", "customary_ext", "iec" or "iec_ext",
@@ -88,14 +88,14 @@ def before_after_each_function(request):
     import psutil
     current_pids = set(proc.pid for proc in psutil.process_iter())
     before_curr_proc_memory_info = psutil.Process().memory_info()
-    
+
     if _global_collect_info and DEBUG_MEMORY_INFO:
         try:
             from pympler import summary, muppy
             sum1 = summary.summarize(muppy.get_objects())
         except:
             import traceback;traceback.print_exc()
-    
+
     sys.stdout.write(
 '''
 ===============================================================================
@@ -104,20 +104,23 @@ Memory before: %s
 ===============================================================================
 ''' % (request.function, format_memory_info(psutil.virtual_memory(), before_curr_proc_memory_info)))
     yield
-    
+
     processes_info = []
     for proc in psutil.process_iter():
         if proc.pid not in current_pids:
-            processes_info.append(
-                'New Process: %s(%s) - %s' % (
-                    proc.name(), 
-                    proc.pid, 
-                    format_process_memory_info(proc.memory_info())
+            try:
+                processes_info.append(
+                    'New Process: %s(%s) - %s' % (
+                        proc.name(),
+                        proc.pid,
+                        format_process_memory_info(proc.memory_info())
+                    )
                 )
-            )
-    
+            except psutil.NoSuchProcess:
+                pass  # The process could've died in the meanwhile
+
     after_curr_proc_memory_info = psutil.Process().memory_info()
-    
+
     if DEBUG_MEMORY_INFO:
         try:
             if after_curr_proc_memory_info.rss - before_curr_proc_memory_info.rss > 10 * 1000 * 1000:
@@ -128,9 +131,9 @@ Memory before: %s
                     sys.stdout.write('===============================================================================\n')
                     sys.stdout.write('Leak info:\n')
                     sys.stdout.write('===============================================================================\n')
-                    summary.print_(diff) 
+                    summary.print_(diff)
                     sys.stdout.write('===============================================================================\n')
-                
+
                 _global_collect_info = True
                 # We'll only really collect the info on the next test (i.e.: if at one test
                 # we used too much memory, the next one will start collecting)
@@ -138,7 +141,7 @@ Memory before: %s
                 _global_collect_info = False
         except:
             import traceback;traceback.print_exc()
-        
+
     sys.stdout.write(
 '''
 ===============================================================================
@@ -148,7 +151,7 @@ Memory after: %s
 
 
 ''' % (
-    request.function, 
-    format_memory_info(psutil.virtual_memory(), after_curr_proc_memory_info), 
+    request.function,
+    format_memory_info(psutil.virtual_memory(), after_curr_proc_memory_info),
     '' if not processes_info else '\nLeaked processes:\n'+'\n'.join(processes_info)),
     )
