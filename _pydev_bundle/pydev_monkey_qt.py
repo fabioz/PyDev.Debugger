@@ -26,9 +26,9 @@ def patch_qt(qt_support_mode):
         return
 
     _patched_qt = True
-    
+
     if qt_support_mode == 'auto':
-    
+
         patch_qt_on_import = None
         try:
             import PySide  # @UnresolvedImport @UnusedImport
@@ -43,16 +43,16 @@ def patch_qt(qt_support_mode):
                     qt_support_mode = 'pyqt4'
                 except:
                     return
-            
-            
+
+
     if qt_support_mode == 'pyside':
         import PySide.QtCore  # @UnresolvedImport
-        _internal_patch_qt(PySide.QtCore)
-    
+        _internal_patch_qt(PySide.QtCore, qt_support_mode)
+
     elif qt_support_mode == 'pyqt5':
         import PyQt5.QtCore  # @UnresolvedImport
         _internal_patch_qt(PyQt5.QtCore)
-    
+
     elif qt_support_mode == 'pyqt4':
         # Ok, we have an issue here:
         # PyDev-452: Selecting PyQT API version using sip.setapi fails in debug mode
@@ -65,7 +65,7 @@ def patch_qt(qt_support_mode):
             import PyQt4.QtCore  # @UnresolvedImport
             return PyQt4.QtCore
         _patch_import_to_patch_pyqt_on_import(patch_qt_on_import, get_qt_core_module)
-        
+
     else:
         raise ValueError('Unexpected qt support mode: %s' % (qt_support_mode,))
 
@@ -98,13 +98,21 @@ def _patch_import_to_patch_pyqt_on_import(patch_qt_on_import, get_qt_core_module
     builtins.__import__ = patched_import
 
 
-def _internal_patch_qt(QtCore):
+def _internal_patch_qt(QtCore, qt_support_mode='auto'):
     _original_thread_init = QtCore.QThread.__init__
     _original_runnable_init = QtCore.QRunnable.__init__
     _original_QThread = QtCore.QThread
 
+    class FuncWrapper:
+        def __init__(self, original):
+            self._original = original
+
+        def __call__(self, *args, **kwargs):
+            set_trace_in_qt()
+            return self._original(*args, **kwargs)
+
     class StartedSignalWrapper(QtCore.QObject):  # Wrapper for the QThread.started signal
-        
+
         try:
             _signal = QtCore.Signal()  # @UndefinedVariable
         except:
@@ -114,11 +122,17 @@ def _internal_patch_qt(QtCore):
             QtCore.QObject.__init__(self)
             self.thread = thread
             self.original_started = original_started
-            self._signal.connect(self._on_call)
-            self.original_started.connect(self._signal)
+            if qt_support_mode == 'pyside':
+                self._signal = original_started
+            else:
+                self._signal.connect(self._on_call)
+                self.original_started.connect(self._signal)
 
-        def connect(self, *args, **kwargs):
-            return self._signal.connect(*args, **kwargs)
+        def connect(self, func, *args, **kwargs):
+            if qt_support_mode == 'pyside':
+                return self._signal.connect(FuncWrapper(func), *args, **kwargs)
+            else:
+                return self._signal.connect(func, *args, **kwargs)
 
         def disconnect(self, *args, **kwargs):
             return self._signal.disconnect(*args, **kwargs)
