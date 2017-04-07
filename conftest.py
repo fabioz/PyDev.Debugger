@@ -82,6 +82,8 @@ DEBUG_MEMORY_INFO = False
 
 _global_collect_info = False
 
+IS_JYTHON = sys.platform.startswith("java")
+
 @pytest.yield_fixture(autouse=True)
 def before_after_each_function(request):
     global _global_collect_info
@@ -155,3 +157,8 @@ Memory after: %s
     format_memory_info(psutil.virtual_memory(), after_curr_proc_memory_info),
     '' if not processes_info else '\nLeaked processes:\n'+'\n'.join(processes_info)),
     )
+
+if IS_JYTHON:
+    # On Jython, it's a no-op.
+    def before_after_each_function():
+        pass

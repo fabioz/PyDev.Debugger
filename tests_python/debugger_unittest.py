@@ -4,13 +4,15 @@ except ImportError:
     from urllib.parse import quote, quote_plus, unquote_plus #@UnresolvedImport
 
 
-import socket
 import os
-import threading
-import time
-from _pydev_bundle import pydev_localhost
+import socket
 import subprocess
 import sys
+import threading
+import time
+
+from _pydev_bundle import pydev_localhost
+
 
 IS_PY3K = sys.version_info[0] >= 3
 
@@ -363,13 +365,18 @@ class AbstractWriterThread(threading.Thread):
         self.sock.send(msg)
 
 
-    def start_socket(self, port=0):
+    def start_socket(self, port=None):
+        from _pydev_bundle.pydev_localhost import get_socket_name
         if SHOW_WRITES_AND_READS:
             print('start_socket')
 
+        if port is None:
+            socket_name = get_socket_name(close=True)
+        else:
+            socket_name = (pydev_localhost.get_localhost(), port)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind(('', port))
-        self.port = s.getsockname()[1]
+        s.bind(socket_name)
+        self.port = socket_name[1]
         s.listen(1)
         if SHOW_WRITES_AND_READS:
             print('Waiting in socket.accept()')
@@ -589,8 +596,5 @@ def _get_debugger_test_file(filename):
     return os.path.normcase(rPath(os.path.join(os.path.dirname(__file__), filename)))
 
 def get_free_port():
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((pydev_localhost.get_localhost(), 0))
-    _, port = s.getsockname()
-    s.close()
-    return port
+    from _pydev_bundle.pydev_localhost import get_socket_name
+    return get_socket_name(close=True)[1]

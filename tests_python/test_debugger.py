@@ -5,28 +5,30 @@
 
     Note that it's a python script but it'll spawn a process to run as jython, ironpython and as python.
 '''
-from tests_python.debugger_unittest import get_free_port
+import os
+import platform
+import sys
 import threading
+import time
+import unittest
 
+import pytest
 
+from tests_python import debugger_unittest
+from tests_python.debugger_unittest import get_free_port
 
 
 CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION, CMD_ENABLE_DONT_TRACE = 133, 134, 135, 141
-PYTHON_EXE = None
-IRONPYTHON_EXE = None
-JYTHON_JAR_LOCATION = None
-JAVA_LOCATION = None
+
+IS_CPYTHON = platform.python_implementation() == 'CPython'
+IS_IRONPYTHON = platform.python_implementation() == 'IronPython'
+IS_JYTHON = platform.python_implementation() == 'Jython'
 
 try:
     xrange
 except:
     xrange = range
 
-import unittest
-import os
-import sys
-import time
-from tests_python import debugger_unittest
 
 TEST_DJANGO = False
 if sys.version_info[:2] == (2, 7):
@@ -48,6 +50,7 @@ else:
 
 
 TEST_CYTHON = os.getenv('PYDEVD_USE_CYTHON', None) == 'YES'
+TEST_JYTHON = os.getenv('TEST_JYTHON', None) == 'YES'
 
 #=======================================================================================================================
 # WriterThreadCaseSetNextStatement
@@ -148,7 +151,7 @@ class WriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
         assert line == 5, 'Expected return to be in line 5, was: %s' % line
         self.write_get_variable(thread_id, frame_id, 'entry')
         self.wait_for_vars([
-            '<var name="key" type="str"', 
+            '<var name="key" type="str"',
             'v2'
         ])
 
@@ -258,7 +261,7 @@ class WriterThreadCase17a(debugger_unittest.AbstractWriterThread):
 
         self.write_step_in(thread_id)
         thread_id, frame_id, line, name = self.wait_for_breakpoint_hit('107', get_line=True, get_name=True)
-        
+
         # Should Skip step into properties setter
         assert name == 'm3'
         assert line == 10, 'Expected return to be in line 10, was: %s' % line
@@ -312,11 +315,11 @@ class WriterThreadCase16(debugger_unittest.AbstractWriterThread):
                 '<var name="min" type="int64" qualifier="numpy" value="int64%253A 0"',
                 '<var name="min" type="int64" qualifier="numpy" value="int64%3A 0"',
                 '<var name="size" type="int" qualifier="{0}" value="int%3A 100000"'.format(builtin_qualifier),
-            ], 
+            ],
             [
                 '<var name="max" type="int64" qualifier="numpy" value="int64%253A 99999"',
                 '<var name="max" type="int32" qualifier="numpy" value="int32%253A 99999"',
-                '<var name="max" type="int64" qualifier="numpy" value="int64%3A 99999"', 
+                '<var name="max" type="int64" qualifier="numpy" value="int64%3A 99999"',
                 '<var name="max" type="int32" qualifier="numpy" value="int32%253A 99999"',
             ],
             '<var name="shape" type="tuple"',
@@ -341,7 +344,7 @@ class WriterThreadCase16(debugger_unittest.AbstractWriterThread):
                 '<var name="max" type="str" qualifier={0} value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
                 '<var name="max" type="str" qualifier="{0}" value="str%253A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
                 '<var name="max" type="str" qualifier="{0}" value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
-            ], 
+            ],
             '<var name="shape" type="tuple"',
             '<var name="dtype" type="dtype"',
             '<var name="size" type="int"',
@@ -522,7 +525,7 @@ class WriterThreadCase11(debugger_unittest.AbstractWriterThread):
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
 
         assert line == 2, 'Expected return to be in line 2, was: %s' % line
-        
+
         self.write_step_over(thread_id)
 
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('108', True)
@@ -933,7 +936,7 @@ class WriterThreadCaseQThread4(debugger_unittest.AbstractWriterThread):
 
         self.log.append('Marking finished ok.')
         self.finished_ok = True
-        
+
     def additional_output_checks(self, stdout, stderr):
         if 'On start called' not in stdout:
             raise AssertionError('Expected "On start called" to be in stdout:\n%s' % (stdout,))
@@ -982,7 +985,7 @@ class WriterThreadCase1(debugger_unittest.AbstractWriterThread):
         self.log.append('asserted')
 
         self.finished_ok = True
-        
+
 #=======================================================================================================================
 # WriterThreadCaseMSwitch
 #=======================================================================================================================
@@ -990,17 +993,17 @@ class WriterThreadCaseMSwitch(debugger_unittest.AbstractWriterThread):
 
     TEST_FILE = 'tests_python._debugger_case_m_switch'
     IS_MODULE = True
-    
+
     def get_environ(self):
         env = os.environ.copy()
         curr_pythonpath = env.get('PYTHONPATH', '')
-        
+
         root_dirname = os.path.dirname(os.path.dirname(__file__))
-        
+
         curr_pythonpath += root_dirname + os.pathsep
         env['PYTHONPATH'] = curr_pythonpath
         return env
-    
+
     def get_main_filename(self):
         return debugger_unittest._get_debugger_test_file('_debugger_case_m_switch.py')
 
@@ -1015,7 +1018,7 @@ class WriterThreadCaseMSwitch(debugger_unittest.AbstractWriterThread):
 
         self.log.append('waiting for breakpoint hit')
         thread_id, frame_id = self.wait_for_breakpoint_hit()
-        
+
         self.write_remove_breakpoint(breakpoint_id)
 
         self.log.append('run thread')
@@ -1030,12 +1033,12 @@ class WriterThreadCaseMSwitch(debugger_unittest.AbstractWriterThread):
         self.log.append('asserted')
 
         self.finished_ok = True
-        
+
 #=======================================================================================================================
 # WriterThreadCaseRemoteDebugger
 #=======================================================================================================================
 class WriterThreadCaseRemoteDebugger(debugger_unittest.AbstractWriterThread):
-    
+
     TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_remote.py')
 
     def run(self):
@@ -1059,18 +1062,18 @@ class WriterThreadCaseRemoteDebugger(debugger_unittest.AbstractWriterThread):
         self.log.append('asserted')
 
         self.finished_ok = True
-        
+
 #=======================================================================================================================
 # _SecondaryMultiProcProcessWriterThread
 #=======================================================================================================================
 class _SecondaryMultiProcProcessWriterThread(debugger_unittest.AbstractWriterThread):
 
     FORCE_KILL_PROCESS_WHEN_FINISHED_OK = True
-    
+
     def __init__(self, server_socket):
         debugger_unittest.AbstractWriterThread.__init__(self)
         self.server_socket = server_socket
-        
+
     def run(self):
         print('waiting for second process')
         self.sock, addr = self.server_socket.accept()
@@ -1092,7 +1095,7 @@ class _SecondaryMultiProcProcessWriterThread(debugger_unittest.AbstractWriterThr
 # WriterThreadCaseRemoteDebuggerMultiProc
 #=======================================================================================================================
 class WriterThreadCaseRemoteDebuggerMultiProc(debugger_unittest.AbstractWriterThread):
-    
+
     # It seems sometimes it becomes flaky on the ci because the process outlives the writer thread...
     # As we're only interested in knowing if a second connection was received, just kill the related
     # process.
@@ -1112,10 +1115,10 @@ class WriterThreadCaseRemoteDebuggerMultiProc(debugger_unittest.AbstractWriterTh
         self.secondary_multi_proc_process_writer_thread  = secondary_multi_proc_process_writer_thread = \
             _SecondaryMultiProcProcessWriterThread(self.server_socket)
         secondary_multi_proc_process_writer_thread.start()
-        
+
         self.log.append('run thread')
         self.write_run_thread(thread_id)
-        
+
         for _i in xrange(400):
             if secondary_multi_proc_process_writer_thread.finished_ok:
                 break
@@ -1133,26 +1136,54 @@ class WriterThreadCaseRemoteDebuggerMultiProc(debugger_unittest.AbstractWriterTh
         self.log.append('asserted')
 
         self.finished_ok = True
-        
+
     def do_kill(self):
         debugger_unittest.AbstractWriterThread.do_kill(self)
         if hasattr(self, 'secondary_multi_proc_process_writer_thread'):
             self.secondary_multi_proc_process_writer_thread.do_kill()
 
 #=======================================================================================================================
-# DebuggerBase
+# Test
 #=======================================================================================================================
-class DebuggerBase(debugger_unittest.DebuggerRunner):
+class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
 
+    def get_command_line(self):
+        if IS_JYTHON:
+            if sys.executable is not None:
+                # i.e.: we're running with the provided jython.exe
+                return [sys.executable]
+            else:
+                
+                
+                return [
+                    get_java_location(),
+                    '-classpath',
+                    get_jython_jar(),
+                    'org.python.util.jython'
+                ]
+                
+        if IS_CPYTHON:
+            return [sys.executable, '-u']
+        
+        if IS_IRONPYTHON:
+            return [
+                    sys.executable,
+                    '-X:Frames'
+                ]
+            
+        raise RuntimeError('Unable to provide command line')
+        
     def test_case_1(self):
         self.check_case(WriterThreadCase1)
 
     def test_case_2(self):
         self.check_case(WriterThreadCase2)
 
+    @pytest.mark.skipif(IS_IRONPYTHON, reason='This test fails once in a while due to timing issues on IronPython, so, skipping it.')
     def test_case_3(self):
         self.check_case(WriterThreadCase3)
 
+    @pytest.mark.skipif(IS_JYTHON, reason='This test is flaky on Jython, so, skipping it.')
     def test_case_4(self):
         self.check_case(WriterThreadCase4)
 
@@ -1163,6 +1194,11 @@ class DebuggerBase(debugger_unittest.DebuggerRunner):
         self.check_case(WriterThreadCase6)
 
     def test_case_7(self):
+        if IS_IRONPYTHON:
+            # This test checks that we start without variables and at each step a new var is created, but on ironpython,
+            # the variables exist all at once (with None values), so, we can't test it properly.
+            pytest.skip("Different behavior on IronPython")
+
         self.check_case(WriterThreadCase7)
 
     def test_case_8(self):
@@ -1190,6 +1226,11 @@ class DebuggerBase(debugger_unittest.DebuggerRunner):
         self.check_case(WriterThreadCase15)
 
     def test_case_16(self):
+        try:
+            import numpy
+        except ImportError:
+            pytest.skip('numpy not available')
+            
         self.check_case(WriterThreadCase16)
 
     def test_case_17(self):
@@ -1199,6 +1240,9 @@ class DebuggerBase(debugger_unittest.DebuggerRunner):
         self.check_case(WriterThreadCase17a)
 
     def test_case_18(self):
+        if IS_IRONPYTHON or IS_JYTHON:
+            pytest.skip('Unsupported assign to local')
+        
         self.check_case(WriterThreadCase18)
 
     def test_case_19(self):
@@ -1244,81 +1288,49 @@ class DebuggerBase(debugger_unittest.DebuggerRunner):
     def test_case_qthread4(self):
         if self._has_qt():
             self.check_case(WriterThreadCaseQThread4)
-            
+
     def test_m_switch(self):
         self.check_case(WriterThreadCaseMSwitch)
 
+    def test_case_set_next_statement(self):
+        # Set next only for Python.
+        if not IS_CPYTHON:
+            pytest.skip('Set next statement only for CPython')
+        self.check_case(WriterThreadCaseSetNextStatement)
 
-
+@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 class TestPythonRemoteDebugger(unittest.TestCase, debugger_unittest.DebuggerRunner):
 
     def get_command_line(self):
-        return [PYTHON_EXE, '-u']
-    
+        return [sys.executable, '-u']
+
     def add_command_line_args(self, args):
         return args + [self.writer_thread.TEST_FILE]
-    
+
     def test_remote_debugger(self):
         self.check_case(WriterThreadCaseRemoteDebugger)
-    
+
     def test_remote_debugger2(self):
         self.check_case(WriterThreadCaseRemoteDebuggerMultiProc)
-    
-    
-class TestPython(unittest.TestCase, DebuggerBase):
-    def get_command_line(self):
-        return [PYTHON_EXE, '-u']
 
-    def test_case_set_next_statement(self):
-        # Set next only for Python.
-        self.check_case(WriterThreadCaseSetNextStatement)
+
         
-class TestJython(unittest.TestCase, DebuggerBase):
-    def get_command_line(self):
-        return [
-                JAVA_LOCATION,
-                '-classpath',
-                JYTHON_JAR_LOCATION,
-                'org.python.util.jython'
-            ]
+def get_java_location():
+    from java.lang import System  # @UnresolvedImport
+    jre_dir = System.getProperty("java.home")
+    for f in [os.path.join(jre_dir, 'bin', 'java.exe'), os.path.join(jre_dir, 'bin', 'java')]:
+        if os.path.exists(f):
+            return f
+    raise RuntimeError('Unable to find java executable')
 
-    # This case requires decorators to work (which are not present on Jython 2.1), so, this test is just removed from the jython run.
-    def test_case_13(self):
-        self.skipTest("Unsupported Decorators")
-
-    # This case requires decorators to work (which are not present on Jython 2.1), so, this test is just removed from the jython run.
-    def test_case_17(self):
-        self.skipTest("Unsupported Decorators")
-
-    def test_case_18(self):
-        self.skipTest("Unsupported assign to local")
-
-    def test_case_16(self):
-        self.skipTest("Unsupported numpy")
-
-class TestIronPython(unittest.TestCase, DebuggerBase):
-    def get_command_line(self):
-        return [
-                IRONPYTHON_EXE,
-                '-X:Frames'
-            ]
-
-    def test_case_3(self):
-        self.skipTest("Timing issues") # This test fails once in a while due to timing issues on IronPython, so, skipping it.
-
-    def test_case_7(self):
-        # This test checks that we start without variables and at each step a new var is created, but on ironpython,
-        # the variables exist all at once (with None values), so, we can't test it properly.
-        self.skipTest("Different behavior on IronPython")
-
-    def test_case_13(self):
-        self.skipTest("Unsupported Decorators") # Not sure why it doesn't work on IronPython, but it's not so common, so, leave it be.
-
-    def test_case_16(self):
-        self.skipTest("Unsupported numpy")
-
-    def test_case_18(self):
-        self.skipTest("Unsupported assign to local")
+def get_jython_jar():
+    from java.lang import ClassLoader  # @UnresolvedImport
+    cl = ClassLoader.getSystemClassLoader()
+    paths = map(lambda url: url.getFile(), cl.getURLs())
+    for p in paths:
+        if 'jython.jar' in p:
+            return p
+    raise RuntimeError('Unable to find jython.jar')
 
 
 def get_location_from_line(line):
@@ -1340,93 +1352,4 @@ def split_line(line):
 
 
 
-
-import platform
-sysname = platform.system().lower()
-test_dependent = os.path.join('../../../', 'org.python.pydev.core', 'tests', 'org', 'python', 'pydev', 'core', 'TestDependent.' + sysname + '.properties')
-
-if os.path.exists(test_dependent):
-    f = open(test_dependent)
-    try:
-        for line in f.readlines():
-            var, loc = split_line(line)
-            if 'PYTHON_EXE' == var:
-                PYTHON_EXE = loc
-
-            if 'IRONPYTHON_EXE' == var:
-                IRONPYTHON_EXE = loc
-
-            if 'JYTHON_JAR_LOCATION' == var:
-                JYTHON_JAR_LOCATION = loc
-
-            if 'JAVA_LOCATION' == var:
-                JAVA_LOCATION = loc
-    finally:
-        f.close()
-else:
-    pass
-
-if IRONPYTHON_EXE is None:
-    sys.stderr.write('Warning: not running IronPython tests.\n')
-    class TestIronPython(unittest.TestCase):
-        pass
-
-if JAVA_LOCATION is None:
-    sys.stderr.write('Warning: not running Jython tests.\n')
-    class TestJython(unittest.TestCase):
-        pass
-
-# if PYTHON_EXE is None:
-PYTHON_EXE = sys.executable
-
-
-if __name__ == '__main__':
-    if False:
-        assert PYTHON_EXE, 'PYTHON_EXE not found in %s' % (test_dependent,)
-        assert IRONPYTHON_EXE, 'IRONPYTHON_EXE not found in %s' % (test_dependent,)
-        assert JYTHON_JAR_LOCATION, 'JYTHON_JAR_LOCATION not found in %s' % (test_dependent,)
-        assert JAVA_LOCATION, 'JAVA_LOCATION not found in %s' % (test_dependent,)
-        assert os.path.exists(PYTHON_EXE), 'The location: %s is not valid' % (PYTHON_EXE,)
-        assert os.path.exists(IRONPYTHON_EXE), 'The location: %s is not valid' % (IRONPYTHON_EXE,)
-        assert os.path.exists(JYTHON_JAR_LOCATION), 'The location: %s is not valid' % (JYTHON_JAR_LOCATION,)
-        assert os.path.exists(JAVA_LOCATION), 'The location: %s is not valid' % (JAVA_LOCATION,)
-
-    if True:
-        print('Running with :%s (%s)' % (PYTHON_EXE, sys.version_info))
-        #try:
-        #    os.remove(r'X:\pydev\plugins\org.python.pydev\pysrc\pydevd.pyc')
-        #except:
-        #    pass
-        suite = unittest.TestSuite()
-
-#         suite.addTests(unittest.makeSuite(TestJython)) # Note: Jython should be 2.2.1
-#
-#         suite.addTests(unittest.makeSuite(TestIronPython))
-#
-        suite.addTests(unittest.makeSuite(TestPython))
-
-
-
-
-#         suite.addTest(TestIronPython('test_case_18'))
-#         suite.addTest(TestIronPython('test_case_17'))
-#         suite.addTest(TestIronPython('test_case_3'))
-#         suite.addTest(TestIronPython('test_case_7'))
-#
-#         suite.addTest(TestPython('test_case_18'))
-#         suite.addTest(TestPython('test_case_django'))
-#         suite.addTest(TestPython('test_case_qthread1'))
-#         suite.addTest(TestPython('test_case_qthread2'))
-#         suite.addTest(TestPython('test_case_qthread3'))
-
-#         suite.addTest(TestPython('test_case_17a'))
-
-
-#         suite.addTest(TestJython('test_case_1'))
-#         suite.addTest(TestPython('test_case_2'))
-#         unittest.TextTestRunner(verbosity=3).run(suite)
-    #     suite.addTest(TestPython('test_case_17'))
-#         suite.addTest(TestPython('test_case_16'))
-#         suite.addTest(TestPython('test_case_qthread4'))
-
-        unittest.TextTestRunner(verbosity=3).run(suite)
+# c:\bin\jython2.7.0\bin\jython.exe -m py.test tests_python

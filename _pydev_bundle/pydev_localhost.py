@@ -1,5 +1,8 @@
 from _pydevd_bundle import pydevd_constants
 from _pydev_imps._pydev_saved_modules import socket
+import sys
+
+IS_JYTHON = sys.platform.find('java') != -1
 
 _cache = None
 def get_localhost():
@@ -30,8 +33,32 @@ def get_localhost():
     return _cache
 
 
-def get_socket_name():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(('', 0))
-    return sock.getsockname()
+def get_socket_names(n_sockets, close=False):
+    socket_names = []
+    sockets = []
+    for _ in range(n_sockets):
+        if IS_JYTHON:
+            # Although the option which would be pure java *should* work for Jython, the socket being returned is still 0
+            # (i.e.: it doesn't give the local port bound, only the original port, which was 0).
+            from java.net import ServerSocket
+            sock = ServerSocket(0)
+            socket_name = get_localhost(), sock.getLocalPort()
+        else:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.bind((get_localhost(), 0))
+            socket_name = sock.getsockname()
+            
+        sockets.append(sock)
+        socket_names.append(socket_name)
+        
+    if close:
+        for s in sockets:
+            s.close()
+    return socket_names
+    
+def get_socket_name(close=False):
+    return get_socket_names(1, close)[0]
+
+if __name__ == '__main__':
+    print(get_socket_name())
