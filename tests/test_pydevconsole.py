@@ -1,13 +1,7 @@
 import threading
 import unittest
 import sys
-import os
-
-try:
-    import pydevconsole
-except:
-    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-    import pydevconsole
+import pydevconsole
 from _pydev_bundle.pydev_imports import xmlrpclib, SimpleXMLRPCServer
 from _pydevd_bundle import pydevd_io
 
@@ -119,7 +113,8 @@ class Test(unittest.TestCase):
                          desc.find('str(Char* value)') >= 0 or
                          desc.find('str(object=\'\') -> string') >= 0 or
                          desc.find('str(value: Char*)') >= 0 or
-                         desc.find('str(object=\'\') -> str') >= 0
+                         desc.find('str(object=\'\') -> str') >= 0 or
+                         desc.find('The most base type') >= 0 # Jython 2.7 is providing this :P
                          ,
                          'Could not find what was needed in %s' % desc)
 
@@ -190,29 +185,11 @@ class Test(unittest.TestCase):
 
 
     def get_free_addresses(self):
-        import socket
-        s = socket.socket()
-        s.bind(('', 0))
-        port0 = s.getsockname()[1]
-
-        s1 = socket.socket()
-        s1.bind(('', 0))
-        port1 = s1.getsockname()[1]
-        s.close()
-        s1.close()
-
-        if port0 <= 0 or port1 <= 0:
-            #This happens in Jython...
-            from java.net import ServerSocket  # @UnresolvedImport
-            s0 = ServerSocket(0)
-            port0 = s0.getLocalPort()
-
-            s1 = ServerSocket(0)
-            port1 = s1.getLocalPort()
-
-            s0.close()
-            s1.close()
-
+        from _pydev_bundle.pydev_localhost import get_socket_names
+        socket_names = get_socket_names(2, True)
+        port0 = socket_names[0][1]
+        port1 = socket_names[1][1]
+        
         assert port0 != port1
         assert port0 > 0
         assert port1 > 0
@@ -267,10 +244,4 @@ class Test(unittest.TestCase):
             self.assertEqual(['input_request'], found.split())
         finally:
             sys.stdout = self.original_stdout
-
-#=======================================================================================================================
-# main
-#=======================================================================================================================
-if __name__ == '__main__':
-    unittest.main()
 

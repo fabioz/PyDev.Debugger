@@ -16,3 +16,6 @@ if [ "$TRAVIS_PYTHON_VERSION" = "3.5" ]; then
     conda install --yes pyqt=5
     pip install "django>=1.7,<1.8"
 fi
+
+pip install Pympler
+pip install pytest
