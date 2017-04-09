@@ -458,20 +458,17 @@ class AbstractWriterThread(threading.Thread):
         return True
 
     def _is_var_in_last(self, expected, last):
-        for e in expected:
-            if e in last:
-                return True
+        if expected in last:
+            return True
 
         last = unquote_plus(last)
-        for e in expected:
-            if e in last:
-                return True
+        if expected in last:
+            return True
 
         # We actually quote 2 times on the backend...
         last = unquote_plus(last)
-        for e in expected:
-            if e in last:
-                return True
+        if expected in last:
+            return True
             
         return False
 
