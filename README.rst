@@ -13,7 +13,7 @@ debugging a process which runs in another machine, it's possible to `pip install
 `pydevd.settrace(host='10.1.1.1')` to connect the debugger backend to the debugger UI running in the IDE
 (whereas previously the sources had to be manually copied from the IDE installation).
 
-It should be compatible with Python 2.4 onwards (as well as Jython 2.2.1, IronPython and PyPy -- and
+It should be compatible with Python 2.6 onwards (as well as Jython 2.7, IronPython and PyPy -- and
 any other variant which properly supports the Python structure for debuggers -- i.e.: sys.settrace/threading.settrace).
 
 Recent versions contain speedup modules using Cython, which are generated with a few changes in the regular files
