@@ -77,6 +77,7 @@ DONT_TRACE = {
     'pydevd_exec2.py': PYDEV_FILE,
     'pydevd_file_utils.py': PYDEV_FILE,
     'pydevd_frame.py': PYDEV_FILE,
+    'pydevd_frame_eval_cython_wrapper.py': PYDEV_FILE,
     'pydevd_frame_eval_main.py': PYDEV_FILE,
     'pydevd_frame_tracing.py': PYDEV_FILE,
     'pydevd_frame_utils.py': PYDEV_FILE,

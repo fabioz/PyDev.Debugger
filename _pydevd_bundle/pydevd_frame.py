@@ -21,6 +21,12 @@ try:
 except:
     CO_GENERATOR = 0
 
+try:
+    from _pydevd_bundle.pydevd_signature import send_signature_call_trace, send_signature_return_trace
+except ImportError:
+    def send_signature_call_trace(*args, **kwargs):
+        pass
+
 basename = os.path.basename
 
 IGNORE_EXCEPTION_TAG = re.compile('[^#]*#.*@IgnoreException')
