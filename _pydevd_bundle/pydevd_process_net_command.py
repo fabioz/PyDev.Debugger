@@ -19,7 +19,7 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, \
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
     CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription, pydevd_check_frame_for_new_breakpoint
-from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_contains, dict_keys, dict_pop, \
+from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, \
     STATE_RUN
 
 
