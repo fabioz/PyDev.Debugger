@@ -790,10 +790,9 @@ class WriterThreadCase3(debugger_unittest.AbstractWriterThread):
 
     def run(self):
         self.start_socket()
-        self.write_make_initial_run()
-        time.sleep(.5)
         breakpoint_id = self.write_add_breakpoint(4, '')
         self.write_add_breakpoint(5, 'FuncNotAvailable')  # Check that it doesn't get hit in the global when a function is available
+        self.write_make_initial_run()
 
         thread_id, frame_id = self.wait_for_breakpoint_hit()
 
@@ -830,6 +829,9 @@ class WriterThreadCase2(debugger_unittest.AbstractWriterThread):
         self.write_get_frame(thread_id, frame_id)
 
         self.write_add_breakpoint(14, 'Call2')
+
+        # in the frame evaluation debugger we need some time to enable old tracing in an appropriate thread
+        time.sleep(0.3)
 
         self.write_run_thread(thread_id)
 

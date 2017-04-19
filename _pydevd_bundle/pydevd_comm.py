@@ -1485,8 +1485,11 @@ def pydevd_check_frame_for_new_breakpoint(main_debugger, breakpoint, filepath):
 
                     if abs_path_real_path_and_base[1] == filepath:
                         # compare functions' names
-                        current_func = current_frame.f_code.co_name
-                        if func_name == current_func or (func_name == "None" and current_func == "<module>"):
+                        curr_func_name = current_frame.f_code.co_name
+                        if curr_func_name in ('?', '<module>'):
+                            curr_func_name = ''
+
+                        if func_name in ('None', curr_func_name):
                             frame_executed = current_frame
                             break
                     current_frame = current_frame.f_back
