@@ -26,6 +26,11 @@ environment:
 
     - PYTHON: "C:\\Python35-x64"
       PYDEVD_USE_CYTHON: NO
+    - PYTHON: "C:\\Python36-x64"
+      PYDEVD_USE_CYTHON: YES
+
+    - PYTHON: "C:\\Python36-x64"
+      PYDEVD_USE_CYTHON: NO
 
 install:
   # We need wheel installed to build wheels

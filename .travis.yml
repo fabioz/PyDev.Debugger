@@ -23,6 +23,13 @@ matrix:
     - python: 3.5
       env: PYDEVD_USE_CYTHON=NO
       env: PYDEVD_TEST_JYTHON=NO
+    # Python 3.6 (with and without cython)
+    - python: 3.6
+      env: PYDEVD_USE_CYTHON=YES
+      env: PYDEVD_TEST_JYTHON=NO
+    - python: 3.6
+      env: PYDEVD_USE_CYTHON=NO
+      env: PYDEVD_TEST_JYTHON=NO
     # Jython
     - python: 2.7
       env: PYDEVD_USE_CYTHON=NO
