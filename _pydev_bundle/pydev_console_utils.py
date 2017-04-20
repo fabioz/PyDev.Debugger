@@ -82,9 +82,6 @@ class BaseStdIn:
     def write(self, *args, **kwargs):
         pass  # not available StdIn (but it can be expected to be in the stream interface)
 
-    def isatty(self):
-        return self.original_stdin.isatty()
-
     def flush(self, *args, **kwargs):
         pass  # not available StdIn (but it can be expected to be in the stream interface)
 
@@ -423,6 +420,7 @@ class BaseInterpreterInterface:
                         thread.interrupt_main()
                     else:
                         self.mainThread._thread.interrupt()  # Jython
+            self.finish_exec(False)
             return True
         except:
             traceback.print_exc()
@@ -442,6 +440,11 @@ class BaseInterpreterInterface:
 
     server = property(get_server)
 
+    def ShowConsole(self):
+        server = self.get_server()
+        if server is not None:
+            server.ShowConsole()
+
     def finish_exec(self, more):
         self.interruptable = False
 
@@ -453,8 +456,9 @@ class BaseInterpreterInterface:
             return True
 
     def getFrame(self):
+        hidden_ns = self.get_ipython_hidden_vars_dict()
         xml = "<xml>"
-        xml += pydevd_xml.frame_vars_to_xml(self.get_namespace())
+        xml += pydevd_xml.frame_vars_to_xml(self.get_namespace(), hidden_ns)
         xml += "</xml>"
 
         return xml
@@ -595,6 +599,9 @@ class BaseInterpreterInterface:
         # Important: it has to be really enabled in the main thread, so, schedule
         # it to run in the main thread.
         self.exec_queue.put(do_enable_gui)
+
+    def get_ipython_hidden_vars_dict(self):
+        return None
 
 
 # =======================================================================================================================
