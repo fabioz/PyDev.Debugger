@@ -14,8 +14,7 @@ def bar(a, b):
     return a + b
 
 
-@unittest.skip("The test requires Python 3.6")
-class TestInsertCode(unittest.TestCase):
+class TestInsertCode:
     lines_separator = "---Line tested---"
 
     def check_insert_every_line(self, func_to_modify, func_to_insert, number_of_lines):
