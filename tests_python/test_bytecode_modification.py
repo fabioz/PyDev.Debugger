@@ -236,7 +236,7 @@ class TestInsertCode(unittest.TestCase):
         sys.stdout = StringIO()
 
         try:
-            from tests_pydevd_python._many_names_example import foo
+            from tests_python._many_names_example import foo
             self.check_insert_to_line(foo, tracing, foo.__code__.co_firstlineno + 2)
 
         finally:
