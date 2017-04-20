@@ -1,5 +1,6 @@
 import sys
 from io import StringIO
+import pytest
 
 from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
 
@@ -12,14 +13,10 @@ def tracing():
 def bar(a, b):
     return a + b
 
-
-if sys.version_info < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
+IS_PY36 = sys.version_info[0] == 3 and sys.version_info[1] == 6
 
 
-@unittest.skip("The test requires Python 3.6")
+@pytest.mark.skipif(not IS_PY36, reason='Test requires Python 3.6')
 class TestInsertCode:
     lines_separator = "---Line tested---"
 
