@@ -1,5 +1,4 @@
 import sys
-import unittest
 from io import StringIO
 
 from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
@@ -14,6 +13,13 @@ def bar(a, b):
     return a + b
 
 
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
+
+
+@unittest.skip("The test requires Python 3.6")
 class TestInsertCode:
     lines_separator = "---Line tested---"
 
