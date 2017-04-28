@@ -4,8 +4,8 @@ from _pydev_bundle import pydev_log
 import pydevd_plugins.extensions
 
 class ExtensionManager(object):
+    
     def __init__(self):
-        super(ExtensionManager, self).__init__()
         self.loaded_extensions = None
         self.type_to_instance = {}
 
