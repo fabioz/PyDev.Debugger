@@ -50,36 +50,8 @@ except:
 
 
 #=======================================================================================================================
-# AbstractResolver
+# See: pydevd_extension_api module for resolver interface
 #=======================================================================================================================
-class AbstractResolver:
-    '''
-        This class exists only for documentation purposes to explain how to create a resolver.
-
-        Some examples on how to resolve things:
-        - list: get_dictionary could return a dict with index->item and use the index to resolve it later
-        - set: get_dictionary could return a dict with id(object)->object and reiterate in that array to resolve it later
-        - arbitrary instance: get_dictionary could return dict with attr_name->attr and use getattr to resolve it later
-    '''
-
-    def resolve(self, var, attribute):
-        '''
-            In this method, we'll resolve some child item given the string representation of the item in the key
-            representing the previously asked dictionary.
-
-            @param var: this is the actual variable to be resolved.
-            @param attribute: this is the string representation of a key previously returned in get_dictionary.
-        '''
-        raise NotImplementedError
-
-    def get_dictionary(self, var):
-        '''
-            @param var: this is the variable that should have its children gotten.
-
-            @return: a dictionary where each pair key, value should be shown to the user as children items
-            in the variables view for the given var.
-        '''
-        raise NotImplementedError
 
 
 #=======================================================================================================================
@@ -399,73 +371,6 @@ class JyArrayResolver:
         return ret
 
 
-#=======================================================================================================================
-# NdArrayResolver
-#=======================================================================================================================
-class NdArrayResolver:
-    '''
-        This resolves a numpy ndarray returning some metadata about the NDArray
-    '''
-    use_value_repr_instead_of_str = False
-
-    def is_numeric(self, obj):
-        if not hasattr(obj, 'dtype'):
-            return False
-        return obj.dtype.kind in 'biufc'
-
-    def resolve(self, obj, attribute):
-        if attribute == '__internals__':
-            return defaultResolver.get_dictionary(obj)
-        if attribute == 'min':
-            if self.is_numeric(obj):
-                return obj.min()
-            else:
-                return None
-        if attribute == 'max':
-            if self.is_numeric(obj):
-                return obj.max()
-            else:
-                return None
-        if attribute == 'shape':
-            return obj.shape
-        if attribute == 'dtype':
-            return obj.dtype
-        if attribute == 'size':
-            return obj.size
-        if attribute.startswith('['):
-            container = NdArrayItemsContainer()
-            i = 0
-            format_str = '%0' + str(int(len(str(len(obj))))) + 'd'
-            for item in obj:
-                setattr(container, format_str % i, item)
-                i += 1
-                if i > MAX_ITEMS_TO_HANDLE:
-                    setattr(container, TOO_LARGE_ATTR, TOO_LARGE_MSG)
-                    break
-            return container
-        return None
-
-    def get_dictionary(self, obj):
-        ret = {}
-        ret['__internals__'] = defaultResolver.get_dictionary(obj)
-        if obj.size > 1024 * 1024:
-            ret['min'] = 'ndarray too big, calculating min would slow down debugging'
-            ret['max'] = 'ndarray too big, calculating max would slow down debugging'
-        else:
-            if self.is_numeric(obj):
-                ret['min'] = obj.min()
-                ret['max'] = obj.max()
-            else:
-                ret['min'] = 'not a numeric object'
-                ret['max'] = 'not a numeric object'
-        ret['shape'] = obj.shape
-        ret['dtype'] = obj.dtype
-        ret['size'] = obj.size
-        ret['[0:%s] ' % (len(obj))] = list(obj[0:MAX_ITEMS_TO_HANDLE])
-        return ret
-
-class NdArrayItemsContainer: pass
-
 
 
 #=======================================================================================================================
@@ -585,7 +490,6 @@ tupleResolver = TupleResolver()
 instanceResolver = InstanceResolver()
 jyArrayResolver = JyArrayResolver()
 setResolver = SetResolver()
-ndarrayResolver = NdArrayResolver()
 multiValueDictResolver = MultiValueDictResolver()
 djangoFormResolver = DjangoFormResolver()
 dequeResolver = DequeResolver()
