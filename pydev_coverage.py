@@ -44,7 +44,7 @@ def execute():
         import traceback;traceback.print_exc()
         return
     
-    version = tuple(map(int, coverage.__version__.split('.'))[:2])
+    version = tuple(map(int, coverage.__version__.split('.')[:2]))
     if version < (4, 3):
         sys.stderr.write('Error: minimum supported coverage version is 4.3.')
         sys.exit(1) 
