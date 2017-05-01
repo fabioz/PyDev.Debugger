@@ -61,7 +61,6 @@ class DefaultResolver:
     '''
         DefaultResolver is the class that'll actually resolve how to show some variable.
     '''
-    use_value_repr_instead_of_str = False
 
     def resolve(self, var, attribute):
         return getattr(var, attribute)
@@ -185,7 +184,6 @@ class DefaultResolver:
 # DictResolver
 #=======================================================================================================================
 class DictResolver:
-    use_value_repr_instead_of_str = False
 
     def resolve(self, dict, key):
         if key in ('__len__', TOO_LARGE_ATTR):
@@ -241,7 +239,6 @@ class DictResolver:
 # TupleResolver
 #=======================================================================================================================
 class TupleResolver: #to enumerate tuples and lists
-    use_value_repr_instead_of_str = False
 
     def resolve(self, var, attribute):
         '''
@@ -285,7 +282,6 @@ class SetResolver:
     '''
         Resolves a set as dict id(object)->object
     '''
-    use_value_repr_instead_of_str = False
 
     def resolve(self, var, attribute):
         if attribute in ('__len__', TOO_LARGE_ATTR):
@@ -325,7 +321,6 @@ class SetResolver:
 # InstanceResolver
 #=======================================================================================================================
 class InstanceResolver:
-    use_value_repr_instead_of_str = False
 
     def resolve(self, var, attribute):
         field = var.__class__.getDeclaredField(attribute)
@@ -354,7 +349,6 @@ class JyArrayResolver:
     '''
         This resolves a regular Object[] array from java
     '''
-    use_value_repr_instead_of_str = False
 
     def resolve(self, var, attribute):
         if attribute == '__len__':
@@ -440,7 +434,6 @@ class FrameResolver:
     '''
     This resolves a frame.
     '''
-    use_value_repr_instead_of_str = False
 
     def resolve(self, obj, attribute):
         if attribute == '__internals__':
