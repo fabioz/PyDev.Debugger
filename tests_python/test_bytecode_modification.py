@@ -1,4 +1,5 @@
 import sys
+import unittest
 from io import StringIO
 import pytest
 
@@ -17,7 +18,7 @@ IS_PY36 = sys.version_info[0] == 3 and sys.version_info[1] == 6
 
 
 @pytest.mark.skipif(not IS_PY36, reason='Test requires Python 3.6')
-class TestInsertCode:
+class TestInsertCode(unittest.TestCase):
     lines_separator = "---Line tested---"
 
     def check_insert_every_line(self, func_to_modify, func_to_insert, number_of_lines):

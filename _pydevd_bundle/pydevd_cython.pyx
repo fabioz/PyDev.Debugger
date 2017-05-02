@@ -626,11 +626,6 @@ cdef class PyDBFrame:
                     breakpoint = breakpoints_for_file[line]
                     new_frame = frame
                     stop = True
-                    if main_debugger.frame_eval_func and step_cmd != -1:
-                        # we'll stop at this breakpoint later in the frame eval function
-                        stop = False
-                        info.pydev_step_cmd = -1
-                        main_debugger.SetTrace(None)
                     if step_cmd == CMD_STEP_OVER and stop_frame is frame and (is_line or is_return):
                         stop = False #we don't stop on breakpoint if we have to stop by step-over (it will be processed later)
                 elif plugin_manager is not None and main_debugger.has_plugin_line_breaks:
