@@ -25,10 +25,6 @@ class _AbstractResolver(_with_metaclass(abc.ABCMeta)):
         - arbitrary instance: get_dictionary could return dict with attr_name->attr and use getattr to resolve it later
     """
 
-    # In addition to the following methods it is also possible to define boolean: use_value_repr_instead_of_str in
-    # the class which is used to define if str() or repr() should be used to get the representation of the object.
-    # The default is using to use 'str' (same as use_value_repr_instead_of_str = False)
-
     @abc.abstractmethod
     def resolve(self, var, attribute):
         """

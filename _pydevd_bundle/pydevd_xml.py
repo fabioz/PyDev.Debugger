@@ -277,8 +277,6 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml=''):
 
     _type, typeName, resolver = get_type(v)
     type_qualifier = getattr(_type, "__module__", "")
-    do_not_call_value_str = resolver is not None and getattr(resolver,'use_value_repr_instead_of_str', False)
-
     try:
         str_from_provider = _str_from_providers(v, _type, typeName)
         if str_from_provider is not None:
@@ -306,10 +304,8 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml=''):
                 except:
                     cName = str(v.__class__)
 
-                if do_not_call_value_str:
-                    value = '%s: %r' % (cName, v)
-                else:
-                    value = '%s: %s' % (cName, v)
+
+                value = '%s: %s' % (cName, v)
         else:
             value = str(v)
     except:

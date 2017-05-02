@@ -393,7 +393,6 @@ class MultiValueDictResolver(DictResolver):
 #=======================================================================================================================
 class DjangoFormResolver(DefaultResolver):
     has_errors_attr = False
-    use_value_repr_instead_of_str = True
 
     def get_names(self, var):
         names = dir(var)
