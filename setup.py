@@ -124,6 +124,11 @@ args = dict(
         'Programming Language :: Python',
         'Topic :: Software Development :: Debuggers',
     ],
+    entry_points=[
+        'console_scripts':[
+            'pydevd = pydevd:main',
+        ],
+    ],
     data_files=data_files,
     keywords=['pydev', 'pydevd', 'pydev.debugger'],
     include_package_data=True,
