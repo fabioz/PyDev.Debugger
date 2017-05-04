@@ -1383,7 +1383,7 @@ for handler in pydevd_extension_utils.extensions_of_type(DebuggerEventHandler):
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-if __name__ == '__main__':
+def main():
 
     # parse the command line. --file is our last argument that is required
     try:
@@ -1553,4 +1553,5 @@ if __name__ == '__main__':
         if setup['cmd-line']:
             debugger.wait_for_commands(globals)
 
-
+if __name__ == '__main__':
+    main()
