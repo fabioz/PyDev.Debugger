@@ -93,6 +93,7 @@ args = dict(
 
         'pydevd_concurrency_analyser',
         'pydevd_plugins',
+        'pydevd_plugins.extensions',
     ],
     py_modules=[
         # 'interpreterInfo', -- Not needed for debugger
