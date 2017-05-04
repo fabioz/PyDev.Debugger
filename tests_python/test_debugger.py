@@ -86,10 +86,9 @@ class WriterThreadCaseSetNextStatement(debugger_unittest.AbstractWriterThread):
         self.finished_ok = True
 
 #=======================================================================================================================
-# WriterThreadCaseDjango
+# AbstractWriterThreadCaseDjango
 #======================================================================================================================
-class WriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
-
+class AbstractWriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
     FORCE_KILL_PROCESS_WHEN_FINISHED_OK = True
 
     def get_command_line_args(self):
@@ -101,24 +100,18 @@ class WriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
             '--noreload',
             str(free_port),
         ]
-
-    def write_add_breakpoint(self, line, func):
+    def write_add_breakpoint_django(self, line, func, template):
         '''
             @param line: starts at 1
         '''
         breakpoint_id = self.next_breakpoint_id()
-        template_file = debugger_unittest._get_debugger_test_file(os.path.join('my_django_proj_17', 'my_app', 'templates', 'my_app', 'index.html'))
+        template_file = debugger_unittest._get_debugger_test_file(os.path.join('my_django_proj_17', 'my_app', 'templates', 'my_app', template))
         self.write("111\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (self.next_seq(), breakpoint_id, 'django-line', template_file, line, func))
         self.log.append('write_add_django_breakpoint: %s line: %s func: %s' % (breakpoint_id, line, func))
         return breakpoint_id
 
-
-    def run(self):
-        self.start_socket()
-        self.write_add_breakpoint(5, None)
-        self.write_make_initial_run()
-        django_port = self.django_port
-
+    def create_request_thread(self, uri):
+        outer= self
         class T(threading.Thread):
             def run(self):
                 try:
@@ -127,13 +120,24 @@ class WriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
                     from urllib import urlopen
                 for _ in xrange(10):
                     try:
-                        stream = urlopen('http://127.0.0.1:%s/my_app' % django_port)
+                        stream = urlopen('http://127.0.0.1:%s/%s' % (outer.django_port,uri))
                         self.contents = stream.read()
                         break
                     except IOError:
                         continue
+        return T()
 
-        t = T()
+#=======================================================================================================================
+# WriterThreadCaseDjango
+#======================================================================================================================
+class WriterThreadCaseDjango(AbstractWriterThreadCaseDjango):
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint_django(5, None, 'index.html')
+        self.write_make_initial_run()
+
+        t = self.create_request_thread('my_app')
         time.sleep(2) # Give django some time to get to startup before requesting the page
         t.start()
 
@@ -168,6 +172,28 @@ class WriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
         if contents != '<ul><li>v1:v1</li><li>v2:v2</li></ul>':
             raise AssertionError('%s != <ul><li>v1:v1</li><li>v2:v2</li></ul>' % (contents,))
 
+        self.finished_ok = True
+
+#=======================================================================================================================
+# WriterThreadCaseDjango2
+#======================================================================================================================
+class WriterThreadCaseDjango2(AbstractWriterThreadCaseDjango):
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint_django(4, None, 'name.html')
+        self.write_make_initial_run()
+
+        t = self.create_request_thread('my_app/name')
+        time.sleep(2) # Give django some time to get to startup before requesting the page
+        t.start()
+
+        thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
+        assert line == 4, 'Expected return to be in line 4, was: %s' % line
+
+        self.write_get_frame(thread_id, frame_id)
+        self.wait_for_var('<var name="form" type="NameForm" qualifier="my_app.forms" value="NameForm%253A %253Cmy_app.forms.NameForm object')
+        self.write_run_thread(thread_id)
         self.finished_ok = True
 
 #=======================================================================================================================
@@ -413,14 +439,13 @@ class WriterThreadCase14(debugger_unittest.AbstractWriterThread):
 
         # Iterate some loop
         self.write_debug_console_expression("%s\t%s\tEVALUATE\tfor i in range(3):" % (thread_id, frame_id))
-        self.wait_for_var(['<xml><more>True</more></xml>', '<xml><more>1</more></xml>'])
+        self.wait_for_var(['<xml><more>True</more></xml>'])
         self.write_debug_console_expression("%s\t%s\tEVALUATE\t    print(i)" % (thread_id, frame_id))
+        self.wait_for_var(['<xml><more>True</more></xml>'])
         self.write_debug_console_expression("%s\t%s\tEVALUATE\t" % (thread_id, frame_id))
         self.wait_for_var(
             [
-                '<xml><more>False</more><output message="0"></output><output message="1"></output><output message="2"></output></xml>',
-                '<xml><more>0</more><output message="0"></output><output message="1"></output><output message="2"></output></xml>'
-            ]
+                '<xml><more>False</more><output message="0"></output><output message="1"></output><output message="2"></output></xml>'            ]
             )
         assert 17 == self._sequence, 'Expected 19. Had: %s' % self._sequence
 
@@ -668,11 +693,16 @@ class WriterThreadCase7(debugger_unittest.AbstractWriterThread):
 
         self.write_step_over(thread_id)
 
+        self.wait_for_breakpoint_hit('108')
+
         self.write_get_frame(thread_id, frame_id)
 
         self.wait_for_vars('<xml><var name="variable_for_test_1" type="int" qualifier="{0}" value="int%253A 10" />%0A</xml>'.format(builtin_qualifier))
 
         self.write_step_over(thread_id)
+
+        self.wait_for_breakpoint_hit('108')
+
 
         self.write_get_frame(thread_id, frame_id)
 
@@ -1143,6 +1173,60 @@ class WriterThreadCaseRemoteDebuggerMultiProc(debugger_unittest.AbstractWriterTh
             self.secondary_multi_proc_process_writer_thread.do_kill()
 
 #=======================================================================================================================
+# WriterThreadCaseTypeExt - [Test Case]: Custom type presentation extensions
+#======================================================================================================================
+class WriterThreadCaseTypeExt(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_type_ext.py')
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(7, None)
+        self.write_make_initial_run()
+
+        thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
+        self.write_get_frame(thread_id, frame_id)
+        self.wait_for_var(r'<var name="my_rect" type="Rect" qualifier="__main__" value="Rectangle%255BLength%253A 5%252C Width%253A 10 %252C Area%253A 50%255D" isContainer="True" />') is True
+        self.write_get_variable(thread_id, frame_id, 'my_rect')
+        self.wait_for_var(r'<var name="area" type="int" qualifier="{0}" value="int%253A 50" />'.format(builtin_qualifier)) is True
+        self.write_run_thread(thread_id)
+        self.finished_ok = True
+
+
+    def get_environ(self):
+        env = os.environ.copy()
+
+        python_path = env.get("PYTHONPATH","")
+        ext_base = debugger_unittest._get_debugger_test_file('my_extensions')
+        env['PYTHONPATH']= ext_base + os.pathsep + python_path  if python_path else ext_base
+        return env
+
+#=======================================================================================================================
+# WriterThreadCaseEventExt - [Test Case]: Test initialize event for extensions
+#======================================================================================================================
+class WriterThreadCaseEventExt(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_event_ext.py')
+
+    def run(self):
+        self.start_socket()
+        self.write_make_initial_run()
+        self.finished_ok = True
+
+    def additional_output_checks(self, stdout, stderr):
+        if 'INITIALIZE EVENT RECEIVED' not in stdout:
+            raise AssertionError('No initialize event received')
+
+    def get_environ(self):
+        env = os.environ.copy()
+
+        python_path = env.get("PYTHONPATH","")
+        ext_base = debugger_unittest._get_debugger_test_file('my_extensions')
+        env['PYTHONPATH']= ext_base + os.pathsep + python_path  if python_path else ext_base
+        env["VERIFY_EVENT_TEST"] = "1"
+        return env
+
+#=======================================================================================================================
 # Test
 #=======================================================================================================================
 class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
@@ -1252,6 +1336,10 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
         def test_case_django(self):
             self.check_case(WriterThreadCaseDjango)
 
+        def test_case_django2(self):
+            self.check_case(WriterThreadCaseDjango2)
+
+
     if TEST_CYTHON:
         def test_cython(self):
             from _pydevd_bundle import pydevd_cython
@@ -1297,6 +1385,13 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
         if not IS_CPYTHON:
             pytest.skip('Set next statement only for CPython')
         self.check_case(WriterThreadCaseSetNextStatement)
+
+
+    def test_case_type_ext(self):
+        self.check_case(WriterThreadCaseTypeExt)
+
+    def test_case_event_ext(self):
+        self.check_case(WriterThreadCaseEventExt)
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 class TestPythonRemoteDebugger(unittest.TestCase, debugger_unittest.DebuggerRunner):
