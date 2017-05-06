@@ -235,7 +235,7 @@ def _get_template_file_name(frame):
                             self = locals['self']
                             if self.__class__.__name__ == 'Template' and hasattr(self, 'origin') and \
                                     hasattr(self.origin, 'name'):
-                                return self.origin.name
+                                return normcase(self.origin.name)
                         back = back.f_back
                 else:
                     if hasattr(context, 'template') and hasattr(context.template, 'origin') and \
@@ -332,17 +332,14 @@ def _is_django_exception_break_context(frame):
 #=======================================================================================================================
 
 def can_not_skip(plugin, main_debugger, pydb_frame, frame):
-    if main_debugger.django_breakpoints and _is_django_render_call(frame):
-        filename = _get_template_file_name(frame)
-        django_breakpoints_for_file = main_debugger.django_breakpoints.get(filename)
-        if django_breakpoints_for_file:
-            return True
-    return False
+    return main_debugger.django_breakpoints and _is_django_render_call(frame)
+
 
 def has_exception_breaks(plugin):
     if len(plugin.main_debugger.django_exception_break) > 0:
         return True
     return False
+
 
 def has_line_breaks(plugin):
     for file, breakpoints in dict_iter_items(plugin.main_debugger.django_breakpoints):

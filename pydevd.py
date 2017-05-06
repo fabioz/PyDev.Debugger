@@ -14,7 +14,7 @@ import traceback
 
 from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OLDER, get_thread_id, dict_keys, \
     dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
-    clear_cached_thread_id
+    clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
@@ -39,6 +39,7 @@ from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_fr
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from _pydevd_bundle.pydevd_trace_dispatch import trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips
+from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, stop_frame_eval, set_use_code_extra, dummy_trace_dispatch
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
@@ -78,6 +79,7 @@ connected = False
 bufferStdOutToServer = False
 bufferStdErrToServer = False
 remote = False
+forked = False
 
 file_system_encoding = getfilesystemencoding()
 
@@ -256,6 +258,9 @@ class PyDB:
         self.show_return_values = False
         self.remove_return_values_flag = False
 
+        # this dict is used for frame evaluation, it holds thread_id -> set of frames
+        self.disable_tracing_after_exit_frames = {}
+
     def get_plugin_lazy_init(self):
         if self.plugin is None and SUPPORT_PLUGINS:
             self.plugin = PluginManager(self)
@@ -403,6 +408,23 @@ class PyDB:
                             "matplotlib.pyplot": activate_pyplot,
                             "pylab": activate_pylab }
 
+    def _activate_mpl_if_needed(self):
+        if len(self.mpl_modules_for_patching) > 0:
+            for module in dict_keys(self.mpl_modules_for_patching):
+                if module in sys.modules:
+                    activate_function = dict_pop(self.mpl_modules_for_patching, module)
+                    activate_function()
+                    self.mpl_in_use = True
+
+    def _call_mpl_hook(self):
+        try:
+            from pydev_ipython.inputhook import get_inputhook
+            inputhook = get_inputhook()
+            if inputhook:
+                inputhook()
+        except:
+            pass
+
     def suspend_all_other_threads(self, thread_suspended_at_bp):
         all_threads = threadingEnumerate()
         for t in all_threads:
@@ -542,6 +564,8 @@ class PyDB:
     def set_tracing_for_untraced_contexts(self, ignore_frame=None, overwrite_prev_trace=False):
         # Enable the tracing for existing threads (because there may be frames being executed that
         # are currently untraced).
+        if self.frame_eval_func is not None:
+            return
         threads = threadingEnumerate()
         try:
             for t in threads:
@@ -728,25 +752,12 @@ class PyDB:
 
         if info.pydev_state == STATE_SUSPEND and not self._finish_debugging_session:
             # before every stop check if matplotlib modules were imported inside script code
-            if len(self.mpl_modules_for_patching) > 0:
-                for module in dict_keys(self.mpl_modules_for_patching):
-                    if module in sys.modules:
-                        activate_function = self.mpl_modules_for_patching.pop(module)
-                        activate_function()
-                        self.mpl_in_use = True
+            self._activate_mpl_if_needed()
 
         while info.pydev_state == STATE_SUSPEND and not self._finish_debugging_session:
             if self.mpl_in_use:
                 # call input hooks if only matplotlib is in use
-                try:
-                    if not imported:
-                        from pydev_ipython.inputhook import get_inputhook
-                        imported = True
-                    inputhook = get_inputhook()
-                    if inputhook:
-                        inputhook()
-                except:
-                    pass
+                self._call_mpl_hook()
 
             self.process_internal_commands()
             time.sleep(0.01)
@@ -810,6 +821,13 @@ class PyDB:
                 info.pydev_step_cmd = -1
                 info.pydev_state = STATE_RUN
 
+        if self.frame_eval_func is not None and info.pydev_state == STATE_RUN:
+            if info.pydev_step_cmd != -1:
+                if info.pydev_step_cmd == CMD_STEP_INTO or info.pydev_step_cmd == CMD_STEP_INTO_MY_CODE:
+                    self.set_trace_for_frame_and_parents(frame)
+                # enable old tracing function for stepping
+                self.SetTrace(self.trace_dispatch)
+
         del frame
         cmd = self.cmd_factory.make_thread_run_message(get_thread_id(thread), info.pydev_step_cmd)
         self.writer.add_command(cmd)
@@ -872,8 +890,9 @@ class PyDB:
     def prepare_to_run(self):
         ''' Shared code to prepare debugging by installing traces and registering threads '''
         self.patch_threads()
-        pydevd_tracing.SetTrace(self.trace_dispatch)
-
+        pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
+        # There is no need to set tracing function if frame evaluation is available. Moreover, there is no need to patch thread
+        # functions, because frame evaluation function is set to all threads by default.
 
         PyDBCommandThread(self).start()
         if self.signature_factory is not None or self.thread_analyser is not None:
@@ -957,10 +976,16 @@ class PyDB:
                 # The file being run must be in the pythonpath (even if it was not before)
                 sys.path.insert(0, os.path.split(file)[0])
 
-            self.prepare_to_run()
-
             while not self.ready_to_run:
                 time.sleep(0.1)  # busy wait until we receive run command
+
+            if self.break_on_caught_exceptions or (self.plugin and self.plugin.has_exception_breaks()) or self.signature_factory:
+                # disable frame evaluation if there are exception breakpoints with 'On raise' activation policy
+                # or if there are plugin exception breakpoints or if collecting run-time types is enabled
+                self.frame_eval_func = None
+
+            # call prepare_to_run when we already have all information about breakpoints
+            self.prepare_to_run()
 
         if self.thread_analyser is not None:
             wrap_threads()
@@ -973,7 +998,8 @@ class PyDB:
             send_message("asyncio_event", 0, "Task", "Task", "thread", "stop", file, 1, frame=None, parent=None)
 
         try:
-            self.init_matplotlib_support()
+            if INTERACTIVE_MODE_AVAILABLE:
+                self.init_matplotlib_support()
         except:
             sys.stderr.write("Matplotlib support in debugger failed\n")
             traceback.print_exc()
@@ -1001,6 +1027,8 @@ class PyDB:
         self.writer.add_command(cmd)
 
     def wait_for_commands(self, globals):
+        self._activate_mpl_if_needed()
+
         thread = threading.currentThread()
         from _pydevd_bundle import pydevd_frame_utils
         frame = pydevd_frame_utils.Frame(None, -1, pydevd_frame_utils.FCode("Console",
@@ -1012,10 +1040,16 @@ class PyDB:
         self.writer.add_command(cmd)
 
         while True:
+            if self.mpl_in_use:
+                # call input hooks if only matplotlib is in use
+                self._call_mpl_hook()
             self.process_internal_commands()
             time.sleep(0.01)
 
     trace_dispatch = _trace_dispatch
+    frame_eval_func = frame_eval_func
+    dummy_trace_dispatch = dummy_trace_dispatch
+    set_use_code_extra = set_use_code_extra
 
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True
@@ -1188,9 +1222,14 @@ def _locked_settrace(
         while not debugger.ready_to_run:
             time.sleep(0.1)  # busy wait until we receive run command
 
+        global forked
+        if frame_eval_func is not None and not forked:
+            # Disable frame evaluation for Remote Debug Server
+            debugger.frame_eval_func = None
+
         # note that we do that through pydevd_tracing.SetTrace so that the tracing
         # is not warned to the user!
-        pydevd_tracing.SetTrace(debugger.trace_dispatch)
+        pydevd_tracing.SetTrace(debugger.trace_dispatch, debugger.frame_eval_func, debugger.dummy_trace_dispatch)
 
         if not trace_only_current_thread:
             # Trace future threads?
@@ -1223,7 +1262,7 @@ def _locked_settrace(
             additional_info = PyDBAdditionalThreadInfo()
             t.additional_info = additional_info
 
-        pydevd_tracing.SetTrace(debugger.trace_dispatch)
+        pydevd_tracing.SetTrace(debugger.trace_dispatch, debugger.frame_eval_func, debugger.dummy_trace_dispatch)
 
         if not trace_only_current_thread:
             # Trace future threads?
@@ -1327,6 +1366,8 @@ def settrace_forked():
     if port is not None:
         global connected
         connected = False
+        global forked
+        forked = True
 
         custom_frames_container_init()
 

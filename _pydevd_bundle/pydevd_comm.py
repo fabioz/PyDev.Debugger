@@ -78,7 +78,7 @@ from _pydevd_bundle import pydevd_vars
 import pydevd_tracing
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_vm_type
-import pydevd_file_utils
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER, norm_file_to_client
 import sys
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string
@@ -679,9 +679,9 @@ class NetCommandFactory:
 
                 #print "name is ", my_name
 
-                abs_path_real_path_and_base = pydevd_file_utils.get_abs_path_real_path_and_base_from_frame(curr_frame)
+                abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(curr_frame)
 
-                myFile = pydevd_file_utils.norm_file_to_client(abs_path_real_path_and_base[0])
+                myFile = norm_file_to_client(abs_path_real_path_and_base[0])
                 if file_system_encoding.lower() != "utf-8" and hasattr(myFile, "decode"):
                     # myFile is a byte string encoded using the file system encoding
                     # convert it to utf8
@@ -1080,7 +1080,7 @@ class InternalGetFrame(InternalThreadCommand):
         try:
             frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
             if frame is not None:
-                hidden_ns = pydevconsole.get_ipython_hidden_vars_dict()
+                hidden_ns = pydevconsole.get_ipython_hidden_vars()
                 xml = "<xml>"
                 xml += pydevd_xml.frame_vars_to_xml(frame.f_locals, hidden_ns)
                 del frame
@@ -1437,3 +1437,31 @@ def pydevd_find_thread_by_id(thread_id):
 
     return None
 
+
+def enable_tracing_in_frames(main_debugger):
+    """ If frame evaluation is enabled and breakpoint was added while running debug session there are two cases:
+        * the frame isn't under execution yet, we'll handle all its breakpoints in frame evaluation function
+        * the frame is already under execution, we need to enable old tracing function and disable it after exiting the frame
+    """
+    if not main_debugger.ready_to_run:
+        # do it it only debug session is started
+        return
+
+    threads = threading.enumerate()
+    try:
+        for t in threads:
+            if getattr(t, 'is_pydev_daemon_thread', False):
+                continue
+            additional_info = None
+            try:
+                additional_info = t.additional_info
+            except AttributeError:
+                pass  # that's ok, no info currently set
+            if additional_info is None:
+                continue
+
+            for frame in additional_info.iter_frames(t):
+                main_debugger.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
+            main_debugger.set_use_code_extra(False)
+    except:
+        traceback.print_exc()
