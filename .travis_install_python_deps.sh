@@ -5,6 +5,7 @@ conda install --yes numpy ipython cython pytest psutil
 
 if [ "$TRAVIS_PYTHON_VERSION" = "2.6" ]; then
     conda install --yes pyqt=4
+    pip install unittest2
     # Django 1.7 does not support Python 2.7
 fi
 if [ "$TRAVIS_PYTHON_VERSION" = "2.7" ]; then
