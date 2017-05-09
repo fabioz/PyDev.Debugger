@@ -208,20 +208,22 @@ class ThreadTracer:
                 pass
             return None
 
-    if IS_IRONPYTHON:
-        # This is far from ideal, as we'll leak frames (we'll always have the last created frame, not really
-        # the last topmost frame saved -- this should be Ok for our usage, but it may leak frames and things
-        # may live longer... as IronPython is garbage-collected, things should live longer anyways, so, it
-        # shouldn't be an issue as big as it's in CPython -- it may still be annoying, but this should
-        # be a reasonable workaround until IronPython itself is able to provide that functionality).
-        #
-        # See: https://github.com/IronLanguages/main/issues/1630
-        _original_call = __call__
-        def __call__(self, frame, event, arg):
-            _tid_to_last_frame[self._args[1].ident] = frame
-            return self._original_call(frame, event, arg)
 
 if IS_IRONPYTHON:
-    # Part of workaround due to IronPython not having sys._current_frames: 
+    # This is far from ideal, as we'll leak frames (we'll always have the last created frame, not really
+    # the last topmost frame saved -- this should be Ok for our usage, but it may leak frames and things
+    # may live longer... as IronPython is garbage-collected, things should live longer anyways, so, it
+    # shouldn't be an issue as big as it's in CPython -- it may still be annoying, but this should
+    # be a reasonable workaround until IronPython itself is able to provide that functionality).
+    #
     # See: https://github.com/IronLanguages/main/issues/1630
     from _pydevd_bundle.pydevd_additional_thread_info_regular import _tid_to_last_frame
+    
+    _original_call = ThreadTracer.__call__
+    
+    def __call__(self, frame, event, arg):
+        _tid_to_last_frame[self._args[1].ident] = frame
+        return _original_call(self, frame, event, arg)
+    
+    ThreadTracer.__call__ = __call__
+    
