@@ -5,7 +5,6 @@ from _pydevd_bundle import pydevd_resolver
 import sys
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
     MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT
-from _pydev_bundle.pydev_imports import quote
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
 try:
     import types
@@ -13,15 +12,68 @@ try:
 except:
     frame_type = None
 
-try:
-    from xml.sax.saxutils import escape
 
-    def make_valid_xml_value(s):
-        return escape(s, {'"': '&quot;'})
-except:
-    #Simple replacement if it's not there.
-    def make_valid_xml_value(s):
-        return s.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+def make_valid_xml_value(s):
+    return s.replace("&", "&amp;").replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+
+
+class _TranslatorBuilder:
+    _always_safe = ('ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                    'abcdefghijklmnopqrstuvwxyz'
+                    '0123456789' '_.-~')
+
+    _translation_map = {}
+    for i, c in zip(range(256), bytes(bytearray(range(256)))):
+        _translation_map[c] = chr(i) if (i < 128 and chr(i) in _always_safe) else '%{:02X}'.format(i)
+
+    def __init__(self):
+        self.translation_map = self._translation_map.copy()
+
+    def make_safe(self, safe):
+        safe = safe.encode('utf-8')
+        translation_map = self.translation_map
+        for c in bytes(safe):
+            translation_map[c] = chr(c) if IS_PY3K else c
+        return self
+
+    def add_translations(self, translations):
+        translation_map = self.translation_map
+        for c in dict_keys(translations):
+            key = c.encode('utf-8')[0]
+            translation_map[key] = translations[c]
+        return self
+
+    def build(self):
+        replace_dict = self.translation_map.copy()
+        safe =[]
+        for i, c in zip(range(256), bytes(bytearray(range(256)))):
+            if replace_dict[c] == chr(i):
+                safe.append(chr(i))
+        safe_chars = ''.join(safe)
+        is_py3k = IS_PY3K
+
+        def translator(in_str):
+            """
+
+            :type in_str: str
+            """
+            if not in_str.rstrip(safe_chars):
+                if is_py3k:
+                    return in_str
+                return in_str if isinstance(in_str, str) else in_str.encode(encoding='utf-8')
+            if not isinstance(in_str, bytes):
+                in_str = in_str.encode(encoding='utf-8')
+
+            return ''.join(map(replace_dict.__getitem__, in_str))
+
+        return translator
+
+_xml_escape_dict = {'"': '&quot;', '>' : '&lt;', '<': '&gt;', '&': '&amp;'}
+xml_quote = _TranslatorBuilder().make_safe("'/>_= '\t").add_translations(_xml_escape_dict).build()
+#version that keeps tab for backwards compat
+xml_quote_2 = _TranslatorBuilder().make_safe("'/>_= '").add_translations(_xml_escape_dict).build()
+
+
 
 class ExceptionOnEvaluate:
     def __init__(self, result):
@@ -314,11 +366,6 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml=''):
         except:
             value = 'Unable to get repr for %s' % v.__class__
 
-    try:
-        name = quote(name, '/>_= ') #TODO: Fix PY-5834 without using quote
-    except:
-        pass
-
     xml = '<var name="%s" type="%s" ' % (make_valid_xml_value(name), make_valid_xml_value(typeName))
 
     if type_qualifier:
@@ -331,19 +378,7 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml=''):
         if len(value) > MAXIMUM_VARIABLE_REPRESENTATION_SIZE and doTrim:
             value = value[0:MAXIMUM_VARIABLE_REPRESENTATION_SIZE]
             value += '...'
-
-        #fix to work with unicode values
-        try:
-            if not IS_PY3K:
-                if value.__class__ == unicode:  # @UndefinedVariable
-                    value = value.encode('utf-8')
-            else:
-                if value.__class__ == bytes:
-                    value = value.encode('utf-8')
-        except TypeError: #in java, unicode is a function
-            pass
-
-        xml_value = ' value="%s"' % (make_valid_xml_value(quote(value, '/>_= ')))
+        xml_value = ' value="%s"' % (xml_quote_2(value))
     else:
         xml_value = ''
 
