@@ -994,9 +994,12 @@ class InternalGetVariable(InternalThreadCommand):
             val_dict = pydevd_vars.resolve_compound_variable(self.thread_id, self.frame_id, self.scope, self.attributes)
             if val_dict is None:
                 val_dict = {}
-                
+
+            # assume properly ordered if resolver returns 'OrderedDict'
+            # check type as string to support OrderedDict backport for older Python
             keys = dict_keys(val_dict)
-            keys.sort(key=compare_object_attrs_key)
+            if not val_dict.__class__.__name__ == "OrderedDict":
+                keys.sort(key=compare_object_attrs_key)
 
             for k in keys:
                 xml += pydevd_xml.var_to_xml(val_dict[k], to_string(k))
