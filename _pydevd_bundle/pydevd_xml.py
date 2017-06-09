@@ -24,7 +24,7 @@ class _TranslatorBuilder:
 
     _translation_map = {}
     for i, c in zip(range(256), bytes(bytearray(range(256)))):
-        _translation_map[c] = chr(i) if (i < 128 and chr(i) in _always_safe) else '%{:02X}'.format(i)
+        _translation_map[c] = chr(i) if (i < 128 and chr(i) in _always_safe) else '%{0:02X}'.format(i)
 
     def __init__(self):
         self.translation_map = self._translation_map.copy()
