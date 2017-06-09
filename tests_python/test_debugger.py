@@ -1064,6 +1064,20 @@ class WriterThreadCaseMSwitch(debugger_unittest.AbstractWriterThread):
 
         self.finished_ok = True
 
+
+# =======================================================================================================================
+# WriterThreadCaseModuleWithEntryPoint
+# =======================================================================================================================
+class WriterThreadCaseModuleWithEntryPoint(WriterThreadCaseMSwitch):
+    TEST_FILE = 'tests_python._debugger_case_module_entry_point:main'
+    IS_MODULE = True
+
+    def get_main_filename(self):
+        return debugger_unittest._get_debugger_test_file('_debugger_case_module_entry_point.py')
+
+
+
+
 #=======================================================================================================================
 # WriterThreadCaseRemoteDebugger
 #=======================================================================================================================
@@ -1237,26 +1251,26 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
                 # i.e.: we're running with the provided jython.exe
                 return [sys.executable]
             else:
-                
-                
+
+
                 return [
                     get_java_location(),
                     '-classpath',
                     get_jython_jar(),
                     'org.python.util.jython'
                 ]
-                
+
         if IS_CPYTHON:
             return [sys.executable, '-u']
-        
+
         if IS_IRONPYTHON:
             return [
                     sys.executable,
                     '-X:Frames'
                 ]
-            
+
         raise RuntimeError('Unable to provide command line')
-        
+
     @pytest.mark.skipif(IS_IRONPYTHON, reason='Test needs gc.get_referrers to really check anything.')
     def test_case_1(self):
         self.check_case(WriterThreadCase1)
@@ -1316,7 +1330,7 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
             import numpy
         except ImportError:
             pytest.skip('numpy not available')
-            
+
         self.check_case(WriterThreadCase16)
 
     def test_case_17(self):
@@ -1328,7 +1342,7 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
     def test_case_18(self):
         if IS_IRONPYTHON or IS_JYTHON:
             pytest.skip('Unsupported assign to local')
-        
+
         self.check_case(WriterThreadCase18)
 
     def test_case_19(self):
@@ -1381,6 +1395,9 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
 
     def test_m_switch(self):
         self.check_case(WriterThreadCaseMSwitch)
+
+    def test_module_entry_point(self):
+         self.check_case(WriterThreadCaseModuleWithEntryPoint)
 
     def test_case_set_next_statement(self):
         # Set next only for Python.
