@@ -60,9 +60,9 @@ class _TranslatorBuilder:
             if not in_str.rstrip(safe_chars):
                 if is_py3k:
                     return in_str
-                return in_str if isinstance(in_str, str) else in_str.encode(encoding='utf-8')
+                return in_str if isinstance(in_str, str) else in_str.encode('utf-8')
             if not isinstance(in_str, bytes):
-                in_str = in_str.encode(encoding='utf-8')
+                in_str = in_str.encode('utf-8')
 
             return ''.join(map(replace_dict.__getitem__, in_str))
 
