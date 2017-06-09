@@ -68,7 +68,7 @@ class _TranslatorBuilder:
 
         return translator
 
-_xml_escape_dict = {'"': '&quot;', '>' : '&lt;', '<': '&gt;', '&': '&amp;'}
+_xml_escape_dict = {'"': '&quot;', '>' : '&lt;'}
 xml_quote = _TranslatorBuilder().make_safe("'/>_= '\t").add_translations(_xml_escape_dict).build()
 #version that keeps tab for backwards compat
 xml_quote_2 = _TranslatorBuilder().make_safe("'/>_= '").add_translations(_xml_escape_dict).build()
@@ -366,7 +366,7 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml=''):
         except:
             value = 'Unable to get repr for %s' % v.__class__
 
-    xml = '<var name="%s" type="%s" ' % (make_valid_xml_value(name), make_valid_xml_value(typeName))
+    xml = '<var name="%s" type="%s" ' % (xml_quote_2(name), make_valid_xml_value(typeName))
 
     if type_qualifier:
         xml_qualifier = 'qualifier="%s"' % make_valid_xml_value(type_qualifier)
