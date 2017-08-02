@@ -53,7 +53,7 @@ def get_environment_from_batch_command(env_cmd, initial=None):
     # create a tag so we can tell in the output when the proc is done
     tag = 'Done running command'
     # construct a cmd.exe command to do accomplish this
-    cmd = 'cmd.exe /s /c "{env_cmd} && echo "{tag}" && set"'.format(**vars())
+    cmd = 'cmd.exe /V:ON /s /c "{env_cmd} && echo "{tag}" && set"'.format(**vars())
     # launch the process
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=initial)
     # parse the output sent to stdout
@@ -130,6 +130,15 @@ def build():
             else:
                 env.update(get_environment_from_batch_command(
                     [r"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd", '/x86'],
+                    initial=os.environ.copy()))
+        elif sys.version_info[:2] == (2,6):
+            if is_python_64bit():
+                env.update(get_environment_from_batch_command(
+                    [r"C:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\SetEnv.cmd", '/x64'],
+                    initial=os.environ.copy()))
+            else:
+                env.update(get_environment_from_batch_command(
+                    [r"C:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\SetEnv.cmd", '/x86'],
                     initial=os.environ.copy()))
 
         else:
