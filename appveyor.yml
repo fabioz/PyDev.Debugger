@@ -7,65 +7,63 @@ environment:
     # The list here is complete (excluding Python 2.6, which
     # isn't covered by this document) at the time of writing.
 
-    - PYTHON: "C:\\Python27"
+    - PYTHON_FOLDER: "C:\\Python27"
       PYDEVD_USE_CYTHON: YES
-
-    - PYTHON: "C:\\Python27"
+    - PYTHON_FOLDER: "C:\\Python27"
       PYDEVD_USE_CYTHON: NO
 
-    #- PYTHON: "C:\\Python33"
-    #- PYTHON: "C:\\Python34"
-    #- PYTHON: "C:\\Python35"
-    #- PYTHON: "C:\\Python27-x64"
-    #- PYTHON: "C:\\Python33-x64"
+    #- PYTHON_FOLDER: "C:\\Python33"
+    #- PYTHON_FOLDER: "C:\\Python34"
+    #- PYTHON_FOLDER: "C:\\Python35"
+    #- PYTHON_FOLDER: "C:\\Python27-x64"
+    #- PYTHON_FOLDER: "C:\\Python33-x64"
     #  DISTUTILS_USE_SDK: "1"
-    #- PYTHON: "C:\\Python34-x64"
+    #- PYTHON_FOLDER: "C:\\Python34-x64"
     #  DISTUTILS_USE_SDK: "1"
-    - PYTHON: "C:\\Python35-x64"
+    
+    - PYTHON_FOLDER: "C:\\Python35-x64"
       PYDEVD_USE_CYTHON: YES
-
-    - PYTHON: "C:\\Python35-x64"
+    - PYTHON_FOLDER: "C:\\Python35-x64"
       PYDEVD_USE_CYTHON: NO
-    - PYTHON: "C:\\Python36-x64"
+     
+    - PYTHON_FOLDER: "C:\\Python36-x64"
       PYDEVD_USE_CYTHON: YES
-
-    - PYTHON: "C:\\Python36-x64"
+    - PYTHON_FOLDER: "C:\\Python36-x64"
       PYDEVD_USE_CYTHON: NO
+      
+    - PYTHON_FOLDER: "C:\\Python36-x64"
+      PYDEVD_USE_CYTHON: NO
+      TEST_IRONPYTHON: YES
 
 install:
-  # We need wheel installed to build wheels
-  - cmd: "%PYTHON%\\python.exe -m pip install wheel"
-  - cmd: "%PYTHON%\\python.exe -m pip install cython"
-  - cmd: "%PYTHON%\\python.exe -m pip install numpy"
-  - cmd: "%PYTHON%\\python.exe -m pip install pytest"
-  - cmd: "%PYTHON%\\python.exe -m pip install psutil"
-  - cmd: "%PYTHON%\\python.exe -m pip install ipython"
+  # Note: we can't use powershell for everything as it'll fail if anything is written to stderr (which is expected
+  # in some cases), so, using cmd on case where writing to stderr is Ok.
+  - cmd: "set PYTHON_EXE=%PYTHON_FOLDER%\\python.exe"
+  - ps: if ($env:TEST_IRONPYTHON -eq "YES"){Start-FileDownload https://github.com/IronLanguages/main/releases/download/ipy-2.7.5/IronPython-2.7.5.zip -FileName ironpython.zip}
+  - cmd: IF "%TEST_IRONPYTHON%"=="YES" (7z x ironpython.zip -oironpython)
+  - cmd: IF "%TEST_IRONPYTHON%"=="YES" (ironpython\IronPython-2.7.5\ipy.exe -X:Frames  -X:ExceptionDetail -X:ShowClrExceptions -m ensurepip)
+  - cmd: IF "%TEST_IRONPYTHON%"=="YES" (ironpython\IronPython-2.7.5\ipy.exe -X:Frames  -X:ExceptionDetail -X:ShowClrExceptions -m pip install pytest)
   - ps: |
-      if ($env:PYTHON -eq "C:\\Python27"){
-          "%PYTHON%\\python.exe -m pip install django>=1.7,<1.8"
-      }
+        if ($env:TEST_IRONPYTHON -ne "YES"){
+            $PYTHON_EXE = $Env:PYTHON_EXE
+            & $PYTHON_EXE -m pip install wheel
+            & $PYTHON_EXE -m pip install cython
+            & $PYTHON_EXE -m pip install numpy
+            & $PYTHON_EXE -m pip install pytest
+            & $PYTHON_EXE -m pip install psutil
+            & $PYTHON_EXE -m pip install ipython
+            if ($env:PYTHON -eq "C:\\Python27"){
+                "%PYTHON%\\python.exe -m pip install django>=1.7,<1.8"
+            }
+        }
   - cmd: "set PYTHONPATH=%PYTHONPATH%;%APPVEYOR_BUILD_FOLDER%"
 
 build_script:
-  - "%PYTHON%\\python.exe build_tools/build.py"
+  - "%PYTHON_EXE% build_tools/build.py"
 
 test_script:
-  # Put your test command here.
-  # If you don't need to build C extensions on 64-bit Python 3.3 or 3.4,
-  # you can remove "build.cmd" from the front of the command, as it's
-  # only needed to support those cases.
-  # Note that you must use the environment variable %PYTHON% to refer to
-  # the interpreter you're using - Appveyor does not do anything special
-  # to put the Python version you want to use on PATH.
-  # - "build.cmd %PYTHON%\\python.exe setup.py test"
-  - "build.cmd %PYTHON%\\python.exe -m pytest"
-
-# after_test:
-  # This step builds your wheels.
-  # Again, you only need build.cmd if you're building C extensions for
-  # 64-bit Python 3.3/3.4. And you need to use %PYTHON% to get the correct
-  # interpreter
-  # - "build.cmd %PYTHON%\\python.exe setup.py bdist_wheel"
+  - cmd: IF "%TEST_IRONPYTHON%"=="YES" (ironpython\IronPython-2.7.5\ipy.exe -X:Frames -X:ExceptionDetail -X:ShowClrExceptions -m pytest --assert=plain -k "not samples")
+  - cmd: IF "%TEST_IRONPYTHON%"=="" (%PYTHON_EXE% -m pytest)
 
 artifacts:
   # bdist_wheel puts your built wheel in the dist directory

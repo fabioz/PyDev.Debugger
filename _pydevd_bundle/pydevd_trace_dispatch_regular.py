@@ -2,7 +2,7 @@ import traceback
 
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_constants import get_thread_id
+from _pydevd_bundle.pydevd_constants import get_thread_id, IS_IRONPYTHON
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
@@ -207,3 +207,23 @@ class ThreadTracer:
                 # (https://github.com/fabioz/PyDev.Debugger/issues/8)
                 pass
             return None
+
+
+if IS_IRONPYTHON:
+    # This is far from ideal, as we'll leak frames (we'll always have the last created frame, not really
+    # the last topmost frame saved -- this should be Ok for our usage, but it may leak frames and things
+    # may live longer... as IronPython is garbage-collected, things should live longer anyways, so, it
+    # shouldn't be an issue as big as it's in CPython -- it may still be annoying, but this should
+    # be a reasonable workaround until IronPython itself is able to provide that functionality).
+    #
+    # See: https://github.com/IronLanguages/main/issues/1630
+    from _pydevd_bundle.pydevd_additional_thread_info_regular import _tid_to_last_frame
+    
+    _original_call = ThreadTracer.__call__
+    
+    def __call__(self, frame, event, arg):
+        _tid_to_last_frame[self._args[1].ident] = frame
+        return _original_call(self, frame, event, arg)
+    
+    ThreadTracer.__call__ = __call__
+    

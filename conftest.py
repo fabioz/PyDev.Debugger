@@ -1,5 +1,6 @@
 import pytest
 import sys
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_IRONPYTHON
 
 
 # see: http://goo.gl/kTQMs
@@ -82,8 +83,6 @@ DEBUG_MEMORY_INFO = False
 
 _global_collect_info = False
 
-IS_JYTHON = sys.platform.startswith("java")
-
 @pytest.yield_fixture(autouse=True)
 def before_after_each_function(request):
     global _global_collect_info
@@ -158,7 +157,7 @@ Memory after: %s
     '' if not processes_info else '\nLeaked processes:\n'+'\n'.join(processes_info)),
     )
 
-if IS_JYTHON:
-    # On Jython, it's a no-op.
+if IS_JYTHON or IS_IRONPYTHON:
+    # On Jython and IronPython, it's a no-op.
     def before_after_each_function():
         pass
