@@ -5,8 +5,10 @@ from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON
 from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
+version = 4
+
 if not hasattr(sys, '_current_frames'):
-    
+
     # Some versions of Jython don't have it (but we can provide a replacement)
     if IS_JYTHON:
         from java.lang import NoSuchFieldException
@@ -28,11 +30,11 @@ if not hasattr(sys, '_current_frames'):
                 thread_state = thread_to_state.getValue()
                 if thread_state is None:
                     continue
-                
+
                 frame = thread_state.frame
                 if frame is None:
                     continue
-                
+
                 ret[thread.getId()] = frame
             return ret
         
