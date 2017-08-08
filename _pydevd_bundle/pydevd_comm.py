@@ -646,7 +646,7 @@ class NetCommandFactory:
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
-    def make_thread_suspend_str(self, thread_id, frame, stop_reason, message):
+    def make_thread_suspend_str(self, thread_id, frame, stop_reason, message, suspend_type="trace"):
         """ <xml>
             <thread id="id" stop_reason="reason">
                     <frame id="id" name="functionName " file="file" line="line">
@@ -661,7 +661,7 @@ class NetCommandFactory:
         if message:
             message = make_valid_xml_value(message)
 
-        append('<thread id="%s" stop_reason="%s" message="%s">' % (thread_id, stop_reason, message))
+        append('<thread id="%s" stop_reason="%s" message="%s" suspend_type="%s">' % (thread_id, stop_reason, message, suspend_type))
 
         curr_frame = frame
         try:
@@ -708,9 +708,9 @@ class NetCommandFactory:
         append("</thread></xml>")
         return ''.join(cmd_text_list)
 
-    def make_thread_suspend_message(self, thread_id, frame, stop_reason, message):
+    def make_thread_suspend_message(self, thread_id, frame, stop_reason, message, suspend_type):
         try:
-            return NetCommand(CMD_THREAD_SUSPEND, 0, self.make_thread_suspend_str(thread_id, frame, stop_reason, message))
+            return NetCommand(CMD_THREAD_SUSPEND, 0, self.make_thread_suspend_str(thread_id, frame, stop_reason, message, suspend_type))
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
@@ -1436,32 +1436,3 @@ def pydevd_find_thread_by_id(thread_id):
         traceback.print_exc()
 
     return None
-
-
-def enable_tracing_in_frames(main_debugger):
-    """ If frame evaluation is enabled and breakpoint was added while running debug session there are two cases:
-        * the frame isn't under execution yet, we'll handle all its breakpoints in frame evaluation function
-        * the frame is already under execution, we need to enable old tracing function and disable it after exiting the frame
-    """
-    if not main_debugger.ready_to_run:
-        # do it it only debug session is started
-        return
-
-    threads = threading.enumerate()
-    try:
-        for t in threads:
-            if getattr(t, 'is_pydev_daemon_thread', False):
-                continue
-            additional_info = None
-            try:
-                additional_info = t.additional_info
-            except AttributeError:
-                pass  # that's ok, no info currently set
-            if additional_info is None:
-                continue
-
-            for frame in additional_info.iter_frames(t):
-                main_debugger.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
-            main_debugger.set_use_code_extra(False)
-    except:
-        traceback.print_exc()

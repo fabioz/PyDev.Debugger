@@ -103,6 +103,7 @@ DONT_TRACE = {
     'pydevd_vars.py': PYDEV_FILE,
     'pydevd_vm_type.py': PYDEV_FILE,
     'pydevd_xml.py': PYDEV_FILE,
+    'result.py': PYDEV_FILE,
 }
 
 if IS_PY3K:
