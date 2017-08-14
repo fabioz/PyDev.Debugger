@@ -412,7 +412,7 @@ class PyDB:
         if len(self.mpl_modules_for_patching) > 0:
             for module in dict_keys(self.mpl_modules_for_patching):
                 if module in sys.modules:
-                    activate_function = dict_pop(self.mpl_modules_for_patching, module)
+                    activate_function = self.mpl_modules_for_patching.pop(module)
                     activate_function()
                     self.mpl_in_use = True
 
