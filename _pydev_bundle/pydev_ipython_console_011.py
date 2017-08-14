@@ -332,7 +332,10 @@ class _PyDevFrontEnd:
         ns = self.ipython.user_ns
 
         for ind in ['_oh', '_ih', '_dh', '_sh', 'In', 'Out', 'get_ipython', 'exit', 'quit']:
-            locals[ind] = ns[ind]
+            try:
+                locals[ind] = ns[ind]
+            except KeyError:
+                pass # Ignore if it's not there -- #PyDev-817: Error on autocomplete with IPython on interactive console
 
         self.ipython.user_global_ns.clear()
         self.ipython.user_global_ns.update(globals)
@@ -502,4 +505,4 @@ def get_pydev_frontend(pydev_host, pydev_client_port, show_banner=True):
 
     return _PyDevFrontEndContainer._instance
 
-    
+
