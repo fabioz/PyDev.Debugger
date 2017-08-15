@@ -189,7 +189,7 @@ class TypeResolveHandler(object):
             return None
         
         if provider is not None:
-            return provider
+            return provider.get_str(o)
         
         if not self._initialized:
             self._initialize()
