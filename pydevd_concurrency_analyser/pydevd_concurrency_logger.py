@@ -2,15 +2,12 @@ from pydevd_concurrency_analyser.pydevd_thread_wrappers import ObjectWrapper, wr
 
 import pydevd_file_utils
 from _pydevd_bundle import pydevd_xml
+from _pydevd_bundle.pydevd_xml import xml_quote
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K
 
 file_system_encoding = getfilesystemencoding()
 
-try:
-    from urllib import quote
-except:
-    from urllib.parse import quote  # @UnresolvedImport
 
 from _pydev_imps._pydev_saved_modules import threading
 threadingCurrentThread = threading.currentThread
@@ -75,7 +72,7 @@ def get_text_list_for_frame(frame):
 
             variables = ''
             cmdTextList.append('<frame id="%s" name="%s" ' % (myId , pydevd_xml.make_valid_xml_value(myName)))
-            cmdTextList.append('file="%s" line="%s">' % (quote(myFile, '/>_= \t'), myLine))
+            cmdTextList.append('file="%s" line="%s">' % (xml_quote(myFile), myLine))
             cmdTextList.append(variables)
             cmdTextList.append("</frame>")
             curFrame = curFrame.f_back

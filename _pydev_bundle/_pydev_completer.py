@@ -169,20 +169,19 @@ def generate_completions_as_xml(frame, act_tok):
         #list(tuple(name, descr, parameters, type))
         completions = completer.complete(act_tok)
 
-    valid_xml = pydevd_xml.make_valid_xml_value
-    quote = pydevd_xml.quote
+    xml_quote = pydevd_xml.xml_quote
 
     msg = ["<xml>"]
 
     for comp in completions:
         msg.append('<comp p0="')
-        msg.append(valid_xml(quote(comp[0], '/>_= \t')))
+        msg.append(xml_quote(comp[0]))
         msg.append('" p1="')
-        msg.append(valid_xml(quote(comp[1], '/>_= \t')))
+        msg.append(xml_quote(comp[1]))
         msg.append('" p2="')
-        msg.append(valid_xml(quote(comp[2], '/>_= \t')))
+        msg.append(xml_quote(comp[2]))
         msg.append('" p3="')
-        msg.append(valid_xml(quote(comp[3], '/>_= \t')))
+        msg.append(xml_quote(comp[3]))
         msg.append('"/>')
     msg.append("</xml>")
 

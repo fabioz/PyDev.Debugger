@@ -77,6 +77,7 @@ import pydevconsole
 from _pydevd_bundle import pydevd_vars
 import pydevd_tracing
 from _pydevd_bundle import pydevd_xml
+from _pydevd_bundle.pydevd_xml import xml_quote
 from _pydevd_bundle import pydevd_vm_type
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER, norm_file_to_client
 import sys
@@ -571,7 +572,7 @@ class NetCommandFactory:
     def _thread_to_xml(self, thread):
         """ thread information as XML """
         name = pydevd_xml.make_valid_xml_value(thread.getName())
-        cmdText = '<thread name="%s" id="%s" />' % (quote(name), get_thread_id(thread))
+        cmdText = '<thread name="%s" id="%s" />' % (xml_quote(name), get_thread_id(thread))
         return cmdText
 
     def make_error_message(self, seq, text):
@@ -624,7 +625,7 @@ class NetCommandFactory:
                 v = v[0:MAX_IO_MSG_SIZE]
                 v += '...'
 
-            v = pydevd_xml.make_valid_xml_value(quote(v, '/>_= \t'))
+            v = xml_quote(v)
             net = NetCommand(str(CMD_WRITE_TO_CONSOLE), 0, '<xml><io s="%s" ctx="%s"/></xml>' % (v, ctx))
         except:
             net = self.make_error_message(0, get_exception_traceback_str())
@@ -698,7 +699,7 @@ class NetCommandFactory:
 
                 variables = ''
                 append('<frame id="%s" name="%s" ' % (my_id , make_valid_xml_value(my_name)))
-                append('file="%s" line="%s">' % (quote(myFile, '/>_= \t'), myLine))
+                append('file="%s" line="%s">' % (xml_quote(myFile), myLine))
                 append(variables)
                 append("</frame>")
                 curr_frame = curr_frame.f_back
@@ -1193,7 +1194,7 @@ class InternalGetDescription(InternalThreadCommand):
         try:
             frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
             description = pydevd_console.get_description(frame, self.thread_id, self.frame_id, self.expression)
-            description = pydevd_xml.make_valid_xml_value(quote(description, '/>_= \t'))
+            description = xml_quote(description)
             description_xml = '<xml><var name="" type="" value="%s"/></xml>' % description
             cmd = dbg.cmd_factory.make_get_description_message(self.sequence, description_xml)
             dbg.writer.add_command(cmd)
