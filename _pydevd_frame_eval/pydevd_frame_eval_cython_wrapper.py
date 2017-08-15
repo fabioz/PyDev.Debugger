@@ -25,7 +25,7 @@ except ImportError:
         check_name = '_pydevd_frame_eval.%s' % (mod_name,)
         mod = __import__(check_name)
         mod = getattr(mod, mod_name)
-        frame_eval_func, stop_frame_eval, enable_cache_frames_without_breaks, dummy_trace_dispatch = mod.frame_eval_func, mod.stop_frame_eval, mod.enable_cache_frames_without_breaks,
-        mod.dummy_trace_dispatch
+        frame_eval_func, stop_frame_eval, enable_cache_frames_without_breaks, dummy_trace_dispatch = \
+            mod.frame_eval_func, mod.stop_frame_eval, mod.enable_cache_frames_without_breaks, mod.dummy_trace_dispatch
     except ImportError:
         raise
