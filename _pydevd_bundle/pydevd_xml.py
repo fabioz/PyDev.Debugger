@@ -7,8 +7,10 @@ from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K,
     MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT
 from _pydev_bundle.pydev_imports import quote
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
+
 try:
     import types
+
     frame_type = types.FrameType
 except:
     frame_type = None
@@ -16,24 +18,28 @@ except:
 try:
     from xml.sax.saxutils import escape
 
+
     def make_valid_xml_value(s):
         return escape(s, {'"': '&quot;'})
 except:
-    #Simple replacement if it's not there.
+    # Simple replacement if it's not there.
     def make_valid_xml_value(s):
         return s.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+
 
 class ExceptionOnEvaluate:
     def __init__(self, result):
         self.result = result
 
+
 _IS_JYTHON = sys.platform.startswith("java")
+
 
 def _create_default_type_map():
     if not _IS_JYTHON:
         default_type_map = [
             # None means that it should not be treated as a compound variable
-    
+
             # isintance does not accept a tuple on some versions of python, so, we must declare it expanded
             (type(None), None,),
             (int, None),
@@ -47,46 +53,46 @@ def _create_default_type_map():
         try:
             default_type_map.append((long, None))  # @UndefinedVariable
         except:
-            pass #not available on all python versions
-    
+            pass  # not available on all python versions
+
         try:
             default_type_map.append((unicode, None))  # @UndefinedVariable
         except:
-            pass #not available on all python versions
-    
+            pass  # not available on all python versions
+
         try:
             default_type_map.append((set, pydevd_resolver.setResolver))
         except:
-            pass #not available on all python versions
-    
+            pass  # not available on all python versions
+
         try:
             default_type_map.append((frozenset, pydevd_resolver.setResolver))
         except:
-            pass #not available on all python versions
-    
+            pass  # not available on all python versions
+
         try:
             from django.utils.datastructures import MultiValueDict
             default_type_map.insert(0, (MultiValueDict, pydevd_resolver.multiValueDictResolver))
-            #we should put it before dict
+            # we should put it before dict
         except:
-            pass  #django may not be installed
-    
+            pass  # django may not be installed
+
         try:
             from django.forms import BaseForm
             default_type_map.insert(0, (BaseForm, pydevd_resolver.djangoFormResolver))
-            #we should put it before instance resolver
+            # we should put it before instance resolver
         except:
-            pass  #django may not be installed
-    
+            pass  # django may not be installed
+
         try:
             from collections import deque
             default_type_map.append((deque, pydevd_resolver.dequeResolver))
         except:
             pass
-    
+
         if frame_type is not None:
             default_type_map.append((frame_type, pydevd_resolver.frameResolver))
-    
+
     else:
         from org.python import core  # @UnresolvedImport
         default_type_map = [
@@ -107,9 +113,9 @@ def _create_default_type_map():
 
     return default_type_map
 
+
 class TypeResolveHandler(object):
-    
-    NO_PROVIDER = [] # Sentinel value (any mutable object to be used as a constant would be valid).
+    NO_PROVIDER = []  # Sentinel value (any mutable object to be used as a constant would be valid).
 
     def __init__(self):
         # Note: don't initialize with the types we already know about so that the extensions can override
@@ -117,14 +123,14 @@ class TypeResolveHandler(object):
         self._type_to_resolver_cache = {}
         self._type_to_str_provider_cache = {}
         self._initialized = False
-        
+
     def _initialize(self):
         self._default_type_map = _create_default_type_map()
         self._resolve_providers = pydevd_extension_utils.extensions_of_type(TypeResolveProvider)
         self._str_providers = pydevd_extension_utils.extensions_of_type(StrPresentationProvider)
         self._initialized = True
 
-    def get_type(self,o):
+    def get_type(self, o):
         try:
             try:
                 # Faster than type(o) as we don't need the function call.
@@ -132,22 +138,22 @@ class TypeResolveHandler(object):
             except:
                 # Not all objects have __class__ (i.e.: there are bad bindings around).
                 type_object = type(o)
-                
+
             type_name = type_object.__name__
         except:
             # This happens for org.python.core.InitModule
             return 'Unable to get Type', 'Unable to get Type', None
-        
+
         return self._get_type(o, type_object, type_name)
 
     def _get_type(self, o, type_object, type_name):
         resolver = self._type_to_resolver_cache.get(type_object)
         if resolver is not None:
             return type_object, type_name, resolver
-        
+
         if not self._initialized:
             self._initialize()
-            
+
         try:
             for resolver in self._resolve_providers:
                 if resolver.can_provide(type_object, type_name):
@@ -168,37 +174,36 @@ class TypeResolveHandler(object):
         resolver = pydevd_resolver.defaultResolver
         self._type_to_resolver_cache[type_object] = resolver
         return type_object, type_name, resolver
-    
+
     if _IS_JYTHON:
         _base_get_type = _get_type
-        
+
         def _get_type(self, o, type_object, type_name):
             if type_name == 'org.python.core.PyJavaInstance':
                 return type_object, type_name, pydevd_resolver.instanceResolver
 
             if type_name == 'org.python.core.PyArray':
                 return type_object, type_name, pydevd_resolver.jyArrayResolver
-            
+
             return self._base_get_type(o, type_name, type_name)
 
-
-    def str_from_providers(self,  o, type_object, type_name):
+    def str_from_providers(self, o, type_object, type_name):
         provider = self._type_to_str_provider_cache.get(type_object)
-        
+
         if provider is self.NO_PROVIDER:
             return None
-        
+
         if provider is not None:
             return provider.get_str(o)
-        
+
         if not self._initialized:
             self._initialize()
-        
+
         for provider in self._str_providers:
             if provider.can_provide(type_object, type_name):
                 self._type_to_str_provider_cache[type_object] = provider
                 return provider.get_str(o)
-            
+
         self._type_to_str_provider_cache[type_object] = self.NO_PROVIDER
         return None
 
@@ -235,10 +240,10 @@ def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
 
     keys = dict_keys(frame_f_locals)
     if hasattr(keys, 'sort'):
-        keys.sort() #Python 3.0 does not have it
+        keys.sort()  # Python 3.0 does not have it
     else:
-        keys = sorted(keys) #Jython 2.1 does not have it
-        
+        keys = sorted(keys)  # Jython 2.1 does not have it
+
     return_values_xml = ''
 
     for k in keys:
@@ -296,14 +301,13 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml=''):
                     if cName.find('.') != -1:
                         cName = cName.split('.')[-1]
 
-                    elif cName.find("'") != -1: #does not have '.' (could be something like <type 'int'>)
+                    elif cName.find("'") != -1:  # does not have '.' (could be something like <type 'int'>)
                         cName = cName[cName.index("'") + 1:]
 
                     if cName.endswith("'>"):
                         cName = cName[:-2]
                 except:
                     cName = str(v.__class__)
-
 
                 value = '%s: %s' % (cName, v)
         else:
@@ -315,7 +319,7 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml=''):
             value = 'Unable to get repr for %s' % v.__class__
 
     try:
-        name = quote(name, '/>_= ') #TODO: Fix PY-5834 without using quote
+        name = quote(name, '/>_= ')  # TODO: Fix PY-5834 without using quote
     except:
         pass
 
@@ -327,12 +331,12 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml=''):
         xml_qualifier = ''
 
     if value:
-        #cannot be too big... communication may not handle it.
+        # cannot be too big... communication may not handle it.
         if len(value) > MAXIMUM_VARIABLE_REPRESENTATION_SIZE and doTrim:
             value = value[0:MAXIMUM_VARIABLE_REPRESENTATION_SIZE]
             value += '...'
 
-        #fix to work with unicode values
+        # fix to work with unicode values
         try:
             if not IS_PY3K:
                 if value.__class__ == unicode:  # @UndefinedVariable
@@ -340,7 +344,7 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml=''):
             else:
                 if value.__class__ == bytes:
                     value = value.encode('utf-8')
-        except TypeError: #in java, unicode is a function
+        except TypeError:  # in java, unicode is a function
             pass
 
         xml_value = ' value="%s"' % (make_valid_xml_value(quote(value, '/>_= ')))
@@ -356,4 +360,3 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml=''):
             xml_container = ''
 
     return ''.join((xml, xml_qualifier, xml_value, xml_container, additional_in_xml, ' />\n'))
-
