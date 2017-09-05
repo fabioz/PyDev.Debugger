@@ -124,6 +124,8 @@ class StdIn(BaseStdIn):
                 # readline should end with '\n' (not doing so makes IPython 5 remove the last *valid* character).
                 requested_input += '\n'
             return requested_input
+        except KeyboardInterrupt:
+            raise  # Let KeyboardInterrupt go through -- #PyDev-816: Interrupting infinite loop in the Interactive Console
         except:
             return '\n'
 
