@@ -104,7 +104,7 @@ def build():
 
 
         env = os.environ.copy()
-        if sys.version_info[:2] in ((2,6), (2,7), (3,5), (3,6)):
+        if sys.version_info[:2] in ((2,6), (2,7), (3,5), (3, 6)):
             import setuptools # We have to import it first for the compiler to be found
             from distutils import msvc9compiler
 
