@@ -66,8 +66,8 @@ from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import socket
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
-from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, STATE_RUN,\
-    dict_keys
+from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, STATE_RUN, \
+    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC
 
 try:
     from urllib import quote_plus, unquote, unquote_plus
@@ -1418,6 +1418,68 @@ class InternalConsoleExec(InternalThreadCommand):
 
             sys.stderr.flush()
             sys.stdout.flush()
+
+
+#=======================================================================================================================
+# InternalLoadFullValue
+#=======================================================================================================================
+class InternalLoadFullValue(InternalThreadCommand):
+    """ changes the value of a variable """
+    def __init__(self, seq, thread_id, frame_id, vars):
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.vars = vars
+
+    def do_it(self, dbg):
+        """ Converts request into python variable """
+        try:
+            var_objects = []
+            for variable in self.vars:
+                variable = variable.strip()
+                if len(variable) > 0:
+                    if '\t' in variable:  # there are attributes beyond scope
+                        scope, attrs = variable.split('\t', 1)
+                        name = attrs[0]
+                    else:
+                        scope, attrs = (variable, None)
+                        name = scope
+
+                    var_obj = pydevd_vars.getVariable(self.thread_id, self.frame_id, scope, attrs)
+                    var_objects.append((var_obj, name))
+
+            t = GetValueAsyncThread(dbg, self.thread_id, self.frame_id, self.sequence, var_objects)
+            t.start()
+        except:
+            exc = get_exception_traceback_str()
+            sys.stderr.write('%s\n' % (exc,))
+            cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error evaluating variable %s " % exc)
+            dbg.writer.add_command(cmd)
+
+
+class GetValueAsyncThread(PyDBDaemonThread):
+    def __init__(self, py_db, thread_id, frame_id, seq, var_objects):
+        PyDBDaemonThread.__init__(self)
+        self.py_db = py_db
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.seq = seq
+        self.var_objs = var_objects
+        self.cancel_event = threading.Event()
+
+    def _on_run(self):
+        start = time.time()
+        xml = StringIO.StringIO()
+        xml.write("<xml>")
+        for (var_obj, name) in self.var_objs:
+            current_time = time.time()
+            if current_time - start > ASYNC_EVAL_TIMEOUT_SEC or self.cancel_event.is_set():
+                break
+            xml.write(pydevd_xml.var_to_xml(var_obj, name, evaluate_full_value=True))
+        xml.write("</xml>")
+        cmd = self.py_db.cmd_factory.make_load_full_value_message(self.seq, xml.getvalue())
+        xml.close()
+        self.py_db.writer.add_command(cmd)
 
 
 #=======================================================================================================================
