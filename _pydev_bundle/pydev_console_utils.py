@@ -182,6 +182,12 @@ class BaseInterpreterInterface:
         self.exec_queue = _queue.Queue(0)
         self.buffer = None
 
+    def build_banner(self):
+        return 'print({0})\n'.format(repr(self.get_greeting_msg()))
+
+    def get_greeting_msg(self):
+        return 'PyDev console: starting.\n'
+
     def need_more_for_code(self, source):
         # PyDev-502: PyDev 3.9 F2 doesn't support backslash continuations
 
