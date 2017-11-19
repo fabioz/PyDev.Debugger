@@ -52,61 +52,6 @@ def connect_to_server_for_communication_to_xml_rpc_on_xdist():
 PY2 = sys.version_info[0] <= 2
 PY3 = not PY2
 
-#=========================================================================
-# Mocking to get clickable file representations
-#=========================================================================
-
-_mock_code = []
-try:
-    from py._code import code  # @UnresolvedImport
-    _mock_code.append(code)
-except ImportError:
-    pass
-try:
-    from _pytest._code import code  # @UnresolvedImport
-    _mock_code.append(code)
-except ImportError:
-    pass
-
-def _MockFileRepresentation():
-    for code in _mock_code:
-        code.ReprFileLocation._original_toterminal = code.ReprFileLocation.toterminal
-
-        def toterminal(self, tw):
-            # filename and lineno output for each entry,
-            # using an output format that most editors understand
-            msg = self.message
-            i = msg.find("\n")
-            if i != -1:
-                msg = msg[:i]
-
-            path = os.path.abspath(self.path)
-
-            if PY2:
-                # Note: it usually is NOT unicode...
-                if not isinstance(path, unicode):
-                    path = path.decode(sys.getfilesystemencoding(), 'replace')
-
-                # Note: it usually is unicode...
-                if not isinstance(msg, unicode):
-                    msg = msg.decode('utf-8', 'replace')
-                unicode_line = unicode('File "%s", line %s\n%s') % (
-                    path, self.lineno, msg)
-                tw.line(unicode_line)
-            else:
-                tw.line('File "%s", line %s\n%s' % (path, self.lineno, msg))
-
-        code.ReprFileLocation.toterminal = toterminal
-
-
-def _UninstallMockFileRepresentation():
-    for code in _mock_code:
-        # @UndefinedVariable
-        code.ReprFileLocation.toterminal = code.ReprFileLocation._original_toterminal
-
-#=========================================================================
-# End mocking to get clickable file representations
-#=========================================================================
 
 class State:
     start_time = time.time()
@@ -126,12 +71,7 @@ def get_curr_output():
     return State.buf_out.getvalue(), State.buf_err.getvalue()
 
 
-def pytest_configure():
-    _MockFileRepresentation()
-
-
 def pytest_unconfigure():
-    _UninstallMockFileRepresentation()
     if is_in_xdist_node():
         return
     # Only report that it finished when on the main node (we don't want to report
@@ -205,7 +145,7 @@ def _get_error_contents_from_report(report):
         s = exc.strip()
         if s:
             return s
-        
+
     return ''
 
 def pytest_collectreport(report):
@@ -216,33 +156,33 @@ def pytest_collectreport(report):
 def append_strings(s1, s2):
     if s1.__class__ == s2.__class__:
         return s1 + s2
-    
+
     if sys.version_info[0] == 2:
         if not isinstance(s1, basestring):
             s1 = str(s1)
-            
+
         if not isinstance(s2, basestring):
             s2 = str(s2)
-            
+
         # Prefer bytes
         if isinstance(s1, unicode):
             s1 = s1.encode('utf-8')
-            
+
         if isinstance(s2, unicode):
             s2 = s2.encode('utf-8')
-            
+
         return s1 + s2
     else:
         # Prefer str
         if isinstance(s1, bytes):
             s1 = s1.decode('utf-8', 'replace')
-            
+
         if isinstance(s2, bytes):
             s2 = s2.decode('utf-8', 'replace')
-            
+
         return s1 + s2
-            
-            
+
+
 
 def pytest_runtest_logreport(report):
     if is_in_xdist_node():

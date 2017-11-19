@@ -64,7 +64,8 @@ if sys.platform == "cygwin":
         path = fully_normalize_path(path)
         path = tobytes(path)
         CCP_POSIX_TO_WIN_A = 0
-        ctypes.cdll.cygwin1.cygwin_conv_path(CCP_POSIX_TO_WIN_A, path, retval, MAX_PATH)
+        cygwin1dll = ctypes.cdll.LoadLibrary( 'cygwin1.dll' )
+        cygwin1dll.cygwin_conv_path(CCP_POSIX_TO_WIN_A, path, retval, MAX_PATH)
 
         return retval.value
 
@@ -251,13 +252,5 @@ if __name__ == '__main__':
     else:
         sys.stdout.write(inasciixml)
 
-    try:
-        sys.stdout.flush()
-        sys.stderr.flush()
-        # and give some time to let it read things (just in case)
-        import time
-        time.sleep(0.1)
-    except:
-        pass
-
-    raise RuntimeError('Ok, this is so that it shows the output (ugly hack for some platforms, so that it releases the output).')
+    sys.stdout.flush()
+    sys.stderr.flush()
