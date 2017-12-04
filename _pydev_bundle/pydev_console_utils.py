@@ -185,6 +185,7 @@ class BaseInterpreterInterface:
         self.interruptable = False
         self.exec_queue = _queue.Queue(0)
         self.buffer = None
+        self.banner_shown = False
 
     def build_banner(self):
         return 'print({0})\n'.format(repr(self.get_greeting_msg()))

@@ -18,19 +18,22 @@ class InterpreterInterface(BaseInterpreterInterface):
         The methods in this class should be registered in the xml-rpc server.
     '''
 
-    def __init__(self, host, client_port, mainThread, show_banner=True):
-        BaseInterpreterInterface.__init__(self, mainThread)
+    def __init__(self, host, client_port, main_thread, show_banner=True):
+        BaseInterpreterInterface.__init__(self, main_thread)
         self.client_port = client_port
         self.host = host
-        self.interpreter = get_pydev_frontend(host, client_port, show_banner=show_banner)
+        self.interpreter = get_pydev_frontend(host, client_port)
         self._input_error_printed = False
         self.notification_succeeded = False
         self.notification_tries = 0
         self.notification_max_tries = 3
+        self.show_banner = show_banner
 
         self.notify_about_magic()
 
     def get_greeting_msg(self):
+        if self.show_banner:
+            self.interpreter.show_banner()
         return self.interpreter.get_greeting_msg()
 
     def do_add_exec(self, codeFragment):
