@@ -729,6 +729,31 @@ class PyDB:
         cmd = self.cmd_factory.make_process_created_message()
         self.writer.add_command(cmd)
 
+    def set_next_statement(self, frame, event, func_name, next_line):
+        stop = False
+        response_msg = ""
+        old_line = frame.f_lineno
+        if event == 'line' or event == 'exception':
+            #If we're already in the correct context, we have to stop it now, because we can act only on
+            #line events -- if a return was the next statement it wouldn't work (so, we have this code
+            #repeated at pydevd_frame).
+
+            curr_func_name = frame.f_code.co_name
+
+            #global context is set with an empty name
+            if curr_func_name in ('?', '<module>'):
+                curr_func_name = ''
+
+            if curr_func_name == func_name:
+                line = next_line
+                if frame.f_trace is None:
+                    frame.f_trace = self.trace_dispatch
+                frame.f_lineno = line
+                stop = True
+            else:
+                response_msg = "jump is available only within the bottom frame"
+        return stop, old_line, response_msg
+
     def cancel_async_evaluation(self, thread_id, frame_id):
         self._main_lock.acquire()
         try:
@@ -826,6 +851,17 @@ class PyDB:
                         frame.f_trace = None
                         stop = True
                 if stop:
+                    cmd = self.cmd_factory.make_thread_run_message(get_thread_id(thread), info.pydev_step_cmd)
+                    self.writer.add_command(cmd)
+                    if suspend_type == "trace":
+                        info.pydev_state = STATE_SUSPEND
+                        thread.stop_reason= CMD_SET_NEXT_STATEMENT
+                        self.do_wait_suspend(thread, frame, event, arg, "trace")
+                    else:
+                        info.pydev_step_stop = frame
+                    return
+                else:
+                    info.pydev_step_cmd = -1
                     info.pydev_state = STATE_SUSPEND
                     self.do_wait_suspend(thread, frame, event, arg, "trace")
                     return
