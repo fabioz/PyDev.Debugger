@@ -30,12 +30,12 @@ class NDArrayTypeResolveProvider(object):
         if attribute == '__internals__':
             return defaultResolver.get_dictionary(obj)
         if attribute == 'min':
-            if self.is_numeric(obj):
+            if self.is_numeric(obj) and obj.size > 0:
                 return obj.min()
             else:
                 return None
         if attribute == 'max':
-            if self.is_numeric(obj):
+            if self.is_numeric(obj) and obj.size > 0:
                 return obj.max()
             else:
                 return None
@@ -64,6 +64,9 @@ class NDArrayTypeResolveProvider(object):
         if obj.size > 1024 * 1024:
             ret['min'] = 'ndarray too big, calculating min would slow down debugging'
             ret['max'] = 'ndarray too big, calculating max would slow down debugging'
+        elif obj.size == 0:
+            ret['min'] = 'array is empty'
+            ret['max'] = 'array is empty'
         else:
             if self.is_numeric(obj):
                 ret['min'] = obj.min()
