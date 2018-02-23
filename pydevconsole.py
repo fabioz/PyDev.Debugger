@@ -426,7 +426,7 @@ class ConsoleWriter(InteractiveInterpreter):
         list = traceback.format_exception_only(type, value)
         sys.stderr.write(''.join(list))
 
-    def showtraceback(self):
+    def showtraceback(self, *args, **kwargs):
         """Display the exception that just occurred."""
         #Override for avoid using sys.excepthook PY-12600
         try:

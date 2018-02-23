@@ -139,8 +139,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
     # Things related to exceptions
     #-------------------------------------------------------------------------
 
-    def showtraceback(self, exc_tuple=None, filename=None, tb_offset=None,
-                  exception_only=False):
+    def showtraceback(self, *args, **kwargs):
         # IPython does a lot of clever stuff with Exceptions. However mostly
         # it is related to IPython running in a terminal instead of an IDE.
         # (e.g. it prints out snippets of code around the stack trace)
