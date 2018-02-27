@@ -228,69 +228,75 @@ class BaseInterpreterInterface:
             return DebugConsoleStdIn(dbg=debugger, original_stdin=original_std_in)
 
     def add_exec(self, code_fragment, debugger=None):
-        original_in = sys.stdin
+        # In case sys.excepthook called, use original excepthook #PyDev-877: Debug console freezes with Python 3.5+
+        # (showtraceback does it on python 3.5 onwards)
+        sys.excepthook = sys.__excepthook__
         try:
-            help = None
-            if 'pydoc' in sys.modules:
-                pydoc = sys.modules['pydoc']  # Don't import it if it still is not there.
-
-                if hasattr(pydoc, 'help'):
-                    # You never know how will the API be changed, so, let's code defensively here
-                    help = pydoc.help
-                    if not hasattr(help, 'input'):
-                        help = None
-        except:
-            # Just ignore any error here
-            pass
-
-        more = False
-        try:
-            sys.stdin = self.create_std_in(debugger, original_in)
+            original_in = sys.stdin
             try:
-                if help is not None:
-                    # This will enable the help() function to work.
-                    try:
-                        try:
-                            help.input = sys.stdin
-                        except AttributeError:
-                            help._input = sys.stdin
-                    except:
-                        help = None
-                        if not self._input_error_printed:
-                            self._input_error_printed = True
-                            sys.stderr.write('\nError when trying to update pydoc.help.input\n')
-                            sys.stderr.write('(help() may not work -- please report this as a bug in the pydev bugtracker).\n\n')
-                            traceback.print_exc()
+                help = None
+                if 'pydoc' in sys.modules:
+                    pydoc = sys.modules['pydoc']  # Don't import it if it still is not there.
 
+                    if hasattr(pydoc, 'help'):
+                        # You never know how will the API be changed, so, let's code defensively here
+                        help = pydoc.help
+                        if not hasattr(help, 'input'):
+                            help = None
+            except:
+                # Just ignore any error here
+                pass
+
+            more = False
+            try:
+                sys.stdin = self.create_std_in(debugger, original_in)
                 try:
-                    self.start_exec()
-                    if hasattr(self, 'debugger'):
-                        import pydevd_tracing
-                        pydevd_tracing.SetTrace(self.debugger.trace_dispatch)
-
-                    more = self.do_add_exec(code_fragment)
-
-                    if hasattr(self, 'debugger'):
-                        import pydevd_tracing
-                        pydevd_tracing.SetTrace(None)
-
-                    self.finish_exec(more)
-                finally:
                     if help is not None:
+                        # This will enable the help() function to work.
                         try:
                             try:
-                                help.input = original_in
+                                help.input = sys.stdin
                             except AttributeError:
-                                help._input = original_in
+                                help._input = sys.stdin
                         except:
-                            pass
+                            help = None
+                            if not self._input_error_printed:
+                                self._input_error_printed = True
+                                sys.stderr.write('\nError when trying to update pydoc.help.input\n')
+                                sys.stderr.write('(help() may not work -- please report this as a bug in the pydev bugtracker).\n\n')
+                                traceback.print_exc()
 
-            finally:
-                sys.stdin = original_in
-        except SystemExit:
-            raise
-        except:
-            traceback.print_exc()
+                    try:
+                        self.start_exec()
+                        if hasattr(self, 'debugger'):
+                            import pydevd_tracing
+                            pydevd_tracing.SetTrace(self.debugger.trace_dispatch)
+
+                        more = self.do_add_exec(code_fragment)
+
+                        if hasattr(self, 'debugger'):
+                            import pydevd_tracing
+                            pydevd_tracing.SetTrace(None)
+
+                        self.finish_exec(more)
+                    finally:
+                        if help is not None:
+                            try:
+                                try:
+                                    help.input = original_in
+                                except AttributeError:
+                                    help._input = original_in
+                            except:
+                                pass
+
+                finally:
+                    sys.stdin = original_in
+            except SystemExit:
+                raise
+            except:
+                traceback.print_exc()
+        finally:
+            sys.__excepthook__ = sys.excepthook
 
         return more
 
