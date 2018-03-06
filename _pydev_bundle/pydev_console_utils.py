@@ -6,9 +6,15 @@ from  _pydev_bundle._pydev_calltip_util import get_description
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_xml
-from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
-from _pydevd_bundle.pydevd_utils import to_string
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items, NEXT_VALUE_SEPARATOR
 
+try:
+    import cStringIO as StringIO #may not always be available @UnusedImport
+except:
+    try:
+        import StringIO #@Reimport
+    except:
+        import io as StringIO
 
 # =======================================================================================================================
 # Null
@@ -486,27 +492,30 @@ class BaseInterpreterInterface:
             return True
 
     def getFrame(self):
+        xml = StringIO.StringIO()
         hidden_ns = self.get_ipython_hidden_vars_dict()
-        xml = "<xml>"
-        xml += pydevd_xml.frame_vars_to_xml(self.get_namespace(), hidden_ns)
-        xml += "</xml>"
+        xml.write("<xml>")
+        xml.write(pydevd_xml.frame_vars_to_xml(self.get_namespace(), hidden_ns))
+        xml.write("</xml>")
 
-        return xml
+        return xml.getvalue()
 
     def getVariable(self, attributes):
-        xml = "<xml>"
-        valDict = pydevd_vars.resolve_var(self.get_namespace(), attributes)
-        if valDict is None:
-            valDict = {}
+        xml = StringIO.StringIO()
+        xml.write("<xml>")
+        val_dict = pydevd_vars.resolve_compound_var_object_fields(self.get_namespace(), attributes)
+        if val_dict is None:
+            val_dict = {}
 
-        keys = valDict.keys()
-
+        keys = val_dict.keys()
         for k in keys:
-            xml += pydevd_vars.var_to_xml(valDict[k], to_string(k))
+            val = val_dict[k]
+            evaluate_full_value = pydevd_xml.should_evaluate_full_value(val)
+            xml.write(pydevd_vars.var_to_xml(val, k, evaluate_full_value=evaluate_full_value))
 
-        xml += "</xml>"
+        xml.write("</xml>")
 
-        return xml
+        return xml.getvalue()
 
     def getArray(self, attr, roffset, coffset, rows, cols, format):
         name = attr.split("\t")[-1]
@@ -514,14 +523,41 @@ class BaseInterpreterInterface:
         return pydevd_vars.table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format)
 
     def evaluate(self, expression):
-        xml = "<xml>"
+        xml = StringIO.StringIO()
+        xml.write("<xml>")
         result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
+        xml.write(pydevd_vars.var_to_xml(result, expression))
+        xml.write("</xml>")
+        return xml.getvalue()
 
-        xml += pydevd_vars.var_to_xml(result, expression)
+    def loadFullValue(self, seq, scope_attrs):
+        """
+        Evaluate full value for async Console variables in a separate thread and send results to IDE side
+        :param seq: id of command
+        :param scope_attrs: a sequence of variables with their attributes separated by NEXT_VALUE_SEPARATOR
+        (i.e.: obj\tattr1\tattr2NEXT_VALUE_SEPARATORobj2\attr1\tattr2)
+        :return:
+        """
+        frame_variables = self.get_namespace()
+        var_objects = []
+        vars = scope_attrs.split(NEXT_VALUE_SEPARATOR)
+        for var_attrs in vars:
+            if '\t' in var_attrs:
+                name, attrs = var_attrs.split('\t', 1)
 
-        xml += "</xml>"
+            else:
+                name = var_attrs
+                attrs = None
+            if name in frame_variables.keys():
+                var_object = pydevd_vars.resolve_var_object(frame_variables[name], attrs)
+                var_objects.append((var_object, name))
+            else:
+                var_object = pydevd_vars.eval_in_context(name, frame_variables, frame_variables)
+                var_objects.append((var_object, name))
 
-        return xml
+        from _pydevd_bundle.pydevd_comm import GetValueAsyncThreadConsole
+        t = GetValueAsyncThreadConsole(self.get_server(), seq, var_objects)
+        t.start()
 
     def changeVariable(self, attr, value):
         def do_change_variable():
