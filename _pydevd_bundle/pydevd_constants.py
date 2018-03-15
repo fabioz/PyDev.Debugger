@@ -69,7 +69,8 @@ else:
 # Python 3?
 #=======================================================================================================================
 IS_PY3K = False
-IS_PY34_OLDER = False
+IS_PY34_OR_GREATER = False
+IS_PY36_OR_GREATER = False
 IS_PY2 = True
 IS_PY27 = False
 IS_PY24 = False
@@ -77,8 +78,8 @@ try:
     if sys.version_info[0] >= 3:
         IS_PY3K = True
         IS_PY2 = False
-        if (sys.version_info[0] == 3 and sys.version_info[1] >= 4) or sys.version_info[0] > 3:
-            IS_PY34_OLDER = True
+        IS_PY34_OR_GREATER = sys.version_info >= (3, 4)
+        IS_PY36_OR_GREATER = sys.version_info >= (3, 6)
     elif sys.version_info[0] == 2 and sys.version_info[1] == 7:
         IS_PY27 = True
     elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
