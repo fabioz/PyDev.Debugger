@@ -12,7 +12,7 @@ import atexit
 import os
 import traceback
 
-from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OR_GREATER, IS_PYCHARM, get_thread_id, \
+from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OLDER, get_thread_id, \
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV
 from _pydev_bundle import fix_getpass
