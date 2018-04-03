@@ -1,6 +1,10 @@
 try:
-    from _pydevd_frame_eval_ext.pydevd_frame_evaluator import frame_eval_func, stop_frame_eval, enable_cache_frames_without_breaks, \
-        dummy_trace_dispatch
+    try:
+        from _pydevd_frame_eval_ext.pydevd_frame_evaluator import frame_eval_func, stop_frame_eval, \
+            enable_cache_frames_without_breaks, dummy_trace_dispatch
+    except ImportError:
+        from _pydevd_frame_eval.pydevd_frame_evaluator import frame_eval_func, stop_frame_eval, \
+            enable_cache_frames_without_breaks, dummy_trace_dispatch
 
 except ImportError:
     try:
