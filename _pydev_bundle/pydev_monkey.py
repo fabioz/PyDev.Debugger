@@ -136,7 +136,7 @@ def patch_args(args):
 
                 if port is not None:
                     new_args.extend(args)
-                    new_args[ind_c + 1] = _get_python_c_args(host, port, ind_c, args, SetupHolder.setup)
+                    new_args[ind_c + 1] = _get_python_c_args(host, port, ind_c, args)
                     return quote_args(new_args)
             else:
                 # Check for Python ZIP Applications and don't patch the args for them.
