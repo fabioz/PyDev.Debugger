@@ -826,6 +826,12 @@ class NetCommandFactory:
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
+    def make_set_next_stmnt_status_message(self, seq, is_success, exception_msg):
+        try:
+            message = str(is_success) + '\t' + exception_msg
+            return NetCommand(CMD_SET_NEXT_STATEMENT, int(seq), message)
+        except:
+            return self.make_error_message(0, get_exception_traceback_str())
 
     def make_exit_message(self):
         try:

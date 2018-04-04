@@ -74,7 +74,7 @@ class WriterThreadCaseSetNextStatement(debugger_unittest.AbstractWriterThread):
         self.write_evaluate_expression('%s\t%s\t%s' % (thread_id, frame_id, 'LOCAL'), 'a')
         self.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="int: 2"'.format(builtin_qualifier))
         self.write_set_next_statement(thread_id, 2, 'method')
-        thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
+        thread_id, frame_id, line = self.wait_for_breakpoint_hit('127', True)
         assert line == 2, 'Expected return to be in line 2, was: %s' % line
 
         self.write_step_over(thread_id)
@@ -1402,10 +1402,8 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
     def test_module_entry_point(self):
         self.check_case(WriterThreadCaseModuleWithEntryPoint)
 
-    @pytest.mark.skipif(not IS_CPYTHON or IS_PY36, reason='Only for Python (failing on 3.6 -- needs to be investigated).')
     def test_case_set_next_statement(self):
         self.check_case(WriterThreadCaseSetNextStatement)
-
 
     @pytest.mark.skipif(IS_IRONPYTHON, reason='Failing on IronPython (needs to be investigated).')
     def test_case_type_ext(self):

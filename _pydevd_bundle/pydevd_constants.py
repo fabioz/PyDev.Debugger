@@ -99,7 +99,7 @@ USE_LIB_COPY = SUPPORT_GEVENT and \
 
 
 INTERACTIVE_MODE_AVAILABLE = sys.platform in ('darwin', 'win32') or os.getenv('DISPLAY') is not None
-IS_PYCHARM = True
+IS_PYCHARM = False
 
 LOAD_VALUES_ASYNC = os.getenv('PYDEVD_LOAD_VALUES_ASYNC', 'False') == 'True'
 DEFAULT_VALUE = "__pydevd_value_async"
