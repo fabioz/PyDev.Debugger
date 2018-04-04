@@ -82,6 +82,7 @@ from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_P
 import sys
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string
+from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_bundle import pydev_log
 from _pydev_bundle import _pydev_completer
 
