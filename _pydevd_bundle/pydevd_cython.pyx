@@ -4,12 +4,14 @@
 # DO NOT edit manually!
 import sys
 from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON, IS_IRONPYTHON
+from _pydev_bundle import pydev_log
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+pydev_log.debug("Using Cython speedups")
 # ELSE
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 4
+version = 11
 
 if not hasattr(sys, '_current_frames'):
 
@@ -812,28 +814,10 @@ cdef class PyDBFrame:
                     stop = is_return and stop_frame is frame
 
                 elif step_cmd == CMD_RUN_TO_LINE or step_cmd == CMD_SET_NEXT_STATEMENT:
-                    stop = False
-
-                    if is_line or is_exception_event:
-                        #Yes, we can only act on line events (weird hum?)
-                        #Note: This code is duplicated at pydevd.py
-                        #Acting on exception events after debugger breaks with exception
-                        curr_func_name = frame.f_code.co_name
-
-                        #global context is set with an empty name
-                        if curr_func_name in ('?', '<module>'):
-                            curr_func_name = ''
-
-                        if curr_func_name == info.pydev_func_name:
-                            line = info.pydev_next_line
-                            if frame.f_lineno == line:
-                                stop = True
-                            else:
-                                if frame.f_trace is None:
-                                    frame.f_trace = self.trace_dispatch
-                                frame.f_lineno = line
-                                frame.f_trace = None
-                                stop = True
+                    try:
+                        stop, _, response_msg = main_debugger.set_next_statement(frame, event, info.pydev_func_name, info.pydev_next_line)
+                    except ValueError:
+                        pass
 
                 else:
                     stop = False
