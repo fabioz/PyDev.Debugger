@@ -26,9 +26,9 @@ class TestCase(unittest.TestCase):
                 'trace_only_current_thread=False, patch_multiprocessing=True); '
                 ''
                 "from pydevd import SetupHolder; "
-                "SetupHolder.setup = {'client': '127.0.0.1', 'port': '0'}; "
+                "SetupHolder.setup = %s; "
                 ''
-                'connect("127.0.0.1")') % pydev_src_dir
+                'connect("127.0.0.1")') % (pydev_src_dir, SetupHolder.setup)
             if sys.platform == "win32":
                 debug_command = debug_command.replace('"', '\\"')
                 debug_command = '"%s"' % debug_command
@@ -53,9 +53,9 @@ class TestCase(unittest.TestCase):
                 'pydevd.settrace(host=\'127.0.0.1\', port=0, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); '
                 ''
                 "from pydevd import SetupHolder; "
-                "SetupHolder.setup = {'client': '127.0.0.1', 'port': '0'}; "
+                "SetupHolder.setup = %s; "
                 ''
-                'connect("127.0.0.1")') % pydev_src_dir
+                'connect("127.0.0.1")') % (pydev_src_dir, SetupHolder.setup)
             if sys.platform == "win32":
                 debug_command = debug_command.replace('"', '\\"')
                 debug_command = '"%s"' % debug_command
