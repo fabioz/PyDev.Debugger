@@ -66,13 +66,19 @@ from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import socket
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
-from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, STATE_RUN,\
-    dict_keys
+from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
+    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON
 
 try:
     from urllib import quote_plus, unquote, unquote_plus
 except:
     from urllib.parse import quote_plus, unquote, unquote_plus  #@Reimport @UnresolvedImport
+
+if IS_IRONPYTHON:
+    # redefine `unquote` for IronPython, since we use it only for logging messages, but it leads to SOF with IronPython
+    def unquote(s):
+        return s
+
 import pydevconsole
 from _pydevd_bundle import pydevd_vars
 import pydevd_tracing
@@ -82,13 +88,21 @@ from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_P
 import sys
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string
+from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_bundle import pydev_log
 from _pydev_bundle import _pydev_completer
 
 from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle import pydevd_console
 from _pydev_bundle.pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
-from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
+
+try:
+    import cStringIO as StringIO #may not always be available @UnusedImport
+except:
+    try:
+        import StringIO #@Reimport
+    except:
+        import io as StringIO
 
 
 CMD_RUN = 101
@@ -146,6 +160,8 @@ CMD_INPUT_REQUESTED = 147
 CMD_GET_DESCRIPTION = 148
 
 CMD_PROCESS_CREATED = 149
+CMD_SHOW_CYTHON_WARNING = 150
+CMD_LOAD_FULL_VALUE = 151
 
 CMD_VERSION = 501
 CMD_RETURN = 502
@@ -203,6 +219,8 @@ ID_TO_MEANING = {
     '148': 'CMD_GET_DESCRIPTION',
 
     '149': 'CMD_PROCESS_CREATED',
+    '150': 'CMD_SHOW_CYTHON_WARNING',
+    '151': 'CMD_LOAD_FULL_VALUE',
 
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',
@@ -588,6 +606,12 @@ class NetCommandFactory:
         cmdText = '<process/>'
         return NetCommand(CMD_PROCESS_CREATED, 0, cmdText)
 
+    def make_show_cython_warning_message(self):
+        try:
+            return NetCommand(CMD_SHOW_CYTHON_WARNING, 0, '')
+        except:
+            return self.make_error_message(0, get_exception_traceback_str())
+
     def make_custom_frame_created_message(self, frameId, frameDescription):
         frameDescription = pydevd_xml.make_valid_xml_value(frameDescription)
         cmdText = '<xml><thread name="%s" id="%s"/></xml>' % (frameDescription, frameId)
@@ -826,6 +850,18 @@ class NetCommandFactory:
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
+    def make_set_next_stmnt_status_message(self, seq, is_success, exception_msg):
+        try:
+            message = str(is_success) + '\t' + exception_msg
+            return NetCommand(CMD_SET_NEXT_STATEMENT, int(seq), message)
+        except:
+            return self.make_error_message(0, get_exception_traceback_str())
+
+    def make_load_full_value_message(self, seq, payload):
+        try:
+            return NetCommand(CMD_LOAD_FULL_VALUE, seq, payload)
+        except Exception:
+            return self.make_error_message(seq, get_exception_traceback_str())
 
     def make_exit_message(self):
         try:
@@ -954,10 +990,11 @@ class InternalStepThread(InternalThreadCommand):
 # InternalSetNextStatementThread
 #=======================================================================================================================
 class InternalSetNextStatementThread(InternalThreadCommand):
-    def __init__(self, thread_id, cmd_id, line, func_name):
+    def __init__(self, thread_id, cmd_id, line, func_name, seq=0):
         self.thread_id = thread_id
         self.cmd_id = cmd_id
         self.line = line
+        self.seq = seq
 
         if IS_PY2:
             if isinstance(func_name, unicode):
@@ -973,6 +1010,7 @@ class InternalSetNextStatementThread(InternalThreadCommand):
             t.additional_info.pydev_next_line = int(self.line)
             t.additional_info.pydev_func_name = self.func_name
             t.additional_info.pydev_state = STATE_RUN
+            t.additional_info.pydev_message = str(self.seq)
 
 
 #=======================================================================================================================
@@ -990,11 +1028,13 @@ class InternalGetVariable(InternalThreadCommand):
     def do_it(self, dbg):
         """ Converts request into python variable """
         try:
-            xml = "<xml>"
-            val_dict = pydevd_vars.resolve_compound_variable(self.thread_id, self.frame_id, self.scope, self.attributes)
+            xml = StringIO.StringIO()
+            xml.write("<xml>")
+            _typeName, val_dict = pydevd_vars.resolve_compound_variable_fields(self.thread_id, self.frame_id, self.scope, self.attributes)
             if val_dict is None:
                 val_dict = {}
 
+            keys = dict_keys(val_dict)
             # assume properly ordered if resolver returns 'OrderedDict'
             # check type as string to support OrderedDict backport for older Python
             keys = dict_keys(val_dict)
@@ -1002,10 +1042,13 @@ class InternalGetVariable(InternalThreadCommand):
                 keys.sort(key=compare_object_attrs_key)
 
             for k in keys:
-                xml += pydevd_xml.var_to_xml(val_dict[k], to_string(k))
+                val = val_dict[k]
+                evaluate_full_value = pydevd_xml.should_evaluate_full_value(val)
+                xml.write(pydevd_xml.var_to_xml(val, k, evaluate_full_value=evaluate_full_value))
 
-            xml += "</xml>"
-            cmd = dbg.cmd_factory.make_get_variable_message(self.sequence, xml)
+            xml.write("</xml>")
+            cmd = dbg.cmd_factory.make_get_variable_message(self.sequence, xml.getvalue())
+            xml.close()
             dbg.writer.add_command(cmd)
         except Exception:
             cmd = dbg.cmd_factory.make_error_message(
@@ -1128,7 +1171,6 @@ class InternalEvaluateExpression(InternalThreadCommand):
             dbg.writer.add_command(cmd)
         except:
             exc = get_exception_traceback_str()
-            sys.stderr.write('%s\n' % (exc,))
             cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error evaluating expression " + exc)
             dbg.writer.add_command(cmd)
 
@@ -1418,6 +1460,91 @@ class InternalConsoleExec(InternalThreadCommand):
 
             sys.stderr.flush()
             sys.stdout.flush()
+
+
+#=======================================================================================================================
+# InternalLoadFullValue
+#=======================================================================================================================
+class InternalLoadFullValue(InternalThreadCommand):
+    """ changes the value of a variable """
+    def __init__(self, seq, thread_id, frame_id, vars):
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.vars = vars
+
+    def do_it(self, dbg):
+        """ Converts request into python variable """
+        try:
+            var_objects = []
+            for variable in self.vars:
+                variable = variable.strip()
+                if len(variable) > 0:
+                    if '\t' in variable:  # there are attributes beyond scope
+                        scope, attrs = variable.split('\t', 1)
+                        name = attrs[0]
+                    else:
+                        scope, attrs = (variable, None)
+                        name = scope
+                    var_obj = pydevd_vars.getVariable(self.thread_id, self.frame_id, scope, attrs)
+                    var_objects.append((var_obj, name))
+
+            t = GetValueAsyncThreadDebug(dbg, self.sequence, var_objects)
+            t.start()
+        except:
+            exc = get_exception_traceback_str()
+            sys.stderr.write('%s\n' % (exc,))
+            cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error evaluating variable %s " % exc)
+            dbg.writer.add_command(cmd)
+
+
+class AbstractGetValueAsyncThread(PyDBDaemonThread):
+    """
+    Abstract class for a thread, which evaluates values for async variables
+    """
+    def __init__(self, frame_accessor, seq, var_objects):
+        PyDBDaemonThread.__init__(self)
+        self.frame_accessor = frame_accessor
+        self.seq = seq
+        self.var_objs = var_objects
+        self.cancel_event = threading.Event()
+
+    def send_result(self, xml):
+        raise NotImplementedError()
+
+    def _on_run(self):
+        start = time.time()
+        xml = StringIO.StringIO()
+        xml.write("<xml>")
+        for (var_obj, name) in self.var_objs:
+            current_time = time.time()
+            if current_time - start > ASYNC_EVAL_TIMEOUT_SEC or self.cancel_event.is_set():
+                break
+            xml.write(pydevd_xml.var_to_xml(var_obj, name, evaluate_full_value=True))
+        xml.write("</xml>")
+        self.send_result(xml)
+        xml.close()
+
+
+class GetValueAsyncThreadDebug(AbstractGetValueAsyncThread):
+    """
+    A thread for evaluation async values, which returns result for debugger
+    Create message and send it via writer thread
+    """
+    def send_result(self, xml):
+        if self.frame_accessor is not None:
+            cmd = self.frame_accessor.cmd_factory.make_load_full_value_message(self.seq, xml.getvalue())
+            self.frame_accessor.writer.add_command(cmd)
+
+
+class GetValueAsyncThreadConsole(AbstractGetValueAsyncThread):
+    """
+    A thread for evaluation async values, which returns result for Console
+    Send result directly to Console's server
+    """
+    def send_result(self, xml):
+        if self.frame_accessor is not None:
+            self.frame_accessor.ReturnFullValue(self.seq, xml.getvalue())
 
 
 #=======================================================================================================================
