@@ -1036,6 +1036,7 @@ class InternalGetVariable(InternalThreadCommand):
 
             # assume properly ordered if resolver returns 'OrderedDict'
             # check type as string to support OrderedDict backport for older Python
+            keys = val_dict.keys()
             if not (_typeName == "OrderedDict" or val_dict.__class__.__name__ == "OrderedDict" or IS_PY36_OR_GREATER):
                 keys.sort(key=compare_object_attrs_key)
 

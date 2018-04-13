@@ -1203,9 +1203,9 @@ class WriterThreadCaseTypeExt(debugger_unittest.AbstractWriterThread):
 
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
         self.write_get_frame(thread_id, frame_id)
-        self.wait_for_var(r'<var name="my_rect" type="Rect" qualifier="__main__" value="Rectangle%255BLength%253A 5%252C Width%253A 10 %252C Area%253A 50%255D" isContainer="True" />') is True
+        assert self.wait_for_var(r'<var name="my_rect" type="Rect" qualifier="__main__" value="Rectangle%255BLength%253A 5%252C Width%253A 10 %252C Area%253A 50%255D" isContainer="True" />')
         self.write_get_variable(thread_id, frame_id, 'my_rect')
-        self.wait_for_var(r'<var name="area" type="int" qualifier="{0}" value="int%253A 50" />'.format(builtin_qualifier)) is True
+        assert self.wait_for_var(r'<var name="area" type="int" qualifier="{0}" value="int%253A 50" />'.format(builtin_qualifier))
         self.write_run_thread(thread_id)
         self.finished_ok = True
 
