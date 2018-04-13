@@ -46,6 +46,7 @@ install:
   - ps: |
         if ($env:TEST_IRONPYTHON -ne "YES"){
             $PYTHON_EXE = $Env:PYTHON_EXE
+            & $PYTHON_EXE -m pip install --upgrade pip
             & $PYTHON_EXE -m pip install wheel
             & $PYTHON_EXE -m pip install cython
             & $PYTHON_EXE -m pip install numpy
