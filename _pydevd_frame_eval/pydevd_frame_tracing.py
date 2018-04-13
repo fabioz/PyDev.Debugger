@@ -28,7 +28,9 @@ def handle_breakpoint(frame, thread, global_debugger, breakpoint):
     condition = breakpoint.condition
     info = thread.additional_info
     if condition is not None:
-        handle_breakpoint_condition(global_debugger, info, breakpoint, new_frame, False)
+        eval_result = handle_breakpoint_condition(global_debugger, info, breakpoint, new_frame)
+        if not eval_result:
+            return False
 
     if breakpoint.expression is not None:
         handle_breakpoint_expression(breakpoint, info, new_frame)

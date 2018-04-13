@@ -548,7 +548,7 @@ class BaseInterpreterInterface:
             else:
                 name = var_attrs
                 attrs = None
-            if name in frame_variables.keys():
+            if name in frame_variables:
                 var_object = pydevd_vars.resolve_var_object(frame_variables[name], attrs)
                 var_objects.append((var_object, name))
             else:

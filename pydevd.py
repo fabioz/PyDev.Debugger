@@ -614,6 +614,8 @@ class PyDB:
     def add_break_on_exception(
         self,
         exception,
+        condition,
+        expression,
         notify_always,
         notify_on_terminate,
         notify_on_first_raise_only,
@@ -622,6 +624,8 @@ class PyDB:
         try:
             eb = ExceptionBreakpoint(
                 exception,
+                condition,
+                expression,
                 notify_always,
                 notify_on_terminate,
                 notify_on_first_raise_only,
@@ -762,7 +766,7 @@ class PyDB:
                         t.frame_id == frame_id:
                     t.cancel_event.set()
         except:
-            pass
+            import traceback;traceback.print_exc()
         finally:
             self._main_lock.release()
 
@@ -825,7 +829,7 @@ class PyDB:
             info.pydev_step_stop = None
             info.pydev_smart_step_stop = frame
 
-        elif info.pydev_step_cmd == CMD_RUN_TO_LINE or info.pydev_step_cmd == CMD_SET_NEXT_STATEMENT :
+        elif info.pydev_step_cmd == CMD_RUN_TO_LINE or info.pydev_step_cmd == CMD_SET_NEXT_STATEMENT:
             self.set_trace_for_frame_and_parents(frame)
             stop = False
             response_msg = ""
@@ -878,8 +882,7 @@ class PyDB:
                     self.SetTrace(self.dummy_trace_dispatch)
                     self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True, dispatch_func=dummy_trace_dispatch)
             else:
-                if info.pydev_step_cmd == CMD_STEP_INTO or info.pydev_step_cmd == CMD_STEP_INTO_MY_CODE:
-                    self.set_trace_for_frame_and_parents(frame)
+                self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
                 # enable old tracing function for stepping
                 self.SetTrace(self.trace_dispatch)
 
@@ -1043,6 +1046,10 @@ class PyDB:
         except:
             sys.stderr.write("Matplotlib support in debugger failed\n")
             traceback.print_exc()
+
+        if hasattr(sys, 'exc_clear'):
+            # we should clean exception information in Python 2, before user's code execution
+            sys.exc_clear()
 
         if not is_module:
             pydev_imports.execfile(file, globals, locals)  # execute the script
@@ -1523,7 +1530,7 @@ def main():
 
         elif setup['multiproc']: # PyCharm
             pydev_log.debug("Started in multiproc mode\n")
-            # Note: we're not inside method, so, no need for 'global'
+            global DISPATCH_APPROACH
             DISPATCH_APPROACH = DISPATCH_APPROACH_EXISTING_CONNECTION
 
             dispatcher = Dispatcher()
@@ -1636,6 +1643,7 @@ def main():
             traceback.print_exc()
             sys.exit(1)
 
+        global connected
         connected = True  # Mark that we're connected when started from inside ide.
 
         globals = debugger.run(setup['file'], None, None, is_module)

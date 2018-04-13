@@ -11,9 +11,9 @@ from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
 from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
 from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
-    RETURN_VALUES_DICT
+    dict_keys, RETURN_VALUES_DICT
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
-from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised
+from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised, remove_exception_from_frame
 from _pydevd_bundle.pydevd_utils import get_clsname_for_code
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
 try:
@@ -36,13 +36,10 @@ TRACE_PROPERTY = 'pydevd_traceproperty.py'
 get_file_type = DONT_TRACE.get
 
 
-def handle_breakpoint_condition(py_db, info, breakpoint, new_frame, default_return_value):
+def handle_breakpoint_condition(py_db, info, breakpoint, new_frame):
     condition = breakpoint.condition
     try:
-        val = eval(condition, new_frame.f_globals, new_frame.f_locals)
-        if not val:
-            return default_return_value
-
+        return eval(condition, new_frame.f_globals, new_frame.f_locals)
     except:
         if type(condition) != type(''):
             if hasattr(condition, 'encode'):
@@ -52,9 +49,8 @@ def handle_breakpoint_condition(py_db, info, breakpoint, new_frame, default_retu
         sys.stderr.write(msg)
         traceback.print_exc()
         if not py_db.suspend_on_breakpoint_exception:
-            return default_return_value
+            return False
         else:
-            stop = True
             try:
                 # add exception_type and stacktrace into thread additional info
                 etype, value, tb = sys.exc_info()
@@ -70,6 +66,7 @@ def handle_breakpoint_condition(py_db, info, breakpoint, new_frame, default_retu
                     etype, value, tb = None, None, None
             except:
                 traceback.print_exc()
+            return True
 
 
 def handle_breakpoint_expression(breakpoint, info, new_frame):
@@ -168,6 +165,12 @@ class PyDBFrame:
                     exception, main_debugger.break_on_caught_exceptions)
 
                 if exception_breakpoint is not None:
+                    add_exception_to_frame(frame, (exception, value, trace))
+                    if exception_breakpoint.condition is not None:
+                        eval_result = handle_breakpoint_condition(main_debugger, info, exception_breakpoint, frame)
+                        if not eval_result:
+                            return False, frame
+
                     if exception_breakpoint.ignore_libraries:
                         if exception_breakpoint.notify_on_first_raise_only:
                             if main_debugger.first_appearance_in_scope(trace):
@@ -198,6 +201,12 @@ class PyDBFrame:
                                 flag, frame = result
                     except:
                         flag = False
+
+                if flag:
+                    if exception_breakpoint is not None and exception_breakpoint.expression is not None:
+                        handle_breakpoint_expression(exception_breakpoint, info, frame)
+                else:
+                    remove_exception_from_frame(frame)
 
         return flag, frame
 
@@ -459,7 +468,7 @@ class PyDBFrame:
                     #- we have no stop marked
                     #- we should make a step return/step over and we're not in the current frame
                     # CMD_STEP_RETURN = 109, CMD_STEP_OVER = 108
-                    can_skip = (step_cmd == -1 and stop_frame is None)\
+                    can_skip = (step_cmd == -1 and stop_frame is None) \
                         or (step_cmd in (109, 108) and stop_frame is not frame)
 
                     if can_skip:
@@ -559,10 +568,9 @@ class PyDBFrame:
                     if stop or exist_result:
                         condition = breakpoint.condition
                         if condition is not None:
-                            result = handle_breakpoint_condition(main_debugger, info, breakpoint, new_frame,
-                                                                 self.trace_dispatch)
-                            if result is not None:
-                                return result
+                            eval_result = handle_breakpoint_condition(main_debugger, info, breakpoint, new_frame)
+                            if not eval_result:
+                                return self.trace_dispatch
 
                         if breakpoint.expression is not None:
                             handle_breakpoint_expression(breakpoint, info, new_frame)

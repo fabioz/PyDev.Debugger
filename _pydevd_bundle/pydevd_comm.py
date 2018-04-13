@@ -1034,11 +1034,9 @@ class InternalGetVariable(InternalThreadCommand):
             if val_dict is None:
                 val_dict = {}
 
-            keys = dict_keys(val_dict)
             # assume properly ordered if resolver returns 'OrderedDict'
             # check type as string to support OrderedDict backport for older Python
-            keys = dict_keys(val_dict)
-            if not val_dict.__class__.__name__ == "OrderedDict":
+            if not (_typeName == "OrderedDict" or val_dict.__class__.__name__ == "OrderedDict" or IS_PY36_OR_GREATER):
                 keys.sort(key=compare_object_attrs_key)
 
             for k in keys:
@@ -1466,7 +1464,9 @@ class InternalConsoleExec(InternalThreadCommand):
 # InternalLoadFullValue
 #=======================================================================================================================
 class InternalLoadFullValue(InternalThreadCommand):
-    """ changes the value of a variable """
+    """
+    Loads values asynchronously
+    """
     def __init__(self, seq, thread_id, frame_id, vars):
         self.sequence = seq
         self.thread_id = thread_id
@@ -1474,7 +1474,7 @@ class InternalLoadFullValue(InternalThreadCommand):
         self.vars = vars
 
     def do_it(self, dbg):
-        """ Converts request into python variable """
+        """Starts a thread that will load values asynchronously"""
         try:
             var_objects = []
             for variable in self.vars:

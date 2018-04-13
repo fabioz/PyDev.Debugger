@@ -23,14 +23,17 @@ def log_error_once(msg):
 
 pydev_src_dir = os.path.dirname(os.path.dirname(__file__))
 
-def _get_python_c_args(host, port, indC, args):
+
+def _get_python_c_args(host, port, indC, args, setup):
+    host_literal = "'" + host + "'" if host is not None else 'None'
     return ("import sys; sys.path.append(r'%s'); import pydevd; "
-            "pydevd.settrace(host='%s', port=%s, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); "
-            "%s"
+            "pydevd.settrace(host=%s, port=%s, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); "
+            "from pydevd import SetupHolder; SetupHolder.setup = %s; %s"
             ) % (
                pydev_src_dir,
-               host,
+               host_literal,
                port,
+               setup,
                args[indC + 1])
 
 
@@ -123,6 +126,7 @@ def patch_args(args):
         log_debug("Patching args: %s"% str(args))
         args = remove_quotes_from_args(args)
 
+        from pydevd import SetupHolder
         import sys
         new_args = []
         if len(args) == 0:
@@ -136,14 +140,14 @@ def patch_args(args):
 
                 if port is not None:
                     new_args.extend(args)
-                    new_args[ind_c + 1] = _get_python_c_args(host, port, ind_c, args)
+                    new_args[ind_c + 1] = _get_python_c_args(host, port, ind_c, args, SetupHolder.setup)
                     return quote_args(new_args)
             else:
                 # Check for Python ZIP Applications and don't patch the args for them.
                 # Assumes the first non `-<flag>` argument is what we need to check.
                 # There's probably a better way to determine this but it works for most cases.
                 continue_next = False
-                for i in xrange(1, len(args)):
+                for i in range(1, len(args)):
                     if continue_next:
                         continue_next = False
                         continue
@@ -169,7 +173,6 @@ def patch_args(args):
         # ['X:\\pysrc\\pydevd.py', '--multiprocess', '--print-in-debugger-startup',
         #  '--vm_type', 'python', '--client', '127.0.0.1', '--port', '56352', '--file', 'x:\\snippet1.py']
         from _pydevd_bundle.pydevd_command_line_handling import setup_to_argv
-        from pydevd import SetupHolder
         original = setup_to_argv(SetupHolder.setup) + ['--file']
         while i < len(args):
             if args[i] == '-m':

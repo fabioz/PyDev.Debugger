@@ -44,6 +44,9 @@ def show_in_pager(self, strng, *args, **kwargs):
     # On PyDev we just output the string, there are scroll bars in the console
     # to handle "paging". This is the same behaviour as when TERM==dump (see
     # page.py)
+    # for compatibility with mime-bundle form:
+    if isinstance(strng, dict):
+        strng = strng.get('text/plain', strng)
     print(strng)
 
 def create_editor_hook(pydev_host, pydev_client_port):
@@ -316,11 +319,9 @@ class _PyDevFrontEnd:
     def update(self, globals, locals):
         ns = self.ipython.user_ns
 
-        for ind in ['_oh', '_ih', '_dh', '_sh', 'In', 'Out', 'get_ipython', 'exit', 'quit']:
-            try:
-                locals[ind] = ns[ind]
-            except KeyError:
-                pass # Ignore if it's not there -- #PyDev-817: Error on autocomplete with IPython on interactive console
+        for key in dict_keys(self.ipython.user_ns):
+            if key not in locals:
+                locals[key] = ns[key]
 
         self.ipython.user_global_ns.clear()
         self.ipython.user_global_ns.update(globals)
