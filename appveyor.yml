@@ -48,12 +48,12 @@ install:
         if ($env:TEST_IRONPYTHON -ne "YES"){
             $PYTHON_EXE = $Env:PYTHON_EXE
             & $PYTHON_EXE -m pip install --upgrade pip
-            & $PYTHON_EXE -m pip install wheel
-            & $PYTHON_EXE -m pip install cython
+            & $PYTHON_EXE -m pip install wheel --no-warn-script-location
+            & $PYTHON_EXE -m pip install cython --no-warn-script-location
             & $PYTHON_EXE -m pip install numpy
-            & $PYTHON_EXE -m pip install pytest
+            & $PYTHON_EXE -m pip install pytest --no-warn-script-location
             & $PYTHON_EXE -m pip install psutil
-            & $PYTHON_EXE -m pip install ipython
+            & $PYTHON_EXE -m pip install ipython --no-warn-script-location
             if ($env:PYTHON -eq "C:\\Python27"){
                 "%PYTHON%\\python.exe -m pip install django>=1.7,<1.8"
             }
