@@ -4,16 +4,7 @@
 __version_info__ in pydevd.py
 
 
-2. Regenerate windows binaries
-================================
-
-cd /D x:\PyDev.Debugger
-set PYTHONPATH=x:\PyDev.Debugger
-C:\tools\Miniconda32\envs\py27_32\python build_tools\build.py
-C:\tools\Miniconda32\envs\py27_32\python build_tools\build_binaries_windows.py
-
-
-3. Upload new version
+2. Generate new version
 ======================
 
 cd /D x:\PyDev.Debugger
@@ -60,5 +51,9 @@ python setup.py sdist bdist_wheel
 deactivate
 dir dist
 
+# Note: uploading with twine gives an error in the end, but apparently it works (check final result in pypi).
+twine upload dist/pydevd*
+
 git tag pydev_debugger_1_2_0 -a -m "PyDev.Debugger 1.2.0"
 git push --tags
+
