@@ -1454,12 +1454,12 @@ static const char __pyx_k_has_plugin_line_breaks[] = "has_plugin_line_breaks";
 static const char __pyx_k_kill_all_pydev_threads[] = "kill_all_pydev_threads";
 static const char __pyx_k_pyx_unpickle_PyDBFrame[] = "__pyx_unpickle_PyDBFrame";
 static const char __pyx_k_threadingCurrentThread[] = "threadingCurrentThread";
+static const char __pyx_k_notify_thread_not_alive[] = "notify_thread_not_alive";
 static const char __pyx_k_pydevd_traceproperty_py[] = "pydevd_traceproperty.py";
 static const char __pyx_k_finish_debugging_session[] = "_finish_debugging_session";
 static const char __pyx_k_first_breakpoint_reached[] = "first_breakpoint_reached";
 static const char __pyx_k_get_exception_breakpoint[] = "get_exception_breakpoint";
 static const char __pyx_k_global_cache_frame_skips[] = "global_cache_frame_skips";
-static const char __pyx_k_process_thread_not_alive[] = "_process_thread_not_alive";
 static const char __pyx_k_should_stop_on_exception[] = "should_stop_on_exception";
 static const char __pyx_k_CMD_STEP_CAUGHT_EXCEPTION[] = "CMD_STEP_CAUGHT_EXCEPTION";
 static const char __pyx_k_first_appearance_in_scope[] = "first_appearance_in_scope";
@@ -1675,6 +1675,7 @@ static PyObject *__pyx_n_s_new;
 static PyObject *__pyx_n_s_new_frame;
 static PyObject *__pyx_n_s_not_in_scope;
 static PyObject *__pyx_n_s_notify_on_first_raise_only;
+static PyObject *__pyx_n_s_notify_thread_not_alive;
 static PyObject *__pyx_n_s_org_python_core;
 static PyObject *__pyx_n_s_original_call;
 static PyObject *__pyx_n_s_os;
@@ -1686,7 +1687,6 @@ static PyObject *__pyx_n_s_pickle;
 static PyObject *__pyx_n_s_plugin;
 static PyObject *__pyx_n_s_pop;
 static PyObject *__pyx_n_s_print_exc;
-static PyObject *__pyx_n_s_process_thread_not_alive;
 static PyObject *__pyx_n_s_py_db;
 static PyObject *__pyx_n_s_pydev_bundle;
 static PyObject *__pyx_n_s_pydev_bundle_pydev_is_thread_al;
@@ -21340,7 +21340,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_2__cal
  * 
  *             # if thread is not alive, cancel trace_dispatch processing
  *             if not is_thread_alive(t):             # <<<<<<<<<<<<<<
- *                 py_db._process_thread_not_alive(get_thread_id(t))
+ *                 py_db.notify_thread_not_alive(get_thread_id(t))
  *                 return None  # suspend tracing
  */
       __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_is_thread_alive); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1024, __pyx_L3_error)
@@ -21396,11 +21396,11 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_2__cal
         /* "_pydevd_bundle/pydevd_cython.pyx":1025
  *             # if thread is not alive, cancel trace_dispatch processing
  *             if not is_thread_alive(t):
- *                 py_db._process_thread_not_alive(get_thread_id(t))             # <<<<<<<<<<<<<<
+ *                 py_db.notify_thread_not_alive(get_thread_id(t))             # <<<<<<<<<<<<<<
  *                 return None  # suspend tracing
  * 
  */
-        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_process_thread_not_alive); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1025, __pyx_L3_error)
+        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_notify_thread_not_alive); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1025, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_6);
         __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_get_thread_id); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1025, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_1);
@@ -21497,7 +21497,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_2__cal
 
         /* "_pydevd_bundle/pydevd_cython.pyx":1026
  *             if not is_thread_alive(t):
- *                 py_db._process_thread_not_alive(get_thread_id(t))
+ *                 py_db.notify_thread_not_alive(get_thread_id(t))
  *                 return None  # suspend tracing             # <<<<<<<<<<<<<<
  * 
  * 
@@ -21511,7 +21511,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_2__cal
  * 
  *             # if thread is not alive, cancel trace_dispatch processing
  *             if not is_thread_alive(t):             # <<<<<<<<<<<<<<
- *                 py_db._process_thread_not_alive(get_thread_id(t))
+ *                 py_db.notify_thread_not_alive(get_thread_id(t))
  *                 return None  # suspend tracing
  */
       }
@@ -26293,6 +26293,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_new_frame, __pyx_k_new_frame, sizeof(__pyx_k_new_frame), 0, 0, 1, 1},
   {&__pyx_n_s_not_in_scope, __pyx_k_not_in_scope, sizeof(__pyx_k_not_in_scope), 0, 0, 1, 1},
   {&__pyx_n_s_notify_on_first_raise_only, __pyx_k_notify_on_first_raise_only, sizeof(__pyx_k_notify_on_first_raise_only), 0, 0, 1, 1},
+  {&__pyx_n_s_notify_thread_not_alive, __pyx_k_notify_thread_not_alive, sizeof(__pyx_k_notify_thread_not_alive), 0, 0, 1, 1},
   {&__pyx_n_s_org_python_core, __pyx_k_org_python_core, sizeof(__pyx_k_org_python_core), 0, 0, 1, 1},
   {&__pyx_n_s_original_call, __pyx_k_original_call, sizeof(__pyx_k_original_call), 0, 0, 1, 1},
   {&__pyx_n_s_os, __pyx_k_os, sizeof(__pyx_k_os), 0, 0, 1, 1},
@@ -26304,7 +26305,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_plugin, __pyx_k_plugin, sizeof(__pyx_k_plugin), 0, 0, 1, 1},
   {&__pyx_n_s_pop, __pyx_k_pop, sizeof(__pyx_k_pop), 0, 0, 1, 1},
   {&__pyx_n_s_print_exc, __pyx_k_print_exc, sizeof(__pyx_k_print_exc), 0, 0, 1, 1},
-  {&__pyx_n_s_process_thread_not_alive, __pyx_k_process_thread_not_alive, sizeof(__pyx_k_process_thread_not_alive), 0, 0, 1, 1},
   {&__pyx_n_s_py_db, __pyx_k_py_db, sizeof(__pyx_k_py_db), 0, 0, 1, 1},
   {&__pyx_n_s_pydev_bundle, __pyx_k_pydev_bundle, sizeof(__pyx_k_pydev_bundle), 0, 0, 1, 1},
   {&__pyx_n_s_pydev_bundle_pydev_is_thread_al, __pyx_k_pydev_bundle_pydev_is_thread_al, sizeof(__pyx_k_pydev_bundle_pydev_is_thread_al), 0, 0, 1, 1},

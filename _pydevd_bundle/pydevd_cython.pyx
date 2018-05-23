@@ -1022,7 +1022,7 @@ cdef class ThreadTracer:
 
             # if thread is not alive, cancel trace_dispatch processing
             if not is_thread_alive(t):
-                py_db._process_thread_not_alive(get_thread_id(t))
+                py_db.notify_thread_not_alive(get_thread_id(t))
                 return None  # suspend tracing
 
 
