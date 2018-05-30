@@ -27,7 +27,7 @@ import pydevd_tracing
 from _pydevd_bundle import pydevd_utils
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
-from _pydevd_bundle.pydevd_breakpoints import ExceptionBreakpoint, update_exception_hook
+from _pydevd_bundle.pydevd_breakpoints import ExceptionBreakpoint
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO, CMD_STEP_OVER, \
     CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE, CMD_THREAD_SUSPEND, CMD_RUN_TO_LINE, \
     CMD_ADD_EXCEPTION_BREAK, CMD_SMART_STEP_INTO, InternalConsoleExec, NetCommandFactory, \
@@ -698,19 +698,6 @@ class PyDB:
 
         return eb
 
-    def update_after_exceptions_added(self, added):
-        updated_on_caught = False
-        updated_on_uncaught = False
-
-        for eb in added:
-            if not updated_on_uncaught and eb.notify_on_terminate:
-                updated_on_uncaught = True
-                update_exception_hook(self)
-
-            if not updated_on_caught and eb.notify_always:
-                updated_on_caught = True
-                self.set_tracing_for_untraced_contexts_if_not_frame_eval()
-
 
     def set_suspend(self, thread, stop_reason):
         thread.additional_info.suspend_type = PYTHON_SUSPEND
@@ -929,7 +916,7 @@ class PyDB:
         finally:
             CustomFramesContainer.custom_frames_lock.release()  # @UndefinedVariable
 
-    def handle_post_mortem_stop(self, thread, frame, frames_byid, exception):
+    def stop_on_unhandled_exception(self, thread, frame, frames_byid, exception):
         pydev_log.debug("We are stopping in post-mortem\n")
         thread_id = get_thread_id(thread)
         pydevd_vars.add_additional_frame_by_id(thread_id, frames_byid)
@@ -977,9 +964,6 @@ class PyDB:
     def prepare_to_run(self):
         ''' Shared code to prepare debugging by installing traces and registering threads '''
         self.patch_threads()
-        pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
-        # There is no need to set tracing function if frame evaluation is available. Moreover, there is no need to patch thread
-        # functions, because frame evaluation function is set to all threads by default.
 
         PyDBCommandThread(self).start()
         if self.signature_factory is not None or self.thread_analyser is not None:
@@ -1000,6 +984,7 @@ class PyDB:
 
     def run(self, file, globals=None, locals=None, is_module=False, set_trace=True):
         module_name = None
+        entry_point_fn = ''
         if is_module:
             file, _,  entry_point_fn = file.partition(':')
             module_name = file
@@ -1085,7 +1070,15 @@ class PyDB:
         thread_id = get_thread_id(t)
         self.notify_thread_created(thread_id, t)
 
-
+        # Note: important: set the tracing right before calling _exec.
+        pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
+        
+        return self._exec(is_module, entry_point_fn, module_name, file, globals, locals)
+        
+    def _exec(self, is_module, entry_point_fn, module_name, file, globals, locals):
+        '''
+        This function should have frames tracked by unhandled exceptions (the `_exec` name is important).
+        '''
         if not is_module:
             pydev_imports.execfile(file, globals, locals)  # execute the script
         else:
