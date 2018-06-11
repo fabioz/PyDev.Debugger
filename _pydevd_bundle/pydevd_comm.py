@@ -47,6 +47,11 @@ each command has a format:
     119      CMD_RELOAD_CODE
     120      CMD_GET_COMPLETIONS      JAVA
 
+    200      CMD_REDIRECT_OUTPUT      JAVA      streams to redirect as string - 
+                                                'STDOUT' (redirect only STDOUT)
+                                                'STDERR' (redirect only STDERR)
+                                                'STDOUT STDERR' (redirect both streams)
+
 500 series diagnostics/ok
     501      VERSION                  either      Version string (1.0)        Currently just used at startup
     502      RETURN                   either      Depends on caller    -
@@ -58,6 +63,7 @@ each command has a format:
     * PYDB - pydevd, the python end
 '''
 
+import itertools
 import os
 
 from _pydev_bundle.pydev_imports import _queue
@@ -85,6 +91,7 @@ import pydevd_tracing
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_vm_type
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER, norm_file_to_client
+import pydevd_file_utils
 import sys
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string
@@ -163,6 +170,9 @@ CMD_PROCESS_CREATED = 149
 CMD_SHOW_CYTHON_WARNING = 150
 CMD_LOAD_FULL_VALUE = 151
 
+CMD_REDIRECT_OUTPUT = 200
+CMD_GET_NEXT_STATEMENT_TARGETS = 201
+
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901
@@ -221,6 +231,9 @@ ID_TO_MEANING = {
     '149': 'CMD_PROCESS_CREATED',
     '150': 'CMD_SHOW_CYTHON_WARNING',
     '151': 'CMD_LOAD_FULL_VALUE',
+
+    '200': 'CMD_REDIRECT_OUTPUT',
+    '201': 'CMD_GET_NEXT_STATEMENT_TARGETS',
 
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',
@@ -649,11 +662,10 @@ class NetCommandFactory:
         # notify debugger that value was changed successfully
         return NetCommand(CMD_RETURN, seq, payload)
 
-    def make_io_message(self, v, ctx, dbg=None):
+    def make_io_message(self, v, ctx):
         '''
         @param v: the message to pass to the debug server
         @param ctx: 1 for stdio 2 for stderr
-        @param dbg: If not none, add to the writer
         '''
 
         try:
@@ -662,14 +674,9 @@ class NetCommandFactory:
                 v += '...'
 
             v = pydevd_xml.make_valid_xml_value(quote(v, '/>_= \t'))
-            net = NetCommand(str(CMD_WRITE_TO_CONSOLE), 0, '<xml><io s="%s" ctx="%s"/></xml>' % (v, ctx))
+            return NetCommand(str(CMD_WRITE_TO_CONSOLE), 0, '<xml><io s="%s" ctx="%s"/></xml>' % (v, ctx))
         except:
-            net = self.make_error_message(0, get_exception_traceback_str())
-
-        if dbg:
-            dbg.writer.add_command(net)
-
-        return net
+            return self.make_error_message(0, get_exception_traceback_str())
 
     def make_version_message(self, seq):
         try:
@@ -884,6 +891,13 @@ class NetCommandFactory:
             net = self.make_error_message(0, get_exception_traceback_str())
 
         return net
+
+    def make_get_next_statement_targets_message(self, seq, payload):
+        try:
+            return NetCommand(CMD_GET_NEXT_STATEMENT_TARGETS, seq, payload)
+        except Exception:
+            return self.make_error_message(seq, get_exception_traceback_str())
+
 
 INTERNAL_TERMINATE_THREAD = 1
 INTERNAL_SUSPEND_THREAD = 2
@@ -1154,6 +1168,45 @@ class InternalGetFrame(InternalThreadCommand):
             cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error resolving frame: %s from thread: %s" % (self.frame_id, self.thread_id))
             dbg.writer.add_command(cmd)
 
+#=======================================================================================================================
+# InternalGetNextStatementTargets
+#=======================================================================================================================
+class InternalGetNextStatementTargets(InternalThreadCommand):
+    """ gets the valid line numbers for use with set next statement """
+    def __init__(self, seq, thread_id, frame_id):
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+
+    def do_it(self, dbg):
+        """ Converts request into set of line numbers """
+        try:
+            frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
+            if frame is not None:
+                code = frame.f_code
+                xml = "<xml>"
+                if hasattr(code, 'co_lnotab'):
+                    lineno = code.co_firstlineno
+                    lnotab = code.co_lnotab
+                    for i in itertools.islice(lnotab, 1, len(lnotab), 2):
+                        if isinstance(i, int):
+                            lineno = lineno + i
+                        else:
+                            # in python 2 elements in co_lnotab are of type str
+                            lineno = lineno + ord(i)
+                        xml += "<line>%d</line>" % (lineno,)
+                else:
+                    xml += "<line>%d</line>" % (frame.f_lineno,)
+                del frame
+                xml += "</xml>"
+                cmd = dbg.cmd_factory.make_get_next_statement_targets_message(self.sequence, xml)
+                dbg.writer.add_command(cmd)
+            else:
+                cmd = dbg.cmd_factory.make_error_message(self.sequence, "Frame not found: %s from thread: %s" % (self.frame_id, self.thread_id))
+                dbg.writer.add_command(cmd)
+        except:
+            cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error resolving frame: %s from thread: %s" % (self.frame_id, self.thread_id))
+            dbg.writer.add_command(cmd)
 
 #=======================================================================================================================
 # InternalEvaluateExpression
