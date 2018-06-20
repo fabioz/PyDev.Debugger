@@ -1411,6 +1411,7 @@ def _locked_settrace(
             additional_info.pydev_state = STATE_RUN
             additional_info.pydev_step_cmd = CMD_STEP_OVER
             additional_info.pydev_step_stop = stop_at_frame
+            additional_info.suspend_type = PYTHON_SUSPEND
         else:
             # Ask to break as soon as possible.
             debugger.set_suspend(t, CMD_THREAD_SUSPEND)
