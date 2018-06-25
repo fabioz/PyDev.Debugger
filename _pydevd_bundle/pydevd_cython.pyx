@@ -546,7 +546,7 @@ cdef class PyDBFrame:
     # ENDIF
 
         main_debugger, filename, info, thread, frame_skips_cache, frame_cache_key = self._args
-        # print('frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, event, info.pydev_step_cmd)
+        # print('frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, frame.f_code.co_filename, event, info.pydev_step_cmd)
         try:
             info.is_tracing = True
             line = frame.f_lineno
@@ -659,7 +659,7 @@ cdef class PyDBFrame:
                         curr_func_name = frame.f_code.co_name
 
                         #global context is set with an empty name
-                        if curr_func_name in ('?', '<module>'):
+                        if curr_func_name in ('?', '<module>', '<lambda>'):
                             curr_func_name = ''
 
                         for breakpoint in dict_iter_values(breakpoints_for_file): #jython does not support itervalues()
@@ -722,18 +722,17 @@ cdef class PyDBFrame:
                             handle_breakpoint_expression(breakpoint, info, new_frame)
                             if breakpoint.is_logpoint:
                                 return self.trace_dispatch
+                            
+                    if is_call and frame.f_code.co_name in ('<module>', '<lambda>'):
+                        # If we find a call for a module, it means that the module is being imported/executed for the
+                        # first time. In this case we have to ignore this hit as it may later duplicated by a
+                        # line event at the same place (so, if there's a module with a print() in the first line
+                        # the user will hit that line twice, which is not what we want).
+                        #
+                        # As for lamdba, as it only has a single statement, it's not interesting to trace
+                        # its call and later its line event as they're usually in the same line.
+                        return self.trace_dispatch
 
-                        if not main_debugger.first_breakpoint_reached:
-                            if is_call:
-                                back = frame.f_back
-                                if back is not None:
-                                    # When we start debug session, we call execfile in pydevd run function. It produces an additional
-                                    # 'call' event for tracing and we stop on the first line of code twice.
-                                    _, back_filename, base = get_abs_path_real_path_and_base_from_frame(back)
-                                    if (base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]) or \
-                                            (base == DEBUG_START_PY3K[0] and back.f_code.co_name == DEBUG_START_PY3K[1]):
-                                        stop = False
-                                        main_debugger.first_breakpoint_reached = True
                 else:
                     # if the frame is traced after breakpoint stop,
                     # but the file should be ignored while stepping because of filters
@@ -869,7 +868,7 @@ cdef class PyDBFrame:
                             #(note that it can still go on for other threads, but for this one, we just make it finish)
                             #So, just setting it to None should be OK
                             _, back_filename, base = get_abs_path_real_path_and_base_from_frame(back)
-                            if base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]:
+                            if (base, back.f_code.co_name) in (DEBUG_START, DEBUG_START_PY3K):
                                 back = None
 
                             elif base == TRACE_PROPERTY:
@@ -944,7 +943,6 @@ get_file_type = DONT_TRACE.get
 # ELSE
 # ENDIF
 
-
 # Cache where we should keep that we completely skipped entering some context.
 # It needs to be invalidated when:
 # - Breakpoints are changed
@@ -997,6 +995,7 @@ def trace_dispatch(py_db, frame, event, arg):
         thread = threadingCurrentThread()
 
     if getattr(thread, 'pydev_do_not_trace', None):
+        SetTrace(None, apply_to_pydevd_thread=True)
         return None
 
     try:
