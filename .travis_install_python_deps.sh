@@ -19,3 +19,4 @@ fi
 
 pip install Pympler
 pip install pytest
+pip install untangle

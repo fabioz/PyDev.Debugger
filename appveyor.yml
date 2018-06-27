@@ -54,6 +54,7 @@ install:
             & $PYTHON_EXE -m pip install pytest --no-warn-script-location
             & $PYTHON_EXE -m pip install psutil
             & $PYTHON_EXE -m pip install ipython --no-warn-script-location
+            & $PYTHON_EXE -m pip install untangle --no-warn-script-location
             if ($env:PYTHON -eq "C:\\Python27"){
                 "%PYTHON%\\python.exe -m pip install django>=1.7,<1.8"
             }
