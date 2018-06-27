@@ -196,6 +196,24 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
         return self.obtain_results(WriterThreadPerformance6)
 
 if __name__ == '__main__':
+    # Local times gotten:
+    #
+    # Checking: regular
+    # method_calls_with_breakpoint: 1.139s 
+    # method_calls_without_breakpoint: 0.268s 
+    # method_calls_with_step_over: 2.601s 
+    # method_calls_with_exception_breakpoint: 0.242s 
+    # global_scope_1_with_breakpoint: 3.232s 
+    # global_scope_2_with_breakpoint: 3.059s 
+    # Checking: cython
+    # method_calls_with_breakpoint: 0.587s 
+    # method_calls_without_breakpoint: 0.176s 
+    # method_calls_with_step_over: 1.240s 
+    # method_calls_with_exception_breakpoint: 0.176s 
+    # global_scope_1_with_breakpoint: 2.523s 
+    # global_scope_2_with_breakpoint: 1.483s 
+    # TotalTime for profile: 157.73s
+
     debugger_unittest.SHOW_WRITES_AND_READS = False
     debugger_unittest.SHOW_OTHER_DEBUG_INFO = False
     debugger_unittest.SHOW_STDOUT = False

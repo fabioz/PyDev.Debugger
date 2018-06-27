@@ -20,9 +20,9 @@ if not hasattr(sys, '_current_frames'):
         from java.lang import NoSuchFieldException
         from org.python.core import ThreadStateMapping
         try:
-            cachedThreadState = ThreadStateMapping.getDeclaredField('globalThreadStates') # Dev version
+            cachedThreadState = ThreadStateMapping.getDeclaredField('globalThreadStates')  # Dev version
         except NoSuchFieldException:
-            cachedThreadState = ThreadStateMapping.getDeclaredField('cachedThreadState') # Release Jython 2.7.0
+            cachedThreadState = ThreadStateMapping.getDeclaredField('cachedThreadState')  # Release Jython 2.7.0
         cachedThreadState.accessible = True
         thread_states = cachedThreadState.get(ThreadStateMapping)
 
@@ -55,6 +55,7 @@ if not hasattr(sys, '_current_frames'):
         raise RuntimeError('Unable to proceed (sys._current_frames not available in this Python implementation).')
 else:
     _current_frames = sys._current_frames
+
 
 #=======================================================================================================================
 # PyDBAdditionalThreadInfo
@@ -102,7 +103,7 @@ cdef class PyDBAdditionalThreadInfo:
     def __init__(self):
         self.pydev_state = STATE_RUN
         self.pydev_step_stop = None
-        self.pydev_step_cmd = -1 # Something as CMD_STEP_INTO, CMD_STEP_OVER, etc.
+        self.pydev_step_cmd = -1  # Something as CMD_STEP_INTO, CMD_STEP_OVER, etc.
         self.pydev_notify_kill = False
         self.pydev_smart_step_stop = None
         self.pydev_django_resolve_frame = False
@@ -113,11 +114,10 @@ cdef class PyDBAdditionalThreadInfo:
         self.pydev_message = ''
         self.suspend_type = PYTHON_SUSPEND
         self.pydev_next_line = -1
-        self.pydev_func_name = '.invalid.' # Must match the type in cython
-
+        self.pydev_func_name = '.invalid.'  # Must match the type in cython
 
     def iter_frames(self, t):
-        #sys._current_frames(): dictionary with thread id -> topmost frame
+        # sys._current_frames(): dictionary with thread id -> topmost frame
         current_frames = _current_frames()
         v = current_frames.get(t.ident)
         if v is not None:
@@ -128,6 +128,25 @@ cdef class PyDBAdditionalThreadInfo:
         return 'State:%s Stop:%s Cmd: %s Kill:%s' % (
             self.pydev_state, self.pydev_step_stop, self.pydev_step_cmd, self.pydev_notify_kill)
 
+
+from _pydev_imps._pydev_saved_modules import threading
+_set_additional_thread_info_lock = threading.Lock()
+
+
+def set_additional_thread_info(thread):
+    try:
+        additional_info = thread.additional_info
+        if additional_info is None:
+            raise AttributeError()
+    except:
+        with _set_additional_thread_info_lock:
+            # If it's not there, set it within a lock to avoid any racing
+            # conditions.
+            additional_info = getattr(thread, 'additional_info', None)
+            if additional_info is None:
+                additional_info = thread.additional_info = PyDBAdditionalThreadInfo()
+
+    return additional_info
 import linecache
 import os.path
 import re
@@ -925,11 +944,11 @@ from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 from pydevd_tracing import SetTrace
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
-# In Cython, PyDBAdditionalThreadInfo is bundled in the file.
+# In Cython, set_additional_thread_info is bundled in the file.
 from cpython.object cimport PyObject
 from cpython.ref cimport Py_INCREF, Py_XDECREF
 # ELSE
-# from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
+# from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # 
 # ENDIF
@@ -1003,7 +1022,7 @@ def trace_dispatch(py_db, frame, event, arg):
         if additional_info is None:
             raise AttributeError()
     except:
-        additional_info = thread.additional_info = PyDBAdditionalThreadInfo()
+        additional_info = set_additional_thread_info(thread)
         
     # print('enter thread tracer', thread, get_thread_id(thread))
     thread_tracer = ThreadTracer((py_db, thread, additional_info, global_cache_skips, global_cache_frame_skips))

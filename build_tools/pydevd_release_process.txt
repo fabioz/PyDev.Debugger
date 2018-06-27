@@ -105,6 +105,8 @@ deactivate
 4. Regenerate the .pyx and .c
 ===============================
 
+cd /D x:\PyDev.Debugger
+set PYTHONPATH=x:\PyDev.Debugger
 C:\bin\Miniconda\envs\py27_32\python build_tools\build.py
 
 
