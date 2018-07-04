@@ -20,3 +20,4 @@ fi
 pip install Pympler
 pip install pytest
 pip install untangle
+pip install scapy==2.4.0
