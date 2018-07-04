@@ -55,11 +55,11 @@ install:
             & $PYTHON_EXE -m pip install psutil
             & $PYTHON_EXE -m pip install ipython --no-warn-script-location
             & $PYTHON_EXE -m pip install untangle --no-warn-script-location
-            & $PYTHON_EXE -m pip install scapy==2.4.0 --no-warn-script-location
             if ($env:PYTHON -eq "C:\\Python27"){
                 "%PYTHON%\\python.exe -m pip install django>=1.7,<1.8"
             }
         }
+  - cmd: IF "%TEST_IRONPYTHON%"=="" (%PYTHON_EXE% -m pip install scapy==2.4.0 --no-warn-script-location)
   - cmd: "set PYTHONPATH=%PYTHONPATH%;%APPVEYOR_BUILD_FOLDER%"
 
 build_script:
