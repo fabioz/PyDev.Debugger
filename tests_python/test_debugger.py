@@ -24,6 +24,7 @@ CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATIO
 IS_CPYTHON = platform.python_implementation() == 'CPython'
 IS_IRONPYTHON = platform.python_implementation() == 'IronPython'
 IS_JYTHON = platform.python_implementation() == 'Jython'
+IS_APPVEYOR = os.environ.get('APPVEYOR', '') in ('True', 'true', '1')
 
 try:
     xrange
@@ -1928,6 +1929,7 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
     def test_case_scapy(self):
         self.check_case(WriterThreadCaseScapy)
 
+    @pytest.mark.skipif(IS_APPVEYOR, reason='Flaky on appveyor.')
     def test_redirect_output(self):
         self.check_case(WriterThreadCaseRedirectOutput)
 

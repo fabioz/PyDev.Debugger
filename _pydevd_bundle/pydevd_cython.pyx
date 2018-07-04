@@ -985,7 +985,7 @@ def trace_dispatch(py_db, frame, event, arg):
     # print('called at', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
     while f_unhandled is not None:
         filename = f_unhandled.f_code.co_filename
-        name, ext = splitext(basename(filename))
+        name = splitext(basename(filename))[0]
         if name == 'threading':
             if f_unhandled.f_code.co_name in ('__bootstrap', '_bootstrap'):
                 # We need __bootstrap_inner, not __bootstrap.
