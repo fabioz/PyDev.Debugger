@@ -1725,6 +1725,31 @@ class WriterCaseLamda(debugger_unittest.AbstractWriterThread):
         
         self.finished_ok = True
 
+#=======================================================================================================================
+# WriterCaseBreakpointSuspensionPolicy
+#======================================================================================================================
+class WriterCaseBreakpointSuspensionPolicy(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_suspend_policy.py')
+    
+    def run(self):
+        from tests_python.debugger_unittest import CMD_THREAD_SUSPEND, CMD_SET_BREAK
+        self.start_socket()
+        self.write_add_breakpoint(27, '', filename=self.TEST_FILE, hit_condition='', is_logpoint=False, suspend_policy='ALL')
+        self.write_make_initial_run()
+
+        thread_ids = []
+        for i in range(3):
+            self.log.append('Waiting for thread %s of 3 to stop' % (i + 1,))
+            # One thread is suspended with a breakpoint hit and the other 2 as thread suspended.
+            thread_id, _frame_id = self.wait_for_breakpoint_hit((CMD_SET_BREAK, CMD_THREAD_SUSPEND))
+            thread_ids.append(thread_id)
+            
+        for thread_id in thread_ids:
+            self.write_run_thread(thread_id)
+        
+        self.finished_ok = True
+
 
 #=======================================================================================================================
 # Test
@@ -1950,6 +1975,9 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
 
     def test_case_lamdda(self):
         self.check_case(WriterCaseLamda)
+
+    def test_case_suspension_policy(self):
+        self.check_case(WriterCaseBreakpointSuspensionPolicy)
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 class TestPythonRemoteDebugger(unittest.TestCase, debugger_unittest.DebuggerRunner):
