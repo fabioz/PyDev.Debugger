@@ -9,4 +9,6 @@ def test_io_redirector():
     class MyRedirection2(object):
         pass
 
+    # Check that we don't fail creating the IORedirector if the original
+    # doesn't have a 'buffer'.
     IORedirector(MyRedirection1(), MyRedirection2(), wrap_buffer=True)
