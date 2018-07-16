@@ -1766,19 +1766,20 @@ class WriterDebugZipFiles(debugger_unittest.AbstractWriterThread):
         self.write_add_breakpoint(
             2, 
             'None', 
-            filename=os.path.join(self.tmpdir.join('myzip.zip'), 'zipped', 'zipped_contents.py')
+            filename=os.path.join(str(self.tmpdir.join('myzip.zip')), 'zipped', 'zipped_contents.py')
         )
+
+        self.write_add_breakpoint(
+            2, 
+            'None', 
+            filename=os.path.join(str(self.tmpdir.join('myzip2.egg!')), 'zipped2', 'zipped_contents2.py')
+        )
+
         self.write_make_initial_run()
         thread_id, _frame_id, name, _suspend_type = self.wait_for_breakpoint_hit_with_suspend_type(get_name=True)
         assert name == 'call_in_zip'
         self.write_run_thread(thread_id)
         
-        self.write_add_breakpoint(
-            2, 
-            'None', 
-            filename=os.path.join(self.tmpdir.join('myzip2.egg!'), 'zipped2', 'zipped_contents2.py')
-        )
-        self.write_make_initial_run()
         thread_id, _frame_id, name, _suspend_type = self.wait_for_breakpoint_hit_with_suspend_type(get_name=True)
         assert name == 'call_in_zip2'
         self.write_run_thread(thread_id)

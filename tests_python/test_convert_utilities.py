@@ -149,8 +149,12 @@ def test_zip_paths(tmpdir):
         zip_file.close()
 
         sys.path.append(zipfile_path)
-        import importlib
-        importlib.import_module('zipped%s' % (i,))  # Check that it's importable.
+        try:
+            import importlib
+        except ImportError:
+            __import__('zipped%s' % (i,))  # Py2.6 does not have importlib
+        else:
+            importlib.import_module('zipped%s' % (i,))  # Check that it's importable.
 
         # Check that we can deal with the zip path.
         assert pydevd_file_utils.exists(zipfile_path)
