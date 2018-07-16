@@ -912,6 +912,11 @@ class WriterThreadCaseUnhandledExceptions(debugger_unittest.AbstractWriterThread
     # Note: expecting unhandled exceptions to be printed to stdout.
     TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_unhandled_exceptions.py')
 
+    def additional_output_checks(self, stdout, stderr):
+        if 'raise Exception' not in stderr:
+            raise AssertionError('Expected test to have an unhandled exception.')
+        # Don't call super (we have an unhandled exception in the stack trace).
+        
     def run(self):
         self.start_socket()
         self.write_add_exception_breakpoint_with_policy('Exception', "0", "1", "0")
@@ -946,7 +951,7 @@ class WriterThreadCase2(debugger_unittest.AbstractWriterThread):
 
         thread_id, frame_id = self.wait_for_breakpoint_hit()
 
-        self.write_get_frame(thread_id, frame_id)
+        self.write_get_frame(thread_id, frame_id)  # Note: write get frame but not waiting for it to be gotten.
 
         self.write_add_breakpoint(14, 'Call2')
 
@@ -954,7 +959,7 @@ class WriterThreadCase2(debugger_unittest.AbstractWriterThread):
 
         thread_id, frame_id = self.wait_for_breakpoint_hit()
 
-        self.write_get_frame(thread_id, frame_id)
+        self.write_get_frame(thread_id, frame_id)  # Note: write get frame but not waiting for it to be gotten.
 
         self.write_run_thread(thread_id)
 
@@ -1057,6 +1062,7 @@ class WriterThreadCaseQThread4(debugger_unittest.AbstractWriterThread):
         self.finished_ok = True
 
     def additional_output_checks(self, stdout, stderr):
+        debugger_unittest.AbstractWriterThread.additional_output_checks(self, stdout, stderr)
         if 'On start called' not in stdout:
             raise AssertionError('Expected "On start called" to be in stdout:\n%s' % (stdout,))
         if 'Done sleeping' not in stdout:
@@ -1317,6 +1323,7 @@ class WriterThreadCaseEventExt(debugger_unittest.AbstractWriterThread):
         self.finished_ok = True
 
     def additional_output_checks(self, stdout, stderr):
+        debugger_unittest.AbstractWriterThread.additional_output_checks(self, stdout, stderr)
         if 'INITIALIZE EVENT RECEIVED' not in stdout:
             raise AssertionError('No initialize event received')
 
@@ -1521,6 +1528,15 @@ class WriterCaseSetTrace(debugger_unittest.AbstractWriterThread):
 class WriterThreadCaseRedirectOutput(debugger_unittest.AbstractWriterThread):
 
     TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_redirect.py')
+
+    def _ignore_stderr_line(self, line):
+        if debugger_unittest.AbstractWriterThread._ignore_stderr_line(self, line):
+            return True
+        return line.startswith((
+            'text',
+            'binary',
+            'a' 
+        ))
 
     def get_environ(self):
         env = os.environ.copy()
