@@ -143,10 +143,10 @@ def test_zip_paths(tmpdir):
 
     for i, zip_basename in enumerate(('MY1.zip', 'my2.egg!')):
         zipfile_path = str(tmpdir.join(zip_basename))
-        with zipfile.ZipFile(zipfile_path, 'w') as zip_file:
-            zip_file.writestr('zipped%s/__init__.py' % (i,), '')
-            zip_file.writestr('zipped%s/zipped_contents.py' % (i,), 'def call_in_zip():\n    return 1')
-            zip_file.close()
+        zip_file = zipfile.ZipFile(zipfile_path, 'w')
+        zip_file.writestr('zipped%s/__init__.py' % (i,), '')
+        zip_file.writestr('zipped%s/zipped_contents.py' % (i,), 'def call_in_zip():\n    return 1')
+        zip_file.close()
 
         sys.path.append(zipfile_path)
         import importlib
