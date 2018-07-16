@@ -123,6 +123,15 @@ class WriterThreadCaseGetNextStatementTargets(debugger_unittest.AbstractWriterTh
 #======================================================================================================================
 class AbstractWriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
     FORCE_KILL_PROCESS_WHEN_FINISHED_OK = True
+    
+    def _ignore_stderr_line(self, line):
+        if debugger_unittest.AbstractWriterThread._ignore_stderr_line(self, line):
+            return True
+        
+        if 'GET /my_app' in line:
+            return True
+        
+        return False
 
     def get_command_line_args(self):
         free_port = get_free_port()
