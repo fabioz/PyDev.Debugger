@@ -1330,17 +1330,22 @@ class WriterThreadCaseModuleWithEntryPoint(WriterThreadCaseMSwitch):
     def get_main_filename(self):
         return debugger_unittest._get_debugger_test_file('_debugger_case_module_entry_point.py')
 
+class AbstractRemoteWriterThread(debugger_unittest.AbstractWriterThread):
 
-
+    def update_command_line_args(self, args):
+        ret = debugger_unittest.AbstractWriterThread.update_command_line_args(self, args)
+        ret.append(str(self.port))
+        return ret
+    
 #=======================================================================================================================
 # WriterThreadCaseRemoteDebugger
 #=======================================================================================================================
-class WriterThreadCaseRemoteDebugger(debugger_unittest.AbstractWriterThread):
+class WriterThreadCaseRemoteDebugger(AbstractRemoteWriterThread):
 
     TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_remote.py')
 
     def run(self):
-        self.start_socket(8787)
+        self.start_socket()
 
         self.log.append('making initial run')
         self.write_make_initial_run()
@@ -1364,21 +1369,21 @@ class WriterThreadCaseRemoteDebugger(debugger_unittest.AbstractWriterThread):
 #=======================================================================================================================
 # WriterThreadCaseRemoteDebuggerUnhandledExceptions
 #=======================================================================================================================
-class WriterThreadCaseRemoteDebuggerUnhandledExceptions(debugger_unittest.AbstractWriterThread):
+class WriterThreadCaseRemoteDebuggerUnhandledExceptions(AbstractRemoteWriterThread):
 
     TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_remote_unhandled_exceptions.py')
     
-    @overrides(debugger_unittest.AbstractWriterThread.check_test_suceeded_msg)
+    @overrides(AbstractRemoteWriterThread.check_test_suceeded_msg)
     def check_test_suceeded_msg(self, stdout, stderr):
         return 'TEST SUCEEDED' in ''.join(stderr)
     
-    @overrides(debugger_unittest.AbstractWriterThread.additional_output_checks)
+    @overrides(AbstractRemoteWriterThread.additional_output_checks)
     def additional_output_checks(self, stdout, stderr):
         # Don't call super as we have an expected exception
         assert 'ValueError: TEST SUCEEDED' in stderr
 
     def run(self):
-        self.start_socket(8787)  # Wait for it to connect back at this port.
+        self.start_socket()  # Wait for it to connect back at this port.
 
         self.log.append('making initial run')
         self.write_make_initial_run()
@@ -1401,21 +1406,21 @@ class WriterThreadCaseRemoteDebuggerUnhandledExceptions(debugger_unittest.Abstra
 #=======================================================================================================================
 # WriterThreadCaseRemoteDebuggerUnhandledExceptions2
 #=======================================================================================================================
-class WriterThreadCaseRemoteDebuggerUnhandledExceptions2(debugger_unittest.AbstractWriterThread):
+class WriterThreadCaseRemoteDebuggerUnhandledExceptions2(AbstractRemoteWriterThread):
 
     TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_remote_unhandled_exceptions2.py')
     
-    @overrides(debugger_unittest.AbstractWriterThread.check_test_suceeded_msg)
+    @overrides(AbstractRemoteWriterThread.check_test_suceeded_msg)
     def check_test_suceeded_msg(self, stdout, stderr):
         return 'TEST SUCEEDED' in ''.join(stderr)
     
-    @overrides(debugger_unittest.AbstractWriterThread.additional_output_checks)
+    @overrides(AbstractRemoteWriterThread.additional_output_checks)
     def additional_output_checks(self, stdout, stderr):
         # Don't call super as we have an expected exception
         assert 'ValueError: TEST SUCEEDED' in stderr
 
     def run(self):
-        self.start_socket(8787)  # Wait for it to connect back at this port.
+        self.start_socket()  # Wait for it to connect back at this port.
 
         self.log.append('making initial run')
         self.write_make_initial_run()
@@ -1474,7 +1479,7 @@ class _SecondaryMultiProcProcessWriterThread(debugger_unittest.AbstractWriterThr
 #=======================================================================================================================
 # WriterThreadCaseRemoteDebuggerMultiProc
 #=======================================================================================================================
-class WriterThreadCaseRemoteDebuggerMultiProc(debugger_unittest.AbstractWriterThread):
+class WriterThreadCaseRemoteDebuggerMultiProc(AbstractRemoteWriterThread):
 
     # It seems sometimes it becomes flaky on the ci because the process outlives the writer thread...
     # As we're only interested in knowing if a second connection was received, just kill the related
@@ -1484,7 +1489,7 @@ class WriterThreadCaseRemoteDebuggerMultiProc(debugger_unittest.AbstractWriterTh
     TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_remote_1.py')
 
     def run(self):
-        self.start_socket(8787)
+        self.start_socket()
 
         self.log.append('making initial run')
         self.write_make_initial_run()
@@ -2304,7 +2309,11 @@ class TestPythonRemoteDebugger(unittest.TestCase, debugger_unittest.DebuggerRunn
         return [sys.executable, '-u']
 
     def add_command_line_args(self, args):
-        return args + [self.writer_thread.TEST_FILE]
+        writer_thread = self.writer_thread
+
+        ret = args + [self.writer_thread.TEST_FILE]
+        ret = writer_thread.update_command_line_args(ret)  # Provide a hook for the writer
+        return ret
 
     def test_remote_debugger(self):
         self.check_case(WriterThreadCaseRemoteDebugger)
