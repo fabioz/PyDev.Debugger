@@ -440,14 +440,15 @@ class AbstractWriterThread(threading.Thread):
             socket_name = get_socket_name(close=True)
         else:
             socket_name = (pydev_localhost.get_localhost(), port)
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind(socket_name)
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server_socket.bind(socket_name)
         self.port = socket_name[1]
-        s.listen(1)
+        server_socket.listen(1)
         if SHOW_WRITES_AND_READS:
             print('Waiting in socket.accept()')
-        self.server_socket = s
-        new_sock, addr = s.accept()
+        self.server_socket = server_socket
+        new_sock, addr = server_socket.accept()
         if SHOW_WRITES_AND_READS:
             print('Test Writer Thread Socket:', new_sock, addr)
 
