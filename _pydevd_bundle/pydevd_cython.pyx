@@ -81,6 +81,7 @@ cdef class PyDBAdditionalThreadInfo:
     cdef public int suspend_type;
     cdef public int pydev_next_line;
     cdef public str pydev_func_name;
+    cdef public bint suspended_at_unhandled;
     # ELSE
 #     __slots__ = [
 #         'pydev_state',
@@ -97,6 +98,7 @@ cdef class PyDBAdditionalThreadInfo:
 #         'suspend_type',
 #         'pydev_next_line',
 #         'pydev_func_name',
+#         'suspended_at_unhandled',
 #     ]
     # ENDIF
 
@@ -115,6 +117,7 @@ cdef class PyDBAdditionalThreadInfo:
         self.suspend_type = PYTHON_SUSPEND
         self.pydev_next_line = -1
         self.pydev_func_name = '.invalid.'  # Must match the type in cython
+        self.suspended_at_unhandled = False
 
     def iter_frames(self, t):
         # sys._current_frames(): dictionary with thread id -> topmost frame
@@ -989,7 +992,7 @@ def trace_dispatch(py_db, frame, event, arg):
         if name == 'threading':
             if f_unhandled.f_code.co_name in ('__bootstrap', '_bootstrap'):
                 # We need __bootstrap_inner, not __bootstrap.
-                return py_db.trace_dispatch
+                return None
             
             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):
                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
@@ -1000,6 +1003,10 @@ def trace_dispatch(py_db, frame, event, arg):
                     break
             
         elif name == 'pydevd':
+            if f_unhandled.f_code.co_name in ('run', 'main'):
+                # We need to get to _exec
+                return None
+            
             if f_unhandled.f_code.co_name == '_exec':
                 only_trace_for_unhandled_exceptions = True
                 break
@@ -1113,8 +1120,11 @@ cdef class ThreadTracer:
             from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
             py_db, t, additional_info = self._args[0:3]
             if arg is not None:
-                exctype, value, tb = arg
-                stop_on_unhandled_exception(py_db, t, additional_info, exctype, value, tb)        
+                if not additional_info.suspended_at_unhandled:
+                    additional_info.suspended_at_unhandled = True
+                    
+                    exctype, value, tb = arg
+                    stop_on_unhandled_exception(py_db, t, additional_info, exctype, value, tb)        
         # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
         return SafeCallWrapper(self.trace_unhandled_exceptions)
         # ELSE
