@@ -922,7 +922,8 @@ class WriterThreadCaseUnhandledExceptions(debugger_unittest.AbstractWriterThread
     @overrides(debugger_unittest.AbstractWriterThread.additional_output_checks)
     def additional_output_checks(self, stdout, stderr):
         if 'raise Exception' not in stderr:
-            raise AssertionError('Expected test to have an unhandled exception.')
+            raise AssertionError('Expected test to have an unhandled exception.\nstdout:\n%s\n\nstderr:\n%s' % (
+                stdout, stderr))
         # Don't call super (we have an unhandled exception in the stack trace).
         
     def run(self):
@@ -959,7 +960,9 @@ class WriterThreadCaseUnhandledExceptionsOnTopLevel(debugger_unittest.AbstractWr
     @overrides(debugger_unittest.AbstractWriterThread.additional_output_checks)
     def additional_output_checks(self, stdout, stderr):
         # Don't call super as we have an expected exception
-        assert 'ValueError: TEST SUCEEDED' in stderr
+        if 'ValueError: TEST SUCEEDED' not in stderr:
+            raise AssertionError('"ValueError: TEST SUCEEDED" not in stderr.\nstdout:\n%s\n\nstderr:\n%s' % (
+                stdout, stderr))
 
     def run(self):
         self.start_socket()
@@ -988,7 +991,10 @@ class WriterThreadCaseUnhandledExceptionsOnTopLevel2(debugger_unittest.AbstractW
     @overrides(debugger_unittest.AbstractWriterThread.additional_output_checks)
     def additional_output_checks(self, stdout, stderr):
         # Don't call super as we have an expected exception
-        assert 'ValueError: TEST SUCEEDED' in stderr
+        if 'ValueError: TEST SUCEEDED' not in stderr:
+            raise AssertionError('"ValueError: TEST SUCEEDED" not in stderr.\nstdout:\n%s\n\nstderr:\n%s' % (
+                stdout, stderr))
+
         
     @overrides(debugger_unittest.AbstractWriterThread.get_environ)
     def get_environ(self):
@@ -1036,7 +1042,9 @@ class WriterThreadCaseUnhandledExceptionsOnTopLevel3(debugger_unittest.AbstractW
     @overrides(debugger_unittest.AbstractWriterThread.additional_output_checks)
     def additional_output_checks(self, stdout, stderr):
         # Don't call super as we have an expected exception
-        assert 'ValueError: TEST SUCEEDED' in stderr
+        if 'ValueError: TEST SUCEEDED' not in stderr:
+            raise AssertionError('"ValueError: TEST SUCEEDED" not in stderr.\nstdout:\n%s\n\nstderr:\n%s' % (
+                stdout, stderr))
 
     def run(self):
         self.start_socket()
