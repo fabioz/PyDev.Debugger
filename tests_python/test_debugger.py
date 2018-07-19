@@ -16,8 +16,9 @@ import unittest
 import pytest
 
 from tests_python import debugger_unittest
-from tests_python.debugger_unittest import get_free_port, CMD_SET_PROPERTY_TRACE, REASON_CAUGHT_EXCEPTION, \
-    REASON_UNCAUGHT_EXCEPTION, REASON_STOP_ON_BREAKPOINT, REASON_THREAD_SUSPEND, overrides
+from tests_python.debugger_unittest import (get_free_port, CMD_SET_PROPERTY_TRACE, REASON_CAUGHT_EXCEPTION, 
+    REASON_UNCAUGHT_EXCEPTION, REASON_STOP_ON_BREAKPOINT, REASON_THREAD_SUSPEND, overrides, CMD_THREAD_CREATE,
+    CMD_GET_THREAD_STACK)
 
 IS_CPYTHON = platform.python_implementation() == 'CPython'
 IS_IRONPYTHON = platform.python_implementation() == 'IronPython'
@@ -1962,8 +1963,9 @@ class WriterThreadCaseListThreads(debugger_unittest.AbstractWriterThread):
         thread_id, frame_id = self.wait_for_breakpoint_hit()
         
         seq = self.write_list_threads()
-        threads = self.wait_for_list_threads(seq)
-        assert len(threads) == 1
+        msg = self.wait_for_list_threads(seq)
+        assert msg.thread['name'] == 'MainThread'
+        assert msg.thread['id'].startswith('pid')
         self.write_run_thread(thread_id)
         self.finished_ok = True
 
@@ -2087,6 +2089,49 @@ class WriterCaseBreakpointSuspensionPolicy(debugger_unittest.AbstractWriterThrea
         for thread_id in thread_ids:
             self.write_run_thread(thread_id)
         
+        self.finished_ok = True
+
+#=======================================================================================================================
+# WriterCaseGetThreadStack
+#======================================================================================================================
+class WriterCaseGetThreadStack(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_get_thread_stack.py')
+    
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(12, None)
+        self.write_make_initial_run()
+
+        thread_created_msgs = [self.wait_for_message(lambda msg:msg.startswith('%s\t' % (CMD_THREAD_CREATE,)))]
+        thread_created_msgs.append(self.wait_for_message(lambda msg:msg.startswith('%s\t' % (CMD_THREAD_CREATE,))))
+        thread_id_to_name = {}
+        for msg in thread_created_msgs:
+            thread_id_to_name[msg.thread['id']] = msg.thread['name']
+        assert len(thread_id_to_name) == 2
+
+        thread_id, _frame_id = self.wait_for_breakpoint_hit(REASON_STOP_ON_BREAKPOINT)
+        assert thread_id in thread_id_to_name
+
+        for request_thread_id in thread_id_to_name:
+            self.write_get_thread_stack(request_thread_id)
+            msg = self.wait_for_message(lambda msg:msg.startswith('%s\t' % (CMD_GET_THREAD_STACK,)))
+            files = [frame['file'] for frame in  msg.thread.frame]
+            assert msg.thread['id'] == request_thread_id
+            if not files[0].endswith('_debugger_case_get_thread_stack.py'):
+                raise AssertionError('Expected to find _debugger_case_get_thread_stack.py in files[0]. Found: %s' % ('\n'.join(files),))
+
+            if ([filename for filename in files if filename.endswith('pydevd.py')]):
+                raise AssertionError('Did not expect to find pydevd.py. Found: %s' % ('\n'.join(files),))
+            if request_thread_id == thread_id:
+                assert len(msg.thread.frame) == 0 # In main thread (must have no back frames).
+                assert msg.thread.frame['name'] == '<module>'
+            else:
+                assert len(msg.thread.frame) > 1 # Stopped in threading (must have back frames).
+                assert msg.thread.frame[0]['name'] == 'method'
+
+        self.write_run_thread(thread_id)
+
         self.finished_ok = True
 
 
@@ -2336,6 +2381,9 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
 
     def test_case_suspension_policy(self):
         self.check_case(WriterCaseBreakpointSuspensionPolicy)
+
+    def test_case_get_thread_stack(self):
+        self.check_case(WriterCaseGetThreadStack)
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 class TestPythonRemoteDebugger(unittest.TestCase, debugger_unittest.DebuggerRunner):
