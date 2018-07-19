@@ -2136,6 +2136,30 @@ class WriterCaseGetThreadStack(debugger_unittest.AbstractWriterThread):
 
 
 #=======================================================================================================================
+# WriterCaseDumpThreadsToStderr
+#======================================================================================================================
+class WriterCaseDumpThreadsToStderr(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_get_thread_stack.py')
+
+    def additional_output_checks(self, stdout, stderr):
+        assert 'Thread Dump' in stderr and 'Thread pydevd.CommandThread  (daemon: True, pydevd thread: True)' in stderr, \
+            'Did not find thread dump in stderr. stderr:\n%s' % (stderr,)
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(12, None)
+        self.write_make_initial_run()
+
+        thread_id, _frame_id = self.wait_for_breakpoint_hit(REASON_STOP_ON_BREAKPOINT)
+
+        self.write_dump_threads()
+        self.write_run_thread(thread_id)
+
+        self.finished_ok = True
+
+
+#=======================================================================================================================
 # Test
 #=======================================================================================================================
 class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
@@ -2384,6 +2408,9 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
 
     def test_case_get_thread_stack(self):
         self.check_case(WriterCaseGetThreadStack)
+
+    def test_case_dump_threads_to_stderr(self):
+        self.check_case(WriterCaseDumpThreadsToStderr)
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 class TestPythonRemoteDebugger(unittest.TestCase, debugger_unittest.DebuggerRunner):
