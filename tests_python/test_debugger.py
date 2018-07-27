@@ -929,6 +929,10 @@ class WriterThreadCaseUnhandledExceptionsBasic(debugger_unittest.AbstractWriterT
     # Note: expecting unhandled exceptions to be printed to stdout.
     TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_unhandled_exceptions.py')
 
+    @overrides(debugger_unittest.AbstractWriterThread.check_test_suceeded_msg)
+    def check_test_suceeded_msg(self, stdout, stderr):
+        return 'TEST SUCEEDED' in ''.join(stdout) and 'TEST SUCEEDED' in ''.join(stderr)
+
     @overrides(debugger_unittest.AbstractWriterThread.additional_output_checks)
     def additional_output_checks(self, stdout, stderr):
         if 'raise Exception' not in stderr:
