@@ -416,6 +416,7 @@ class AbstractWriterThread(threading.Thread):
                 'Failed to submit a listener notification task. Event loop shut down?',
                 'java.util.concurrent.RejectedExecutionException',
                 'An event executor terminated with non-empty task',
+                'java.lang.UnsupportedOperationException',
                 ):
                 if expected in line:
                     return True
