@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import subprocess
+import tempfile
 import unittest
 
 
@@ -56,9 +57,12 @@ class Test(unittest.TestCase):
         self.assertEqual(ref_invalid_files, invalid_files)
 
     def test_pydev_analyse_invalid_files(self):
-        ref_valid_files = []
-        ref_invalid_files = [os.path.join(self._resources_path, "_pydev_coverage_syntax_error.py")]
+        with tempfile.NamedTemporaryFile(suffix=".pyx") as pyx_file:
+            ref_valid_files = []
+            ref_invalid_files = [os.path.join(self._resources_path,
+                                              "_pydev_coverage_syntax_error.py"),
+                                 pyx_file.name]
 
-        invalid_files = self._do_analyze(ref_valid_files + ref_invalid_files)
+            invalid_files = self._do_analyze(ref_valid_files + ref_invalid_files)
 
-        self.assertEqual(ref_invalid_files, invalid_files)
+            self.assertEqual(ref_invalid_files, invalid_files)
