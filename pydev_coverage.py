@@ -50,7 +50,7 @@ def execute():
                 else:
                     invalid_files.append(v)
             if invalid_files:
-                sys.stderr.write('Invalid files not passed to coverage: %s'
+                sys.stderr.write('Invalid files not passed to coverage: %s\n'
                                  % ', '.join(invalid_files))
 
             # Note that in this case we'll already be in the working dir with the coverage files, 
@@ -77,12 +77,12 @@ def execute():
         version = tuple(map(int, coverage.__version__.split('.')[:2]))
         if version < (4, 3):
             sys.stderr.write('Error: minimum supported coverage version is 4.3.'
-                             '\nFound: %s\nLocation: %s' 
+                             '\nFound: %s\nLocation: %s\n' 
                              % ('.'.join(str(x) for x in version), coverage.__file__))
             sys.exit(1)
     else:
         sys.stderr.write('Warning: Could not determine version of python module coverage.'
-                         '\nEnsure coverage version is >= 4.3')
+                         '\nEnsure coverage version is >= 4.3\n')
 
     from coverage.cmdline import main #@UnresolvedImport
 
