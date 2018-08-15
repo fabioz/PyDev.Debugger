@@ -48,8 +48,8 @@ class Test(unittest.TestCase):
 
     def test_pydev_analyse_non_standard_encoding(self):
         ref_valid_files = [os.path.join(self._resources_path,
-                                        "_pydev_coverage_cyrillic_encoding_py{}.py"
-                                            .format(sys.version_info[0]))]
+                                        "_pydev_coverage_cyrillic_encoding_py%i.py"
+                                        % sys.version_info[0])]
         ref_invalid_files = []
 
         invalid_files = self._do_analyze(ref_valid_files + ref_invalid_files)
