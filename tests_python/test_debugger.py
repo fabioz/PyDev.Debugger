@@ -1775,7 +1775,7 @@ def test_py_37_breakpoint(case_setup, filename):
         writer.write_make_initial_run()
 
         hit = writer.wait_for_breakpoint_hit(
-            REASON_THREAD_SUSPEND, file=filename, line=2)
+            REASON_THREAD_SUSPEND, file=filename, line=3)
 
         writer.write_run_thread(hit.thread_id)
 
