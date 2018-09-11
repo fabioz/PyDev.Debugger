@@ -191,19 +191,19 @@ def set_ide_os(os):
         'UNIX' or 'WINDOWS'
     '''
     global _ide_os
-    _prev = _ide_os
+    prev = _ide_os
     if os == 'WIN':  # Apparently PyCharm uses 'WIN' (https://github.com/fabioz/PyDev.Debugger/issues/116)
         os = 'WINDOWS'
 
     assert os in ('WINDOWS', 'UNIX')
 
-    if _prev != os:
+    if prev != os:
         _ide_os = os
         # We need to (re)setup how the client <-> server translation works to provide proper separators.
         setup_client_server_paths(_last_client_server_paths_set)
 
 
-DEBUG_CLIENT_SERVER_TRANSLATION = False
+DEBUG_CLIENT_SERVER_TRANSLATION = os.environ.get('DEBUG_PYDEVD_PATHS_TRANSLATION', 'False').lower() in ('1', 'true')
 
 # Caches filled as requested during the debug session.
 NORM_PATHS_CONTAINER = {}
@@ -381,7 +381,8 @@ def _fix_path(path, sep):
     if path.endswith('/') or path.endswith('\\'):
         path = path[:-1]
 
-    path = path.replace('/', sep)
+    if sep != '/':
+        path = path.replace('/', sep)
     return path
 
 
