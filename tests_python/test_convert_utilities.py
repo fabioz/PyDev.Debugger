@@ -71,6 +71,8 @@ def test_to_server_and_to_client(tmpdir):
                 ]
                 pydevd_file_utils.setup_client_server_paths(PATHS_FROM_ECLIPSE_TO_PYTHON)
                 check(pydevd_file_utils.norm_file_to_server('c:\\foo\\my'), 'c:\\bar\\my')
+                check(pydevd_file_utils.norm_file_to_server('c:/foo/my'), 'c:\\bar\\my')
+                check(pydevd_file_utils.norm_file_to_server('c:/foo/my/'), 'c:\\bar\\my')
                 check(pydevd_file_utils.norm_file_to_server('c:\\foo\\áéíóú'.upper()), 'c:\\bar\\áéíóú')
                 check(pydevd_file_utils.norm_file_to_client('c:\\bar\\my'), 'c:\\foo\\my')
 
