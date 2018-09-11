@@ -92,14 +92,18 @@ args = dict(
         'Environment :: Console',
         'Intended Audience :: Developers',
 
-        # It seems that the license is not recognized by Pypi, so, not categorizing it for now.
-        # https://bitbucket.org/pypa/pypi/issues/369/the-eclipse-public-license-superseeded
-        # 'License :: OSI Approved :: Eclipse Public License',
+        'License :: OSI Approved :: Eclipse Public License 1.0 (EPL-1.0)',
 
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX',
         'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Software Development :: Debuggers',
     ],
     entry_points={
