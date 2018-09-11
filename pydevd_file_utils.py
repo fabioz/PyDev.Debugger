@@ -433,6 +433,10 @@ def setup_client_server_paths(paths):
         try:
             return cache[filename]
         except KeyError:
+            if eclipse_sep != python_sep:
+                # Make sure that the separators are what we expect from the IDE.
+                filename = filename.replace(python_sep, eclipse_sep)
+
             # used to translate a path from the client to the debug server
             translated = normcase(filename)
             for eclipse_prefix, server_prefix in paths_from_eclipse_to_python:

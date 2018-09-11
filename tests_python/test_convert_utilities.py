@@ -136,22 +136,33 @@ def test_to_server_and_to_client(tmpdir):
             pydevd_file_utils.setup_client_server_paths(PATHS_FROM_ECLIPSE_TO_PYTHON)
             assert pydevd_file_utils.norm_file_to_server(test_dir) == test_dir.lower()
             assert pydevd_file_utils.norm_file_to_client(test_dir).endswith('\\Foo')
-
         else:
             # Client on windows and server on unix
             pydevd_file_utils.set_ide_os('WINDOWS')
-            in_eclipse = 'c:\\foo'
-            in_python = '/bar'
-            PATHS_FROM_ECLIPSE_TO_PYTHON = [
-                (in_eclipse, in_python)
-            ]
-            pydevd_file_utils.setup_client_server_paths(PATHS_FROM_ECLIPSE_TO_PYTHON)
-            assert pydevd_file_utils.norm_file_to_server('c:\\foo\\my') == '/bar/my'
-            assert pydevd_file_utils.norm_file_to_client('/bar/my') == 'c:\\foo\\my'
+            for in_eclipse, in_python  in ([
+                    ('c:\\foo', '/bar'),
+                    ('c:/foo', '/bar'),
+                    ('c:/foo/', '/bar'),
+                ]):
+                
+                PATHS_FROM_ECLIPSE_TO_PYTHON = [
+                    (in_eclipse, in_python)
+                ]
 
-            # Files for which there's no translation have only their separators updated.
-            assert pydevd_file_utils.norm_file_to_client('/usr/bin') == '\\usr\\bin'
-            assert pydevd_file_utils.norm_file_to_server('\\usr\\bin') == '/usr/bin'
+                pydevd_file_utils.setup_client_server_paths(PATHS_FROM_ECLIPSE_TO_PYTHON)
+                assert pydevd_file_utils.norm_file_to_server('c:\\foo\\my') == '/bar/my'
+                assert pydevd_file_utils.norm_file_to_server('c:/foo/my') == '/bar/my'
+                assert pydevd_file_utils.norm_file_to_server('c:\\foo\\my\\') == '/bar/my'
+                assert pydevd_file_utils.norm_file_to_server('c:/foo/my/') == '/bar/my'
+                
+                assert pydevd_file_utils.norm_file_to_client('/bar/my') == 'c:\\foo\\my'
+                assert pydevd_file_utils.norm_file_to_client('/bar/my/') == 'c:\\foo\\my'
+    
+                # Files for which there's no translation have only their separators updated.
+                assert pydevd_file_utils.norm_file_to_client('/usr/bin') == '\\usr\\bin'
+                assert pydevd_file_utils.norm_file_to_client('/usr/bin/') == '\\usr\\bin'
+                assert pydevd_file_utils.norm_file_to_server('\\usr\\bin') == '/usr/bin'
+                assert pydevd_file_utils.norm_file_to_server('\\usr\\bin\\') == '/usr/bin'
 
             # Client and server on unix
             pydevd_file_utils.set_ide_os('UNIX')
