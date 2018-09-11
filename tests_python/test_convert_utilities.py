@@ -54,26 +54,46 @@ def test_to_server_and_to_client(tmpdir):
 
             # Client and server are on windows.
             pydevd_file_utils.set_ide_os('WINDOWS')
-            in_eclipse = 'c:\\foo'
-            in_python = 'c:\\bar'
-            PATHS_FROM_ECLIPSE_TO_PYTHON = [
-                (in_eclipse, in_python)
-            ]
-            pydevd_file_utils.setup_client_server_paths(PATHS_FROM_ECLIPSE_TO_PYTHON)
-            check(pydevd_file_utils.norm_file_to_server('c:\\foo\\my'), 'c:\\bar\\my')
-            check(pydevd_file_utils.norm_file_to_server('c:\\foo\\áéíóú'.upper()), 'c:\\bar\\áéíóú')
-            check(pydevd_file_utils.norm_file_to_client('c:\\bar\\my'), 'c:\\foo\\my')
+            for in_eclipse, in_python  in ([
+                    ('c:\\foo', 'c:\\bar'),
+                    ('c:/foo', 'c:\\bar'),
+                    ('c:\\foo', 'c:/bar'),
+                    ('c:\\foo', 'c:\\bar\\'),
+                    ('c:/foo', 'c:\\bar\\'),
+                    ('c:\\foo', 'c:/bar/'),
+                    ('c:\\foo\\', 'c:\\bar'),
+                    ('c:/foo/', 'c:\\bar'),
+                    ('c:\\foo\\', 'c:/bar'),
+                    
+                ]):
+                PATHS_FROM_ECLIPSE_TO_PYTHON = [
+                    (in_eclipse, in_python)
+                ]
+                pydevd_file_utils.setup_client_server_paths(PATHS_FROM_ECLIPSE_TO_PYTHON)
+                check(pydevd_file_utils.norm_file_to_server('c:\\foo\\my'), 'c:\\bar\\my')
+                check(pydevd_file_utils.norm_file_to_server('c:\\foo\\áéíóú'.upper()), 'c:\\bar\\áéíóú')
+                check(pydevd_file_utils.norm_file_to_client('c:\\bar\\my'), 'c:\\foo\\my')
 
             # Client on unix and server on windows
             pydevd_file_utils.set_ide_os('UNIX')
-            in_eclipse = '/foo'
-            in_python = 'c:\\bar'
-            PATHS_FROM_ECLIPSE_TO_PYTHON = [
-                (in_eclipse, in_python)
-            ]
-            pydevd_file_utils.setup_client_server_paths(PATHS_FROM_ECLIPSE_TO_PYTHON)
-            check(pydevd_file_utils.norm_file_to_server('/foo/my'), 'c:\\bar\\my')
-            check(pydevd_file_utils.norm_file_to_client('c:\\bar\\my'), '/foo/my')
+            for in_eclipse, in_python  in ([
+                    ('/foo', 'c:\\bar'),
+                    ('/foo', 'c:/bar'),
+                    ('/foo', 'c:\\bar\\'),
+                    ('/foo', 'c:/bar/'),
+                    ('/foo/', 'c:\\bar'),
+                    ('/foo/', 'c:\\bar\\'),
+                ]):
+                
+                PATHS_FROM_ECLIPSE_TO_PYTHON = [
+                    (in_eclipse, in_python)
+                ]
+                pydevd_file_utils.setup_client_server_paths(PATHS_FROM_ECLIPSE_TO_PYTHON)
+                check(pydevd_file_utils.norm_file_to_server('/foo/my'), 'c:\\bar\\my')
+                check(pydevd_file_utils.norm_file_to_client('c:\\bar\\my'), '/foo/my')
+                check(pydevd_file_utils.norm_file_to_client('c:\\bar\\my\\'), '/foo/my')
+                check(pydevd_file_utils.norm_file_to_client('c:/bar/my'), '/foo/my')
+                check(pydevd_file_utils.norm_file_to_client('c:/bar/my/'), '/foo/my')
 
             # Test with 'real' files
             # Client and server are on windows.
