@@ -32,7 +32,6 @@ class DummyWriter(object):
 def test_debug_console():
     from _pydev_bundle.pydev_console_utils import DebugConsoleStdIn
     from pydevd import PyDB
-    from tests_python.test_tracing_on_top_level import DummyWriter
 
     class OriginalStdin(object):
 
