@@ -146,10 +146,12 @@ def trace_dispatch(py_db, frame, event, arg):
         if frame is f_unhandled:
             return f_unhandled.f_trace(frame, event, arg)
 
-    thread_tracer = getattr(thread, '__tracer__', None)
-    if thread_tracer is None:
-        thread_tracer = ThreadTracer(args)
-        thread.__tracer__ = thread_tracer
+    thread_tracer = ThreadTracer(args)
+# IFDEF CYTHON
+#     thread._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
+# ELSE
+# ENDIF
+
 
     SetTrace(thread_tracer.__call__)
     return thread_tracer.__call__(frame, event, arg)
