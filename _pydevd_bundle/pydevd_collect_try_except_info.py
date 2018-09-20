@@ -23,7 +23,7 @@ class TryExceptInfo(object):
 
     def is_line_in_try_block(self, line):
         return self.try_line <= line <= self.except_line
-    
+
     def is_line_in_except_block(self, line):
         return self.except_line <= line <= self.except_end_line
 
