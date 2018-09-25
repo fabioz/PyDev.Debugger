@@ -788,8 +788,9 @@ static const char *__pyx_f[] = {
 /*--- Type declarations ---*/
 struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo;
 struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBFrame;
-struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace;
 struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper;
+struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions;
+struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame;
 struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer;
 
 /* "_pydevd_bundle/pydevd_cython.pyx":64
@@ -834,21 +835,7 @@ struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBFrame {
 };
 
 
-/* "_pydevd_bundle/pydevd_cython.pyx":1072
- * 
- * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- * cdef class PyDbFrameTraceAndUnhandledExceptionsTrace(object):             # <<<<<<<<<<<<<<
- *     cdef object _pydb_frame_trace;
- *     cdef object _unhandled_trace;
- */
-struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace {
-  PyObject_HEAD
-  PyObject *_pydb_frame_trace;
-  PyObject *_unhandled_trace;
-};
-
-
-/* "_pydevd_bundle/pydevd_cython.pyx":1104
+/* "_pydevd_bundle/pydevd_cython.pyx":987
  * 
  * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
  * cdef class SafeCallWrapper:             # <<<<<<<<<<<<<<
@@ -861,9 +848,40 @@ struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper {
 };
 
 
-/* "_pydevd_bundle/pydevd_cython.pyx":1116
- *       Py_XDECREF (method_obj)
- *       return SafeCallWrapper(ret) if ret is not None else None
+/* "_pydevd_bundle/pydevd_cython.pyx":1109
+ * 
+ * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ * cdef class TopLevelThreadTracerOnlyUnhandledExceptions:             # <<<<<<<<<<<<<<
+ *     cdef public tuple _args;
+ *     def __init__(self, tuple args):
+ */
+struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions {
+  PyObject_HEAD
+  PyObject *_args;
+};
+
+
+/* "_pydevd_bundle/pydevd_cython.pyx":1141
+ * 
+ * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ * cdef class TopLevelThreadTracerNoBackFrame:             # <<<<<<<<<<<<<<
+ * #
+ *     cdef public object _frame_trace_dispatch;
+ */
+struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame {
+  PyObject_HEAD
+  PyObject *_frame_trace_dispatch;
+  PyObject *_args;
+  PyObject *_try_except_info;
+  PyObject *_last_exc_arg;
+  PyObject *_raise_lines;
+  int _last_raise_line;
+};
+
+
+/* "_pydevd_bundle/pydevd_cython.pyx":1247
+ * 
+ * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
  * cdef class ThreadTracer:             # <<<<<<<<<<<<<<
  *     cdef public tuple _args;
  *     def __init__(self, tuple args):
@@ -1280,12 +1298,6 @@ static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key);
 #define __Pyx_PyObject_Dict_GetItem(obj, name)  PyObject_GetItem(obj, name)
 #endif
 
-/* Import.proto */
-static PyObject *__Pyx_Import(PyObject *name, PyObject *from_list, int level);
-
-/* ImportFrom.proto */
-static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name);
-
 /* SliceTupleAndList.proto */
 #if CYTHON_COMPILING_IN_CPYTHON
 static CYTHON_INLINE PyObject* __Pyx_PyList_GetSlice(PyObject* src, Py_ssize_t start, Py_ssize_t stop);
@@ -1293,6 +1305,29 @@ static CYTHON_INLINE PyObject* __Pyx_PyTuple_GetSlice(PyObject* src, Py_ssize_t 
 #else
 #define __Pyx_PyList_GetSlice(seq, start, stop)   PySequence_GetSlice(seq, start, stop)
 #define __Pyx_PyTuple_GetSlice(seq, start, stop)  PySequence_GetSlice(seq, start, stop)
+#endif
+
+/* pyfrozenset_new.proto */
+static CYTHON_INLINE PyObject* __Pyx_PyFrozenSet_New(PyObject* it);
+
+/* PySetContains.proto */
+static CYTHON_INLINE int __Pyx_PySet_ContainsTF(PyObject* key, PyObject* set, int eq);
+
+/* ListAppend.proto */
+#if CYTHON_USE_PYLIST_INTERNALS && CYTHON_ASSUME_SAFE_MACROS
+static CYTHON_INLINE int __Pyx_PyList_Append(PyObject* list, PyObject* x) {
+    PyListObject* L = (PyListObject*) list;
+    Py_ssize_t len = Py_SIZE(list);
+    if (likely(L->allocated > len) & likely(len > (L->allocated >> 1))) {
+        Py_INCREF(x);
+        PyList_SET_ITEM(list, len, x);
+        Py_SIZE(list) = len+1;
+        return 0;
+    }
+    return PyList_Append(list, x);
+}
+#else
+#define __Pyx_PyList_Append(L,x) PyList_Append(L,x)
 #endif
 
 /* ObjectGetItem.proto */
@@ -1309,6 +1344,12 @@ static PyObject* __Pyx_PyInt_EqObjC(PyObject *op1, PyObject *op2, long intval, i
 #define __Pyx_PyInt_EqObjC(op1, op2, intval, inplace)\
     PyObject_RichCompare(op1, op2, Py_EQ)
     #endif
+
+/* Import.proto */
+static PyObject *__Pyx_Import(PyObject *name, PyObject *from_list, int level);
+
+/* ImportFrom.proto */
+static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name);
 
 /* PyObject_GenericGetAttrNoDict.proto */
 #if CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP && PY_VERSION_HEX < 0x03070000
@@ -1428,13 +1469,15 @@ static PyTypeObject *__pyx_ptype_7cpython_4type_type = 0;
 /* Module declarations from '_pydevd_bundle.pydevd_cython' */
 static PyTypeObject *__pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo = 0;
 static PyTypeObject *__pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDBFrame = 0;
-static PyTypeObject *__pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace = 0;
 static PyTypeObject *__pyx_ptype_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper = 0;
+static PyTypeObject *__pyx_ptype_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions = 0;
+static PyTypeObject *__pyx_ptype_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame = 0;
 static PyTypeObject *__pyx_ptype_14_pydevd_bundle_13pydevd_cython_ThreadTracer = 0;
 static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_PyDBAdditionalThreadInfo__set_state(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo *, PyObject *); /*proto*/
 static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_PyDBFrame__set_state(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBFrame *, PyObject *); /*proto*/
-static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *, PyObject *); /*proto*/
 static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_SafeCallWrapper__set_state(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper *, PyObject *); /*proto*/
+static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *, PyObject *); /*proto*/
+static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *, PyObject *); /*proto*/
 static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_ThreadTracer__set_state(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *, PyObject *); /*proto*/
 #define __Pyx_MODULE_NAME "_pydevd_bundle.pydevd_cython"
 extern int __pyx_module_is_main__pydevd_bundle__pydevd_cython;
@@ -1600,6 +1643,7 @@ static const char __pyx_k_bootstrap_2[] = "_bootstrap";
 static const char __pyx_k_breakpoints[] = "breakpoints";
 static const char __pyx_k_cmd_factory[] = "cmd_factory";
 static const char __pyx_k_co_filename[] = "co_filename";
+static const char __pyx_k_except_line[] = "except_line";
 static const char __pyx_k_f_unhandled[] = "f_unhandled";
 static const char __pyx_k_is_logpoint[] = "is_logpoint";
 static const char __pyx_k_just_raised[] = "just_raised";
@@ -1609,6 +1653,7 @@ static const char __pyx_k_CO_GENERATOR[] = "CO_GENERATOR";
 static const char __pyx_k_RuntimeError[] = "RuntimeError";
 static const char __pyx_k_can_not_skip[] = "can_not_skip";
 static const char __pyx_k_pydev_bundle[] = "_pydev_bundle";
+static const char __pyx_k_pydev_monkey[] = "pydev_monkey";
 static const char __pyx_k_pyx_checksum[] = "__pyx_checksum";
 static const char __pyx_k_stringsource[] = "stringsource";
 static const char __pyx_k_thread_state[] = "thread_state";
@@ -1661,7 +1706,6 @@ static const char __pyx_k_setstate_cython[] = "__setstate_cython__";
 static const char __pyx_k_thread_analyser[] = "thread_analyser";
 static const char __pyx_k_thread_to_state[] = "thread_to_state";
 static const char __pyx_k_trace_exception[] = "trace_exception";
-static const char __pyx_k_unhandled_trace[] = "unhandled_trace";
 static const char __pyx_k_DEBUG_START_PY3K[] = "DEBUG_START_PY3K";
 static const char __pyx_k_asyncio_analyser[] = "asyncio_analyser";
 static const char __pyx_k_dict_iter_values[] = "dict_iter_values";
@@ -1669,7 +1713,6 @@ static const char __pyx_k_getDeclaredField[] = "getDeclaredField";
 static const char __pyx_k_handle_exception[] = "handle_exception";
 static const char __pyx_k_ignore_libraries[] = "ignore_libraries";
 static const char __pyx_k_in_project_scope[] = "in_project_scope";
-static const char __pyx_k_pydb_frame_trace[] = "pydb_frame_trace";
 static const char __pyx_k_KeyboardInterrupt[] = "KeyboardInterrupt";
 static const char __pyx_k_bootstrap_inner_2[] = "_bootstrap_inner";
 static const char __pyx_k_cachedThreadState[] = "cachedThreadState";
@@ -1692,8 +1735,10 @@ static const char __pyx_k_CMD_SMART_STEP_INTO[] = "CMD_SMART_STEP_INTO";
 static const char __pyx_k_is_filter_libraries[] = "is_filter_libraries";
 static const char __pyx_k_IGNORE_EXCEPTION_TAG[] = "IGNORE_EXCEPTION_TAG";
 static const char __pyx_k_NoSuchFieldException[] = "NoSuchFieldException";
+static const char __pyx_k_frame_trace_dispatch[] = "frame_trace_dispatch";
 static const char __pyx_k_get_clsname_for_code[] = "get_clsname_for_code";
 static const char __pyx_k_handle_hit_condition[] = "handle_hit_condition";
+static const char __pyx_k_is_line_in_try_block[] = "is_line_in_try_block";
 static const char __pyx_k_overwrite_prev_trace[] = "overwrite_prev_trace";
 static const char __pyx_k_remove_return_values[] = "remove_return_values";
 static const char __pyx_k_CMD_STEP_INTO_MY_CODE[] = "CMD_STEP_INTO_MY_CODE";
@@ -1701,6 +1746,7 @@ static const char __pyx_k_Using_Cython_speedups[] = "Using Cython speedups";
 static const char __pyx_k_filename_to_stat_info[] = "filename_to_stat_info";
 static const char __pyx_k_format_exception_only[] = "format_exception_only";
 static const char __pyx_k_is_ignored_by_filters[] = "is_ignored_by_filters";
+static const char __pyx_k_raise_lines_in_except[] = "raise_lines_in_except";
 static const char __pyx_k_termination_event_set[] = "_termination_event_set";
 static const char __pyx_k_CMD_SET_NEXT_STATEMENT[] = "CMD_SET_NEXT_STATEMENT";
 static const char __pyx_k_add_exception_to_frame[] = "add_exception_to_frame";
@@ -1711,8 +1757,12 @@ static const char __pyx_k_kill_all_pydev_threads[] = "kill_all_pydev_threads";
 static const char __pyx_k_pyx_unpickle_PyDBFrame[] = "__pyx_unpickle_PyDBFrame";
 static const char __pyx_k_suspended_at_unhandled[] = "suspended_at_unhandled";
 static const char __pyx_k_threadingCurrentThread[] = "threadingCurrentThread";
+static const char __pyx_k_collect_try_except_info[] = "collect_try_except_info";
+static const char __pyx_k_get_trace_dispatch_func[] = "get_trace_dispatch_func";
+static const char __pyx_k_is_line_in_except_block[] = "is_line_in_except_block";
 static const char __pyx_k_notify_thread_not_alive[] = "notify_thread_not_alive";
 static const char __pyx_k_pydevd_traceproperty_py[] = "pydevd_traceproperty.py";
+static const char __pyx_k_top_level_thread_tracer[] = "_top_level_thread_tracer";
 static const char __pyx_k_finish_debugging_session[] = "_finish_debugging_session";
 static const char __pyx_k_get_exception_breakpoint[] = "get_exception_breakpoint";
 static const char __pyx_k_global_cache_frame_skips[] = "global_cache_frame_skips";
@@ -1723,6 +1773,7 @@ static const char __pyx_k_pyx_unpickle_ThreadTracer[] = "__pyx_unpickle_ThreadTr
 static const char __pyx_k_remove_return_values_flag[] = "remove_return_values_flag";
 static const char __pyx_k_send_signature_call_trace[] = "send_signature_call_trace";
 static const char __pyx_k_suspend_all_other_threads[] = "suspend_all_other_threads";
+static const char __pyx_k_top_level_thread_tracer_2[] = "top_level_thread_tracer";
 static const char __pyx_k_add_additional_frame_by_id[] = "add_additional_frame_by_id";
 static const char __pyx_k_break_on_caught_exceptions[] = "break_on_caught_exceptions";
 static const char __pyx_k_notify_on_first_raise_only[] = "notify_on_first_raise_only";
@@ -1730,6 +1781,7 @@ static const char __pyx_k_pydevd_bundle_pydevd_utils[] = "_pydevd_bundle.pydevd_
 static const char __pyx_k_set_additional_thread_info[] = "set_additional_thread_info";
 static const char __pyx_k_trace_unhandled_exceptions[] = "trace_unhandled_exceptions";
 static const char __pyx_k_State_s_Stop_s_Cmd_s_Kill_s[] = "State:%s Stop:%s Cmd: %s Kill:%s";
+static const char __pyx_k_force_only_unhandled_tracer[] = "force_only_unhandled_tracer";
 static const char __pyx_k_handle_breakpoint_condition[] = "handle_breakpoint_condition";
 static const char __pyx_k_has_plugin_exception_breaks[] = "has_plugin_exception_breaks";
 static const char __pyx_k_pydevd_bundle_pydevd_cython[] = "_pydevd_bundle.pydevd_cython";
@@ -1744,13 +1796,14 @@ static const char __pyx_k_remove_additional_frame_by_id[] = "remove_additional_f
 static const char __pyx_k_pydevd_bundle_pydevd_constants[] = "_pydevd_bundle.pydevd_constants";
 static const char __pyx_k_pydevd_bundle_pydevd_signature[] = "_pydevd_bundle.pydevd_signature";
 static const char __pyx_k_pyx_unpickle_PyDBAdditionalThr[] = "__pyx_unpickle_PyDBAdditionalThreadInfo";
-static const char __pyx_k_pyx_unpickle_PyDbFrameTraceAnd[] = "__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace";
+static const char __pyx_k_pyx_unpickle_TopLevelThreadTra[] = "__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions";
 static const char __pyx_k_Ignore_exception_s_in_library_s[] = "Ignore exception %s in library %s -- (%s)";
 static const char __pyx_k_get_abs_path_real_path_and_base[] = "get_abs_path_real_path_and_base_from_frame";
 static const char __pyx_k_pydev_bundle_pydev_is_thread_al[] = "_pydev_bundle.pydev_is_thread_alive";
 static const char __pyx_k_pydev_imps__pydev_saved_modules[] = "_pydev_imps._pydev_saved_modules";
 static const char __pyx_k_pydevd_bundle_pydevd_additional[] = "_pydevd_bundle.pydevd_additional_thread_info_regular";
 static const char __pyx_k_pydevd_bundle_pydevd_breakpoint[] = "_pydevd_bundle.pydevd_breakpoints";
+static const char __pyx_k_pydevd_bundle_pydevd_collect_tr[] = "_pydevd_bundle.pydevd_collect_try_except_info";
 static const char __pyx_k_pydevd_bundle_pydevd_cython_pyx[] = "_pydevd_bundle\\pydevd_cython.pyx";
 static const char __pyx_k_pydevd_bundle_pydevd_dont_trace[] = "_pydevd_bundle.pydevd_dont_trace_files";
 static const char __pyx_k_pydevd_bundle_pydevd_frame_util[] = "_pydevd_bundle.pydevd_frame_utils";
@@ -1762,14 +1815,14 @@ static const char __pyx_k_Error_while_evaluating_expressio[] = "Error while eval
 static const char __pyx_k_Incompatible_checksums_s_vs_0x2f[] = "Incompatible checksums (%s vs 0x2f8638b = (conditional_breakpoint_exception, is_tracing, pydev_call_from_jinja2, pydev_call_inside_jinja2, pydev_django_resolve_frame, pydev_func_name, pydev_message, pydev_next_line, pydev_notify_kill, pydev_smart_step_stop, pydev_state, pydev_step_cmd, pydev_step_stop, suspend_type, suspended_at_unhandled))";
 static const char __pyx_k_Incompatible_checksums_s_vs_0x3d[] = "Incompatible checksums (%s vs 0x3d7902a = (_args))";
 static const char __pyx_k_Incompatible_checksums_s_vs_0x77[] = "Incompatible checksums (%s vs 0x77c077b = (method_object))";
-static const char __pyx_k_Incompatible_checksums_s_vs_0x91[] = "Incompatible checksums (%s vs 0x9168de9 = (_pydb_frame_trace, _unhandled_trace))";
+static const char __pyx_k_Incompatible_checksums_s_vs_0xf3[] = "Incompatible checksums (%s vs 0xf34c74e = (_args, _frame_trace_dispatch, _last_exc_arg, _last_raise_line, _raise_lines, _try_except_info))";
 static const char __pyx_k_Incompatible_checksums_s_vs_0xfa[] = "Incompatible checksums (%s vs 0xfa6b183 = (_args, should_skip))";
 static const char __pyx_k_Unable_to_proceed_sys__current_f[] = "Unable to proceed (sys._current_frames not available in this Python implementation).";
 static const char __pyx_k_conditional_breakpoint_exception[] = "conditional_breakpoint_exception";
 static const char __pyx_k_filename_to_lines_where_exceptio[] = "filename_to_lines_where_exceptions_are_ignored";
 static const char __pyx_k_ignore_exceptions_thrown_in_line[] = "ignore_exceptions_thrown_in_lines_with_ignore_exception";
 static const char __pyx_k_is_exception_trace_in_project_sc[] = "is_exception_trace_in_project_scope";
-static const char __pyx_k_only_trace_for_unhandled_excepti[] = "only_trace_for_unhandled_exceptions";
+static const char __pyx_k_pyx_unpickle_TopLevelThreadTra_2[] = "__pyx_unpickle_TopLevelThreadTracerNoBackFrame";
 static const char __pyx_k_send_caught_exception_stack_proc[] = "send_caught_exception_stack_proceeded";
 static const char __pyx_k_skip_on_exceptions_thrown_in_sam[] = "skip_on_exceptions_thrown_in_same_context";
 static const char __pyx_k_trace_dispatch_and_unhandled_exc[] = "trace_dispatch_and_unhandled_exceptions";
@@ -1804,7 +1857,7 @@ static PyObject *__pyx_n_s_ImportError;
 static PyObject *__pyx_kp_s_Incompatible_checksums_s_vs_0x2f;
 static PyObject *__pyx_kp_s_Incompatible_checksums_s_vs_0x3d;
 static PyObject *__pyx_kp_s_Incompatible_checksums_s_vs_0x77;
-static PyObject *__pyx_kp_s_Incompatible_checksums_s_vs_0x91;
+static PyObject *__pyx_kp_s_Incompatible_checksums_s_vs_0xf3;
 static PyObject *__pyx_kp_s_Incompatible_checksums_s_vs_0xfa;
 static PyObject *__pyx_n_s_KeyboardInterrupt;
 static PyObject *__pyx_n_s_Lock;
@@ -1862,6 +1915,7 @@ static PyObject *__pyx_n_s_co_filename;
 static PyObject *__pyx_n_s_co_firstlineno;
 static PyObject *__pyx_n_s_co_flags;
 static PyObject *__pyx_n_s_co_name;
+static PyObject *__pyx_n_s_collect_try_except_info;
 static PyObject *__pyx_n_s_compile;
 static PyObject *__pyx_n_s_condition;
 static PyObject *__pyx_n_s_conditional_breakpoint_exception;
@@ -1880,6 +1934,7 @@ static PyObject *__pyx_n_s_etype;
 static PyObject *__pyx_n_s_eval;
 static PyObject *__pyx_n_s_event;
 static PyObject *__pyx_n_s_exc_info;
+static PyObject *__pyx_n_s_except_line;
 static PyObject *__pyx_n_s_exception;
 static PyObject *__pyx_n_s_exception_break;
 static PyObject *__pyx_n_s_exec;
@@ -1899,8 +1954,10 @@ static PyObject *__pyx_n_s_filename;
 static PyObject *__pyx_n_s_filename_to_lines_where_exceptio;
 static PyObject *__pyx_n_s_filename_to_stat_info;
 static PyObject *__pyx_n_s_finish_debugging_session;
+static PyObject *__pyx_n_s_force_only_unhandled_tracer;
 static PyObject *__pyx_n_s_format_exception_only;
 static PyObject *__pyx_n_s_frame;
+static PyObject *__pyx_n_s_frame_trace_dispatch;
 static PyObject *__pyx_n_s_func_name;
 static PyObject *__pyx_n_s_get;
 static PyObject *__pyx_n_s_getDeclaredField;
@@ -1914,6 +1971,7 @@ static PyObject *__pyx_n_s_get_exception_breakpoint;
 static PyObject *__pyx_n_s_get_file_type;
 static PyObject *__pyx_n_s_get_func_name;
 static PyObject *__pyx_n_s_get_thread_id;
+static PyObject *__pyx_n_s_get_trace_dispatch_func;
 static PyObject *__pyx_n_s_getline;
 static PyObject *__pyx_n_s_getstate;
 static PyObject *__pyx_n_s_globalThreadStates;
@@ -1940,6 +1998,8 @@ static PyObject *__pyx_n_s_is_exception_trace_in_project_sc;
 static PyObject *__pyx_n_s_is_filter_enabled;
 static PyObject *__pyx_n_s_is_filter_libraries;
 static PyObject *__pyx_n_s_is_ignored_by_filters;
+static PyObject *__pyx_n_s_is_line_in_except_block;
+static PyObject *__pyx_n_s_is_line_in_try_block;
 static PyObject *__pyx_n_s_is_logpoint;
 static PyObject *__pyx_n_s_is_thread_alive;
 static PyObject *__pyx_n_s_java_lang;
@@ -1966,7 +2026,6 @@ static PyObject *__pyx_n_s_new;
 static PyObject *__pyx_n_s_new_frame;
 static PyObject *__pyx_n_s_notify_on_first_raise_only;
 static PyObject *__pyx_n_s_notify_thread_not_alive;
-static PyObject *__pyx_n_s_only_trace_for_unhandled_excepti;
 static PyObject *__pyx_n_s_org_python_core;
 static PyObject *__pyx_n_s_original_call;
 static PyObject *__pyx_n_s_os;
@@ -1979,7 +2038,6 @@ static PyObject *__pyx_n_s_plugin;
 static PyObject *__pyx_n_s_pop;
 static PyObject *__pyx_n_s_print_exc;
 static PyObject *__pyx_n_s_py_db;
-static PyObject *__pyx_n_s_pydb_frame_trace;
 static PyObject *__pyx_n_s_pydev_bundle;
 static PyObject *__pyx_n_s_pydev_bundle_pydev_is_thread_al;
 static PyObject *__pyx_n_s_pydev_do_not_trace;
@@ -1987,10 +2045,12 @@ static PyObject *__pyx_kp_s_pydev_execfile_py;
 static PyObject *__pyx_n_s_pydev_imps__pydev_saved_modules;
 static PyObject *__pyx_n_s_pydev_log;
 static PyObject *__pyx_n_s_pydev_message;
+static PyObject *__pyx_n_s_pydev_monkey;
 static PyObject *__pyx_n_s_pydevd;
 static PyObject *__pyx_n_s_pydevd_bundle;
 static PyObject *__pyx_n_s_pydevd_bundle_pydevd_additional;
 static PyObject *__pyx_n_s_pydevd_bundle_pydevd_breakpoint;
+static PyObject *__pyx_n_s_pydevd_bundle_pydevd_collect_tr;
 static PyObject *__pyx_n_s_pydevd_bundle_pydevd_comm;
 static PyObject *__pyx_n_s_pydevd_bundle_pydevd_constants;
 static PyObject *__pyx_n_s_pydevd_bundle_pydevd_cython;
@@ -2013,12 +2073,14 @@ static PyObject *__pyx_n_s_pyx_state;
 static PyObject *__pyx_n_s_pyx_type;
 static PyObject *__pyx_n_s_pyx_unpickle_PyDBAdditionalThr;
 static PyObject *__pyx_n_s_pyx_unpickle_PyDBFrame;
-static PyObject *__pyx_n_s_pyx_unpickle_PyDbFrameTraceAnd;
 static PyObject *__pyx_n_s_pyx_unpickle_SafeCallWrapper;
 static PyObject *__pyx_n_s_pyx_unpickle_ThreadTracer;
+static PyObject *__pyx_n_s_pyx_unpickle_TopLevelThreadTra;
+static PyObject *__pyx_n_s_pyx_unpickle_TopLevelThreadTra_2;
 static PyObject *__pyx_n_s_pyx_vtable;
 static PyObject *__pyx_n_s_qname;
 static PyObject *__pyx_n_s_quitting;
+static PyObject *__pyx_n_s_raise_lines_in_except;
 static PyObject *__pyx_n_s_re;
 static PyObject *__pyx_n_s_reduce;
 static PyObject *__pyx_n_s_reduce_cython;
@@ -2080,6 +2142,8 @@ static PyObject *__pyx_n_s_threading;
 static PyObject *__pyx_n_s_threadingCurrentThread;
 static PyObject *__pyx_n_s_tid_to_last_frame;
 static PyObject *__pyx_n_s_toArray;
+static PyObject *__pyx_n_s_top_level_thread_tracer;
+static PyObject *__pyx_n_s_top_level_thread_tracer_2;
 static PyObject *__pyx_n_s_trace_dispatch;
 static PyObject *__pyx_n_s_trace_dispatch_and_unhandled_exc;
 static PyObject *__pyx_n_s_trace_exception;
@@ -2087,7 +2151,6 @@ static PyObject *__pyx_n_s_trace_return;
 static PyObject *__pyx_n_s_trace_unhandled_exceptions;
 static PyObject *__pyx_n_s_traceback;
 static PyObject *__pyx_n_s_tracer;
-static PyObject *__pyx_n_s_unhandled_trace;
 static PyObject *__pyx_n_s_update;
 static PyObject *__pyx_kp_s_utf_8;
 static PyObject *__pyx_n_s_val;
@@ -2156,34 +2219,60 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_18remove_r
 static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_20trace_dispatch(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBFrame *__pyx_v_self, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg); /* proto */
 static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_22__reduce_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBFrame *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_24__setstate_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBFrame *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12trace_dispatch(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_py_db, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg); /* proto */
-static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace___init__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *__pyx_v_self, PyObject *__pyx_v_pydb_frame_trace, PyObject *__pyx_v_unhandled_trace); /* proto */
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_2trace_dispatch(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *__pyx_v_self, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg); /* proto */
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_4__reduce_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_6__setstate_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
 static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_15SafeCallWrapper___init__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper *__pyx_v_self, PyObject *__pyx_v_method_object); /* proto */
 static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_15SafeCallWrapper_2__call__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper *__pyx_v_self, PyObject *__pyx_v_args); /* proto */
 static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_15SafeCallWrapper_4__reduce_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_15SafeCallWrapper_6__setstate_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12trace_dispatch(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_py_db, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg); /* proto */
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions___init__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v_self, PyObject *__pyx_v_args); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_2trace_unhandled_exceptions(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_4get_trace_dispatch_func(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args___get__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v_self); /* proto */
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args_2__set__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args_4__del__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_6__reduce_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_8__setstate_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame___init__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v_frame_trace_dispatch, PyObject *__pyx_v_args); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_2trace_dispatch_and_unhandled_exceptions(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_4get_trace_dispatch_func(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch___get__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self); /* proto */
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch_2__set__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch_4__del__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args___get__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self); /* proto */
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args_2__set__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args_4__del__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info___get__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self); /* proto */
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info_2__set__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info_4__del__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg___get__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self); /* proto */
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg_2__set__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg_4__del__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines___get__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self); /* proto */
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines_2__set__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines_4__del__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_last_raise_line___get__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self); /* proto */
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_last_raise_line_2__set__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_6__reduce_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_8__setstate_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
 static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer___init__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self, PyObject *__pyx_v_args); /* proto */
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_2trace_unhandled_exceptions(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg); /* proto */
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_4trace_dispatch_and_unhandled_exceptions(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg); /* proto */
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__call__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_2__call__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg); /* proto */
 static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_5_args___get__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self); /* proto */
 static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_5_args_2__set__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
 static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_5_args_4__del__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_8__reduce_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_10__setstate_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_4__reduce_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__setstate_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_14__call__(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg); /* proto */
 static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_16__pyx_unpickle_PyDBAdditionalThreadInfo(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_18__pyx_unpickle_PyDBFrame(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_20__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_22__pyx_unpickle_SafeCallWrapper(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_24__pyx_unpickle_ThreadTracer(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_20__pyx_unpickle_SafeCallWrapper(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_22__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_24__pyx_unpickle_TopLevelThreadTracerNoBackFrame(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_26__pyx_unpickle_ThreadTracer(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_PyDBFrame(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
-static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
+static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
+static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_ThreadTracer(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_get = {0, &__pyx_n_s_get, 0, 0, 0};
 static PyObject *__pyx_int_0;
@@ -2193,7 +2282,7 @@ static PyObject *__pyx_int_32;
 static PyObject *__pyx_int_49832843;
 static PyObject *__pyx_int_64458794;
 static PyObject *__pyx_int_125568891;
-static PyObject *__pyx_int_152473065;
+static PyObject *__pyx_int_255117134;
 static PyObject *__pyx_int_262582659;
 static PyObject *__pyx_int_neg_1;
 static PyObject *__pyx_tuple__2;
@@ -2220,6 +2309,7 @@ static PyObject *__pyx_tuple__32;
 static PyObject *__pyx_tuple__34;
 static PyObject *__pyx_tuple__36;
 static PyObject *__pyx_tuple__38;
+static PyObject *__pyx_tuple__40;
 static PyObject *__pyx_codeobj__12;
 static PyObject *__pyx_codeobj__13;
 static PyObject *__pyx_codeobj__16;
@@ -2233,6 +2323,7 @@ static PyObject *__pyx_codeobj__33;
 static PyObject *__pyx_codeobj__35;
 static PyObject *__pyx_codeobj__37;
 static PyObject *__pyx_codeobj__39;
+static PyObject *__pyx_codeobj__41;
 /* Late includes */
 
 /* "_pydevd_bundle/pydevd_cython.pyx":29
@@ -20556,2046 +20647,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_24__setsta
   return __pyx_r;
 }
 
-/* "_pydevd_bundle/pydevd_cython.pyx":984
- * global_cache_frame_skips = {}
- * 
- * def trace_dispatch(py_db, frame, event, arg):             # <<<<<<<<<<<<<<
- *     # Note: this is always the first entry-point in the tracing for any thread.
- *     # After entering here we'll set a new tracing function for this thread
- */
-
-/* Python wrapper */
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_13trace_dispatch(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_14_pydevd_bundle_13pydevd_cython_13trace_dispatch = {"trace_dispatch", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_13trace_dispatch, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_13trace_dispatch(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  PyObject *__pyx_v_py_db = 0;
-  PyObject *__pyx_v_frame = 0;
-  PyObject *__pyx_v_event = 0;
-  PyObject *__pyx_v_arg = 0;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("trace_dispatch (wrapper)", 0);
-  {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_py_db,&__pyx_n_s_frame,&__pyx_n_s_event,&__pyx_n_s_arg,0};
-    PyObject* values[4] = {0,0,0,0};
-    if (unlikely(__pyx_kwds)) {
-      Py_ssize_t kw_args;
-      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
-      switch (pos_args) {
-        case  4: values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
-        CYTHON_FALLTHROUGH;
-        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
-        CYTHON_FALLTHROUGH;
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        CYTHON_FALLTHROUGH;
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = PyDict_Size(__pyx_kwds);
-      switch (pos_args) {
-        case  0:
-        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_py_db)) != 0)) kw_args--;
-        else goto __pyx_L5_argtuple_error;
-        CYTHON_FALLTHROUGH;
-        case  1:
-        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_frame)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("trace_dispatch", 1, 4, 4, 1); __PYX_ERR(0, 984, __pyx_L3_error)
-        }
-        CYTHON_FALLTHROUGH;
-        case  2:
-        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_event)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("trace_dispatch", 1, 4, 4, 2); __PYX_ERR(0, 984, __pyx_L3_error)
-        }
-        CYTHON_FALLTHROUGH;
-        case  3:
-        if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_arg)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("trace_dispatch", 1, 4, 4, 3); __PYX_ERR(0, 984, __pyx_L3_error)
-        }
-      }
-      if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "trace_dispatch") < 0)) __PYX_ERR(0, 984, __pyx_L3_error)
-      }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 4) {
-      goto __pyx_L5_argtuple_error;
-    } else {
-      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-      values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
-      values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
-    }
-    __pyx_v_py_db = values[0];
-    __pyx_v_frame = values[1];
-    __pyx_v_event = values[2];
-    __pyx_v_arg = values[3];
-  }
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("trace_dispatch", 1, 4, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 984, __pyx_L3_error)
-  __pyx_L3_error:;
-  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.trace_dispatch", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_12trace_dispatch(__pyx_self, __pyx_v_py_db, __pyx_v_frame, __pyx_v_event, __pyx_v_arg);
-
-  /* function exit code */
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12trace_dispatch(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_py_db, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg) {
-  PyObject *__pyx_v_thread = NULL;
-  PyObject *__pyx_v_f_unhandled = NULL;
-  int __pyx_v_only_trace_for_unhandled_exceptions;
-  PyObject *__pyx_v_filename = NULL;
-  PyObject *__pyx_v_name = NULL;
-  PyObject *__pyx_v_t = NULL;
-  PyObject *__pyx_v_additional_info = NULL;
-  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_thread_tracer = NULL;
-  PyObject *__pyx_v_f_trace = NULL;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
-  int __pyx_t_2;
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
-  PyObject *__pyx_t_6 = NULL;
-  PyObject *__pyx_t_7 = NULL;
-  PyObject *__pyx_t_8 = NULL;
-  int __pyx_t_9;
-  PyObject *__pyx_t_10 = NULL;
-  PyObject *__pyx_t_11 = NULL;
-  PyObject *__pyx_t_12 = NULL;
-  PyObject *__pyx_t_13 = NULL;
-  int __pyx_t_14;
-  __Pyx_RefNannySetupContext("trace_dispatch", 0);
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":989
- *     # where more information is cached (and will also setup the tracing for
- *     # frames where we should deal with unhandled exceptions).
- *     thread = None             # <<<<<<<<<<<<<<
- *     # Cache the frame which should be traced to deal with unhandled exceptions.
- *     # (i.e.: thread entry-points).
- */
-  __Pyx_INCREF(Py_None);
-  __pyx_v_thread = Py_None;
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":993
- *     # (i.e.: thread entry-points).
- * 
- *     f_unhandled = frame             # <<<<<<<<<<<<<<
- *     only_trace_for_unhandled_exceptions = True
- *     # print('called at', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
- */
-  __Pyx_INCREF(__pyx_v_frame);
-  __pyx_v_f_unhandled = __pyx_v_frame;
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":994
- * 
- *     f_unhandled = frame
- *     only_trace_for_unhandled_exceptions = True             # <<<<<<<<<<<<<<
- *     # print('called at', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
- *     while f_unhandled is not None:
- */
-  __pyx_v_only_trace_for_unhandled_exceptions = 1;
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":996
- *     only_trace_for_unhandled_exceptions = True
- *     # print('called at', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
- *     while f_unhandled is not None:             # <<<<<<<<<<<<<<
- *         filename = f_unhandled.f_code.co_filename
- *         name = splitext(basename(filename))[0]
- */
-  while (1) {
-    __pyx_t_1 = (__pyx_v_f_unhandled != Py_None);
-    __pyx_t_2 = (__pyx_t_1 != 0);
-    if (!__pyx_t_2) break;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":997
- *     # print('called at', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
- *     while f_unhandled is not None:
- *         filename = f_unhandled.f_code.co_filename             # <<<<<<<<<<<<<<
- *         name = splitext(basename(filename))[0]
- *         if name == 'threading':
- */
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_code); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 997, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_co_filename); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 997, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_XDECREF_SET(__pyx_v_filename, __pyx_t_4);
-    __pyx_t_4 = 0;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":998
- *     while f_unhandled is not None:
- *         filename = f_unhandled.f_code.co_filename
- *         name = splitext(basename(filename))[0]             # <<<<<<<<<<<<<<
- *         if name == 'threading':
- *             if f_unhandled.f_code.co_name in ('__bootstrap', '_bootstrap'):
- */
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_splitext); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 998, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_basename); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 998, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_7 = NULL;
-    if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_6))) {
-      __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_6);
-      if (likely(__pyx_t_7)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
-        __Pyx_INCREF(__pyx_t_7);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_6, function);
-      }
-    }
-    if (!__pyx_t_7) {
-      __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_filename); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 998, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_5);
-    } else {
-      #if CYTHON_FAST_PYCALL
-      if (PyFunction_Check(__pyx_t_6)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_v_filename};
-        __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 998, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
-        __Pyx_GOTREF(__pyx_t_5);
-      } else
-      #endif
-      #if CYTHON_FAST_PYCCALL
-      if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_v_filename};
-        __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 998, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
-        __Pyx_GOTREF(__pyx_t_5);
-      } else
-      #endif
-      {
-        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 998, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_8);
-        __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_7); __pyx_t_7 = NULL;
-        __Pyx_INCREF(__pyx_v_filename);
-        __Pyx_GIVEREF(__pyx_v_filename);
-        PyTuple_SET_ITEM(__pyx_t_8, 0+1, __pyx_v_filename);
-        __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_8, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 998, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_5);
-        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      }
-    }
-    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_6 = NULL;
-    if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
-      __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_3);
-      if (likely(__pyx_t_6)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-        __Pyx_INCREF(__pyx_t_6);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_3, function);
-      }
-    }
-    if (!__pyx_t_6) {
-      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 998, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __Pyx_GOTREF(__pyx_t_4);
-    } else {
-      #if CYTHON_FAST_PYCALL
-      if (PyFunction_Check(__pyx_t_3)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 998, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      } else
-      #endif
-      #if CYTHON_FAST_PYCCALL
-      if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 998, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      } else
-      #endif
-      {
-        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 998, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_8);
-        __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_6); __pyx_t_6 = NULL;
-        __Pyx_GIVEREF(__pyx_t_5);
-        PyTuple_SET_ITEM(__pyx_t_8, 0+1, __pyx_t_5);
-        __pyx_t_5 = 0;
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 998, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      }
-    }
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_4, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 998, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __Pyx_XDECREF_SET(__pyx_v_name, __pyx_t_3);
-    __pyx_t_3 = 0;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":999
- *         filename = f_unhandled.f_code.co_filename
- *         name = splitext(basename(filename))[0]
- *         if name == 'threading':             # <<<<<<<<<<<<<<
- *             if f_unhandled.f_code.co_name in ('__bootstrap', '_bootstrap'):
- *                 # We need __bootstrap_inner, not __bootstrap.
- */
-    __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_name, __pyx_n_s_threading, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 999, __pyx_L1_error)
-    if (__pyx_t_2) {
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1000
- *         name = splitext(basename(filename))[0]
- *         if name == 'threading':
- *             if f_unhandled.f_code.co_name in ('__bootstrap', '_bootstrap'):             # <<<<<<<<<<<<<<
- *                 # We need __bootstrap_inner, not __bootstrap.
- *                 return None
- */
-      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_code); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1000, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_co_name); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1000, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_1 = (__Pyx_PyString_Equals(__pyx_t_4, __pyx_n_s_bootstrap, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 1000, __pyx_L1_error)
-      if (!__pyx_t_1) {
-      } else {
-        __pyx_t_2 = __pyx_t_1;
-        goto __pyx_L7_bool_binop_done;
-      }
-      __pyx_t_1 = (__Pyx_PyString_Equals(__pyx_t_4, __pyx_n_s_bootstrap_2, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 1000, __pyx_L1_error)
-      __pyx_t_2 = __pyx_t_1;
-      __pyx_L7_bool_binop_done:;
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_1 = (__pyx_t_2 != 0);
-      if (__pyx_t_1) {
-
-        /* "_pydevd_bundle/pydevd_cython.pyx":1002
- *             if f_unhandled.f_code.co_name in ('__bootstrap', '_bootstrap'):
- *                 # We need __bootstrap_inner, not __bootstrap.
- *                 return None             # <<<<<<<<<<<<<<
- * 
- *             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):
- */
-        __Pyx_XDECREF(__pyx_r);
-        __pyx_r = Py_None; __Pyx_INCREF(Py_None);
-        goto __pyx_L0;
-
-        /* "_pydevd_bundle/pydevd_cython.pyx":1000
- *         name = splitext(basename(filename))[0]
- *         if name == 'threading':
- *             if f_unhandled.f_code.co_name in ('__bootstrap', '_bootstrap'):             # <<<<<<<<<<<<<<
- *                 # We need __bootstrap_inner, not __bootstrap.
- *                 return None
- */
-      }
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1004
- *                 return None
- * 
- *             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):             # <<<<<<<<<<<<<<
- *                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
- *                 t = f_unhandled.f_locals.get('self')
- */
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1004, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_co_name); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1004, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_t_3, __pyx_n_s_bootstrap_inner, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1004, __pyx_L1_error)
-      if (!__pyx_t_2) {
-      } else {
-        __pyx_t_1 = __pyx_t_2;
-        goto __pyx_L9_bool_binop_done;
-      }
-      __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_t_3, __pyx_n_s_bootstrap_inner_2, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1004, __pyx_L1_error)
-      __pyx_t_1 = __pyx_t_2;
-      __pyx_L9_bool_binop_done:;
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_2 = (__pyx_t_1 != 0);
-      if (__pyx_t_2) {
-
-        /* "_pydevd_bundle/pydevd_cython.pyx":1006
- *             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):
- *                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
- *                 t = f_unhandled.f_locals.get('self')             # <<<<<<<<<<<<<<
- *                 if t is not None and isinstance(t, threading.Thread):
- *                     thread = t
- */
-        __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_locals); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1006, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_get); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1006, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1006, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_XDECREF_SET(__pyx_v_t, __pyx_t_3);
-        __pyx_t_3 = 0;
-
-        /* "_pydevd_bundle/pydevd_cython.pyx":1007
- *                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
- *                 t = f_unhandled.f_locals.get('self')
- *                 if t is not None and isinstance(t, threading.Thread):             # <<<<<<<<<<<<<<
- *                     thread = t
- *                     only_trace_for_unhandled_exceptions = True
- */
-        __pyx_t_1 = (__pyx_v_t != Py_None);
-        __pyx_t_9 = (__pyx_t_1 != 0);
-        if (__pyx_t_9) {
-        } else {
-          __pyx_t_2 = __pyx_t_9;
-          goto __pyx_L12_bool_binop_done;
-        }
-        __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_threading); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1007, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_Thread); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1007, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __pyx_t_9 = PyObject_IsInstance(__pyx_v_t, __pyx_t_4); if (unlikely(__pyx_t_9 == ((int)-1))) __PYX_ERR(0, 1007, __pyx_L1_error)
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __pyx_t_1 = (__pyx_t_9 != 0);
-        __pyx_t_2 = __pyx_t_1;
-        __pyx_L12_bool_binop_done:;
-        if (__pyx_t_2) {
-
-          /* "_pydevd_bundle/pydevd_cython.pyx":1008
- *                 t = f_unhandled.f_locals.get('self')
- *                 if t is not None and isinstance(t, threading.Thread):
- *                     thread = t             # <<<<<<<<<<<<<<
- *                     only_trace_for_unhandled_exceptions = True
- *                     break
- */
-          __Pyx_INCREF(__pyx_v_t);
-          __Pyx_DECREF_SET(__pyx_v_thread, __pyx_v_t);
-
-          /* "_pydevd_bundle/pydevd_cython.pyx":1009
- *                 if t is not None and isinstance(t, threading.Thread):
- *                     thread = t
- *                     only_trace_for_unhandled_exceptions = True             # <<<<<<<<<<<<<<
- *                     break
- * 
- */
-          __pyx_v_only_trace_for_unhandled_exceptions = 1;
-
-          /* "_pydevd_bundle/pydevd_cython.pyx":1010
- *                     thread = t
- *                     only_trace_for_unhandled_exceptions = True
- *                     break             # <<<<<<<<<<<<<<
- * 
- *         elif name == 'pydevd':
- */
-          goto __pyx_L4_break;
-
-          /* "_pydevd_bundle/pydevd_cython.pyx":1007
- *                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
- *                 t = f_unhandled.f_locals.get('self')
- *                 if t is not None and isinstance(t, threading.Thread):             # <<<<<<<<<<<<<<
- *                     thread = t
- *                     only_trace_for_unhandled_exceptions = True
- */
-        }
-
-        /* "_pydevd_bundle/pydevd_cython.pyx":1004
- *                 return None
- * 
- *             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):             # <<<<<<<<<<<<<<
- *                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
- *                 t = f_unhandled.f_locals.get('self')
- */
-      }
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":999
- *         filename = f_unhandled.f_code.co_filename
- *         name = splitext(basename(filename))[0]
- *         if name == 'threading':             # <<<<<<<<<<<<<<
- *             if f_unhandled.f_code.co_name in ('__bootstrap', '_bootstrap'):
- *                 # We need __bootstrap_inner, not __bootstrap.
- */
-      goto __pyx_L5;
-    }
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1012
- *                     break
- * 
- *         elif name == 'pydevd':             # <<<<<<<<<<<<<<
- *             if f_unhandled.f_code.co_name in ('run', 'main'):
- *                 # We need to get to _exec
- */
-    __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_name, __pyx_n_s_pydevd, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1012, __pyx_L1_error)
-    if (__pyx_t_2) {
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1013
- * 
- *         elif name == 'pydevd':
- *             if f_unhandled.f_code.co_name in ('run', 'main'):             # <<<<<<<<<<<<<<
- *                 # We need to get to _exec
- *                 return None
- */
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1013, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_co_name); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1013, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_1 = (__Pyx_PyString_Equals(__pyx_t_3, __pyx_n_s_run, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 1013, __pyx_L1_error)
-      if (!__pyx_t_1) {
-      } else {
-        __pyx_t_2 = __pyx_t_1;
-        goto __pyx_L15_bool_binop_done;
-      }
-      __pyx_t_1 = (__Pyx_PyString_Equals(__pyx_t_3, __pyx_n_s_main, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 1013, __pyx_L1_error)
-      __pyx_t_2 = __pyx_t_1;
-      __pyx_L15_bool_binop_done:;
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_1 = (__pyx_t_2 != 0);
-      if (__pyx_t_1) {
-
-        /* "_pydevd_bundle/pydevd_cython.pyx":1015
- *             if f_unhandled.f_code.co_name in ('run', 'main'):
- *                 # We need to get to _exec
- *                 return None             # <<<<<<<<<<<<<<
- * 
- *             if f_unhandled.f_code.co_name == '_exec':
- */
-        __Pyx_XDECREF(__pyx_r);
-        __pyx_r = Py_None; __Pyx_INCREF(Py_None);
-        goto __pyx_L0;
-
-        /* "_pydevd_bundle/pydevd_cython.pyx":1013
- * 
- *         elif name == 'pydevd':
- *             if f_unhandled.f_code.co_name in ('run', 'main'):             # <<<<<<<<<<<<<<
- *                 # We need to get to _exec
- *                 return None
- */
-      }
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1017
- *                 return None
- * 
- *             if f_unhandled.f_code.co_name == '_exec':             # <<<<<<<<<<<<<<
- *                 only_trace_for_unhandled_exceptions = True
- *                 break
- */
-      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_code); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1017, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_co_name); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1017, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_1 = (__Pyx_PyString_Equals(__pyx_t_4, __pyx_n_s_exec, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 1017, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (__pyx_t_1) {
-
-        /* "_pydevd_bundle/pydevd_cython.pyx":1018
- * 
- *             if f_unhandled.f_code.co_name == '_exec':
- *                 only_trace_for_unhandled_exceptions = True             # <<<<<<<<<<<<<<
- *                 break
- * 
- */
-        __pyx_v_only_trace_for_unhandled_exceptions = 1;
-
-        /* "_pydevd_bundle/pydevd_cython.pyx":1019
- *             if f_unhandled.f_code.co_name == '_exec':
- *                 only_trace_for_unhandled_exceptions = True
- *                 break             # <<<<<<<<<<<<<<
- * 
- *         elif f_unhandled.f_back is None:
- */
-        goto __pyx_L4_break;
-
-        /* "_pydevd_bundle/pydevd_cython.pyx":1017
- *                 return None
- * 
- *             if f_unhandled.f_code.co_name == '_exec':             # <<<<<<<<<<<<<<
- *                 only_trace_for_unhandled_exceptions = True
- *                 break
- */
-      }
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1012
- *                     break
- * 
- *         elif name == 'pydevd':             # <<<<<<<<<<<<<<
- *             if f_unhandled.f_code.co_name in ('run', 'main'):
- *                 # We need to get to _exec
- */
-      goto __pyx_L5;
-    }
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1021
- *                 break
- * 
- *         elif f_unhandled.f_back is None:             # <<<<<<<<<<<<<<
- *             only_trace_for_unhandled_exceptions = False
- *             break
- */
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_back); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1021, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_1 = (__pyx_t_4 == Py_None);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_2 = (__pyx_t_1 != 0);
-    if (__pyx_t_2) {
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1022
- * 
- *         elif f_unhandled.f_back is None:
- *             only_trace_for_unhandled_exceptions = False             # <<<<<<<<<<<<<<
- *             break
- * 
- */
-      __pyx_v_only_trace_for_unhandled_exceptions = 0;
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1023
- *         elif f_unhandled.f_back is None:
- *             only_trace_for_unhandled_exceptions = False
- *             break             # <<<<<<<<<<<<<<
- * 
- *         f_unhandled = f_unhandled.f_back
- */
-      goto __pyx_L4_break;
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1021
- *                 break
- * 
- *         elif f_unhandled.f_back is None:             # <<<<<<<<<<<<<<
- *             only_trace_for_unhandled_exceptions = False
- *             break
- */
-    }
-    __pyx_L5:;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1025
- *             break
- * 
- *         f_unhandled = f_unhandled.f_back             # <<<<<<<<<<<<<<
- * 
- *     if thread is None:
- */
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_back); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1025, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF_SET(__pyx_v_f_unhandled, __pyx_t_4);
-    __pyx_t_4 = 0;
-  }
-  __pyx_L4_break:;
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1027
- *         f_unhandled = f_unhandled.f_back
- * 
- *     if thread is None:             # <<<<<<<<<<<<<<
- *         # Important: don't call threadingCurrentThread if we're in the threading module
- *         # to avoid creating dummy threads.
- */
-  __pyx_t_2 = (__pyx_v_thread == Py_None);
-  __pyx_t_1 = (__pyx_t_2 != 0);
-  if (__pyx_t_1) {
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1030
- *         # Important: don't call threadingCurrentThread if we're in the threading module
- *         # to avoid creating dummy threads.
- *         thread = threadingCurrentThread()             # <<<<<<<<<<<<<<
- * 
- *     if getattr(thread, 'pydev_do_not_trace', None):
- */
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_threadingCurrentThread); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1030, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_8 = NULL;
-    if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
-      __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_3);
-      if (likely(__pyx_t_8)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-        __Pyx_INCREF(__pyx_t_8);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_3, function);
-      }
-    }
-    if (__pyx_t_8) {
-      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_8); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1030, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    } else {
-      __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1030, __pyx_L1_error)
-    }
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_DECREF_SET(__pyx_v_thread, __pyx_t_4);
-    __pyx_t_4 = 0;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1027
- *         f_unhandled = f_unhandled.f_back
- * 
- *     if thread is None:             # <<<<<<<<<<<<<<
- *         # Important: don't call threadingCurrentThread if we're in the threading module
- *         # to avoid creating dummy threads.
- */
-  }
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1032
- *         thread = threadingCurrentThread()
- * 
- *     if getattr(thread, 'pydev_do_not_trace', None):             # <<<<<<<<<<<<<<
- *         SetTrace(None, apply_to_pydevd_thread=True)
- *         return None
- */
-  __pyx_t_4 = __Pyx_GetAttr3(__pyx_v_thread, __pyx_n_s_pydev_do_not_trace, Py_None); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1032, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 1032, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__pyx_t_1) {
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1033
- * 
- *     if getattr(thread, 'pydev_do_not_trace', None):
- *         SetTrace(None, apply_to_pydevd_thread=True)             # <<<<<<<<<<<<<<
- *         return None
- * 
- */
-    __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_SetTrace); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1033, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1033, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_apply_to_pydevd_thread, Py_True) < 0) __PYX_ERR(0, 1033, __pyx_L1_error)
-    __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_tuple__7, __pyx_t_3); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1033, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_8);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1034
- *     if getattr(thread, 'pydev_do_not_trace', None):
- *         SetTrace(None, apply_to_pydevd_thread=True)
- *         return None             # <<<<<<<<<<<<<<
- * 
- *     try:
- */
-    __Pyx_XDECREF(__pyx_r);
-    __pyx_r = Py_None; __Pyx_INCREF(Py_None);
-    goto __pyx_L0;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1032
- *         thread = threadingCurrentThread()
- * 
- *     if getattr(thread, 'pydev_do_not_trace', None):             # <<<<<<<<<<<<<<
- *         SetTrace(None, apply_to_pydevd_thread=True)
- *         return None
- */
-  }
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1036
- *         return None
- * 
- *     try:             # <<<<<<<<<<<<<<
- *         additional_info = thread.additional_info
- *         if additional_info is None:
- */
-  {
-    __Pyx_PyThreadState_declare
-    __Pyx_PyThreadState_assign
-    __Pyx_ExceptionSave(&__pyx_t_10, &__pyx_t_11, &__pyx_t_12);
-    __Pyx_XGOTREF(__pyx_t_10);
-    __Pyx_XGOTREF(__pyx_t_11);
-    __Pyx_XGOTREF(__pyx_t_12);
-    /*try:*/ {
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1037
- * 
- *     try:
- *         additional_info = thread.additional_info             # <<<<<<<<<<<<<<
- *         if additional_info is None:
- *             raise AttributeError()
- */
-      __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_thread, __pyx_n_s_additional_info); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1037, __pyx_L20_error)
-      __Pyx_GOTREF(__pyx_t_8);
-      __pyx_v_additional_info = __pyx_t_8;
-      __pyx_t_8 = 0;
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1038
- *     try:
- *         additional_info = thread.additional_info
- *         if additional_info is None:             # <<<<<<<<<<<<<<
- *             raise AttributeError()
- *     except:
- */
-      __pyx_t_1 = (__pyx_v_additional_info == Py_None);
-      __pyx_t_2 = (__pyx_t_1 != 0);
-      if (unlikely(__pyx_t_2)) {
-
-        /* "_pydevd_bundle/pydevd_cython.pyx":1039
- *         additional_info = thread.additional_info
- *         if additional_info is None:
- *             raise AttributeError()             # <<<<<<<<<<<<<<
- *     except:
- *         additional_info = set_additional_thread_info(thread)
- */
-        __pyx_t_8 = __Pyx_PyObject_CallNoArg(__pyx_builtin_AttributeError); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1039, __pyx_L20_error)
-        __Pyx_GOTREF(__pyx_t_8);
-        __Pyx_Raise(__pyx_t_8, 0, 0, 0);
-        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-        __PYX_ERR(0, 1039, __pyx_L20_error)
-
-        /* "_pydevd_bundle/pydevd_cython.pyx":1038
- *     try:
- *         additional_info = thread.additional_info
- *         if additional_info is None:             # <<<<<<<<<<<<<<
- *             raise AttributeError()
- *     except:
- */
-      }
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1036
- *         return None
- * 
- *     try:             # <<<<<<<<<<<<<<
- *         additional_info = thread.additional_info
- *         if additional_info is None:
- */
-    }
-    __Pyx_XDECREF(__pyx_t_10); __pyx_t_10 = 0;
-    __Pyx_XDECREF(__pyx_t_11); __pyx_t_11 = 0;
-    __Pyx_XDECREF(__pyx_t_12); __pyx_t_12 = 0;
-    goto __pyx_L25_try_end;
-    __pyx_L20_error:;
-    __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1040
- *         if additional_info is None:
- *             raise AttributeError()
- *     except:             # <<<<<<<<<<<<<<
- *         additional_info = set_additional_thread_info(thread)
- * 
- */
-    /*except:*/ {
-      __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.trace_dispatch", __pyx_clineno, __pyx_lineno, __pyx_filename);
-      if (__Pyx_GetException(&__pyx_t_8, &__pyx_t_3, &__pyx_t_4) < 0) __PYX_ERR(0, 1040, __pyx_L22_except_error)
-      __Pyx_GOTREF(__pyx_t_8);
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_GOTREF(__pyx_t_4);
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1041
- *             raise AttributeError()
- *     except:
- *         additional_info = set_additional_thread_info(thread)             # <<<<<<<<<<<<<<
- * 
- *     # print('enter thread tracer', thread, get_thread_id(thread))
- */
-      __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_set_additional_thread_info); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1041, __pyx_L22_except_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __pyx_t_7 = NULL;
-      if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_6))) {
-        __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_6);
-        if (likely(__pyx_t_7)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
-          __Pyx_INCREF(__pyx_t_7);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_6, function);
-        }
-      }
-      if (!__pyx_t_7) {
-        __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_thread); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1041, __pyx_L22_except_error)
-        __Pyx_GOTREF(__pyx_t_5);
-      } else {
-        #if CYTHON_FAST_PYCALL
-        if (PyFunction_Check(__pyx_t_6)) {
-          PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_v_thread};
-          __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1041, __pyx_L22_except_error)
-          __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
-          __Pyx_GOTREF(__pyx_t_5);
-        } else
-        #endif
-        #if CYTHON_FAST_PYCCALL
-        if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
-          PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_v_thread};
-          __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1041, __pyx_L22_except_error)
-          __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
-          __Pyx_GOTREF(__pyx_t_5);
-        } else
-        #endif
-        {
-          __pyx_t_13 = PyTuple_New(1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 1041, __pyx_L22_except_error)
-          __Pyx_GOTREF(__pyx_t_13);
-          __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_13, 0, __pyx_t_7); __pyx_t_7 = NULL;
-          __Pyx_INCREF(__pyx_v_thread);
-          __Pyx_GIVEREF(__pyx_v_thread);
-          PyTuple_SET_ITEM(__pyx_t_13, 0+1, __pyx_v_thread);
-          __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_13, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1041, __pyx_L22_except_error)
-          __Pyx_GOTREF(__pyx_t_5);
-          __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
-        }
-      }
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __Pyx_XDECREF_SET(__pyx_v_additional_info, __pyx_t_5);
-      __pyx_t_5 = 0;
-      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      goto __pyx_L21_exception_handled;
-    }
-    __pyx_L22_except_error:;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1036
- *         return None
- * 
- *     try:             # <<<<<<<<<<<<<<
- *         additional_info = thread.additional_info
- *         if additional_info is None:
- */
-    __Pyx_XGIVEREF(__pyx_t_10);
-    __Pyx_XGIVEREF(__pyx_t_11);
-    __Pyx_XGIVEREF(__pyx_t_12);
-    __Pyx_ExceptionReset(__pyx_t_10, __pyx_t_11, __pyx_t_12);
-    goto __pyx_L1_error;
-    __pyx_L21_exception_handled:;
-    __Pyx_XGIVEREF(__pyx_t_10);
-    __Pyx_XGIVEREF(__pyx_t_11);
-    __Pyx_XGIVEREF(__pyx_t_12);
-    __Pyx_ExceptionReset(__pyx_t_10, __pyx_t_11, __pyx_t_12);
-    __pyx_L25_try_end:;
-  }
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1044
- * 
- *     # print('enter thread tracer', thread, get_thread_id(thread))
- *     thread_tracer = ThreadTracer((py_db, thread, additional_info, global_cache_skips, global_cache_frame_skips))             # <<<<<<<<<<<<<<
- * 
- *     if f_unhandled is not None:
- */
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_global_cache_skips); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1044, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_global_cache_frame_skips); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1044, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_8 = PyTuple_New(5); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1044, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_8);
-  __Pyx_INCREF(__pyx_v_py_db);
-  __Pyx_GIVEREF(__pyx_v_py_db);
-  PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_v_py_db);
-  __Pyx_INCREF(__pyx_v_thread);
-  __Pyx_GIVEREF(__pyx_v_thread);
-  PyTuple_SET_ITEM(__pyx_t_8, 1, __pyx_v_thread);
-  __Pyx_INCREF(__pyx_v_additional_info);
-  __Pyx_GIVEREF(__pyx_v_additional_info);
-  PyTuple_SET_ITEM(__pyx_t_8, 2, __pyx_v_additional_info);
-  __Pyx_GIVEREF(__pyx_t_4);
-  PyTuple_SET_ITEM(__pyx_t_8, 3, __pyx_t_4);
-  __Pyx_GIVEREF(__pyx_t_3);
-  PyTuple_SET_ITEM(__pyx_t_8, 4, __pyx_t_3);
-  __pyx_t_4 = 0;
-  __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_ThreadTracer), __pyx_t_8); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1044, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  __pyx_v_thread_tracer = ((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *)__pyx_t_3);
-  __pyx_t_3 = 0;
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1046
- *     thread_tracer = ThreadTracer((py_db, thread, additional_info, global_cache_skips, global_cache_frame_skips))
- * 
- *     if f_unhandled is not None:             # <<<<<<<<<<<<<<
- *         # print(' --> found to trace unhandled', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
- *         if only_trace_for_unhandled_exceptions:
- */
-  __pyx_t_2 = (__pyx_v_f_unhandled != Py_None);
-  __pyx_t_1 = (__pyx_t_2 != 0);
-  if (__pyx_t_1) {
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1048
- *     if f_unhandled is not None:
- *         # print(' --> found to trace unhandled', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
- *         if only_trace_for_unhandled_exceptions:             # <<<<<<<<<<<<<<
- *             f_trace = thread_tracer.trace_unhandled_exceptions
- *         else:
- */
-    __pyx_t_1 = (__pyx_v_only_trace_for_unhandled_exceptions != 0);
-    if (__pyx_t_1) {
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1049
- *         # print(' --> found to trace unhandled', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
- *         if only_trace_for_unhandled_exceptions:
- *             f_trace = thread_tracer.trace_unhandled_exceptions             # <<<<<<<<<<<<<<
- *         else:
- *             f_trace = thread_tracer.trace_dispatch_and_unhandled_exceptions
- */
-      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_thread_tracer), __pyx_n_s_trace_unhandled_exceptions); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1049, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_v_f_trace = __pyx_t_3;
-      __pyx_t_3 = 0;
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1048
- *     if f_unhandled is not None:
- *         # print(' --> found to trace unhandled', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
- *         if only_trace_for_unhandled_exceptions:             # <<<<<<<<<<<<<<
- *             f_trace = thread_tracer.trace_unhandled_exceptions
- *         else:
- */
-      goto __pyx_L30;
-    }
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1051
- *             f_trace = thread_tracer.trace_unhandled_exceptions
- *         else:
- *             f_trace = thread_tracer.trace_dispatch_and_unhandled_exceptions             # <<<<<<<<<<<<<<
- *         # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- *         f_unhandled.f_trace = SafeCallWrapper(f_trace)
- */
-    /*else*/ {
-      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_thread_tracer), __pyx_n_s_trace_dispatch_and_unhandled_exc); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1051, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_v_f_trace = __pyx_t_3;
-      __pyx_t_3 = 0;
-    }
-    __pyx_L30:;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1053
- *             f_trace = thread_tracer.trace_dispatch_and_unhandled_exceptions
- *         # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- *         f_unhandled.f_trace = SafeCallWrapper(f_trace)             # <<<<<<<<<<<<<<
- *         # ELSE
- * #         f_unhandled.f_trace = f_trace
- */
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper), __pyx_v_f_trace); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1053, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    if (__Pyx_PyObject_SetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_trace, __pyx_t_3) < 0) __PYX_ERR(0, 1053, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1046
- *     thread_tracer = ThreadTracer((py_db, thread, additional_info, global_cache_skips, global_cache_frame_skips))
- * 
- *     if f_unhandled is not None:             # <<<<<<<<<<<<<<
- *         # print(' --> found to trace unhandled', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
- *         if only_trace_for_unhandled_exceptions:
- */
-  }
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1058
- *         # ENDIF
- * 
- *     if frame is f_unhandled:             # <<<<<<<<<<<<<<
- *         if only_trace_for_unhandled_exceptions:
- *             return thread_tracer.trace_unhandled_exceptions(frame, event, arg)
- */
-  __pyx_t_1 = (__pyx_v_frame == __pyx_v_f_unhandled);
-  __pyx_t_2 = (__pyx_t_1 != 0);
-  if (__pyx_t_2) {
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1059
- * 
- *     if frame is f_unhandled:
- *         if only_trace_for_unhandled_exceptions:             # <<<<<<<<<<<<<<
- *             return thread_tracer.trace_unhandled_exceptions(frame, event, arg)
- *         else:
- */
-    __pyx_t_2 = (__pyx_v_only_trace_for_unhandled_exceptions != 0);
-    if (__pyx_t_2) {
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1060
- *     if frame is f_unhandled:
- *         if only_trace_for_unhandled_exceptions:
- *             return thread_tracer.trace_unhandled_exceptions(frame, event, arg)             # <<<<<<<<<<<<<<
- *         else:
- *             return thread_tracer.trace_dispatch_and_unhandled_exceptions(frame, event, arg)
- */
-      __Pyx_XDECREF(__pyx_r);
-      __pyx_t_8 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_thread_tracer), __pyx_n_s_trace_unhandled_exceptions); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1060, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_8);
-      __pyx_t_4 = NULL;
-      __pyx_t_14 = 0;
-      if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_8))) {
-        __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_8);
-        if (likely(__pyx_t_4)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_8);
-          __Pyx_INCREF(__pyx_t_4);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_8, function);
-          __pyx_t_14 = 1;
-        }
-      }
-      #if CYTHON_FAST_PYCALL
-      if (PyFunction_Check(__pyx_t_8)) {
-        PyObject *__pyx_temp[4] = {__pyx_t_4, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
-        __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-__pyx_t_14, 3+__pyx_t_14); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1060, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_GOTREF(__pyx_t_3);
-      } else
-      #endif
-      #if CYTHON_FAST_PYCCALL
-      if (__Pyx_PyFastCFunction_Check(__pyx_t_8)) {
-        PyObject *__pyx_temp[4] = {__pyx_t_4, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
-        __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-__pyx_t_14, 3+__pyx_t_14); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1060, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_GOTREF(__pyx_t_3);
-      } else
-      #endif
-      {
-        __pyx_t_5 = PyTuple_New(3+__pyx_t_14); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1060, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_5);
-        if (__pyx_t_4) {
-          __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
-        }
-        __Pyx_INCREF(__pyx_v_frame);
-        __Pyx_GIVEREF(__pyx_v_frame);
-        PyTuple_SET_ITEM(__pyx_t_5, 0+__pyx_t_14, __pyx_v_frame);
-        __Pyx_INCREF(__pyx_v_event);
-        __Pyx_GIVEREF(__pyx_v_event);
-        PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_14, __pyx_v_event);
-        __Pyx_INCREF(__pyx_v_arg);
-        __Pyx_GIVEREF(__pyx_v_arg);
-        PyTuple_SET_ITEM(__pyx_t_5, 2+__pyx_t_14, __pyx_v_arg);
-        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_5, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1060, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      }
-      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      __pyx_r = __pyx_t_3;
-      __pyx_t_3 = 0;
-      goto __pyx_L0;
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1059
- * 
- *     if frame is f_unhandled:
- *         if only_trace_for_unhandled_exceptions:             # <<<<<<<<<<<<<<
- *             return thread_tracer.trace_unhandled_exceptions(frame, event, arg)
- *         else:
- */
-    }
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1062
- *             return thread_tracer.trace_unhandled_exceptions(frame, event, arg)
- *         else:
- *             return thread_tracer.trace_dispatch_and_unhandled_exceptions(frame, event, arg)             # <<<<<<<<<<<<<<
- * 
- * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- */
-    /*else*/ {
-      __Pyx_XDECREF(__pyx_r);
-      __pyx_t_8 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_thread_tracer), __pyx_n_s_trace_dispatch_and_unhandled_exc); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1062, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_8);
-      __pyx_t_5 = NULL;
-      __pyx_t_14 = 0;
-      if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_8))) {
-        __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_8);
-        if (likely(__pyx_t_5)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_8);
-          __Pyx_INCREF(__pyx_t_5);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_8, function);
-          __pyx_t_14 = 1;
-        }
-      }
-      #if CYTHON_FAST_PYCALL
-      if (PyFunction_Check(__pyx_t_8)) {
-        PyObject *__pyx_temp[4] = {__pyx_t_5, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
-        __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-__pyx_t_14, 3+__pyx_t_14); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1062, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __Pyx_GOTREF(__pyx_t_3);
-      } else
-      #endif
-      #if CYTHON_FAST_PYCCALL
-      if (__Pyx_PyFastCFunction_Check(__pyx_t_8)) {
-        PyObject *__pyx_temp[4] = {__pyx_t_5, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
-        __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-__pyx_t_14, 3+__pyx_t_14); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1062, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __Pyx_GOTREF(__pyx_t_3);
-      } else
-      #endif
-      {
-        __pyx_t_4 = PyTuple_New(3+__pyx_t_14); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1062, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        if (__pyx_t_5) {
-          __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_5); __pyx_t_5 = NULL;
-        }
-        __Pyx_INCREF(__pyx_v_frame);
-        __Pyx_GIVEREF(__pyx_v_frame);
-        PyTuple_SET_ITEM(__pyx_t_4, 0+__pyx_t_14, __pyx_v_frame);
-        __Pyx_INCREF(__pyx_v_event);
-        __Pyx_GIVEREF(__pyx_v_event);
-        PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_14, __pyx_v_event);
-        __Pyx_INCREF(__pyx_v_arg);
-        __Pyx_GIVEREF(__pyx_v_arg);
-        PyTuple_SET_ITEM(__pyx_t_4, 2+__pyx_t_14, __pyx_v_arg);
-        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1062, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      }
-      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      __pyx_r = __pyx_t_3;
-      __pyx_t_3 = 0;
-      goto __pyx_L0;
-    }
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1058
- *         # ENDIF
- * 
- *     if frame is f_unhandled:             # <<<<<<<<<<<<<<
- *         if only_trace_for_unhandled_exceptions:
- *             return thread_tracer.trace_unhandled_exceptions(frame, event, arg)
- */
-  }
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1065
- * 
- * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- *     thread._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).             # <<<<<<<<<<<<<<
- * # ELSE
- * # ENDIF
- */
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_thread, __pyx_n_s_tracer, ((PyObject *)__pyx_v_thread_tracer)) < 0) __PYX_ERR(0, 1065, __pyx_L1_error)
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1068
- * # ELSE
- * # ENDIF
- *     SetTrace(thread_tracer.__call__)             # <<<<<<<<<<<<<<
- *     return thread_tracer.__call__(frame, event, arg)
- * 
- */
-  __pyx_t_8 = __Pyx_GetModuleGlobalName(__pyx_n_s_SetTrace); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1068, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_thread_tracer), __pyx_n_s_call_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1068, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = NULL;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_8))) {
-    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_8);
-    if (likely(__pyx_t_5)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_8);
-      __Pyx_INCREF(__pyx_t_5);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_8, function);
-    }
-  }
-  if (!__pyx_t_5) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1068, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __Pyx_GOTREF(__pyx_t_3);
-  } else {
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_8)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_t_4};
-      __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1068, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_8)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_t_4};
-      __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1068, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    } else
-    #endif
-    {
-      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1068, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
-      __Pyx_GIVEREF(__pyx_t_4);
-      PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_4);
-      __pyx_t_4 = 0;
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_6, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1068, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    }
-  }
-  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1069
- * # ENDIF
- *     SetTrace(thread_tracer.__call__)
- *     return thread_tracer.__call__(frame, event, arg)             # <<<<<<<<<<<<<<
- * 
- * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_thread_tracer), __pyx_n_s_call_2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1069, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_6 = NULL;
-  __pyx_t_14 = 0;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_8))) {
-    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_8);
-    if (likely(__pyx_t_6)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_8);
-      __Pyx_INCREF(__pyx_t_6);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_8, function);
-      __pyx_t_14 = 1;
-    }
-  }
-  #if CYTHON_FAST_PYCALL
-  if (PyFunction_Check(__pyx_t_8)) {
-    PyObject *__pyx_temp[4] = {__pyx_t_6, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
-    __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-__pyx_t_14, 3+__pyx_t_14); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1069, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __Pyx_GOTREF(__pyx_t_3);
-  } else
-  #endif
-  #if CYTHON_FAST_PYCCALL
-  if (__Pyx_PyFastCFunction_Check(__pyx_t_8)) {
-    PyObject *__pyx_temp[4] = {__pyx_t_6, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
-    __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-__pyx_t_14, 3+__pyx_t_14); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1069, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __Pyx_GOTREF(__pyx_t_3);
-  } else
-  #endif
-  {
-    __pyx_t_4 = PyTuple_New(3+__pyx_t_14); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1069, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    if (__pyx_t_6) {
-      __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_6); __pyx_t_6 = NULL;
-    }
-    __Pyx_INCREF(__pyx_v_frame);
-    __Pyx_GIVEREF(__pyx_v_frame);
-    PyTuple_SET_ITEM(__pyx_t_4, 0+__pyx_t_14, __pyx_v_frame);
-    __Pyx_INCREF(__pyx_v_event);
-    __Pyx_GIVEREF(__pyx_v_event);
-    PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_14, __pyx_v_event);
-    __Pyx_INCREF(__pyx_v_arg);
-    __Pyx_GIVEREF(__pyx_v_arg);
-    PyTuple_SET_ITEM(__pyx_t_4, 2+__pyx_t_14, __pyx_v_arg);
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1069, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  }
-  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  __pyx_r = __pyx_t_3;
-  __pyx_t_3 = 0;
-  goto __pyx_L0;
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":984
- * global_cache_frame_skips = {}
- * 
- * def trace_dispatch(py_db, frame, event, arg):             # <<<<<<<<<<<<<<
- *     # Note: this is always the first entry-point in the tracing for any thread.
- *     # After entering here we'll set a new tracing function for this thread
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_XDECREF(__pyx_t_7);
-  __Pyx_XDECREF(__pyx_t_8);
-  __Pyx_XDECREF(__pyx_t_13);
-  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.trace_dispatch", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_thread);
-  __Pyx_XDECREF(__pyx_v_f_unhandled);
-  __Pyx_XDECREF(__pyx_v_filename);
-  __Pyx_XDECREF(__pyx_v_name);
-  __Pyx_XDECREF(__pyx_v_t);
-  __Pyx_XDECREF(__pyx_v_additional_info);
-  __Pyx_XDECREF((PyObject *)__pyx_v_thread_tracer);
-  __Pyx_XDECREF(__pyx_v_f_trace);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "_pydevd_bundle/pydevd_cython.pyx":1085
- * #     '''
- * # ENDIF
- *     def __init__(self, pydb_frame_trace, unhandled_trace):             # <<<<<<<<<<<<<<
- *         self._pydb_frame_trace = pydb_frame_trace
- *         self._unhandled_trace = unhandled_trace
- */
-
-/* Python wrapper */
-static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  PyObject *__pyx_v_pydb_frame_trace = 0;
-  PyObject *__pyx_v_unhandled_trace = 0;
-  int __pyx_r;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("__init__ (wrapper)", 0);
-  {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_pydb_frame_trace,&__pyx_n_s_unhandled_trace,0};
-    PyObject* values[2] = {0,0};
-    if (unlikely(__pyx_kwds)) {
-      Py_ssize_t kw_args;
-      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
-      switch (pos_args) {
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        CYTHON_FALLTHROUGH;
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = PyDict_Size(__pyx_kwds);
-      switch (pos_args) {
-        case  0:
-        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pydb_frame_trace)) != 0)) kw_args--;
-        else goto __pyx_L5_argtuple_error;
-        CYTHON_FALLTHROUGH;
-        case  1:
-        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_unhandled_trace)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, 1); __PYX_ERR(0, 1085, __pyx_L3_error)
-        }
-      }
-      if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 1085, __pyx_L3_error)
-      }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
-      goto __pyx_L5_argtuple_error;
-    } else {
-      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-    }
-    __pyx_v_pydb_frame_trace = values[0];
-    __pyx_v_unhandled_trace = values[1];
-  }
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1085, __pyx_L3_error)
-  __pyx_L3_error:;
-  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.PyDbFrameTraceAndUnhandledExceptionsTrace.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return -1;
-  __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace___init__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *)__pyx_v_self), __pyx_v_pydb_frame_trace, __pyx_v_unhandled_trace);
-
-  /* function exit code */
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace___init__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *__pyx_v_self, PyObject *__pyx_v_pydb_frame_trace, PyObject *__pyx_v_unhandled_trace) {
-  int __pyx_r;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("__init__", 0);
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1086
- * # ENDIF
- *     def __init__(self, pydb_frame_trace, unhandled_trace):
- *         self._pydb_frame_trace = pydb_frame_trace             # <<<<<<<<<<<<<<
- *         self._unhandled_trace = unhandled_trace
- * 
- */
-  __Pyx_INCREF(__pyx_v_pydb_frame_trace);
-  __Pyx_GIVEREF(__pyx_v_pydb_frame_trace);
-  __Pyx_GOTREF(__pyx_v_self->_pydb_frame_trace);
-  __Pyx_DECREF(__pyx_v_self->_pydb_frame_trace);
-  __pyx_v_self->_pydb_frame_trace = __pyx_v_pydb_frame_trace;
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1087
- *     def __init__(self, pydb_frame_trace, unhandled_trace):
- *         self._pydb_frame_trace = pydb_frame_trace
- *         self._unhandled_trace = unhandled_trace             # <<<<<<<<<<<<<<
- * 
- *     def trace_dispatch(self, frame, event, arg):
- */
-  __Pyx_INCREF(__pyx_v_unhandled_trace);
-  __Pyx_GIVEREF(__pyx_v_unhandled_trace);
-  __Pyx_GOTREF(__pyx_v_self->_unhandled_trace);
-  __Pyx_DECREF(__pyx_v_self->_unhandled_trace);
-  __pyx_v_self->_unhandled_trace = __pyx_v_unhandled_trace;
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1085
- * #     '''
- * # ENDIF
- *     def __init__(self, pydb_frame_trace, unhandled_trace):             # <<<<<<<<<<<<<<
- *         self._pydb_frame_trace = pydb_frame_trace
- *         self._unhandled_trace = unhandled_trace
- */
-
-  /* function exit code */
-  __pyx_r = 0;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "_pydevd_bundle/pydevd_cython.pyx":1089
- *         self._unhandled_trace = unhandled_trace
- * 
- *     def trace_dispatch(self, frame, event, arg):             # <<<<<<<<<<<<<<
- *         # print('PyDbFrameTraceAndUnhandledExceptionsTrace', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
- *         if event == 'exception' and arg is not None:
- */
-
-/* Python wrapper */
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_3trace_dispatch(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_3trace_dispatch(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  PyObject *__pyx_v_frame = 0;
-  PyObject *__pyx_v_event = 0;
-  PyObject *__pyx_v_arg = 0;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("trace_dispatch (wrapper)", 0);
-  {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_frame,&__pyx_n_s_event,&__pyx_n_s_arg,0};
-    PyObject* values[3] = {0,0,0};
-    if (unlikely(__pyx_kwds)) {
-      Py_ssize_t kw_args;
-      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
-      switch (pos_args) {
-        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
-        CYTHON_FALLTHROUGH;
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        CYTHON_FALLTHROUGH;
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = PyDict_Size(__pyx_kwds);
-      switch (pos_args) {
-        case  0:
-        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_frame)) != 0)) kw_args--;
-        else goto __pyx_L5_argtuple_error;
-        CYTHON_FALLTHROUGH;
-        case  1:
-        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_event)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("trace_dispatch", 1, 3, 3, 1); __PYX_ERR(0, 1089, __pyx_L3_error)
-        }
-        CYTHON_FALLTHROUGH;
-        case  2:
-        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_arg)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("trace_dispatch", 1, 3, 3, 2); __PYX_ERR(0, 1089, __pyx_L3_error)
-        }
-      }
-      if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "trace_dispatch") < 0)) __PYX_ERR(0, 1089, __pyx_L3_error)
-      }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
-      goto __pyx_L5_argtuple_error;
-    } else {
-      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-      values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
-    }
-    __pyx_v_frame = values[0];
-    __pyx_v_event = values[1];
-    __pyx_v_arg = values[2];
-  }
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("trace_dispatch", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1089, __pyx_L3_error)
-  __pyx_L3_error:;
-  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.PyDbFrameTraceAndUnhandledExceptionsTrace.trace_dispatch", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_2trace_dispatch(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *)__pyx_v_self), __pyx_v_frame, __pyx_v_event, __pyx_v_arg);
-
-  /* function exit code */
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_2trace_dispatch(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *__pyx_v_self, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
-  int __pyx_t_2;
-  int __pyx_t_3;
-  PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
-  PyObject *__pyx_t_6 = NULL;
-  int __pyx_t_7;
-  PyObject *__pyx_t_8 = NULL;
-  __Pyx_RefNannySetupContext("trace_dispatch", 0);
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1091
- *     def trace_dispatch(self, frame, event, arg):
- *         # print('PyDbFrameTraceAndUnhandledExceptionsTrace', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
- *         if event == 'exception' and arg is not None:             # <<<<<<<<<<<<<<
- *             # print('self._unhandled_trace', self._unhandled_trace)
- *             self._unhandled_trace(frame, event, arg)
- */
-  __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_event, __pyx_n_s_exception, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1091, __pyx_L1_error)
-  if (__pyx_t_2) {
-  } else {
-    __pyx_t_1 = __pyx_t_2;
-    goto __pyx_L4_bool_binop_done;
-  }
-  __pyx_t_2 = (__pyx_v_arg != Py_None);
-  __pyx_t_3 = (__pyx_t_2 != 0);
-  __pyx_t_1 = __pyx_t_3;
-  __pyx_L4_bool_binop_done:;
-  if (__pyx_t_1) {
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1093
- *         if event == 'exception' and arg is not None:
- *             # print('self._unhandled_trace', self._unhandled_trace)
- *             self._unhandled_trace(frame, event, arg)             # <<<<<<<<<<<<<<
- *         else:
- *             self._pydb_frame_trace(frame, event, arg)
- */
-    __Pyx_INCREF(__pyx_v_self->_unhandled_trace);
-    __pyx_t_5 = __pyx_v_self->_unhandled_trace; __pyx_t_6 = NULL;
-    __pyx_t_7 = 0;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
-      __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_5);
-      if (likely(__pyx_t_6)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-        __Pyx_INCREF(__pyx_t_6);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_5, function);
-        __pyx_t_7 = 1;
-      }
-    }
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_5)) {
-      PyObject *__pyx_temp[4] = {__pyx_t_6, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
-      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 3+__pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1093, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __Pyx_GOTREF(__pyx_t_4);
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
-      PyObject *__pyx_temp[4] = {__pyx_t_6, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
-      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 3+__pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1093, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __Pyx_GOTREF(__pyx_t_4);
-    } else
-    #endif
-    {
-      __pyx_t_8 = PyTuple_New(3+__pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1093, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_8);
-      if (__pyx_t_6) {
-        __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_6); __pyx_t_6 = NULL;
-      }
-      __Pyx_INCREF(__pyx_v_frame);
-      __Pyx_GIVEREF(__pyx_v_frame);
-      PyTuple_SET_ITEM(__pyx_t_8, 0+__pyx_t_7, __pyx_v_frame);
-      __Pyx_INCREF(__pyx_v_event);
-      __Pyx_GIVEREF(__pyx_v_event);
-      PyTuple_SET_ITEM(__pyx_t_8, 1+__pyx_t_7, __pyx_v_event);
-      __Pyx_INCREF(__pyx_v_arg);
-      __Pyx_GIVEREF(__pyx_v_arg);
-      PyTuple_SET_ITEM(__pyx_t_8, 2+__pyx_t_7, __pyx_v_arg);
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1093, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    }
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1091
- *     def trace_dispatch(self, frame, event, arg):
- *         # print('PyDbFrameTraceAndUnhandledExceptionsTrace', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
- *         if event == 'exception' and arg is not None:             # <<<<<<<<<<<<<<
- *             # print('self._unhandled_trace', self._unhandled_trace)
- *             self._unhandled_trace(frame, event, arg)
- */
-    goto __pyx_L3;
-  }
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1095
- *             self._unhandled_trace(frame, event, arg)
- *         else:
- *             self._pydb_frame_trace(frame, event, arg)             # <<<<<<<<<<<<<<
- *         # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- *         return SafeCallWrapper(self.trace_dispatch)
- */
-  /*else*/ {
-    __Pyx_INCREF(__pyx_v_self->_pydb_frame_trace);
-    __pyx_t_5 = __pyx_v_self->_pydb_frame_trace; __pyx_t_8 = NULL;
-    __pyx_t_7 = 0;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
-      __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_5);
-      if (likely(__pyx_t_8)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-        __Pyx_INCREF(__pyx_t_8);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_5, function);
-        __pyx_t_7 = 1;
-      }
-    }
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_5)) {
-      PyObject *__pyx_temp[4] = {__pyx_t_8, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
-      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 3+__pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1095, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-      __Pyx_GOTREF(__pyx_t_4);
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
-      PyObject *__pyx_temp[4] = {__pyx_t_8, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
-      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 3+__pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1095, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-      __Pyx_GOTREF(__pyx_t_4);
-    } else
-    #endif
-    {
-      __pyx_t_6 = PyTuple_New(3+__pyx_t_7); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1095, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      if (__pyx_t_8) {
-        __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_8); __pyx_t_8 = NULL;
-      }
-      __Pyx_INCREF(__pyx_v_frame);
-      __Pyx_GIVEREF(__pyx_v_frame);
-      PyTuple_SET_ITEM(__pyx_t_6, 0+__pyx_t_7, __pyx_v_frame);
-      __Pyx_INCREF(__pyx_v_event);
-      __Pyx_GIVEREF(__pyx_v_event);
-      PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_7, __pyx_v_event);
-      __Pyx_INCREF(__pyx_v_arg);
-      __Pyx_GIVEREF(__pyx_v_arg);
-      PyTuple_SET_ITEM(__pyx_t_6, 2+__pyx_t_7, __pyx_v_arg);
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_6, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1095, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    }
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  }
-  __pyx_L3:;
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1097
- *             self._pydb_frame_trace(frame, event, arg)
- *         # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- *         return SafeCallWrapper(self.trace_dispatch)             # <<<<<<<<<<<<<<
- *         # ELSE
- * #         return self.trace_dispatch
- */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_trace_dispatch); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1097, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper), __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1097, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_r = __pyx_t_5;
-  __pyx_t_5 = 0;
-  goto __pyx_L0;
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1089
- *         self._unhandled_trace = unhandled_trace
- * 
- *     def trace_dispatch(self, frame, event, arg):             # <<<<<<<<<<<<<<
- *         # print('PyDbFrameTraceAndUnhandledExceptionsTrace', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
- *         if event == 'exception' and arg is not None:
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_XDECREF(__pyx_t_8);
-  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.PyDbFrameTraceAndUnhandledExceptionsTrace.trace_dispatch", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "(tree fragment)":1
- * def __reduce_cython__(self):             # <<<<<<<<<<<<<<
- *     cdef bint use_setstate
- *     state = (self._pydb_frame_trace, self._unhandled_trace)
- */
-
-/* Python wrapper */
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_5__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_5__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("__reduce_cython__ (wrapper)", 0);
-  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_4__reduce_cython__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *)__pyx_v_self));
-
-  /* function exit code */
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_4__reduce_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *__pyx_v_self) {
-  int __pyx_v_use_setstate;
-  PyObject *__pyx_v_state = NULL;
-  PyObject *__pyx_v__dict = NULL;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  int __pyx_t_2;
-  int __pyx_t_3;
-  PyObject *__pyx_t_4 = NULL;
-  int __pyx_t_5;
-  PyObject *__pyx_t_6 = NULL;
-  __Pyx_RefNannySetupContext("__reduce_cython__", 0);
-
-  /* "(tree fragment)":3
- * def __reduce_cython__(self):
- *     cdef bint use_setstate
- *     state = (self._pydb_frame_trace, self._unhandled_trace)             # <<<<<<<<<<<<<<
- *     _dict = getattr(self, '__dict__', None)
- *     if _dict is not None:
- */
-  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 3, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_INCREF(__pyx_v_self->_pydb_frame_trace);
-  __Pyx_GIVEREF(__pyx_v_self->_pydb_frame_trace);
-  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v_self->_pydb_frame_trace);
-  __Pyx_INCREF(__pyx_v_self->_unhandled_trace);
-  __Pyx_GIVEREF(__pyx_v_self->_unhandled_trace);
-  PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_v_self->_unhandled_trace);
-  __pyx_v_state = ((PyObject*)__pyx_t_1);
-  __pyx_t_1 = 0;
-
-  /* "(tree fragment)":4
- *     cdef bint use_setstate
- *     state = (self._pydb_frame_trace, self._unhandled_trace)
- *     _dict = getattr(self, '__dict__', None)             # <<<<<<<<<<<<<<
- *     if _dict is not None:
- *         state += (_dict,)
- */
-  __pyx_t_1 = __Pyx_GetAttr3(((PyObject *)__pyx_v_self), __pyx_n_s_dict, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 4, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_v__dict = __pyx_t_1;
-  __pyx_t_1 = 0;
-
-  /* "(tree fragment)":5
- *     state = (self._pydb_frame_trace, self._unhandled_trace)
- *     _dict = getattr(self, '__dict__', None)
- *     if _dict is not None:             # <<<<<<<<<<<<<<
- *         state += (_dict,)
- *         use_setstate = True
- */
-  __pyx_t_2 = (__pyx_v__dict != Py_None);
-  __pyx_t_3 = (__pyx_t_2 != 0);
-  if (__pyx_t_3) {
-
-    /* "(tree fragment)":6
- *     _dict = getattr(self, '__dict__', None)
- *     if _dict is not None:
- *         state += (_dict,)             # <<<<<<<<<<<<<<
- *         use_setstate = True
- *     else:
- */
-    __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 6, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_INCREF(__pyx_v__dict);
-    __Pyx_GIVEREF(__pyx_v__dict);
-    PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v__dict);
-    __pyx_t_4 = PyNumber_InPlaceAdd(__pyx_v_state, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 6, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __Pyx_DECREF_SET(__pyx_v_state, ((PyObject*)__pyx_t_4));
-    __pyx_t_4 = 0;
-
-    /* "(tree fragment)":7
- *     if _dict is not None:
- *         state += (_dict,)
- *         use_setstate = True             # <<<<<<<<<<<<<<
- *     else:
- *         use_setstate = self._pydb_frame_trace is not None or self._unhandled_trace is not None
- */
-    __pyx_v_use_setstate = 1;
-
-    /* "(tree fragment)":5
- *     state = (self._pydb_frame_trace, self._unhandled_trace)
- *     _dict = getattr(self, '__dict__', None)
- *     if _dict is not None:             # <<<<<<<<<<<<<<
- *         state += (_dict,)
- *         use_setstate = True
- */
-    goto __pyx_L3;
-  }
-
-  /* "(tree fragment)":9
- *         use_setstate = True
- *     else:
- *         use_setstate = self._pydb_frame_trace is not None or self._unhandled_trace is not None             # <<<<<<<<<<<<<<
- *     if use_setstate:
- *         return __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace, (type(self), 0x9168de9, None), state
- */
-  /*else*/ {
-    __pyx_t_2 = (__pyx_v_self->_pydb_frame_trace != Py_None);
-    __pyx_t_5 = (__pyx_t_2 != 0);
-    if (!__pyx_t_5) {
-    } else {
-      __pyx_t_3 = __pyx_t_5;
-      goto __pyx_L4_bool_binop_done;
-    }
-    __pyx_t_5 = (__pyx_v_self->_unhandled_trace != Py_None);
-    __pyx_t_2 = (__pyx_t_5 != 0);
-    __pyx_t_3 = __pyx_t_2;
-    __pyx_L4_bool_binop_done:;
-    __pyx_v_use_setstate = __pyx_t_3;
-  }
-  __pyx_L3:;
-
-  /* "(tree fragment)":10
- *     else:
- *         use_setstate = self._pydb_frame_trace is not None or self._unhandled_trace is not None
- *     if use_setstate:             # <<<<<<<<<<<<<<
- *         return __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace, (type(self), 0x9168de9, None), state
- *     else:
- */
-  __pyx_t_3 = (__pyx_v_use_setstate != 0);
-  if (__pyx_t_3) {
-
-    /* "(tree fragment)":11
- *         use_setstate = self._pydb_frame_trace is not None or self._unhandled_trace is not None
- *     if use_setstate:
- *         return __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace, (type(self), 0x9168de9, None), state             # <<<<<<<<<<<<<<
- *     else:
- *         return __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace, (type(self), 0x9168de9, state)
- */
-    __Pyx_XDECREF(__pyx_r);
-    __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyx_unpickle_PyDbFrameTraceAnd); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 11, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_1 = PyTuple_New(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 11, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_INCREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
-    __Pyx_GIVEREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
-    PyTuple_SET_ITEM(__pyx_t_1, 0, ((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
-    __Pyx_INCREF(__pyx_int_152473065);
-    __Pyx_GIVEREF(__pyx_int_152473065);
-    PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_int_152473065);
-    __Pyx_INCREF(Py_None);
-    __Pyx_GIVEREF(Py_None);
-    PyTuple_SET_ITEM(__pyx_t_1, 2, Py_None);
-    __pyx_t_6 = PyTuple_New(3); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 11, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    __Pyx_GIVEREF(__pyx_t_4);
-    PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4);
-    __Pyx_GIVEREF(__pyx_t_1);
-    PyTuple_SET_ITEM(__pyx_t_6, 1, __pyx_t_1);
-    __Pyx_INCREF(__pyx_v_state);
-    __Pyx_GIVEREF(__pyx_v_state);
-    PyTuple_SET_ITEM(__pyx_t_6, 2, __pyx_v_state);
-    __pyx_t_4 = 0;
-    __pyx_t_1 = 0;
-    __pyx_r = __pyx_t_6;
-    __pyx_t_6 = 0;
-    goto __pyx_L0;
-
-    /* "(tree fragment)":10
- *     else:
- *         use_setstate = self._pydb_frame_trace is not None or self._unhandled_trace is not None
- *     if use_setstate:             # <<<<<<<<<<<<<<
- *         return __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace, (type(self), 0x9168de9, None), state
- *     else:
- */
-  }
-
-  /* "(tree fragment)":13
- *         return __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace, (type(self), 0x9168de9, None), state
- *     else:
- *         return __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace, (type(self), 0x9168de9, state)             # <<<<<<<<<<<<<<
- * def __setstate_cython__(self, __pyx_state):
- *     __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(self, __pyx_state)
- */
-  /*else*/ {
-    __Pyx_XDECREF(__pyx_r);
-    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyx_unpickle_PyDbFrameTraceAnd); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 13, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_1 = PyTuple_New(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 13, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_INCREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
-    __Pyx_GIVEREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
-    PyTuple_SET_ITEM(__pyx_t_1, 0, ((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
-    __Pyx_INCREF(__pyx_int_152473065);
-    __Pyx_GIVEREF(__pyx_int_152473065);
-    PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_int_152473065);
-    __Pyx_INCREF(__pyx_v_state);
-    __Pyx_GIVEREF(__pyx_v_state);
-    PyTuple_SET_ITEM(__pyx_t_1, 2, __pyx_v_state);
-    __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 13, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_GIVEREF(__pyx_t_6);
-    PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_6);
-    __Pyx_GIVEREF(__pyx_t_1);
-    PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_t_1);
-    __pyx_t_6 = 0;
-    __pyx_t_1 = 0;
-    __pyx_r = __pyx_t_4;
-    __pyx_t_4 = 0;
-    goto __pyx_L0;
-  }
-
-  /* "(tree fragment)":1
- * def __reduce_cython__(self):             # <<<<<<<<<<<<<<
- *     cdef bint use_setstate
- *     state = (self._pydb_frame_trace, self._unhandled_trace)
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.PyDbFrameTraceAndUnhandledExceptionsTrace.__reduce_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_state);
-  __Pyx_XDECREF(__pyx_v__dict);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "(tree fragment)":14
- *     else:
- *         return __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace, (type(self), 0x9168de9, state)
- * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
- *     __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(self, __pyx_state)
- */
-
-/* Python wrapper */
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_7__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state); /*proto*/
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_7__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("__setstate_cython__ (wrapper)", 0);
-  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_6__setstate_cython__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *)__pyx_v_self), ((PyObject *)__pyx_v___pyx_state));
-
-  /* function exit code */
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_6__setstate_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("__setstate_cython__", 0);
-
-  /* "(tree fragment)":15
- *         return __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace, (type(self), 0x9168de9, state)
- * def __setstate_cython__(self, __pyx_state):
- *     __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(self, __pyx_state)             # <<<<<<<<<<<<<<
- */
-  if (!(likely(PyTuple_CheckExact(__pyx_v___pyx_state))||((__pyx_v___pyx_state) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_v___pyx_state)->tp_name), 0))) __PYX_ERR(1, 15, __pyx_L1_error)
-  __pyx_t_1 = __pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(__pyx_v_self, ((PyObject*)__pyx_v___pyx_state)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 15, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-  /* "(tree fragment)":14
- *     else:
- *         return __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace, (type(self), 0x9168de9, state)
- * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
- *     __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(self, __pyx_state)
- */
-
-  /* function exit code */
-  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.PyDbFrameTraceAndUnhandledExceptionsTrace.__setstate_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "_pydevd_bundle/pydevd_cython.pyx":1106
+/* "_pydevd_bundle/pydevd_cython.pyx":989
  * cdef class SafeCallWrapper:
  *   cdef method_object
  *   def __init__(self, method_object):             # <<<<<<<<<<<<<<
@@ -22629,7 +20681,7 @@ static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_15SafeCallWrapper_1__init__
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 1106, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 989, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 1) {
       goto __pyx_L5_argtuple_error;
@@ -22640,7 +20692,7 @@ static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_15SafeCallWrapper_1__init__
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1106, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 989, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.SafeCallWrapper.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -22658,7 +20710,7 @@ static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_15SafeCallWrapper___init__(
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__init__", 0);
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1107
+  /* "_pydevd_bundle/pydevd_cython.pyx":990
  *   cdef method_object
  *   def __init__(self, method_object):
  *       self.method_object = method_object             # <<<<<<<<<<<<<<
@@ -22671,7 +20723,7 @@ static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_15SafeCallWrapper___init__(
   __Pyx_DECREF(__pyx_v_self->method_object);
   __pyx_v_self->method_object = __pyx_v_method_object;
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1106
+  /* "_pydevd_bundle/pydevd_cython.pyx":989
  * cdef class SafeCallWrapper:
  *   cdef method_object
  *   def __init__(self, method_object):             # <<<<<<<<<<<<<<
@@ -22685,7 +20737,7 @@ static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_15SafeCallWrapper___init__(
   return __pyx_r;
 }
 
-/* "_pydevd_bundle/pydevd_cython.pyx":1108
+/* "_pydevd_bundle/pydevd_cython.pyx":991
  *   def __init__(self, method_object):
  *       self.method_object = method_object
  *   def  __call__(self, *args):             # <<<<<<<<<<<<<<
@@ -22721,7 +20773,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_15SafeCallWrapper_2__
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("__call__", 0);
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1111
+  /* "_pydevd_bundle/pydevd_cython.pyx":994
  *       #Cannot use 'self' once inside the delegate call since we are borrowing the self reference f_trace field
  *       #in the frame, and that reference might get destroyed by set trace on frame and parents
  *       cdef PyObject* method_obj = <PyObject*> self.method_object             # <<<<<<<<<<<<<<
@@ -22730,7 +20782,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_15SafeCallWrapper_2__
  */
   __pyx_v_method_obj = ((PyObject *)__pyx_v_self->method_object);
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1112
+  /* "_pydevd_bundle/pydevd_cython.pyx":995
  *       #in the frame, and that reference might get destroyed by set trace on frame and parents
  *       cdef PyObject* method_obj = <PyObject*> self.method_object
  *       Py_INCREF(<object>method_obj)             # <<<<<<<<<<<<<<
@@ -22739,38 +20791,38 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_15SafeCallWrapper_2__
  */
   Py_INCREF(((PyObject *)__pyx_v_method_obj));
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1113
+  /* "_pydevd_bundle/pydevd_cython.pyx":996
  *       cdef PyObject* method_obj = <PyObject*> self.method_object
  *       Py_INCREF(<object>method_obj)
  *       ret = (<object>method_obj)(*args)             # <<<<<<<<<<<<<<
  *       Py_XDECREF (method_obj)
  *       return SafeCallWrapper(ret) if ret is not None else None
  */
-  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_v_method_obj), __pyx_v_args, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1113, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_v_method_obj), __pyx_v_args, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 996, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_ret = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1114
+  /* "_pydevd_bundle/pydevd_cython.pyx":997
  *       Py_INCREF(<object>method_obj)
  *       ret = (<object>method_obj)(*args)
  *       Py_XDECREF (method_obj)             # <<<<<<<<<<<<<<
  *       return SafeCallWrapper(ret) if ret is not None else None
- * cdef class ThreadTracer:
+ * # ELSE
  */
   Py_XDECREF(__pyx_v_method_obj);
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1115
+  /* "_pydevd_bundle/pydevd_cython.pyx":998
  *       ret = (<object>method_obj)(*args)
  *       Py_XDECREF (method_obj)
  *       return SafeCallWrapper(ret) if ret is not None else None             # <<<<<<<<<<<<<<
- * cdef class ThreadTracer:
- *     cdef public tuple _args;
+ * # ELSE
+ * # ENDIF
  */
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_2 = (__pyx_v_ret != Py_None);
   if ((__pyx_t_2 != 0)) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper), __pyx_v_ret); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1115, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper), __pyx_v_ret); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 998, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_1 = __pyx_t_3;
     __pyx_t_3 = 0;
@@ -22782,7 +20834,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_15SafeCallWrapper_2__
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1108
+  /* "_pydevd_bundle/pydevd_cython.pyx":991
  *   def __init__(self, method_object):
  *       self.method_object = method_object
  *   def  __call__(self, *args):             # <<<<<<<<<<<<<<
@@ -23090,7 +21142,4656 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_15SafeCallWrapper_6__
   return __pyx_r;
 }
 
-/* "_pydevd_bundle/pydevd_cython.pyx":1118
+/* "_pydevd_bundle/pydevd_cython.pyx":1003
+ * 
+ * 
+ * def trace_dispatch(py_db, frame, event, arg):             # <<<<<<<<<<<<<<
+ *     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ *     cdef str filename;
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_13trace_dispatch(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_14_pydevd_bundle_13pydevd_cython_13trace_dispatch = {"trace_dispatch", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_13trace_dispatch, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_13trace_dispatch(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  PyObject *__pyx_v_py_db = 0;
+  PyObject *__pyx_v_frame = 0;
+  PyObject *__pyx_v_event = 0;
+  PyObject *__pyx_v_arg = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("trace_dispatch (wrapper)", 0);
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_py_db,&__pyx_n_s_frame,&__pyx_n_s_event,&__pyx_n_s_arg,0};
+    PyObject* values[4] = {0,0,0,0};
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        case  4: values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
+        CYTHON_FALLTHROUGH;
+        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+        CYTHON_FALLTHROUGH;
+        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        CYTHON_FALLTHROUGH;
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_py_db)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+        CYTHON_FALLTHROUGH;
+        case  1:
+        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_frame)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("trace_dispatch", 1, 4, 4, 1); __PYX_ERR(0, 1003, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  2:
+        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_event)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("trace_dispatch", 1, 4, 4, 2); __PYX_ERR(0, 1003, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  3:
+        if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_arg)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("trace_dispatch", 1, 4, 4, 3); __PYX_ERR(0, 1003, __pyx_L3_error)
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "trace_dispatch") < 0)) __PYX_ERR(0, 1003, __pyx_L3_error)
+      }
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 4) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+      values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+      values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
+    }
+    __pyx_v_py_db = values[0];
+    __pyx_v_frame = values[1];
+    __pyx_v_event = values[2];
+    __pyx_v_arg = values[3];
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("trace_dispatch", 1, 4, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1003, __pyx_L3_error)
+  __pyx_L3_error:;
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.trace_dispatch", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_12trace_dispatch(__pyx_self, __pyx_v_py_db, __pyx_v_frame, __pyx_v_event, __pyx_v_arg);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12trace_dispatch(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_py_db, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg) {
+  PyObject *__pyx_v_filename = 0;
+  PyObject *__pyx_v_name = 0;
+  PyObject *__pyx_v_args = 0;
+  PyObject *__pyx_v_thread = NULL;
+  PyObject *__pyx_v_f_unhandled = NULL;
+  int __pyx_v_force_only_unhandled_tracer;
+  PyObject *__pyx_v_t = NULL;
+  PyObject *__pyx_v_additional_info = NULL;
+  PyObject *__pyx_v_top_level_thread_tracer = NULL;
+  PyObject *__pyx_v_f_trace = NULL;
+  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_thread_tracer = NULL;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  int __pyx_t_2;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  PyObject *__pyx_t_6 = NULL;
+  PyObject *__pyx_t_7 = NULL;
+  PyObject *__pyx_t_8 = NULL;
+  int __pyx_t_9;
+  PyObject *__pyx_t_10 = NULL;
+  PyObject *__pyx_t_11 = NULL;
+  PyObject *__pyx_t_12 = NULL;
+  PyObject *__pyx_t_13 = NULL;
+  int __pyx_t_14;
+  __Pyx_RefNannySetupContext("trace_dispatch", 0);
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1014
+ *     # where more information is cached (and will also setup the tracing for
+ *     # frames where we should deal with unhandled exceptions).
+ *     thread = None             # <<<<<<<<<<<<<<
+ *     # Cache the frame which should be traced to deal with unhandled exceptions.
+ *     # (i.e.: thread entry-points).
+ */
+  __Pyx_INCREF(Py_None);
+  __pyx_v_thread = Py_None;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1018
+ *     # (i.e.: thread entry-points).
+ * 
+ *     f_unhandled = frame             # <<<<<<<<<<<<<<
+ *     # print('called at', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
+ *     force_only_unhandled_tracer = False
+ */
+  __Pyx_INCREF(__pyx_v_frame);
+  __pyx_v_f_unhandled = __pyx_v_frame;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1020
+ *     f_unhandled = frame
+ *     # print('called at', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
+ *     force_only_unhandled_tracer = False             # <<<<<<<<<<<<<<
+ *     while f_unhandled is not None:
+ *         filename = f_unhandled.f_code.co_filename
+ */
+  __pyx_v_force_only_unhandled_tracer = 0;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1021
+ *     # print('called at', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
+ *     force_only_unhandled_tracer = False
+ *     while f_unhandled is not None:             # <<<<<<<<<<<<<<
+ *         filename = f_unhandled.f_code.co_filename
+ *         name = splitext(basename(filename))[0]
+ */
+  while (1) {
+    __pyx_t_1 = (__pyx_v_f_unhandled != Py_None);
+    __pyx_t_2 = (__pyx_t_1 != 0);
+    if (!__pyx_t_2) break;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1022
+ *     force_only_unhandled_tracer = False
+ *     while f_unhandled is not None:
+ *         filename = f_unhandled.f_code.co_filename             # <<<<<<<<<<<<<<
+ *         name = splitext(basename(filename))[0]
+ *         if name == 'threading':
+ */
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_code); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1022, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_co_filename); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1022, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (!(likely(PyString_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(0, 1022, __pyx_L1_error)
+    __Pyx_XDECREF_SET(__pyx_v_filename, ((PyObject*)__pyx_t_4));
+    __pyx_t_4 = 0;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1023
+ *     while f_unhandled is not None:
+ *         filename = f_unhandled.f_code.co_filename
+ *         name = splitext(basename(filename))[0]             # <<<<<<<<<<<<<<
+ *         if name == 'threading':
+ *             if f_unhandled.f_code.co_name in ('__bootstrap', '_bootstrap'):
+ */
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_splitext); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1023, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_basename); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1023, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_7 = NULL;
+    if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_6))) {
+      __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_6);
+      if (likely(__pyx_t_7)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
+        __Pyx_INCREF(__pyx_t_7);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_6, function);
+      }
+    }
+    if (!__pyx_t_7) {
+      __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_filename); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1023, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+    } else {
+      #if CYTHON_FAST_PYCALL
+      if (PyFunction_Check(__pyx_t_6)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_v_filename};
+        __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1023, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+        __Pyx_GOTREF(__pyx_t_5);
+      } else
+      #endif
+      #if CYTHON_FAST_PYCCALL
+      if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_v_filename};
+        __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1023, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+        __Pyx_GOTREF(__pyx_t_5);
+      } else
+      #endif
+      {
+        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1023, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_8);
+        __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_7); __pyx_t_7 = NULL;
+        __Pyx_INCREF(__pyx_v_filename);
+        __Pyx_GIVEREF(__pyx_v_filename);
+        PyTuple_SET_ITEM(__pyx_t_8, 0+1, __pyx_v_filename);
+        __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_8, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1023, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      }
+    }
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_6 = NULL;
+    if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
+      __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_3);
+      if (likely(__pyx_t_6)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+        __Pyx_INCREF(__pyx_t_6);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_3, function);
+      }
+    }
+    if (!__pyx_t_6) {
+      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1023, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_GOTREF(__pyx_t_4);
+    } else {
+      #if CYTHON_FAST_PYCALL
+      if (PyFunction_Check(__pyx_t_3)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_t_5};
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1023, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+        __Pyx_GOTREF(__pyx_t_4);
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      } else
+      #endif
+      #if CYTHON_FAST_PYCCALL
+      if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_t_5};
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1023, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+        __Pyx_GOTREF(__pyx_t_4);
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      } else
+      #endif
+      {
+        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1023, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_8);
+        __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_6); __pyx_t_6 = NULL;
+        __Pyx_GIVEREF(__pyx_t_5);
+        PyTuple_SET_ITEM(__pyx_t_8, 0+1, __pyx_t_5);
+        __pyx_t_5 = 0;
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1023, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      }
+    }
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_4, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1023, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    if (!(likely(PyString_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_3)->tp_name), 0))) __PYX_ERR(0, 1023, __pyx_L1_error)
+    __Pyx_XDECREF_SET(__pyx_v_name, ((PyObject*)__pyx_t_3));
+    __pyx_t_3 = 0;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1024
+ *         filename = f_unhandled.f_code.co_filename
+ *         name = splitext(basename(filename))[0]
+ *         if name == 'threading':             # <<<<<<<<<<<<<<
+ *             if f_unhandled.f_code.co_name in ('__bootstrap', '_bootstrap'):
+ *                 # We need __bootstrap_inner, not __bootstrap.
+ */
+    __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_name, __pyx_n_s_threading, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1024, __pyx_L1_error)
+    __pyx_t_1 = (__pyx_t_2 != 0);
+    if (__pyx_t_1) {
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1025
+ *         name = splitext(basename(filename))[0]
+ *         if name == 'threading':
+ *             if f_unhandled.f_code.co_name in ('__bootstrap', '_bootstrap'):             # <<<<<<<<<<<<<<
+ *                 # We need __bootstrap_inner, not __bootstrap.
+ *                 return None
+ */
+      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_code); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1025, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_co_name); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1025, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_t_4, __pyx_n_s_bootstrap, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1025, __pyx_L1_error)
+      if (!__pyx_t_2) {
+      } else {
+        __pyx_t_1 = __pyx_t_2;
+        goto __pyx_L7_bool_binop_done;
+      }
+      __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_t_4, __pyx_n_s_bootstrap_2, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1025, __pyx_L1_error)
+      __pyx_t_1 = __pyx_t_2;
+      __pyx_L7_bool_binop_done:;
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __pyx_t_2 = (__pyx_t_1 != 0);
+      if (__pyx_t_2) {
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1027
+ *             if f_unhandled.f_code.co_name in ('__bootstrap', '_bootstrap'):
+ *                 # We need __bootstrap_inner, not __bootstrap.
+ *                 return None             # <<<<<<<<<<<<<<
+ * 
+ *             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):
+ */
+        __Pyx_XDECREF(__pyx_r);
+        __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+        goto __pyx_L0;
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1025
+ *         name = splitext(basename(filename))[0]
+ *         if name == 'threading':
+ *             if f_unhandled.f_code.co_name in ('__bootstrap', '_bootstrap'):             # <<<<<<<<<<<<<<
+ *                 # We need __bootstrap_inner, not __bootstrap.
+ *                 return None
+ */
+      }
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1029
+ *                 return None
+ * 
+ *             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):             # <<<<<<<<<<<<<<
+ *                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
+ *                 t = f_unhandled.f_locals.get('self')
+ */
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1029, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_co_name); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1029, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __pyx_t_1 = (__Pyx_PyString_Equals(__pyx_t_3, __pyx_n_s_bootstrap_inner, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 1029, __pyx_L1_error)
+      if (!__pyx_t_1) {
+      } else {
+        __pyx_t_2 = __pyx_t_1;
+        goto __pyx_L9_bool_binop_done;
+      }
+      __pyx_t_1 = (__Pyx_PyString_Equals(__pyx_t_3, __pyx_n_s_bootstrap_inner_2, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 1029, __pyx_L1_error)
+      __pyx_t_2 = __pyx_t_1;
+      __pyx_L9_bool_binop_done:;
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __pyx_t_1 = (__pyx_t_2 != 0);
+      if (__pyx_t_1) {
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1031
+ *             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):
+ *                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
+ *                 t = f_unhandled.f_locals.get('self')             # <<<<<<<<<<<<<<
+ *                 force_only_unhandled_tracer = True
+ *                 if t is not None and isinstance(t, threading.Thread):
+ */
+        __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_locals); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1031, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_3);
+        __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_get); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1031, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1031, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+        __Pyx_XDECREF_SET(__pyx_v_t, __pyx_t_3);
+        __pyx_t_3 = 0;
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1032
+ *                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
+ *                 t = f_unhandled.f_locals.get('self')
+ *                 force_only_unhandled_tracer = True             # <<<<<<<<<<<<<<
+ *                 if t is not None and isinstance(t, threading.Thread):
+ *                     thread = t
+ */
+        __pyx_v_force_only_unhandled_tracer = 1;
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1033
+ *                 t = f_unhandled.f_locals.get('self')
+ *                 force_only_unhandled_tracer = True
+ *                 if t is not None and isinstance(t, threading.Thread):             # <<<<<<<<<<<<<<
+ *                     thread = t
+ *                     break
+ */
+        __pyx_t_2 = (__pyx_v_t != Py_None);
+        __pyx_t_9 = (__pyx_t_2 != 0);
+        if (__pyx_t_9) {
+        } else {
+          __pyx_t_1 = __pyx_t_9;
+          goto __pyx_L12_bool_binop_done;
+        }
+        __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_threading); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1033, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_3);
+        __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_Thread); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1033, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+        __pyx_t_9 = PyObject_IsInstance(__pyx_v_t, __pyx_t_4); if (unlikely(__pyx_t_9 == ((int)-1))) __PYX_ERR(0, 1033, __pyx_L1_error)
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+        __pyx_t_2 = (__pyx_t_9 != 0);
+        __pyx_t_1 = __pyx_t_2;
+        __pyx_L12_bool_binop_done:;
+        if (__pyx_t_1) {
+
+          /* "_pydevd_bundle/pydevd_cython.pyx":1034
+ *                 force_only_unhandled_tracer = True
+ *                 if t is not None and isinstance(t, threading.Thread):
+ *                     thread = t             # <<<<<<<<<<<<<<
+ *                     break
+ * 
+ */
+          __Pyx_INCREF(__pyx_v_t);
+          __Pyx_DECREF_SET(__pyx_v_thread, __pyx_v_t);
+
+          /* "_pydevd_bundle/pydevd_cython.pyx":1035
+ *                 if t is not None and isinstance(t, threading.Thread):
+ *                     thread = t
+ *                     break             # <<<<<<<<<<<<<<
+ * 
+ *         elif name == 'pydev_monkey':
+ */
+          goto __pyx_L4_break;
+
+          /* "_pydevd_bundle/pydevd_cython.pyx":1033
+ *                 t = f_unhandled.f_locals.get('self')
+ *                 force_only_unhandled_tracer = True
+ *                 if t is not None and isinstance(t, threading.Thread):             # <<<<<<<<<<<<<<
+ *                     thread = t
+ *                     break
+ */
+        }
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1029
+ *                 return None
+ * 
+ *             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):             # <<<<<<<<<<<<<<
+ *                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
+ *                 t = f_unhandled.f_locals.get('self')
+ */
+      }
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1024
+ *         filename = f_unhandled.f_code.co_filename
+ *         name = splitext(basename(filename))[0]
+ *         if name == 'threading':             # <<<<<<<<<<<<<<
+ *             if f_unhandled.f_code.co_name in ('__bootstrap', '_bootstrap'):
+ *                 # We need __bootstrap_inner, not __bootstrap.
+ */
+      goto __pyx_L5;
+    }
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1037
+ *                     break
+ * 
+ *         elif name == 'pydev_monkey':             # <<<<<<<<<<<<<<
+ *             if f_unhandled.f_code.co_name == '__call__':
+ *                 force_only_unhandled_tracer = True
+ */
+    __pyx_t_1 = (__Pyx_PyString_Equals(__pyx_v_name, __pyx_n_s_pydev_monkey, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 1037, __pyx_L1_error)
+    __pyx_t_2 = (__pyx_t_1 != 0);
+    if (__pyx_t_2) {
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1038
+ * 
+ *         elif name == 'pydev_monkey':
+ *             if f_unhandled.f_code.co_name == '__call__':             # <<<<<<<<<<<<<<
+ *                 force_only_unhandled_tracer = True
+ *                 break
+ */
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1038, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_co_name); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1038, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_t_3, __pyx_n_s_call_2, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1038, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      if (__pyx_t_2) {
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1039
+ *         elif name == 'pydev_monkey':
+ *             if f_unhandled.f_code.co_name == '__call__':
+ *                 force_only_unhandled_tracer = True             # <<<<<<<<<<<<<<
+ *                 break
+ * 
+ */
+        __pyx_v_force_only_unhandled_tracer = 1;
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1040
+ *             if f_unhandled.f_code.co_name == '__call__':
+ *                 force_only_unhandled_tracer = True
+ *                 break             # <<<<<<<<<<<<<<
+ * 
+ *         elif name == 'pydevd':
+ */
+        goto __pyx_L4_break;
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1038
+ * 
+ *         elif name == 'pydev_monkey':
+ *             if f_unhandled.f_code.co_name == '__call__':             # <<<<<<<<<<<<<<
+ *                 force_only_unhandled_tracer = True
+ *                 break
+ */
+      }
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1037
+ *                     break
+ * 
+ *         elif name == 'pydev_monkey':             # <<<<<<<<<<<<<<
+ *             if f_unhandled.f_code.co_name == '__call__':
+ *                 force_only_unhandled_tracer = True
+ */
+      goto __pyx_L5;
+    }
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1042
+ *                 break
+ * 
+ *         elif name == 'pydevd':             # <<<<<<<<<<<<<<
+ *             if f_unhandled.f_code.co_name in ('run', 'main'):
+ *                 # We need to get to _exec
+ */
+    __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_name, __pyx_n_s_pydevd, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1042, __pyx_L1_error)
+    __pyx_t_1 = (__pyx_t_2 != 0);
+    if (__pyx_t_1) {
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1043
+ * 
+ *         elif name == 'pydevd':
+ *             if f_unhandled.f_code.co_name in ('run', 'main'):             # <<<<<<<<<<<<<<
+ *                 # We need to get to _exec
+ *                 return None
+ */
+      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_code); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1043, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_co_name); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1043, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_t_4, __pyx_n_s_run, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1043, __pyx_L1_error)
+      if (!__pyx_t_2) {
+      } else {
+        __pyx_t_1 = __pyx_t_2;
+        goto __pyx_L16_bool_binop_done;
+      }
+      __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_t_4, __pyx_n_s_main, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1043, __pyx_L1_error)
+      __pyx_t_1 = __pyx_t_2;
+      __pyx_L16_bool_binop_done:;
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __pyx_t_2 = (__pyx_t_1 != 0);
+      if (__pyx_t_2) {
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1045
+ *             if f_unhandled.f_code.co_name in ('run', 'main'):
+ *                 # We need to get to _exec
+ *                 return None             # <<<<<<<<<<<<<<
+ * 
+ *             if f_unhandled.f_code.co_name == '_exec':
+ */
+        __Pyx_XDECREF(__pyx_r);
+        __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+        goto __pyx_L0;
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1043
+ * 
+ *         elif name == 'pydevd':
+ *             if f_unhandled.f_code.co_name in ('run', 'main'):             # <<<<<<<<<<<<<<
+ *                 # We need to get to _exec
+ *                 return None
+ */
+      }
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1047
+ *                 return None
+ * 
+ *             if f_unhandled.f_code.co_name == '_exec':             # <<<<<<<<<<<<<<
+ *                 force_only_unhandled_tracer = True
+ *                 break
+ */
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1047, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_co_name); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1047, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_t_3, __pyx_n_s_exec, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1047, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      if (__pyx_t_2) {
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1048
+ * 
+ *             if f_unhandled.f_code.co_name == '_exec':
+ *                 force_only_unhandled_tracer = True             # <<<<<<<<<<<<<<
+ *                 break
+ * 
+ */
+        __pyx_v_force_only_unhandled_tracer = 1;
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1049
+ *             if f_unhandled.f_code.co_name == '_exec':
+ *                 force_only_unhandled_tracer = True
+ *                 break             # <<<<<<<<<<<<<<
+ * 
+ *         elif f_unhandled.f_back is None:
+ */
+        goto __pyx_L4_break;
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1047
+ *                 return None
+ * 
+ *             if f_unhandled.f_code.co_name == '_exec':             # <<<<<<<<<<<<<<
+ *                 force_only_unhandled_tracer = True
+ *                 break
+ */
+      }
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1042
+ *                 break
+ * 
+ *         elif name == 'pydevd':             # <<<<<<<<<<<<<<
+ *             if f_unhandled.f_code.co_name in ('run', 'main'):
+ *                 # We need to get to _exec
+ */
+      goto __pyx_L5;
+    }
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1051
+ *                 break
+ * 
+ *         elif f_unhandled.f_back is None:             # <<<<<<<<<<<<<<
+ *             break
+ * 
+ */
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_back); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1051, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_2 = (__pyx_t_3 == Py_None);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __pyx_t_1 = (__pyx_t_2 != 0);
+    if (__pyx_t_1) {
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1052
+ * 
+ *         elif f_unhandled.f_back is None:
+ *             break             # <<<<<<<<<<<<<<
+ * 
+ *         f_unhandled = f_unhandled.f_back
+ */
+      goto __pyx_L4_break;
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1051
+ *                 break
+ * 
+ *         elif f_unhandled.f_back is None:             # <<<<<<<<<<<<<<
+ *             break
+ * 
+ */
+    }
+    __pyx_L5:;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1054
+ *             break
+ * 
+ *         f_unhandled = f_unhandled.f_back             # <<<<<<<<<<<<<<
+ * 
+ *     if thread is None:
+ */
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_back); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1054, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF_SET(__pyx_v_f_unhandled, __pyx_t_3);
+    __pyx_t_3 = 0;
+  }
+  __pyx_L4_break:;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1056
+ *         f_unhandled = f_unhandled.f_back
+ * 
+ *     if thread is None:             # <<<<<<<<<<<<<<
+ *         # Important: don't call threadingCurrentThread if we're in the threading module
+ *         # to avoid creating dummy threads.
+ */
+  __pyx_t_1 = (__pyx_v_thread == Py_None);
+  __pyx_t_2 = (__pyx_t_1 != 0);
+  if (__pyx_t_2) {
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1059
+ *         # Important: don't call threadingCurrentThread if we're in the threading module
+ *         # to avoid creating dummy threads.
+ *         thread = threadingCurrentThread()             # <<<<<<<<<<<<<<
+ * 
+ *     if getattr(thread, 'pydev_do_not_trace', None):
+ */
+    __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_threadingCurrentThread); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1059, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __pyx_t_8 = NULL;
+    if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_4))) {
+      __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_4);
+      if (likely(__pyx_t_8)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+        __Pyx_INCREF(__pyx_t_8);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_4, function);
+      }
+    }
+    if (__pyx_t_8) {
+      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_8); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1059, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+    } else {
+      __pyx_t_3 = __Pyx_PyObject_CallNoArg(__pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1059, __pyx_L1_error)
+    }
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __Pyx_DECREF_SET(__pyx_v_thread, __pyx_t_3);
+    __pyx_t_3 = 0;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1056
+ *         f_unhandled = f_unhandled.f_back
+ * 
+ *     if thread is None:             # <<<<<<<<<<<<<<
+ *         # Important: don't call threadingCurrentThread if we're in the threading module
+ *         # to avoid creating dummy threads.
+ */
+  }
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1061
+ *         thread = threadingCurrentThread()
+ * 
+ *     if getattr(thread, 'pydev_do_not_trace', None):             # <<<<<<<<<<<<<<
+ *         SetTrace(None, apply_to_pydevd_thread=True)
+ *         return None
+ */
+  __pyx_t_3 = __Pyx_GetAttr3(__pyx_v_thread, __pyx_n_s_pydev_do_not_trace, Py_None); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1061, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1061, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (__pyx_t_2) {
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1062
+ * 
+ *     if getattr(thread, 'pydev_do_not_trace', None):
+ *         SetTrace(None, apply_to_pydevd_thread=True)             # <<<<<<<<<<<<<<
+ *         return None
+ * 
+ */
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_SetTrace); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1062, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1062, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_apply_to_pydevd_thread, Py_True) < 0) __PYX_ERR(0, 1062, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__7, __pyx_t_4); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1062, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1063
+ *     if getattr(thread, 'pydev_do_not_trace', None):
+ *         SetTrace(None, apply_to_pydevd_thread=True)
+ *         return None             # <<<<<<<<<<<<<<
+ * 
+ *     try:
+ */
+    __Pyx_XDECREF(__pyx_r);
+    __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+    goto __pyx_L0;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1061
+ *         thread = threadingCurrentThread()
+ * 
+ *     if getattr(thread, 'pydev_do_not_trace', None):             # <<<<<<<<<<<<<<
+ *         SetTrace(None, apply_to_pydevd_thread=True)
+ *         return None
+ */
+  }
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1065
+ *         return None
+ * 
+ *     try:             # <<<<<<<<<<<<<<
+ *         additional_info = thread.additional_info
+ *         if additional_info is None:
+ */
+  {
+    __Pyx_PyThreadState_declare
+    __Pyx_PyThreadState_assign
+    __Pyx_ExceptionSave(&__pyx_t_10, &__pyx_t_11, &__pyx_t_12);
+    __Pyx_XGOTREF(__pyx_t_10);
+    __Pyx_XGOTREF(__pyx_t_11);
+    __Pyx_XGOTREF(__pyx_t_12);
+    /*try:*/ {
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1066
+ * 
+ *     try:
+ *         additional_info = thread.additional_info             # <<<<<<<<<<<<<<
+ *         if additional_info is None:
+ *             raise AttributeError()
+ */
+      __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_thread, __pyx_n_s_additional_info); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1066, __pyx_L21_error)
+      __Pyx_GOTREF(__pyx_t_8);
+      __pyx_v_additional_info = __pyx_t_8;
+      __pyx_t_8 = 0;
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1067
+ *     try:
+ *         additional_info = thread.additional_info
+ *         if additional_info is None:             # <<<<<<<<<<<<<<
+ *             raise AttributeError()
+ *     except:
+ */
+      __pyx_t_2 = (__pyx_v_additional_info == Py_None);
+      __pyx_t_1 = (__pyx_t_2 != 0);
+      if (unlikely(__pyx_t_1)) {
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1068
+ *         additional_info = thread.additional_info
+ *         if additional_info is None:
+ *             raise AttributeError()             # <<<<<<<<<<<<<<
+ *     except:
+ *         additional_info = set_additional_thread_info(thread)
+ */
+        __pyx_t_8 = __Pyx_PyObject_CallNoArg(__pyx_builtin_AttributeError); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1068, __pyx_L21_error)
+        __Pyx_GOTREF(__pyx_t_8);
+        __Pyx_Raise(__pyx_t_8, 0, 0, 0);
+        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+        __PYX_ERR(0, 1068, __pyx_L21_error)
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1067
+ *     try:
+ *         additional_info = thread.additional_info
+ *         if additional_info is None:             # <<<<<<<<<<<<<<
+ *             raise AttributeError()
+ *     except:
+ */
+      }
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1065
+ *         return None
+ * 
+ *     try:             # <<<<<<<<<<<<<<
+ *         additional_info = thread.additional_info
+ *         if additional_info is None:
+ */
+    }
+    __Pyx_XDECREF(__pyx_t_10); __pyx_t_10 = 0;
+    __Pyx_XDECREF(__pyx_t_11); __pyx_t_11 = 0;
+    __Pyx_XDECREF(__pyx_t_12); __pyx_t_12 = 0;
+    goto __pyx_L26_try_end;
+    __pyx_L21_error:;
+    __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1069
+ *         if additional_info is None:
+ *             raise AttributeError()
+ *     except:             # <<<<<<<<<<<<<<
+ *         additional_info = set_additional_thread_info(thread)
+ * 
+ */
+    /*except:*/ {
+      __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.trace_dispatch", __pyx_clineno, __pyx_lineno, __pyx_filename);
+      if (__Pyx_GetException(&__pyx_t_8, &__pyx_t_4, &__pyx_t_3) < 0) __PYX_ERR(0, 1069, __pyx_L23_except_error)
+      __Pyx_GOTREF(__pyx_t_8);
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_GOTREF(__pyx_t_3);
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1070
+ *             raise AttributeError()
+ *     except:
+ *         additional_info = set_additional_thread_info(thread)             # <<<<<<<<<<<<<<
+ * 
+ *     # print('enter thread tracer', thread, get_thread_id(thread))
+ */
+      __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_set_additional_thread_info); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1070, __pyx_L23_except_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __pyx_t_7 = NULL;
+      if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_6))) {
+        __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_6);
+        if (likely(__pyx_t_7)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
+          __Pyx_INCREF(__pyx_t_7);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_6, function);
+        }
+      }
+      if (!__pyx_t_7) {
+        __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_thread); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1070, __pyx_L23_except_error)
+        __Pyx_GOTREF(__pyx_t_5);
+      } else {
+        #if CYTHON_FAST_PYCALL
+        if (PyFunction_Check(__pyx_t_6)) {
+          PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_v_thread};
+          __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1070, __pyx_L23_except_error)
+          __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+          __Pyx_GOTREF(__pyx_t_5);
+        } else
+        #endif
+        #if CYTHON_FAST_PYCCALL
+        if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
+          PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_v_thread};
+          __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1070, __pyx_L23_except_error)
+          __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+          __Pyx_GOTREF(__pyx_t_5);
+        } else
+        #endif
+        {
+          __pyx_t_13 = PyTuple_New(1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 1070, __pyx_L23_except_error)
+          __Pyx_GOTREF(__pyx_t_13);
+          __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_13, 0, __pyx_t_7); __pyx_t_7 = NULL;
+          __Pyx_INCREF(__pyx_v_thread);
+          __Pyx_GIVEREF(__pyx_v_thread);
+          PyTuple_SET_ITEM(__pyx_t_13, 0+1, __pyx_v_thread);
+          __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_13, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1070, __pyx_L23_except_error)
+          __Pyx_GOTREF(__pyx_t_5);
+          __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
+        }
+      }
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_XDECREF_SET(__pyx_v_additional_info, __pyx_t_5);
+      __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      goto __pyx_L22_exception_handled;
+    }
+    __pyx_L23_except_error:;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1065
+ *         return None
+ * 
+ *     try:             # <<<<<<<<<<<<<<
+ *         additional_info = thread.additional_info
+ *         if additional_info is None:
+ */
+    __Pyx_XGIVEREF(__pyx_t_10);
+    __Pyx_XGIVEREF(__pyx_t_11);
+    __Pyx_XGIVEREF(__pyx_t_12);
+    __Pyx_ExceptionReset(__pyx_t_10, __pyx_t_11, __pyx_t_12);
+    goto __pyx_L1_error;
+    __pyx_L22_exception_handled:;
+    __Pyx_XGIVEREF(__pyx_t_10);
+    __Pyx_XGIVEREF(__pyx_t_11);
+    __Pyx_XGIVEREF(__pyx_t_12);
+    __Pyx_ExceptionReset(__pyx_t_10, __pyx_t_11, __pyx_t_12);
+    __pyx_L26_try_end:;
+  }
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1073
+ * 
+ *     # print('enter thread tracer', thread, get_thread_id(thread))
+ *     args = (py_db, thread, additional_info, global_cache_skips, global_cache_frame_skips)             # <<<<<<<<<<<<<<
+ * 
+ *     if f_unhandled is not None:
+ */
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_global_cache_skips); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1073, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_global_cache_frame_skips); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1073, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_8 = PyTuple_New(5); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1073, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_8);
+  __Pyx_INCREF(__pyx_v_py_db);
+  __Pyx_GIVEREF(__pyx_v_py_db);
+  PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_v_py_db);
+  __Pyx_INCREF(__pyx_v_thread);
+  __Pyx_GIVEREF(__pyx_v_thread);
+  PyTuple_SET_ITEM(__pyx_t_8, 1, __pyx_v_thread);
+  __Pyx_INCREF(__pyx_v_additional_info);
+  __Pyx_GIVEREF(__pyx_v_additional_info);
+  PyTuple_SET_ITEM(__pyx_t_8, 2, __pyx_v_additional_info);
+  __Pyx_GIVEREF(__pyx_t_3);
+  PyTuple_SET_ITEM(__pyx_t_8, 3, __pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_4);
+  PyTuple_SET_ITEM(__pyx_t_8, 4, __pyx_t_4);
+  __pyx_t_3 = 0;
+  __pyx_t_4 = 0;
+  __pyx_v_args = ((PyObject*)__pyx_t_8);
+  __pyx_t_8 = 0;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1075
+ *     args = (py_db, thread, additional_info, global_cache_skips, global_cache_frame_skips)
+ * 
+ *     if f_unhandled is not None:             # <<<<<<<<<<<<<<
+ *         if f_unhandled.f_back is None and not force_only_unhandled_tracer:
+ *             # Happens when we attach to a running program.
+ */
+  __pyx_t_1 = (__pyx_v_f_unhandled != Py_None);
+  __pyx_t_2 = (__pyx_t_1 != 0);
+  if (__pyx_t_2) {
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1076
+ * 
+ *     if f_unhandled is not None:
+ *         if f_unhandled.f_back is None and not force_only_unhandled_tracer:             # <<<<<<<<<<<<<<
+ *             # Happens when we attach to a running program.
+ *             top_level_thread_tracer = TopLevelThreadTracerNoBackFrame(ThreadTracer(args).__call__, args)
+ */
+    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_back); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1076, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __pyx_t_1 = (__pyx_t_8 == Py_None);
+    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+    __pyx_t_9 = (__pyx_t_1 != 0);
+    if (__pyx_t_9) {
+    } else {
+      __pyx_t_2 = __pyx_t_9;
+      goto __pyx_L32_bool_binop_done;
+    }
+    __pyx_t_9 = ((!(__pyx_v_force_only_unhandled_tracer != 0)) != 0);
+    __pyx_t_2 = __pyx_t_9;
+    __pyx_L32_bool_binop_done:;
+    if (__pyx_t_2) {
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1078
+ *         if f_unhandled.f_back is None and not force_only_unhandled_tracer:
+ *             # Happens when we attach to a running program.
+ *             top_level_thread_tracer = TopLevelThreadTracerNoBackFrame(ThreadTracer(args).__call__, args)             # <<<<<<<<<<<<<<
+ *         else:
+ *             # Stop in some internal place to report about unhandled exceptions
+ */
+      __pyx_t_8 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_ThreadTracer), __pyx_v_args); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1078, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_n_s_call_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1078, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      __pyx_t_8 = PyTuple_New(2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1078, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
+      __Pyx_GIVEREF(__pyx_t_4);
+      PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_4);
+      __Pyx_INCREF(__pyx_v_args);
+      __Pyx_GIVEREF(__pyx_v_args);
+      PyTuple_SET_ITEM(__pyx_t_8, 1, __pyx_v_args);
+      __pyx_t_4 = 0;
+      __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame), __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1078, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      __pyx_v_top_level_thread_tracer = __pyx_t_4;
+      __pyx_t_4 = 0;
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1076
+ * 
+ *     if f_unhandled is not None:
+ *         if f_unhandled.f_back is None and not force_only_unhandled_tracer:             # <<<<<<<<<<<<<<
+ *             # Happens when we attach to a running program.
+ *             top_level_thread_tracer = TopLevelThreadTracerNoBackFrame(ThreadTracer(args).__call__, args)
+ */
+      goto __pyx_L31;
+    }
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1081
+ *         else:
+ *             # Stop in some internal place to report about unhandled exceptions
+ *             top_level_thread_tracer = TopLevelThreadTracerOnlyUnhandledExceptions(args)             # <<<<<<<<<<<<<<
+ * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ *         thread._top_level_thread_tracer = top_level_thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
+ */
+    /*else*/ {
+      __pyx_t_4 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions), __pyx_v_args); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1081, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __pyx_v_top_level_thread_tracer = __pyx_t_4;
+      __pyx_t_4 = 0;
+    }
+    __pyx_L31:;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1083
+ *             top_level_thread_tracer = TopLevelThreadTracerOnlyUnhandledExceptions(args)
+ * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ *         thread._top_level_thread_tracer = top_level_thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).             # <<<<<<<<<<<<<<
+ * # ELSE
+ * # ENDIF
+ */
+    if (__Pyx_PyObject_SetAttrStr(__pyx_v_thread, __pyx_n_s_top_level_thread_tracer, __pyx_v_top_level_thread_tracer) < 0) __PYX_ERR(0, 1083, __pyx_L1_error)
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1087
+ * # ENDIF
+ *         # print(' --> found to trace unhandled', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
+ *         f_trace = top_level_thread_tracer.get_trace_dispatch_func()             # <<<<<<<<<<<<<<
+ *         # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ *         f_unhandled.f_trace = SafeCallWrapper(f_trace)
+ */
+    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_top_level_thread_tracer, __pyx_n_s_get_trace_dispatch_func); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1087, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __pyx_t_3 = NULL;
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_8))) {
+      __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_8);
+      if (likely(__pyx_t_3)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_8);
+        __Pyx_INCREF(__pyx_t_3);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_8, function);
+      }
+    }
+    if (__pyx_t_3) {
+      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1087, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    } else {
+      __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_t_8); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1087, __pyx_L1_error)
+    }
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+    __pyx_v_f_trace = __pyx_t_4;
+    __pyx_t_4 = 0;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1089
+ *         f_trace = top_level_thread_tracer.get_trace_dispatch_func()
+ *         # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ *         f_unhandled.f_trace = SafeCallWrapper(f_trace)             # <<<<<<<<<<<<<<
+ *         # ELSE
+ * #         f_unhandled.f_trace = f_trace
+ */
+    __pyx_t_4 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper), __pyx_v_f_trace); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1089, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    if (__Pyx_PyObject_SetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_trace, __pyx_t_4) < 0) __PYX_ERR(0, 1089, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1094
+ *         # ENDIF
+ * 
+ *         if frame is f_unhandled:             # <<<<<<<<<<<<<<
+ *             return f_unhandled.f_trace(frame, event, arg)
+ * 
+ */
+    __pyx_t_2 = (__pyx_v_frame == __pyx_v_f_unhandled);
+    __pyx_t_9 = (__pyx_t_2 != 0);
+    if (__pyx_t_9) {
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1095
+ * 
+ *         if frame is f_unhandled:
+ *             return f_unhandled.f_trace(frame, event, arg)             # <<<<<<<<<<<<<<
+ * 
+ *     thread_tracer = ThreadTracer(args)
+ */
+      __Pyx_XDECREF(__pyx_r);
+      __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_trace); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1095, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
+      __pyx_t_3 = NULL;
+      __pyx_t_14 = 0;
+      if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_8))) {
+        __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_8);
+        if (likely(__pyx_t_3)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_8);
+          __Pyx_INCREF(__pyx_t_3);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_8, function);
+          __pyx_t_14 = 1;
+        }
+      }
+      #if CYTHON_FAST_PYCALL
+      if (PyFunction_Check(__pyx_t_8)) {
+        PyObject *__pyx_temp[4] = {__pyx_t_3, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-__pyx_t_14, 3+__pyx_t_14); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1095, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+        __Pyx_GOTREF(__pyx_t_4);
+      } else
+      #endif
+      #if CYTHON_FAST_PYCCALL
+      if (__Pyx_PyFastCFunction_Check(__pyx_t_8)) {
+        PyObject *__pyx_temp[4] = {__pyx_t_3, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-__pyx_t_14, 3+__pyx_t_14); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1095, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+        __Pyx_GOTREF(__pyx_t_4);
+      } else
+      #endif
+      {
+        __pyx_t_5 = PyTuple_New(3+__pyx_t_14); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1095, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        if (__pyx_t_3) {
+          __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3); __pyx_t_3 = NULL;
+        }
+        __Pyx_INCREF(__pyx_v_frame);
+        __Pyx_GIVEREF(__pyx_v_frame);
+        PyTuple_SET_ITEM(__pyx_t_5, 0+__pyx_t_14, __pyx_v_frame);
+        __Pyx_INCREF(__pyx_v_event);
+        __Pyx_GIVEREF(__pyx_v_event);
+        PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_14, __pyx_v_event);
+        __Pyx_INCREF(__pyx_v_arg);
+        __Pyx_GIVEREF(__pyx_v_arg);
+        PyTuple_SET_ITEM(__pyx_t_5, 2+__pyx_t_14, __pyx_v_arg);
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_5, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1095, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      }
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      __pyx_r = __pyx_t_4;
+      __pyx_t_4 = 0;
+      goto __pyx_L0;
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1094
+ *         # ENDIF
+ * 
+ *         if frame is f_unhandled:             # <<<<<<<<<<<<<<
+ *             return f_unhandled.f_trace(frame, event, arg)
+ * 
+ */
+    }
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1075
+ *     args = (py_db, thread, additional_info, global_cache_skips, global_cache_frame_skips)
+ * 
+ *     if f_unhandled is not None:             # <<<<<<<<<<<<<<
+ *         if f_unhandled.f_back is None and not force_only_unhandled_tracer:
+ *             # Happens when we attach to a running program.
+ */
+  }
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1097
+ *             return f_unhandled.f_trace(frame, event, arg)
+ * 
+ *     thread_tracer = ThreadTracer(args)             # <<<<<<<<<<<<<<
+ * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ *     thread._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
+ */
+  __pyx_t_4 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_ThreadTracer), __pyx_v_args); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1097, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_v_thread_tracer = ((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *)__pyx_t_4);
+  __pyx_t_4 = 0;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1099
+ *     thread_tracer = ThreadTracer(args)
+ * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ *     thread._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).             # <<<<<<<<<<<<<<
+ * # ELSE
+ * # ENDIF
+ */
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_thread, __pyx_n_s_tracer, ((PyObject *)__pyx_v_thread_tracer)) < 0) __PYX_ERR(0, 1099, __pyx_L1_error)
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1104
+ * 
+ * 
+ *     SetTrace(thread_tracer.__call__)             # <<<<<<<<<<<<<<
+ *     return thread_tracer.__call__(frame, event, arg)
+ * 
+ */
+  __pyx_t_8 = __Pyx_GetModuleGlobalName(__pyx_n_s_SetTrace); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1104, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_8);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_thread_tracer), __pyx_n_s_call_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1104, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_3 = NULL;
+  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_8))) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_8);
+    if (likely(__pyx_t_3)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_8);
+      __Pyx_INCREF(__pyx_t_3);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_8, function);
+    }
+  }
+  if (!__pyx_t_3) {
+    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1104, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_GOTREF(__pyx_t_4);
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_8)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_t_5};
+      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1104, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_8)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_t_5};
+      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1104, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    } else
+    #endif
+    {
+      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1104, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_3); __pyx_t_3 = NULL;
+      __Pyx_GIVEREF(__pyx_t_5);
+      PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_5);
+      __pyx_t_5 = 0;
+      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_6, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1104, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1105
+ * 
+ *     SetTrace(thread_tracer.__call__)
+ *     return thread_tracer.__call__(frame, event, arg)             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_thread_tracer), __pyx_n_s_call_2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1105, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_8);
+  __pyx_t_6 = NULL;
+  __pyx_t_14 = 0;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_8))) {
+    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_8);
+    if (likely(__pyx_t_6)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_8);
+      __Pyx_INCREF(__pyx_t_6);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_8, function);
+      __pyx_t_14 = 1;
+    }
+  }
+  #if CYTHON_FAST_PYCALL
+  if (PyFunction_Check(__pyx_t_8)) {
+    PyObject *__pyx_temp[4] = {__pyx_t_6, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
+    __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-__pyx_t_14, 3+__pyx_t_14); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1105, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __Pyx_GOTREF(__pyx_t_4);
+  } else
+  #endif
+  #if CYTHON_FAST_PYCCALL
+  if (__Pyx_PyFastCFunction_Check(__pyx_t_8)) {
+    PyObject *__pyx_temp[4] = {__pyx_t_6, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
+    __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-__pyx_t_14, 3+__pyx_t_14); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1105, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __Pyx_GOTREF(__pyx_t_4);
+  } else
+  #endif
+  {
+    __pyx_t_5 = PyTuple_New(3+__pyx_t_14); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1105, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    if (__pyx_t_6) {
+      __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_6); __pyx_t_6 = NULL;
+    }
+    __Pyx_INCREF(__pyx_v_frame);
+    __Pyx_GIVEREF(__pyx_v_frame);
+    PyTuple_SET_ITEM(__pyx_t_5, 0+__pyx_t_14, __pyx_v_frame);
+    __Pyx_INCREF(__pyx_v_event);
+    __Pyx_GIVEREF(__pyx_v_event);
+    PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_14, __pyx_v_event);
+    __Pyx_INCREF(__pyx_v_arg);
+    __Pyx_GIVEREF(__pyx_v_arg);
+    PyTuple_SET_ITEM(__pyx_t_5, 2+__pyx_t_14, __pyx_v_arg);
+    __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_5, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1105, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  }
+  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+  __pyx_r = __pyx_t_4;
+  __pyx_t_4 = 0;
+  goto __pyx_L0;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1003
+ * 
+ * 
+ * def trace_dispatch(py_db, frame, event, arg):             # <<<<<<<<<<<<<<
+ *     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ *     cdef str filename;
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_XDECREF(__pyx_t_8);
+  __Pyx_XDECREF(__pyx_t_13);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.trace_dispatch", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_filename);
+  __Pyx_XDECREF(__pyx_v_name);
+  __Pyx_XDECREF(__pyx_v_args);
+  __Pyx_XDECREF(__pyx_v_thread);
+  __Pyx_XDECREF(__pyx_v_f_unhandled);
+  __Pyx_XDECREF(__pyx_v_t);
+  __Pyx_XDECREF(__pyx_v_additional_info);
+  __Pyx_XDECREF(__pyx_v_top_level_thread_tracer);
+  __Pyx_XDECREF(__pyx_v_f_trace);
+  __Pyx_XDECREF((PyObject *)__pyx_v_thread_tracer);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "_pydevd_bundle/pydevd_cython.pyx":1111
+ * cdef class TopLevelThreadTracerOnlyUnhandledExceptions:
+ *     cdef public tuple _args;
+ *     def __init__(self, tuple args):             # <<<<<<<<<<<<<<
+ *         self._args = args
+ * # ELSE
+ */
+
+/* Python wrapper */
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  PyObject *__pyx_v_args = 0;
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__init__ (wrapper)", 0);
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_args,0};
+    PyObject* values[1] = {0};
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_args)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+      }
+      if (unlikely(kw_args > 0)) {
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 1111, __pyx_L3_error)
+      }
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 1) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+    }
+    __pyx_v_args = ((PyObject*)values[0]);
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1111, __pyx_L3_error)
+  __pyx_L3_error:;
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerOnlyUnhandledExceptions.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return -1;
+  __pyx_L4_argument_unpacking_done:;
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_args), (&PyTuple_Type), 1, "args", 1))) __PYX_ERR(0, 1111, __pyx_L1_error)
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions___init__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *)__pyx_v_self), __pyx_v_args);
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = -1;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions___init__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v_self, PyObject *__pyx_v_args) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__init__", 0);
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1112
+ *     cdef public tuple _args;
+ *     def __init__(self, tuple args):
+ *         self._args = args             # <<<<<<<<<<<<<<
+ * # ELSE
+ * # class TopLevelThreadTracerOnlyUnhandledExceptions:
+ */
+  __Pyx_INCREF(__pyx_v_args);
+  __Pyx_GIVEREF(__pyx_v_args);
+  __Pyx_GOTREF(__pyx_v_self->_args);
+  __Pyx_DECREF(__pyx_v_self->_args);
+  __pyx_v_self->_args = __pyx_v_args;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1111
+ * cdef class TopLevelThreadTracerOnlyUnhandledExceptions:
+ *     cdef public tuple _args;
+ *     def __init__(self, tuple args):             # <<<<<<<<<<<<<<
+ *         self._args = args
+ * # ELSE
+ */
+
+  /* function exit code */
+  __pyx_r = 0;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "_pydevd_bundle/pydevd_cython.pyx":1120
+ * # ENDIF
+ * 
+ *     def trace_unhandled_exceptions(self, frame, event, arg):             # <<<<<<<<<<<<<<
+ *         # Note that we ignore the frame as this tracing method should only be put in topmost frames already.
+ *         # print('trace_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_3trace_unhandled_exceptions(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_3trace_unhandled_exceptions(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  CYTHON_UNUSED PyObject *__pyx_v_frame = 0;
+  PyObject *__pyx_v_event = 0;
+  PyObject *__pyx_v_arg = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("trace_unhandled_exceptions (wrapper)", 0);
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_frame,&__pyx_n_s_event,&__pyx_n_s_arg,0};
+    PyObject* values[3] = {0,0,0};
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+        CYTHON_FALLTHROUGH;
+        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        CYTHON_FALLTHROUGH;
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_frame)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+        CYTHON_FALLTHROUGH;
+        case  1:
+        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_event)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("trace_unhandled_exceptions", 1, 3, 3, 1); __PYX_ERR(0, 1120, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  2:
+        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_arg)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("trace_unhandled_exceptions", 1, 3, 3, 2); __PYX_ERR(0, 1120, __pyx_L3_error)
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "trace_unhandled_exceptions") < 0)) __PYX_ERR(0, 1120, __pyx_L3_error)
+      }
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+      values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+    }
+    __pyx_v_frame = values[0];
+    __pyx_v_event = values[1];
+    __pyx_v_arg = values[2];
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("trace_unhandled_exceptions", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1120, __pyx_L3_error)
+  __pyx_L3_error:;
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerOnlyUnhandledExceptions.trace_unhandled_exceptions", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_2trace_unhandled_exceptions(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *)__pyx_v_self), __pyx_v_frame, __pyx_v_event, __pyx_v_arg);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_2trace_unhandled_exceptions(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg) {
+  PyObject *__pyx_v_py_db = NULL;
+  PyObject *__pyx_v_t = NULL;
+  PyObject *__pyx_v_additional_info = NULL;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  int __pyx_t_2;
+  int __pyx_t_3;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  PyObject *__pyx_t_6 = NULL;
+  PyObject *__pyx_t_7 = NULL;
+  int __pyx_t_8;
+  __Pyx_RefNannySetupContext("trace_unhandled_exceptions", 0);
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1123
+ *         # Note that we ignore the frame as this tracing method should only be put in topmost frames already.
+ *         # print('trace_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
+ *         if event == 'exception' and arg is not None:             # <<<<<<<<<<<<<<
+ *             py_db, t, additional_info = self._args[0:3]
+ *             if arg is not None:
+ */
+  __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_event, __pyx_n_s_exception, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1123, __pyx_L1_error)
+  if (__pyx_t_2) {
+  } else {
+    __pyx_t_1 = __pyx_t_2;
+    goto __pyx_L4_bool_binop_done;
+  }
+  __pyx_t_2 = (__pyx_v_arg != Py_None);
+  __pyx_t_3 = (__pyx_t_2 != 0);
+  __pyx_t_1 = __pyx_t_3;
+  __pyx_L4_bool_binop_done:;
+  if (__pyx_t_1) {
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1124
+ *         # print('trace_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
+ *         if event == 'exception' and arg is not None:
+ *             py_db, t, additional_info = self._args[0:3]             # <<<<<<<<<<<<<<
+ *             if arg is not None:
+ *                 if not additional_info.suspended_at_unhandled:
+ */
+    if (unlikely(__pyx_v_self->_args == Py_None)) {
+      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+      __PYX_ERR(0, 1124, __pyx_L1_error)
+    }
+    __pyx_t_4 = __Pyx_PyTuple_GetSlice(__pyx_v_self->_args, 0, 3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1124, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    if (1) {
+      PyObject* sequence = __pyx_t_4;
+      Py_ssize_t size = __Pyx_PySequence_SIZE(sequence);
+      if (unlikely(size != 3)) {
+        if (size > 3) __Pyx_RaiseTooManyValuesError(3);
+        else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
+        __PYX_ERR(0, 1124, __pyx_L1_error)
+      }
+      #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+      __pyx_t_5 = PyTuple_GET_ITEM(sequence, 0); 
+      __pyx_t_6 = PyTuple_GET_ITEM(sequence, 1); 
+      __pyx_t_7 = PyTuple_GET_ITEM(sequence, 2); 
+      __Pyx_INCREF(__pyx_t_5);
+      __Pyx_INCREF(__pyx_t_6);
+      __Pyx_INCREF(__pyx_t_7);
+      #else
+      __pyx_t_5 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1124, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __pyx_t_6 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1124, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __pyx_t_7 = PySequence_ITEM(sequence, 2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1124, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_7);
+      #endif
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    }
+    __pyx_v_py_db = __pyx_t_5;
+    __pyx_t_5 = 0;
+    __pyx_v_t = __pyx_t_6;
+    __pyx_t_6 = 0;
+    __pyx_v_additional_info = __pyx_t_7;
+    __pyx_t_7 = 0;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1125
+ *         if event == 'exception' and arg is not None:
+ *             py_db, t, additional_info = self._args[0:3]
+ *             if arg is not None:             # <<<<<<<<<<<<<<
+ *                 if not additional_info.suspended_at_unhandled:
+ *                     additional_info.suspended_at_unhandled = True
+ */
+    __pyx_t_1 = (__pyx_v_arg != Py_None);
+    __pyx_t_3 = (__pyx_t_1 != 0);
+    if (__pyx_t_3) {
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1126
+ *             py_db, t, additional_info = self._args[0:3]
+ *             if arg is not None:
+ *                 if not additional_info.suspended_at_unhandled:             # <<<<<<<<<<<<<<
+ *                     additional_info.suspended_at_unhandled = True
+ * 
+ */
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_additional_info, __pyx_n_s_suspended_at_unhandled); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1126, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 1126, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __pyx_t_1 = ((!__pyx_t_3) != 0);
+      if (__pyx_t_1) {
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1127
+ *             if arg is not None:
+ *                 if not additional_info.suspended_at_unhandled:
+ *                     additional_info.suspended_at_unhandled = True             # <<<<<<<<<<<<<<
+ * 
+ *                     stop_on_unhandled_exception(py_db, t, additional_info, arg)
+ */
+        if (__Pyx_PyObject_SetAttrStr(__pyx_v_additional_info, __pyx_n_s_suspended_at_unhandled, Py_True) < 0) __PYX_ERR(0, 1127, __pyx_L1_error)
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1129
+ *                     additional_info.suspended_at_unhandled = True
+ * 
+ *                     stop_on_unhandled_exception(py_db, t, additional_info, arg)             # <<<<<<<<<<<<<<
+ *         # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ *         return SafeCallWrapper(self.trace_unhandled_exceptions)
+ */
+        __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_stop_on_unhandled_exception); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1129, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_7);
+        __pyx_t_6 = NULL;
+        __pyx_t_8 = 0;
+        if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_7))) {
+          __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_7);
+          if (likely(__pyx_t_6)) {
+            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_7);
+            __Pyx_INCREF(__pyx_t_6);
+            __Pyx_INCREF(function);
+            __Pyx_DECREF_SET(__pyx_t_7, function);
+            __pyx_t_8 = 1;
+          }
+        }
+        #if CYTHON_FAST_PYCALL
+        if (PyFunction_Check(__pyx_t_7)) {
+          PyObject *__pyx_temp[5] = {__pyx_t_6, __pyx_v_py_db, __pyx_v_t, __pyx_v_additional_info, __pyx_v_arg};
+          __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_7, __pyx_temp+1-__pyx_t_8, 4+__pyx_t_8); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1129, __pyx_L1_error)
+          __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+          __Pyx_GOTREF(__pyx_t_4);
+        } else
+        #endif
+        #if CYTHON_FAST_PYCCALL
+        if (__Pyx_PyFastCFunction_Check(__pyx_t_7)) {
+          PyObject *__pyx_temp[5] = {__pyx_t_6, __pyx_v_py_db, __pyx_v_t, __pyx_v_additional_info, __pyx_v_arg};
+          __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_7, __pyx_temp+1-__pyx_t_8, 4+__pyx_t_8); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1129, __pyx_L1_error)
+          __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+          __Pyx_GOTREF(__pyx_t_4);
+        } else
+        #endif
+        {
+          __pyx_t_5 = PyTuple_New(4+__pyx_t_8); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1129, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_5);
+          if (__pyx_t_6) {
+            __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_6); __pyx_t_6 = NULL;
+          }
+          __Pyx_INCREF(__pyx_v_py_db);
+          __Pyx_GIVEREF(__pyx_v_py_db);
+          PyTuple_SET_ITEM(__pyx_t_5, 0+__pyx_t_8, __pyx_v_py_db);
+          __Pyx_INCREF(__pyx_v_t);
+          __Pyx_GIVEREF(__pyx_v_t);
+          PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_8, __pyx_v_t);
+          __Pyx_INCREF(__pyx_v_additional_info);
+          __Pyx_GIVEREF(__pyx_v_additional_info);
+          PyTuple_SET_ITEM(__pyx_t_5, 2+__pyx_t_8, __pyx_v_additional_info);
+          __Pyx_INCREF(__pyx_v_arg);
+          __Pyx_GIVEREF(__pyx_v_arg);
+          PyTuple_SET_ITEM(__pyx_t_5, 3+__pyx_t_8, __pyx_v_arg);
+          __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_5, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1129, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_4);
+          __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+        }
+        __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1126
+ *             py_db, t, additional_info = self._args[0:3]
+ *             if arg is not None:
+ *                 if not additional_info.suspended_at_unhandled:             # <<<<<<<<<<<<<<
+ *                     additional_info.suspended_at_unhandled = True
+ * 
+ */
+      }
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1125
+ *         if event == 'exception' and arg is not None:
+ *             py_db, t, additional_info = self._args[0:3]
+ *             if arg is not None:             # <<<<<<<<<<<<<<
+ *                 if not additional_info.suspended_at_unhandled:
+ *                     additional_info.suspended_at_unhandled = True
+ */
+    }
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1123
+ *         # Note that we ignore the frame as this tracing method should only be put in topmost frames already.
+ *         # print('trace_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
+ *         if event == 'exception' and arg is not None:             # <<<<<<<<<<<<<<
+ *             py_db, t, additional_info = self._args[0:3]
+ *             if arg is not None:
+ */
+  }
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1131
+ *                     stop_on_unhandled_exception(py_db, t, additional_info, arg)
+ *         # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ *         return SafeCallWrapper(self.trace_unhandled_exceptions)             # <<<<<<<<<<<<<<
+ *         # ELSE
+ * #         return self.trace_unhandled_exceptions
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_trace_unhandled_exceptions); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1131, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_7 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper), __pyx_t_4); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1131, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_7);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_r = __pyx_t_7;
+  __pyx_t_7 = 0;
+  goto __pyx_L0;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1120
+ * # ENDIF
+ * 
+ *     def trace_unhandled_exceptions(self, frame, event, arg):             # <<<<<<<<<<<<<<
+ *         # Note that we ignore the frame as this tracing method should only be put in topmost frames already.
+ *         # print('trace_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerOnlyUnhandledExceptions.trace_unhandled_exceptions", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_py_db);
+  __Pyx_XDECREF(__pyx_v_t);
+  __Pyx_XDECREF(__pyx_v_additional_info);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "_pydevd_bundle/pydevd_cython.pyx":1136
+ *         # ENDIF
+ * 
+ *     def get_trace_dispatch_func(self):             # <<<<<<<<<<<<<<
+ *         return self.trace_unhandled_exceptions
+ * 
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5get_trace_dispatch_func(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5get_trace_dispatch_func(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_trace_dispatch_func (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_4get_trace_dispatch_func(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_4get_trace_dispatch_func(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  __Pyx_RefNannySetupContext("get_trace_dispatch_func", 0);
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1137
+ * 
+ *     def get_trace_dispatch_func(self):
+ *         return self.trace_unhandled_exceptions             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_trace_unhandled_exceptions); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1137, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1136
+ *         # ENDIF
+ * 
+ *     def get_trace_dispatch_func(self):             # <<<<<<<<<<<<<<
+ *         return self.trace_unhandled_exceptions
+ * 
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerOnlyUnhandledExceptions.get_trace_dispatch_func", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "_pydevd_bundle/pydevd_cython.pyx":1110
+ * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ * cdef class TopLevelThreadTracerOnlyUnhandledExceptions:
+ *     cdef public tuple _args;             # <<<<<<<<<<<<<<
+ *     def __init__(self, tuple args):
+ *         self._args = args
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args_1__get__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args_1__get__(PyObject *__pyx_v_self) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args___get__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args___get__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__", 0);
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v_self->_args);
+  __pyx_r = __pyx_v_self->_args;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__set__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args_2__set__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *)__pyx_v_self), ((PyObject *)__pyx_v_value));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args_2__set__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  __Pyx_RefNannySetupContext("__set__", 0);
+  if (!(likely(PyTuple_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(0, 1110, __pyx_L1_error)
+  __pyx_t_1 = __pyx_v_value;
+  __Pyx_INCREF(__pyx_t_1);
+  __Pyx_GIVEREF(__pyx_t_1);
+  __Pyx_GOTREF(__pyx_v_self->_args);
+  __Pyx_DECREF(__pyx_v_self->_args);
+  __pyx_v_self->_args = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* function exit code */
+  __pyx_r = 0;
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerOnlyUnhandledExceptions._args.__set__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = -1;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args_5__del__(PyObject *__pyx_v_self); /*proto*/
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args_5__del__(PyObject *__pyx_v_self) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__del__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args_4__del__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args_4__del__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v_self) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__del__", 0);
+  __Pyx_INCREF(Py_None);
+  __Pyx_GIVEREF(Py_None);
+  __Pyx_GOTREF(__pyx_v_self->_args);
+  __Pyx_DECREF(__pyx_v_self->_args);
+  __pyx_v_self->_args = ((PyObject*)Py_None);
+
+  /* function exit code */
+  __pyx_r = 0;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "(tree fragment)":1
+ * def __reduce_cython__(self):             # <<<<<<<<<<<<<<
+ *     cdef bint use_setstate
+ *     state = (self._args,)
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_7__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_7__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__reduce_cython__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_6__reduce_cython__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_6__reduce_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v_self) {
+  int __pyx_v_use_setstate;
+  PyObject *__pyx_v_state = NULL;
+  PyObject *__pyx_v__dict = NULL;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_t_2;
+  int __pyx_t_3;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  __Pyx_RefNannySetupContext("__reduce_cython__", 0);
+
+  /* "(tree fragment)":3
+ * def __reduce_cython__(self):
+ *     cdef bint use_setstate
+ *     state = (self._args,)             # <<<<<<<<<<<<<<
+ *     _dict = getattr(self, '__dict__', None)
+ *     if _dict is not None:
+ */
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 3, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_INCREF(__pyx_v_self->_args);
+  __Pyx_GIVEREF(__pyx_v_self->_args);
+  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v_self->_args);
+  __pyx_v_state = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "(tree fragment)":4
+ *     cdef bint use_setstate
+ *     state = (self._args,)
+ *     _dict = getattr(self, '__dict__', None)             # <<<<<<<<<<<<<<
+ *     if _dict is not None:
+ *         state += (_dict,)
+ */
+  __pyx_t_1 = __Pyx_GetAttr3(((PyObject *)__pyx_v_self), __pyx_n_s_dict, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 4, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_v__dict = __pyx_t_1;
+  __pyx_t_1 = 0;
+
+  /* "(tree fragment)":5
+ *     state = (self._args,)
+ *     _dict = getattr(self, '__dict__', None)
+ *     if _dict is not None:             # <<<<<<<<<<<<<<
+ *         state += (_dict,)
+ *         use_setstate = True
+ */
+  __pyx_t_2 = (__pyx_v__dict != Py_None);
+  __pyx_t_3 = (__pyx_t_2 != 0);
+  if (__pyx_t_3) {
+
+    /* "(tree fragment)":6
+ *     _dict = getattr(self, '__dict__', None)
+ *     if _dict is not None:
+ *         state += (_dict,)             # <<<<<<<<<<<<<<
+ *         use_setstate = True
+ *     else:
+ */
+    __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 6, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_INCREF(__pyx_v__dict);
+    __Pyx_GIVEREF(__pyx_v__dict);
+    PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v__dict);
+    __pyx_t_4 = PyNumber_InPlaceAdd(__pyx_v_state, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 6, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __Pyx_DECREF_SET(__pyx_v_state, ((PyObject*)__pyx_t_4));
+    __pyx_t_4 = 0;
+
+    /* "(tree fragment)":7
+ *     if _dict is not None:
+ *         state += (_dict,)
+ *         use_setstate = True             # <<<<<<<<<<<<<<
+ *     else:
+ *         use_setstate = self._args is not None
+ */
+    __pyx_v_use_setstate = 1;
+
+    /* "(tree fragment)":5
+ *     state = (self._args,)
+ *     _dict = getattr(self, '__dict__', None)
+ *     if _dict is not None:             # <<<<<<<<<<<<<<
+ *         state += (_dict,)
+ *         use_setstate = True
+ */
+    goto __pyx_L3;
+  }
+
+  /* "(tree fragment)":9
+ *         use_setstate = True
+ *     else:
+ *         use_setstate = self._args is not None             # <<<<<<<<<<<<<<
+ *     if use_setstate:
+ *         return __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions, (type(self), 0x3d7902a, None), state
+ */
+  /*else*/ {
+    __pyx_t_3 = (__pyx_v_self->_args != ((PyObject*)Py_None));
+    __pyx_v_use_setstate = __pyx_t_3;
+  }
+  __pyx_L3:;
+
+  /* "(tree fragment)":10
+ *     else:
+ *         use_setstate = self._args is not None
+ *     if use_setstate:             # <<<<<<<<<<<<<<
+ *         return __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions, (type(self), 0x3d7902a, None), state
+ *     else:
+ */
+  __pyx_t_3 = (__pyx_v_use_setstate != 0);
+  if (__pyx_t_3) {
+
+    /* "(tree fragment)":11
+ *         use_setstate = self._args is not None
+ *     if use_setstate:
+ *         return __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions, (type(self), 0x3d7902a, None), state             # <<<<<<<<<<<<<<
+ *     else:
+ *         return __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions, (type(self), 0x3d7902a, state)
+ */
+    __Pyx_XDECREF(__pyx_r);
+    __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyx_unpickle_TopLevelThreadTra); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 11, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __pyx_t_1 = PyTuple_New(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 11, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_INCREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    __Pyx_GIVEREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    PyTuple_SET_ITEM(__pyx_t_1, 0, ((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    __Pyx_INCREF(__pyx_int_64458794);
+    __Pyx_GIVEREF(__pyx_int_64458794);
+    PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_int_64458794);
+    __Pyx_INCREF(Py_None);
+    __Pyx_GIVEREF(Py_None);
+    PyTuple_SET_ITEM(__pyx_t_1, 2, Py_None);
+    __pyx_t_5 = PyTuple_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 11, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_GIVEREF(__pyx_t_4);
+    PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4);
+    __Pyx_GIVEREF(__pyx_t_1);
+    PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_t_1);
+    __Pyx_INCREF(__pyx_v_state);
+    __Pyx_GIVEREF(__pyx_v_state);
+    PyTuple_SET_ITEM(__pyx_t_5, 2, __pyx_v_state);
+    __pyx_t_4 = 0;
+    __pyx_t_1 = 0;
+    __pyx_r = __pyx_t_5;
+    __pyx_t_5 = 0;
+    goto __pyx_L0;
+
+    /* "(tree fragment)":10
+ *     else:
+ *         use_setstate = self._args is not None
+ *     if use_setstate:             # <<<<<<<<<<<<<<
+ *         return __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions, (type(self), 0x3d7902a, None), state
+ *     else:
+ */
+  }
+
+  /* "(tree fragment)":13
+ *         return __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions, (type(self), 0x3d7902a, None), state
+ *     else:
+ *         return __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions, (type(self), 0x3d7902a, state)             # <<<<<<<<<<<<<<
+ * def __setstate_cython__(self, __pyx_state):
+ *     __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(self, __pyx_state)
+ */
+  /*else*/ {
+    __Pyx_XDECREF(__pyx_r);
+    __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyx_unpickle_TopLevelThreadTra); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 13, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_1 = PyTuple_New(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 13, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_INCREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    __Pyx_GIVEREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    PyTuple_SET_ITEM(__pyx_t_1, 0, ((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    __Pyx_INCREF(__pyx_int_64458794);
+    __Pyx_GIVEREF(__pyx_int_64458794);
+    PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_int_64458794);
+    __Pyx_INCREF(__pyx_v_state);
+    __Pyx_GIVEREF(__pyx_v_state);
+    PyTuple_SET_ITEM(__pyx_t_1, 2, __pyx_v_state);
+    __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 13, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_GIVEREF(__pyx_t_5);
+    PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_5);
+    __Pyx_GIVEREF(__pyx_t_1);
+    PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_t_1);
+    __pyx_t_5 = 0;
+    __pyx_t_1 = 0;
+    __pyx_r = __pyx_t_4;
+    __pyx_t_4 = 0;
+    goto __pyx_L0;
+  }
+
+  /* "(tree fragment)":1
+ * def __reduce_cython__(self):             # <<<<<<<<<<<<<<
+ *     cdef bint use_setstate
+ *     state = (self._args,)
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerOnlyUnhandledExceptions.__reduce_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_state);
+  __Pyx_XDECREF(__pyx_v__dict);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "(tree fragment)":14
+ *     else:
+ *         return __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions, (type(self), 0x3d7902a, state)
+ * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
+ *     __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(self, __pyx_state)
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_9__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_9__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__setstate_cython__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_8__setstate_cython__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *)__pyx_v_self), ((PyObject *)__pyx_v___pyx_state));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_8__setstate_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  __Pyx_RefNannySetupContext("__setstate_cython__", 0);
+
+  /* "(tree fragment)":15
+ *         return __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions, (type(self), 0x3d7902a, state)
+ * def __setstate_cython__(self, __pyx_state):
+ *     __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(self, __pyx_state)             # <<<<<<<<<<<<<<
+ */
+  if (!(likely(PyTuple_CheckExact(__pyx_v___pyx_state))||((__pyx_v___pyx_state) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_v___pyx_state)->tp_name), 0))) __PYX_ERR(1, 15, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(__pyx_v_self, ((PyObject*)__pyx_v___pyx_state)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 15, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "(tree fragment)":14
+ *     else:
+ *         return __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions, (type(self), 0x3d7902a, state)
+ * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
+ *     __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(self, __pyx_state)
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerOnlyUnhandledExceptions.__setstate_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "_pydevd_bundle/pydevd_cython.pyx":1150
+ *     cdef public int _last_raise_line;
+ * #
+ *     def __init__(self, frame_trace_dispatch, tuple args):             # <<<<<<<<<<<<<<
+ *         self._frame_trace_dispatch = frame_trace_dispatch
+ *         self._args = args
+ */
+
+/* Python wrapper */
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  PyObject *__pyx_v_frame_trace_dispatch = 0;
+  PyObject *__pyx_v_args = 0;
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__init__ (wrapper)", 0);
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_frame_trace_dispatch,&__pyx_n_s_args,0};
+    PyObject* values[2] = {0,0};
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        CYTHON_FALLTHROUGH;
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_frame_trace_dispatch)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+        CYTHON_FALLTHROUGH;
+        case  1:
+        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_args)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, 1); __PYX_ERR(0, 1150, __pyx_L3_error)
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 1150, __pyx_L3_error)
+      }
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+    }
+    __pyx_v_frame_trace_dispatch = values[0];
+    __pyx_v_args = ((PyObject*)values[1]);
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1150, __pyx_L3_error)
+  __pyx_L3_error:;
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerNoBackFrame.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return -1;
+  __pyx_L4_argument_unpacking_done:;
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_args), (&PyTuple_Type), 1, "args", 1))) __PYX_ERR(0, 1150, __pyx_L1_error)
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame___init__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self), __pyx_v_frame_trace_dispatch, __pyx_v_args);
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = -1;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame___init__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v_frame_trace_dispatch, PyObject *__pyx_v_args) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  __Pyx_RefNannySetupContext("__init__", 0);
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1151
+ * #
+ *     def __init__(self, frame_trace_dispatch, tuple args):
+ *         self._frame_trace_dispatch = frame_trace_dispatch             # <<<<<<<<<<<<<<
+ *         self._args = args
+ *         self._try_except_info = None
+ */
+  __Pyx_INCREF(__pyx_v_frame_trace_dispatch);
+  __Pyx_GIVEREF(__pyx_v_frame_trace_dispatch);
+  __Pyx_GOTREF(__pyx_v_self->_frame_trace_dispatch);
+  __Pyx_DECREF(__pyx_v_self->_frame_trace_dispatch);
+  __pyx_v_self->_frame_trace_dispatch = __pyx_v_frame_trace_dispatch;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1152
+ *     def __init__(self, frame_trace_dispatch, tuple args):
+ *         self._frame_trace_dispatch = frame_trace_dispatch
+ *         self._args = args             # <<<<<<<<<<<<<<
+ *         self._try_except_info = None
+ *         self._last_exc_arg = None
+ */
+  __Pyx_INCREF(__pyx_v_args);
+  __Pyx_GIVEREF(__pyx_v_args);
+  __Pyx_GOTREF(__pyx_v_self->_args);
+  __Pyx_DECREF(__pyx_v_self->_args);
+  __pyx_v_self->_args = __pyx_v_args;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1153
+ *         self._frame_trace_dispatch = frame_trace_dispatch
+ *         self._args = args
+ *         self._try_except_info = None             # <<<<<<<<<<<<<<
+ *         self._last_exc_arg = None
+ *         self._raise_lines = set()
+ */
+  __Pyx_INCREF(Py_None);
+  __Pyx_GIVEREF(Py_None);
+  __Pyx_GOTREF(__pyx_v_self->_try_except_info);
+  __Pyx_DECREF(__pyx_v_self->_try_except_info);
+  __pyx_v_self->_try_except_info = Py_None;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1154
+ *         self._args = args
+ *         self._try_except_info = None
+ *         self._last_exc_arg = None             # <<<<<<<<<<<<<<
+ *         self._raise_lines = set()
+ *         self._last_raise_line = -1
+ */
+  __Pyx_INCREF(Py_None);
+  __Pyx_GIVEREF(Py_None);
+  __Pyx_GOTREF(__pyx_v_self->_last_exc_arg);
+  __Pyx_DECREF(__pyx_v_self->_last_exc_arg);
+  __pyx_v_self->_last_exc_arg = Py_None;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1155
+ *         self._try_except_info = None
+ *         self._last_exc_arg = None
+ *         self._raise_lines = set()             # <<<<<<<<<<<<<<
+ *         self._last_raise_line = -1
+ * # ELSE
+ */
+  __pyx_t_1 = PySet_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1155, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_GIVEREF(__pyx_t_1);
+  __Pyx_GOTREF(__pyx_v_self->_raise_lines);
+  __Pyx_DECREF(__pyx_v_self->_raise_lines);
+  __pyx_v_self->_raise_lines = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1156
+ *         self._last_exc_arg = None
+ *         self._raise_lines = set()
+ *         self._last_raise_line = -1             # <<<<<<<<<<<<<<
+ * # ELSE
+ * # class TopLevelThreadTracerNoBackFrame:
+ */
+  __pyx_v_self->_last_raise_line = -1;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1150
+ *     cdef public int _last_raise_line;
+ * #
+ *     def __init__(self, frame_trace_dispatch, tuple args):             # <<<<<<<<<<<<<<
+ *         self._frame_trace_dispatch = frame_trace_dispatch
+ *         self._args = args
+ */
+
+  /* function exit code */
+  __pyx_r = 0;
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerNoBackFrame.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = -1;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "_pydevd_bundle/pydevd_cython.pyx":1180
+ * # ENDIF
+ * 
+ *     def trace_dispatch_and_unhandled_exceptions(self, frame, event, arg):             # <<<<<<<<<<<<<<
+ *         # print('trace_dispatch_and_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
+ *         if self._frame_trace_dispatch is not None:
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_3trace_dispatch_and_unhandled_exceptions(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_3trace_dispatch_and_unhandled_exceptions(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  PyObject *__pyx_v_frame = 0;
+  PyObject *__pyx_v_event = 0;
+  PyObject *__pyx_v_arg = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("trace_dispatch_and_unhandled_exceptions (wrapper)", 0);
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_frame,&__pyx_n_s_event,&__pyx_n_s_arg,0};
+    PyObject* values[3] = {0,0,0};
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+        CYTHON_FALLTHROUGH;
+        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        CYTHON_FALLTHROUGH;
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_frame)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+        CYTHON_FALLTHROUGH;
+        case  1:
+        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_event)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("trace_dispatch_and_unhandled_exceptions", 1, 3, 3, 1); __PYX_ERR(0, 1180, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  2:
+        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_arg)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("trace_dispatch_and_unhandled_exceptions", 1, 3, 3, 2); __PYX_ERR(0, 1180, __pyx_L3_error)
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "trace_dispatch_and_unhandled_exceptions") < 0)) __PYX_ERR(0, 1180, __pyx_L3_error)
+      }
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+      values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+    }
+    __pyx_v_frame = values[0];
+    __pyx_v_event = values[1];
+    __pyx_v_arg = values[2];
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("trace_dispatch_and_unhandled_exceptions", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1180, __pyx_L3_error)
+  __pyx_L3_error:;
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerNoBackFrame.trace_dispatch_and_unhandled_exceptions", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_2trace_dispatch_and_unhandled_exceptions(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self), __pyx_v_frame, __pyx_v_event, __pyx_v_arg);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_2trace_dispatch_and_unhandled_exceptions(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg) {
+  PyObject *__pyx_v_py_db = NULL;
+  PyObject *__pyx_v_t = NULL;
+  PyObject *__pyx_v_additional_info = NULL;
+  PyObject *__pyx_v_valid_try_except_infos = NULL;
+  PyObject *__pyx_v_try_except_info = NULL;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  int __pyx_t_2;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  int __pyx_t_6;
+  PyObject *__pyx_t_7 = NULL;
+  int __pyx_t_8;
+  int __pyx_t_9;
+  PyObject *__pyx_t_10 = NULL;
+  Py_ssize_t __pyx_t_11;
+  PyObject *(*__pyx_t_12)(PyObject *);
+  PyObject *__pyx_t_13 = NULL;
+  int __pyx_t_14;
+  char const *__pyx_t_15;
+  PyObject *__pyx_t_16 = NULL;
+  PyObject *__pyx_t_17 = NULL;
+  PyObject *__pyx_t_18 = NULL;
+  PyObject *__pyx_t_19 = NULL;
+  PyObject *__pyx_t_20 = NULL;
+  PyObject *__pyx_t_21 = NULL;
+  __Pyx_RefNannySetupContext("trace_dispatch_and_unhandled_exceptions", 0);
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1182
+ *     def trace_dispatch_and_unhandled_exceptions(self, frame, event, arg):
+ *         # print('trace_dispatch_and_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
+ *         if self._frame_trace_dispatch is not None:             # <<<<<<<<<<<<<<
+ *             # This deals with raised exceptions
+ *             self._frame_trace_dispatch = self._frame_trace_dispatch(frame, event, arg)
+ */
+  __pyx_t_1 = (__pyx_v_self->_frame_trace_dispatch != Py_None);
+  __pyx_t_2 = (__pyx_t_1 != 0);
+  if (__pyx_t_2) {
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1184
+ *         if self._frame_trace_dispatch is not None:
+ *             # This deals with raised exceptions
+ *             self._frame_trace_dispatch = self._frame_trace_dispatch(frame, event, arg)             # <<<<<<<<<<<<<<
+ * 
+ *         if event == 'exception':
+ */
+    __Pyx_INCREF(__pyx_v_self->_frame_trace_dispatch);
+    __pyx_t_4 = __pyx_v_self->_frame_trace_dispatch; __pyx_t_5 = NULL;
+    __pyx_t_6 = 0;
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
+      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
+      if (likely(__pyx_t_5)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+        __Pyx_INCREF(__pyx_t_5);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_4, function);
+        __pyx_t_6 = 1;
+      }
+    }
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_4)) {
+      PyObject *__pyx_temp[4] = {__pyx_t_5, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
+      __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_6, 3+__pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1184, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_GOTREF(__pyx_t_3);
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
+      PyObject *__pyx_temp[4] = {__pyx_t_5, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
+      __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_6, 3+__pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1184, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_GOTREF(__pyx_t_3);
+    } else
+    #endif
+    {
+      __pyx_t_7 = PyTuple_New(3+__pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1184, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_7);
+      if (__pyx_t_5) {
+        __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_5); __pyx_t_5 = NULL;
+      }
+      __Pyx_INCREF(__pyx_v_frame);
+      __Pyx_GIVEREF(__pyx_v_frame);
+      PyTuple_SET_ITEM(__pyx_t_7, 0+__pyx_t_6, __pyx_v_frame);
+      __Pyx_INCREF(__pyx_v_event);
+      __Pyx_GIVEREF(__pyx_v_event);
+      PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_6, __pyx_v_event);
+      __Pyx_INCREF(__pyx_v_arg);
+      __Pyx_GIVEREF(__pyx_v_arg);
+      PyTuple_SET_ITEM(__pyx_t_7, 2+__pyx_t_6, __pyx_v_arg);
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_7, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1184, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    }
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __Pyx_GIVEREF(__pyx_t_3);
+    __Pyx_GOTREF(__pyx_v_self->_frame_trace_dispatch);
+    __Pyx_DECREF(__pyx_v_self->_frame_trace_dispatch);
+    __pyx_v_self->_frame_trace_dispatch = __pyx_t_3;
+    __pyx_t_3 = 0;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1182
+ *     def trace_dispatch_and_unhandled_exceptions(self, frame, event, arg):
+ *         # print('trace_dispatch_and_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
+ *         if self._frame_trace_dispatch is not None:             # <<<<<<<<<<<<<<
+ *             # This deals with raised exceptions
+ *             self._frame_trace_dispatch = self._frame_trace_dispatch(frame, event, arg)
+ */
+  }
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1186
+ *             self._frame_trace_dispatch = self._frame_trace_dispatch(frame, event, arg)
+ * 
+ *         if event == 'exception':             # <<<<<<<<<<<<<<
+ *             self._last_exc_arg = arg
+ *             self._raise_lines.add(frame.f_lineno)
+ */
+  __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_event, __pyx_n_s_exception, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1186, __pyx_L1_error)
+  if (__pyx_t_2) {
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1187
+ * 
+ *         if event == 'exception':
+ *             self._last_exc_arg = arg             # <<<<<<<<<<<<<<
+ *             self._raise_lines.add(frame.f_lineno)
+ *             self._last_raise_line = frame.f_lineno
+ */
+    __Pyx_INCREF(__pyx_v_arg);
+    __Pyx_GIVEREF(__pyx_v_arg);
+    __Pyx_GOTREF(__pyx_v_self->_last_exc_arg);
+    __Pyx_DECREF(__pyx_v_self->_last_exc_arg);
+    __pyx_v_self->_last_exc_arg = __pyx_v_arg;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1188
+ *         if event == 'exception':
+ *             self._last_exc_arg = arg
+ *             self._raise_lines.add(frame.f_lineno)             # <<<<<<<<<<<<<<
+ *             self._last_raise_line = frame.f_lineno
+ * 
+ */
+    if (unlikely(__pyx_v_self->_raise_lines == Py_None)) {
+      PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%.30s'", "add");
+      __PYX_ERR(0, 1188, __pyx_L1_error)
+    }
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_frame, __pyx_n_s_f_lineno); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1188, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_8 = PySet_Add(__pyx_v_self->_raise_lines, __pyx_t_3); if (unlikely(__pyx_t_8 == ((int)-1))) __PYX_ERR(0, 1188, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1189
+ *             self._last_exc_arg = arg
+ *             self._raise_lines.add(frame.f_lineno)
+ *             self._last_raise_line = frame.f_lineno             # <<<<<<<<<<<<<<
+ * 
+ *         elif event == 'return' and self._last_exc_arg is not None:
+ */
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_frame, __pyx_n_s_f_lineno); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1189, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_6 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1189, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __pyx_v_self->_last_raise_line = __pyx_t_6;
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1186
+ *             self._frame_trace_dispatch = self._frame_trace_dispatch(frame, event, arg)
+ * 
+ *         if event == 'exception':             # <<<<<<<<<<<<<<
+ *             self._last_exc_arg = arg
+ *             self._raise_lines.add(frame.f_lineno)
+ */
+    goto __pyx_L4;
+  }
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1191
+ *             self._last_raise_line = frame.f_lineno
+ * 
+ *         elif event == 'return' and self._last_exc_arg is not None:             # <<<<<<<<<<<<<<
+ *             # For unhandled exceptions we actually track the return when at the topmost level.
+ *             try:
+ */
+  __pyx_t_1 = (__Pyx_PyString_Equals(__pyx_v_event, __pyx_n_s_return, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 1191, __pyx_L1_error)
+  if (__pyx_t_1) {
+  } else {
+    __pyx_t_2 = __pyx_t_1;
+    goto __pyx_L5_bool_binop_done;
+  }
+  __pyx_t_1 = (__pyx_v_self->_last_exc_arg != Py_None);
+  __pyx_t_9 = (__pyx_t_1 != 0);
+  __pyx_t_2 = __pyx_t_9;
+  __pyx_L5_bool_binop_done:;
+  if (__pyx_t_2) {
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1193
+ *         elif event == 'return' and self._last_exc_arg is not None:
+ *             # For unhandled exceptions we actually track the return when at the topmost level.
+ *             try:             # <<<<<<<<<<<<<<
+ *                 py_db, t, additional_info = self._args[0:3]
+ *                 if not additional_info.suspended_at_unhandled:  # Note: only check it here, don't set.
+ */
+    /*try:*/ {
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1194
+ *             # For unhandled exceptions we actually track the return when at the topmost level.
+ *             try:
+ *                 py_db, t, additional_info = self._args[0:3]             # <<<<<<<<<<<<<<
+ *                 if not additional_info.suspended_at_unhandled:  # Note: only check it here, don't set.
+ *                     if frame.f_lineno in self._raise_lines:
+ */
+      if (unlikely(__pyx_v_self->_args == Py_None)) {
+        PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+        __PYX_ERR(0, 1194, __pyx_L8_error)
+      }
+      __pyx_t_3 = __Pyx_PyTuple_GetSlice(__pyx_v_self->_args, 0, 3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1194, __pyx_L8_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      if (1) {
+        PyObject* sequence = __pyx_t_3;
+        Py_ssize_t size = __Pyx_PySequence_SIZE(sequence);
+        if (unlikely(size != 3)) {
+          if (size > 3) __Pyx_RaiseTooManyValuesError(3);
+          else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
+          __PYX_ERR(0, 1194, __pyx_L8_error)
+        }
+        #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+        __pyx_t_4 = PyTuple_GET_ITEM(sequence, 0); 
+        __pyx_t_7 = PyTuple_GET_ITEM(sequence, 1); 
+        __pyx_t_5 = PyTuple_GET_ITEM(sequence, 2); 
+        __Pyx_INCREF(__pyx_t_4);
+        __Pyx_INCREF(__pyx_t_7);
+        __Pyx_INCREF(__pyx_t_5);
+        #else
+        __pyx_t_4 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1194, __pyx_L8_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        __pyx_t_7 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1194, __pyx_L8_error)
+        __Pyx_GOTREF(__pyx_t_7);
+        __pyx_t_5 = PySequence_ITEM(sequence, 2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1194, __pyx_L8_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        #endif
+        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      }
+      __pyx_v_py_db = __pyx_t_4;
+      __pyx_t_4 = 0;
+      __pyx_v_t = __pyx_t_7;
+      __pyx_t_7 = 0;
+      __pyx_v_additional_info = __pyx_t_5;
+      __pyx_t_5 = 0;
+
+      /* "_pydevd_bundle/pydevd_cython.pyx":1195
+ *             try:
+ *                 py_db, t, additional_info = self._args[0:3]
+ *                 if not additional_info.suspended_at_unhandled:  # Note: only check it here, don't set.             # <<<<<<<<<<<<<<
+ *                     if frame.f_lineno in self._raise_lines:
+ *                         stop_on_unhandled_exception(py_db, t, additional_info, self._last_exc_arg)
+ */
+      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_additional_info, __pyx_n_s_suspended_at_unhandled); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1195, __pyx_L8_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1195, __pyx_L8_error)
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __pyx_t_9 = ((!__pyx_t_2) != 0);
+      if (__pyx_t_9) {
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1196
+ *                 py_db, t, additional_info = self._args[0:3]
+ *                 if not additional_info.suspended_at_unhandled:  # Note: only check it here, don't set.
+ *                     if frame.f_lineno in self._raise_lines:             # <<<<<<<<<<<<<<
+ *                         stop_on_unhandled_exception(py_db, t, additional_info, self._last_exc_arg)
+ * 
+ */
+        __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_frame, __pyx_n_s_f_lineno); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1196, __pyx_L8_error)
+        __Pyx_GOTREF(__pyx_t_3);
+        if (unlikely(__pyx_v_self->_raise_lines == Py_None)) {
+          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
+          __PYX_ERR(0, 1196, __pyx_L8_error)
+        }
+        __pyx_t_9 = (__Pyx_PySet_ContainsTF(__pyx_t_3, __pyx_v_self->_raise_lines, Py_EQ)); if (unlikely(__pyx_t_9 < 0)) __PYX_ERR(0, 1196, __pyx_L8_error)
+        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+        __pyx_t_2 = (__pyx_t_9 != 0);
+        if (__pyx_t_2) {
+
+          /* "_pydevd_bundle/pydevd_cython.pyx":1197
+ *                 if not additional_info.suspended_at_unhandled:  # Note: only check it here, don't set.
+ *                     if frame.f_lineno in self._raise_lines:
+ *                         stop_on_unhandled_exception(py_db, t, additional_info, self._last_exc_arg)             # <<<<<<<<<<<<<<
+ * 
+ *                     else:
+ */
+          __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_stop_on_unhandled_exception); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1197, __pyx_L8_error)
+          __Pyx_GOTREF(__pyx_t_5);
+          __pyx_t_7 = NULL;
+          __pyx_t_6 = 0;
+          if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_5))) {
+            __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_5);
+            if (likely(__pyx_t_7)) {
+              PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
+              __Pyx_INCREF(__pyx_t_7);
+              __Pyx_INCREF(function);
+              __Pyx_DECREF_SET(__pyx_t_5, function);
+              __pyx_t_6 = 1;
+            }
+          }
+          #if CYTHON_FAST_PYCALL
+          if (PyFunction_Check(__pyx_t_5)) {
+            PyObject *__pyx_temp[5] = {__pyx_t_7, __pyx_v_py_db, __pyx_v_t, __pyx_v_additional_info, __pyx_v_self->_last_exc_arg};
+            __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_6, 4+__pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1197, __pyx_L8_error)
+            __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+            __Pyx_GOTREF(__pyx_t_3);
+          } else
+          #endif
+          #if CYTHON_FAST_PYCCALL
+          if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
+            PyObject *__pyx_temp[5] = {__pyx_t_7, __pyx_v_py_db, __pyx_v_t, __pyx_v_additional_info, __pyx_v_self->_last_exc_arg};
+            __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_6, 4+__pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1197, __pyx_L8_error)
+            __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+            __Pyx_GOTREF(__pyx_t_3);
+          } else
+          #endif
+          {
+            __pyx_t_4 = PyTuple_New(4+__pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1197, __pyx_L8_error)
+            __Pyx_GOTREF(__pyx_t_4);
+            if (__pyx_t_7) {
+              __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_7); __pyx_t_7 = NULL;
+            }
+            __Pyx_INCREF(__pyx_v_py_db);
+            __Pyx_GIVEREF(__pyx_v_py_db);
+            PyTuple_SET_ITEM(__pyx_t_4, 0+__pyx_t_6, __pyx_v_py_db);
+            __Pyx_INCREF(__pyx_v_t);
+            __Pyx_GIVEREF(__pyx_v_t);
+            PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_6, __pyx_v_t);
+            __Pyx_INCREF(__pyx_v_additional_info);
+            __Pyx_GIVEREF(__pyx_v_additional_info);
+            PyTuple_SET_ITEM(__pyx_t_4, 2+__pyx_t_6, __pyx_v_additional_info);
+            __Pyx_INCREF(__pyx_v_self->_last_exc_arg);
+            __Pyx_GIVEREF(__pyx_v_self->_last_exc_arg);
+            PyTuple_SET_ITEM(__pyx_t_4, 3+__pyx_t_6, __pyx_v_self->_last_exc_arg);
+            __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1197, __pyx_L8_error)
+            __Pyx_GOTREF(__pyx_t_3);
+            __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+          }
+          __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+          /* "_pydevd_bundle/pydevd_cython.pyx":1196
+ *                 py_db, t, additional_info = self._args[0:3]
+ *                 if not additional_info.suspended_at_unhandled:  # Note: only check it here, don't set.
+ *                     if frame.f_lineno in self._raise_lines:             # <<<<<<<<<<<<<<
+ *                         stop_on_unhandled_exception(py_db, t, additional_info, self._last_exc_arg)
+ * 
+ */
+          goto __pyx_L11;
+        }
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1200
+ * 
+ *                     else:
+ *                         if self._try_except_info is None:             # <<<<<<<<<<<<<<
+ *                             self._try_except_info = collect_try_except_info(frame.f_code)
+ *                         if not self._try_except_info:
+ */
+        /*else*/ {
+          __pyx_t_2 = (__pyx_v_self->_try_except_info == Py_None);
+          __pyx_t_9 = (__pyx_t_2 != 0);
+          if (__pyx_t_9) {
+
+            /* "_pydevd_bundle/pydevd_cython.pyx":1201
+ *                     else:
+ *                         if self._try_except_info is None:
+ *                             self._try_except_info = collect_try_except_info(frame.f_code)             # <<<<<<<<<<<<<<
+ *                         if not self._try_except_info:
+ *                             # Consider the last exception as unhandled because there's no try..except in it.
+ */
+            __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_collect_try_except_info); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1201, __pyx_L8_error)
+            __Pyx_GOTREF(__pyx_t_5);
+            __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_frame, __pyx_n_s_f_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1201, __pyx_L8_error)
+            __Pyx_GOTREF(__pyx_t_4);
+            __pyx_t_7 = NULL;
+            if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_5))) {
+              __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_5);
+              if (likely(__pyx_t_7)) {
+                PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
+                __Pyx_INCREF(__pyx_t_7);
+                __Pyx_INCREF(function);
+                __Pyx_DECREF_SET(__pyx_t_5, function);
+              }
+            }
+            if (!__pyx_t_7) {
+              __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1201, __pyx_L8_error)
+              __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+              __Pyx_GOTREF(__pyx_t_3);
+            } else {
+              #if CYTHON_FAST_PYCALL
+              if (PyFunction_Check(__pyx_t_5)) {
+                PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_4};
+                __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1201, __pyx_L8_error)
+                __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+                __Pyx_GOTREF(__pyx_t_3);
+                __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+              } else
+              #endif
+              #if CYTHON_FAST_PYCCALL
+              if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
+                PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_4};
+                __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1201, __pyx_L8_error)
+                __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+                __Pyx_GOTREF(__pyx_t_3);
+                __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+              } else
+              #endif
+              {
+                __pyx_t_10 = PyTuple_New(1+1); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 1201, __pyx_L8_error)
+                __Pyx_GOTREF(__pyx_t_10);
+                __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_10, 0, __pyx_t_7); __pyx_t_7 = NULL;
+                __Pyx_GIVEREF(__pyx_t_4);
+                PyTuple_SET_ITEM(__pyx_t_10, 0+1, __pyx_t_4);
+                __pyx_t_4 = 0;
+                __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_10, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1201, __pyx_L8_error)
+                __Pyx_GOTREF(__pyx_t_3);
+                __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
+              }
+            }
+            __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+            __Pyx_GIVEREF(__pyx_t_3);
+            __Pyx_GOTREF(__pyx_v_self->_try_except_info);
+            __Pyx_DECREF(__pyx_v_self->_try_except_info);
+            __pyx_v_self->_try_except_info = __pyx_t_3;
+            __pyx_t_3 = 0;
+
+            /* "_pydevd_bundle/pydevd_cython.pyx":1200
+ * 
+ *                     else:
+ *                         if self._try_except_info is None:             # <<<<<<<<<<<<<<
+ *                             self._try_except_info = collect_try_except_info(frame.f_code)
+ *                         if not self._try_except_info:
+ */
+          }
+
+          /* "_pydevd_bundle/pydevd_cython.pyx":1202
+ *                         if self._try_except_info is None:
+ *                             self._try_except_info = collect_try_except_info(frame.f_code)
+ *                         if not self._try_except_info:             # <<<<<<<<<<<<<<
+ *                             # Consider the last exception as unhandled because there's no try..except in it.
+ *                             stop_on_unhandled_exception(py_db, t, additional_info, self._last_exc_arg)
+ */
+          __pyx_t_9 = __Pyx_PyObject_IsTrue(__pyx_v_self->_try_except_info); if (unlikely(__pyx_t_9 < 0)) __PYX_ERR(0, 1202, __pyx_L8_error)
+          __pyx_t_2 = ((!__pyx_t_9) != 0);
+          if (__pyx_t_2) {
+
+            /* "_pydevd_bundle/pydevd_cython.pyx":1204
+ *                         if not self._try_except_info:
+ *                             # Consider the last exception as unhandled because there's no try..except in it.
+ *                             stop_on_unhandled_exception(py_db, t, additional_info, self._last_exc_arg)             # <<<<<<<<<<<<<<
+ *                         else:
+ *                             # Now, consider only the try..except for the raise
+ */
+            __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_stop_on_unhandled_exception); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1204, __pyx_L8_error)
+            __Pyx_GOTREF(__pyx_t_5);
+            __pyx_t_10 = NULL;
+            __pyx_t_6 = 0;
+            if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_5))) {
+              __pyx_t_10 = PyMethod_GET_SELF(__pyx_t_5);
+              if (likely(__pyx_t_10)) {
+                PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
+                __Pyx_INCREF(__pyx_t_10);
+                __Pyx_INCREF(function);
+                __Pyx_DECREF_SET(__pyx_t_5, function);
+                __pyx_t_6 = 1;
+              }
+            }
+            #if CYTHON_FAST_PYCALL
+            if (PyFunction_Check(__pyx_t_5)) {
+              PyObject *__pyx_temp[5] = {__pyx_t_10, __pyx_v_py_db, __pyx_v_t, __pyx_v_additional_info, __pyx_v_self->_last_exc_arg};
+              __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_6, 4+__pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1204, __pyx_L8_error)
+              __Pyx_XDECREF(__pyx_t_10); __pyx_t_10 = 0;
+              __Pyx_GOTREF(__pyx_t_3);
+            } else
+            #endif
+            #if CYTHON_FAST_PYCCALL
+            if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
+              PyObject *__pyx_temp[5] = {__pyx_t_10, __pyx_v_py_db, __pyx_v_t, __pyx_v_additional_info, __pyx_v_self->_last_exc_arg};
+              __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_6, 4+__pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1204, __pyx_L8_error)
+              __Pyx_XDECREF(__pyx_t_10); __pyx_t_10 = 0;
+              __Pyx_GOTREF(__pyx_t_3);
+            } else
+            #endif
+            {
+              __pyx_t_4 = PyTuple_New(4+__pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1204, __pyx_L8_error)
+              __Pyx_GOTREF(__pyx_t_4);
+              if (__pyx_t_10) {
+                __Pyx_GIVEREF(__pyx_t_10); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_10); __pyx_t_10 = NULL;
+              }
+              __Pyx_INCREF(__pyx_v_py_db);
+              __Pyx_GIVEREF(__pyx_v_py_db);
+              PyTuple_SET_ITEM(__pyx_t_4, 0+__pyx_t_6, __pyx_v_py_db);
+              __Pyx_INCREF(__pyx_v_t);
+              __Pyx_GIVEREF(__pyx_v_t);
+              PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_6, __pyx_v_t);
+              __Pyx_INCREF(__pyx_v_additional_info);
+              __Pyx_GIVEREF(__pyx_v_additional_info);
+              PyTuple_SET_ITEM(__pyx_t_4, 2+__pyx_t_6, __pyx_v_additional_info);
+              __Pyx_INCREF(__pyx_v_self->_last_exc_arg);
+              __Pyx_GIVEREF(__pyx_v_self->_last_exc_arg);
+              PyTuple_SET_ITEM(__pyx_t_4, 3+__pyx_t_6, __pyx_v_self->_last_exc_arg);
+              __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1204, __pyx_L8_error)
+              __Pyx_GOTREF(__pyx_t_3);
+              __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+            }
+            __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+            __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+            /* "_pydevd_bundle/pydevd_cython.pyx":1202
+ *                         if self._try_except_info is None:
+ *                             self._try_except_info = collect_try_except_info(frame.f_code)
+ *                         if not self._try_except_info:             # <<<<<<<<<<<<<<
+ *                             # Consider the last exception as unhandled because there's no try..except in it.
+ *                             stop_on_unhandled_exception(py_db, t, additional_info, self._last_exc_arg)
+ */
+            goto __pyx_L13;
+          }
+
+          /* "_pydevd_bundle/pydevd_cython.pyx":1207
+ *                         else:
+ *                             # Now, consider only the try..except for the raise
+ *                             valid_try_except_infos = []             # <<<<<<<<<<<<<<
+ *                             for try_except_info in self._try_except_info:
+ *                                 if try_except_info.is_line_in_try_block(self._last_raise_line):
+ */
+          /*else*/ {
+            __pyx_t_3 = PyList_New(0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1207, __pyx_L8_error)
+            __Pyx_GOTREF(__pyx_t_3);
+            __pyx_v_valid_try_except_infos = ((PyObject*)__pyx_t_3);
+            __pyx_t_3 = 0;
+
+            /* "_pydevd_bundle/pydevd_cython.pyx":1208
+ *                             # Now, consider only the try..except for the raise
+ *                             valid_try_except_infos = []
+ *                             for try_except_info in self._try_except_info:             # <<<<<<<<<<<<<<
+ *                                 if try_except_info.is_line_in_try_block(self._last_raise_line):
+ *                                     valid_try_except_infos.append(try_except_info)
+ */
+            if (likely(PyList_CheckExact(__pyx_v_self->_try_except_info)) || PyTuple_CheckExact(__pyx_v_self->_try_except_info)) {
+              __pyx_t_3 = __pyx_v_self->_try_except_info; __Pyx_INCREF(__pyx_t_3); __pyx_t_11 = 0;
+              __pyx_t_12 = NULL;
+            } else {
+              __pyx_t_11 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_v_self->_try_except_info); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1208, __pyx_L8_error)
+              __Pyx_GOTREF(__pyx_t_3);
+              __pyx_t_12 = Py_TYPE(__pyx_t_3)->tp_iternext; if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 1208, __pyx_L8_error)
+            }
+            for (;;) {
+              if (likely(!__pyx_t_12)) {
+                if (likely(PyList_CheckExact(__pyx_t_3))) {
+                  if (__pyx_t_11 >= PyList_GET_SIZE(__pyx_t_3)) break;
+                  #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+                  __pyx_t_5 = PyList_GET_ITEM(__pyx_t_3, __pyx_t_11); __Pyx_INCREF(__pyx_t_5); __pyx_t_11++; if (unlikely(0 < 0)) __PYX_ERR(0, 1208, __pyx_L8_error)
+                  #else
+                  __pyx_t_5 = PySequence_ITEM(__pyx_t_3, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1208, __pyx_L8_error)
+                  __Pyx_GOTREF(__pyx_t_5);
+                  #endif
+                } else {
+                  if (__pyx_t_11 >= PyTuple_GET_SIZE(__pyx_t_3)) break;
+                  #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+                  __pyx_t_5 = PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_11); __Pyx_INCREF(__pyx_t_5); __pyx_t_11++; if (unlikely(0 < 0)) __PYX_ERR(0, 1208, __pyx_L8_error)
+                  #else
+                  __pyx_t_5 = PySequence_ITEM(__pyx_t_3, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1208, __pyx_L8_error)
+                  __Pyx_GOTREF(__pyx_t_5);
+                  #endif
+                }
+              } else {
+                __pyx_t_5 = __pyx_t_12(__pyx_t_3);
+                if (unlikely(!__pyx_t_5)) {
+                  PyObject* exc_type = PyErr_Occurred();
+                  if (exc_type) {
+                    if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
+                    else __PYX_ERR(0, 1208, __pyx_L8_error)
+                  }
+                  break;
+                }
+                __Pyx_GOTREF(__pyx_t_5);
+              }
+              __Pyx_XDECREF_SET(__pyx_v_try_except_info, __pyx_t_5);
+              __pyx_t_5 = 0;
+
+              /* "_pydevd_bundle/pydevd_cython.pyx":1209
+ *                             valid_try_except_infos = []
+ *                             for try_except_info in self._try_except_info:
+ *                                 if try_except_info.is_line_in_try_block(self._last_raise_line):             # <<<<<<<<<<<<<<
+ *                                     valid_try_except_infos.append(try_except_info)
+ * 
+ */
+              __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_try_except_info, __pyx_n_s_is_line_in_try_block); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1209, __pyx_L8_error)
+              __Pyx_GOTREF(__pyx_t_4);
+              __pyx_t_10 = __Pyx_PyInt_From_int(__pyx_v_self->_last_raise_line); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 1209, __pyx_L8_error)
+              __Pyx_GOTREF(__pyx_t_10);
+              __pyx_t_7 = NULL;
+              if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
+                __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_4);
+                if (likely(__pyx_t_7)) {
+                  PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+                  __Pyx_INCREF(__pyx_t_7);
+                  __Pyx_INCREF(function);
+                  __Pyx_DECREF_SET(__pyx_t_4, function);
+                }
+              }
+              if (!__pyx_t_7) {
+                __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_10); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1209, __pyx_L8_error)
+                __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
+                __Pyx_GOTREF(__pyx_t_5);
+              } else {
+                #if CYTHON_FAST_PYCALL
+                if (PyFunction_Check(__pyx_t_4)) {
+                  PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_10};
+                  __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1209, __pyx_L8_error)
+                  __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+                  __Pyx_GOTREF(__pyx_t_5);
+                  __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
+                } else
+                #endif
+                #if CYTHON_FAST_PYCCALL
+                if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
+                  PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_10};
+                  __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1209, __pyx_L8_error)
+                  __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+                  __Pyx_GOTREF(__pyx_t_5);
+                  __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
+                } else
+                #endif
+                {
+                  __pyx_t_13 = PyTuple_New(1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 1209, __pyx_L8_error)
+                  __Pyx_GOTREF(__pyx_t_13);
+                  __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_13, 0, __pyx_t_7); __pyx_t_7 = NULL;
+                  __Pyx_GIVEREF(__pyx_t_10);
+                  PyTuple_SET_ITEM(__pyx_t_13, 0+1, __pyx_t_10);
+                  __pyx_t_10 = 0;
+                  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_13, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1209, __pyx_L8_error)
+                  __Pyx_GOTREF(__pyx_t_5);
+                  __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
+                }
+              }
+              __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+              __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1209, __pyx_L8_error)
+              __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+              if (__pyx_t_2) {
+
+                /* "_pydevd_bundle/pydevd_cython.pyx":1210
+ *                             for try_except_info in self._try_except_info:
+ *                                 if try_except_info.is_line_in_try_block(self._last_raise_line):
+ *                                     valid_try_except_infos.append(try_except_info)             # <<<<<<<<<<<<<<
+ * 
+ *                             if not valid_try_except_infos:
+ */
+                __pyx_t_8 = __Pyx_PyList_Append(__pyx_v_valid_try_except_infos, __pyx_v_try_except_info); if (unlikely(__pyx_t_8 == ((int)-1))) __PYX_ERR(0, 1210, __pyx_L8_error)
+
+                /* "_pydevd_bundle/pydevd_cython.pyx":1209
+ *                             valid_try_except_infos = []
+ *                             for try_except_info in self._try_except_info:
+ *                                 if try_except_info.is_line_in_try_block(self._last_raise_line):             # <<<<<<<<<<<<<<
+ *                                     valid_try_except_infos.append(try_except_info)
+ * 
+ */
+              }
+
+              /* "_pydevd_bundle/pydevd_cython.pyx":1208
+ *                             # Now, consider only the try..except for the raise
+ *                             valid_try_except_infos = []
+ *                             for try_except_info in self._try_except_info:             # <<<<<<<<<<<<<<
+ *                                 if try_except_info.is_line_in_try_block(self._last_raise_line):
+ *                                     valid_try_except_infos.append(try_except_info)
+ */
+            }
+            __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+            /* "_pydevd_bundle/pydevd_cython.pyx":1212
+ *                                     valid_try_except_infos.append(try_except_info)
+ * 
+ *                             if not valid_try_except_infos:             # <<<<<<<<<<<<<<
+ *                                 stop_on_unhandled_exception(py_db, t, additional_info, self._last_exc_arg)
+ * 
+ */
+            __pyx_t_2 = (PyList_GET_SIZE(__pyx_v_valid_try_except_infos) != 0);
+            __pyx_t_9 = ((!__pyx_t_2) != 0);
+            if (__pyx_t_9) {
+
+              /* "_pydevd_bundle/pydevd_cython.pyx":1213
+ * 
+ *                             if not valid_try_except_infos:
+ *                                 stop_on_unhandled_exception(py_db, t, additional_info, self._last_exc_arg)             # <<<<<<<<<<<<<<
+ * 
+ *                             else:
+ */
+              __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_stop_on_unhandled_exception); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1213, __pyx_L8_error)
+              __Pyx_GOTREF(__pyx_t_5);
+              __pyx_t_4 = NULL;
+              __pyx_t_6 = 0;
+              if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_5))) {
+                __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_5);
+                if (likely(__pyx_t_4)) {
+                  PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
+                  __Pyx_INCREF(__pyx_t_4);
+                  __Pyx_INCREF(function);
+                  __Pyx_DECREF_SET(__pyx_t_5, function);
+                  __pyx_t_6 = 1;
+                }
+              }
+              #if CYTHON_FAST_PYCALL
+              if (PyFunction_Check(__pyx_t_5)) {
+                PyObject *__pyx_temp[5] = {__pyx_t_4, __pyx_v_py_db, __pyx_v_t, __pyx_v_additional_info, __pyx_v_self->_last_exc_arg};
+                __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_6, 4+__pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1213, __pyx_L8_error)
+                __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+                __Pyx_GOTREF(__pyx_t_3);
+              } else
+              #endif
+              #if CYTHON_FAST_PYCCALL
+              if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
+                PyObject *__pyx_temp[5] = {__pyx_t_4, __pyx_v_py_db, __pyx_v_t, __pyx_v_additional_info, __pyx_v_self->_last_exc_arg};
+                __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_6, 4+__pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1213, __pyx_L8_error)
+                __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+                __Pyx_GOTREF(__pyx_t_3);
+              } else
+              #endif
+              {
+                __pyx_t_13 = PyTuple_New(4+__pyx_t_6); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 1213, __pyx_L8_error)
+                __Pyx_GOTREF(__pyx_t_13);
+                if (__pyx_t_4) {
+                  __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_13, 0, __pyx_t_4); __pyx_t_4 = NULL;
+                }
+                __Pyx_INCREF(__pyx_v_py_db);
+                __Pyx_GIVEREF(__pyx_v_py_db);
+                PyTuple_SET_ITEM(__pyx_t_13, 0+__pyx_t_6, __pyx_v_py_db);
+                __Pyx_INCREF(__pyx_v_t);
+                __Pyx_GIVEREF(__pyx_v_t);
+                PyTuple_SET_ITEM(__pyx_t_13, 1+__pyx_t_6, __pyx_v_t);
+                __Pyx_INCREF(__pyx_v_additional_info);
+                __Pyx_GIVEREF(__pyx_v_additional_info);
+                PyTuple_SET_ITEM(__pyx_t_13, 2+__pyx_t_6, __pyx_v_additional_info);
+                __Pyx_INCREF(__pyx_v_self->_last_exc_arg);
+                __Pyx_GIVEREF(__pyx_v_self->_last_exc_arg);
+                PyTuple_SET_ITEM(__pyx_t_13, 3+__pyx_t_6, __pyx_v_self->_last_exc_arg);
+                __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_13, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1213, __pyx_L8_error)
+                __Pyx_GOTREF(__pyx_t_3);
+                __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
+              }
+              __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+              __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+              /* "_pydevd_bundle/pydevd_cython.pyx":1212
+ *                                     valid_try_except_infos.append(try_except_info)
+ * 
+ *                             if not valid_try_except_infos:             # <<<<<<<<<<<<<<
+ *                                 stop_on_unhandled_exception(py_db, t, additional_info, self._last_exc_arg)
+ * 
+ */
+              goto __pyx_L17;
+            }
+
+            /* "_pydevd_bundle/pydevd_cython.pyx":1220
+ *                                 # where one try..except is inside the other with only a raise
+ *                                 # and it's gotten in the except line.
+ *                                 for try_except_info in self._try_except_info:             # <<<<<<<<<<<<<<
+ *                                     if try_except_info.is_line_in_except_block(frame.f_lineno):
+ *                                         if (
+ */
+            /*else*/ {
+              if (likely(PyList_CheckExact(__pyx_v_self->_try_except_info)) || PyTuple_CheckExact(__pyx_v_self->_try_except_info)) {
+                __pyx_t_3 = __pyx_v_self->_try_except_info; __Pyx_INCREF(__pyx_t_3); __pyx_t_11 = 0;
+                __pyx_t_12 = NULL;
+              } else {
+                __pyx_t_11 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_v_self->_try_except_info); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1220, __pyx_L8_error)
+                __Pyx_GOTREF(__pyx_t_3);
+                __pyx_t_12 = Py_TYPE(__pyx_t_3)->tp_iternext; if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 1220, __pyx_L8_error)
+              }
+              for (;;) {
+                if (likely(!__pyx_t_12)) {
+                  if (likely(PyList_CheckExact(__pyx_t_3))) {
+                    if (__pyx_t_11 >= PyList_GET_SIZE(__pyx_t_3)) break;
+                    #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+                    __pyx_t_5 = PyList_GET_ITEM(__pyx_t_3, __pyx_t_11); __Pyx_INCREF(__pyx_t_5); __pyx_t_11++; if (unlikely(0 < 0)) __PYX_ERR(0, 1220, __pyx_L8_error)
+                    #else
+                    __pyx_t_5 = PySequence_ITEM(__pyx_t_3, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1220, __pyx_L8_error)
+                    __Pyx_GOTREF(__pyx_t_5);
+                    #endif
+                  } else {
+                    if (__pyx_t_11 >= PyTuple_GET_SIZE(__pyx_t_3)) break;
+                    #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+                    __pyx_t_5 = PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_11); __Pyx_INCREF(__pyx_t_5); __pyx_t_11++; if (unlikely(0 < 0)) __PYX_ERR(0, 1220, __pyx_L8_error)
+                    #else
+                    __pyx_t_5 = PySequence_ITEM(__pyx_t_3, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1220, __pyx_L8_error)
+                    __Pyx_GOTREF(__pyx_t_5);
+                    #endif
+                  }
+                } else {
+                  __pyx_t_5 = __pyx_t_12(__pyx_t_3);
+                  if (unlikely(!__pyx_t_5)) {
+                    PyObject* exc_type = PyErr_Occurred();
+                    if (exc_type) {
+                      if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
+                      else __PYX_ERR(0, 1220, __pyx_L8_error)
+                    }
+                    break;
+                  }
+                  __Pyx_GOTREF(__pyx_t_5);
+                }
+                __Pyx_XDECREF_SET(__pyx_v_try_except_info, __pyx_t_5);
+                __pyx_t_5 = 0;
+
+                /* "_pydevd_bundle/pydevd_cython.pyx":1221
+ *                                 # and it's gotten in the except line.
+ *                                 for try_except_info in self._try_except_info:
+ *                                     if try_except_info.is_line_in_except_block(frame.f_lineno):             # <<<<<<<<<<<<<<
+ *                                         if (
+ *                                                 frame.f_lineno == try_except_info.except_line or
+ */
+                __pyx_t_13 = __Pyx_PyObject_GetAttrStr(__pyx_v_try_except_info, __pyx_n_s_is_line_in_except_block); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 1221, __pyx_L8_error)
+                __Pyx_GOTREF(__pyx_t_13);
+                __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_frame, __pyx_n_s_f_lineno); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1221, __pyx_L8_error)
+                __Pyx_GOTREF(__pyx_t_4);
+                __pyx_t_10 = NULL;
+                if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_13))) {
+                  __pyx_t_10 = PyMethod_GET_SELF(__pyx_t_13);
+                  if (likely(__pyx_t_10)) {
+                    PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_13);
+                    __Pyx_INCREF(__pyx_t_10);
+                    __Pyx_INCREF(function);
+                    __Pyx_DECREF_SET(__pyx_t_13, function);
+                  }
+                }
+                if (!__pyx_t_10) {
+                  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_13, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1221, __pyx_L8_error)
+                  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+                  __Pyx_GOTREF(__pyx_t_5);
+                } else {
+                  #if CYTHON_FAST_PYCALL
+                  if (PyFunction_Check(__pyx_t_13)) {
+                    PyObject *__pyx_temp[2] = {__pyx_t_10, __pyx_t_4};
+                    __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_13, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1221, __pyx_L8_error)
+                    __Pyx_XDECREF(__pyx_t_10); __pyx_t_10 = 0;
+                    __Pyx_GOTREF(__pyx_t_5);
+                    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+                  } else
+                  #endif
+                  #if CYTHON_FAST_PYCCALL
+                  if (__Pyx_PyFastCFunction_Check(__pyx_t_13)) {
+                    PyObject *__pyx_temp[2] = {__pyx_t_10, __pyx_t_4};
+                    __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_13, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1221, __pyx_L8_error)
+                    __Pyx_XDECREF(__pyx_t_10); __pyx_t_10 = 0;
+                    __Pyx_GOTREF(__pyx_t_5);
+                    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+                  } else
+                  #endif
+                  {
+                    __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1221, __pyx_L8_error)
+                    __Pyx_GOTREF(__pyx_t_7);
+                    __Pyx_GIVEREF(__pyx_t_10); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_10); __pyx_t_10 = NULL;
+                    __Pyx_GIVEREF(__pyx_t_4);
+                    PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_t_4);
+                    __pyx_t_4 = 0;
+                    __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_13, __pyx_t_7, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1221, __pyx_L8_error)
+                    __Pyx_GOTREF(__pyx_t_5);
+                    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+                  }
+                }
+                __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
+                __pyx_t_9 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_9 < 0)) __PYX_ERR(0, 1221, __pyx_L8_error)
+                __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+                if (__pyx_t_9) {
+
+                  /* "_pydevd_bundle/pydevd_cython.pyx":1223
+ *                                     if try_except_info.is_line_in_except_block(frame.f_lineno):
+ *                                         if (
+ *                                                 frame.f_lineno == try_except_info.except_line or             # <<<<<<<<<<<<<<
+ *                                                 frame.f_lineno in try_except_info.raise_lines_in_except
+ *                                             ):
+ */
+                  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_frame, __pyx_n_s_f_lineno); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1223, __pyx_L8_error)
+                  __Pyx_GOTREF(__pyx_t_5);
+                  __pyx_t_13 = __Pyx_PyObject_GetAttrStr(__pyx_v_try_except_info, __pyx_n_s_except_line); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 1223, __pyx_L8_error)
+                  __Pyx_GOTREF(__pyx_t_13);
+                  __pyx_t_7 = PyObject_RichCompare(__pyx_t_5, __pyx_t_13, Py_EQ); __Pyx_XGOTREF(__pyx_t_7); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1223, __pyx_L8_error)
+                  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+                  __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
+                  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_7); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1223, __pyx_L8_error)
+                  __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+                  if (!__pyx_t_2) {
+                  } else {
+                    __pyx_t_9 = __pyx_t_2;
+                    goto __pyx_L22_bool_binop_done;
+                  }
+
+                  /* "_pydevd_bundle/pydevd_cython.pyx":1224
+ *                                         if (
+ *                                                 frame.f_lineno == try_except_info.except_line or
+ *                                                 frame.f_lineno in try_except_info.raise_lines_in_except             # <<<<<<<<<<<<<<
+ *                                             ):
+ *                                             # In a raise inside a try..except block or some except which doesn't
+ */
+                  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_frame, __pyx_n_s_f_lineno); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1224, __pyx_L8_error)
+                  __Pyx_GOTREF(__pyx_t_7);
+                  __pyx_t_13 = __Pyx_PyObject_GetAttrStr(__pyx_v_try_except_info, __pyx_n_s_raise_lines_in_except); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 1224, __pyx_L8_error)
+                  __Pyx_GOTREF(__pyx_t_13);
+                  __pyx_t_2 = (__Pyx_PySequence_ContainsTF(__pyx_t_7, __pyx_t_13, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1224, __pyx_L8_error)
+                  __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+                  __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
+                  __pyx_t_1 = (__pyx_t_2 != 0);
+                  __pyx_t_9 = __pyx_t_1;
+                  __pyx_L22_bool_binop_done:;
+
+                  /* "_pydevd_bundle/pydevd_cython.pyx":1222
+ *                                 for try_except_info in self._try_except_info:
+ *                                     if try_except_info.is_line_in_except_block(frame.f_lineno):
+ *                                         if (             # <<<<<<<<<<<<<<
+ *                                                 frame.f_lineno == try_except_info.except_line or
+ *                                                 frame.f_lineno in try_except_info.raise_lines_in_except
+ */
+                  if (__pyx_t_9) {
+
+                    /* "_pydevd_bundle/pydevd_cython.pyx":1228
+ *                                             # In a raise inside a try..except block or some except which doesn't
+ *                                             # match the raised exception.
+ *                                             stop_on_unhandled_exception(py_db, t, additional_info, self._last_exc_arg)             # <<<<<<<<<<<<<<
+ *                                             break
+ *                                         else:
+ */
+                    __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_stop_on_unhandled_exception); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1228, __pyx_L8_error)
+                    __Pyx_GOTREF(__pyx_t_7);
+                    __pyx_t_5 = NULL;
+                    __pyx_t_6 = 0;
+                    if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_7))) {
+                      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_7);
+                      if (likely(__pyx_t_5)) {
+                        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_7);
+                        __Pyx_INCREF(__pyx_t_5);
+                        __Pyx_INCREF(function);
+                        __Pyx_DECREF_SET(__pyx_t_7, function);
+                        __pyx_t_6 = 1;
+                      }
+                    }
+                    #if CYTHON_FAST_PYCALL
+                    if (PyFunction_Check(__pyx_t_7)) {
+                      PyObject *__pyx_temp[5] = {__pyx_t_5, __pyx_v_py_db, __pyx_v_t, __pyx_v_additional_info, __pyx_v_self->_last_exc_arg};
+                      __pyx_t_13 = __Pyx_PyFunction_FastCall(__pyx_t_7, __pyx_temp+1-__pyx_t_6, 4+__pyx_t_6); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 1228, __pyx_L8_error)
+                      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+                      __Pyx_GOTREF(__pyx_t_13);
+                    } else
+                    #endif
+                    #if CYTHON_FAST_PYCCALL
+                    if (__Pyx_PyFastCFunction_Check(__pyx_t_7)) {
+                      PyObject *__pyx_temp[5] = {__pyx_t_5, __pyx_v_py_db, __pyx_v_t, __pyx_v_additional_info, __pyx_v_self->_last_exc_arg};
+                      __pyx_t_13 = __Pyx_PyCFunction_FastCall(__pyx_t_7, __pyx_temp+1-__pyx_t_6, 4+__pyx_t_6); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 1228, __pyx_L8_error)
+                      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+                      __Pyx_GOTREF(__pyx_t_13);
+                    } else
+                    #endif
+                    {
+                      __pyx_t_4 = PyTuple_New(4+__pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1228, __pyx_L8_error)
+                      __Pyx_GOTREF(__pyx_t_4);
+                      if (__pyx_t_5) {
+                        __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_5); __pyx_t_5 = NULL;
+                      }
+                      __Pyx_INCREF(__pyx_v_py_db);
+                      __Pyx_GIVEREF(__pyx_v_py_db);
+                      PyTuple_SET_ITEM(__pyx_t_4, 0+__pyx_t_6, __pyx_v_py_db);
+                      __Pyx_INCREF(__pyx_v_t);
+                      __Pyx_GIVEREF(__pyx_v_t);
+                      PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_6, __pyx_v_t);
+                      __Pyx_INCREF(__pyx_v_additional_info);
+                      __Pyx_GIVEREF(__pyx_v_additional_info);
+                      PyTuple_SET_ITEM(__pyx_t_4, 2+__pyx_t_6, __pyx_v_additional_info);
+                      __Pyx_INCREF(__pyx_v_self->_last_exc_arg);
+                      __Pyx_GIVEREF(__pyx_v_self->_last_exc_arg);
+                      PyTuple_SET_ITEM(__pyx_t_4, 3+__pyx_t_6, __pyx_v_self->_last_exc_arg);
+                      __pyx_t_13 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_4, NULL); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 1228, __pyx_L8_error)
+                      __Pyx_GOTREF(__pyx_t_13);
+                      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+                    }
+                    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+                    __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
+
+                    /* "_pydevd_bundle/pydevd_cython.pyx":1229
+ *                                             # match the raised exception.
+ *                                             stop_on_unhandled_exception(py_db, t, additional_info, self._last_exc_arg)
+ *                                             break             # <<<<<<<<<<<<<<
+ *                                         else:
+ *                                             break  # exited during the except block (no exception raised)
+ */
+                    goto __pyx_L19_break;
+
+                    /* "_pydevd_bundle/pydevd_cython.pyx":1222
+ *                                 for try_except_info in self._try_except_info:
+ *                                     if try_except_info.is_line_in_except_block(frame.f_lineno):
+ *                                         if (             # <<<<<<<<<<<<<<
+ *                                                 frame.f_lineno == try_except_info.except_line or
+ *                                                 frame.f_lineno in try_except_info.raise_lines_in_except
+ */
+                  }
+
+                  /* "_pydevd_bundle/pydevd_cython.pyx":1231
+ *                                             break
+ *                                         else:
+ *                                             break  # exited during the except block (no exception raised)             # <<<<<<<<<<<<<<
+ *             finally:
+ *                 # Remove reference to exception after handling it.
+ */
+                  /*else*/ {
+                    goto __pyx_L19_break;
+                  }
+
+                  /* "_pydevd_bundle/pydevd_cython.pyx":1221
+ *                                 # and it's gotten in the except line.
+ *                                 for try_except_info in self._try_except_info:
+ *                                     if try_except_info.is_line_in_except_block(frame.f_lineno):             # <<<<<<<<<<<<<<
+ *                                         if (
+ *                                                 frame.f_lineno == try_except_info.except_line or
+ */
+                }
+
+                /* "_pydevd_bundle/pydevd_cython.pyx":1220
+ *                                 # where one try..except is inside the other with only a raise
+ *                                 # and it's gotten in the except line.
+ *                                 for try_except_info in self._try_except_info:             # <<<<<<<<<<<<<<
+ *                                     if try_except_info.is_line_in_except_block(frame.f_lineno):
+ *                                         if (
+ */
+              }
+              __pyx_L19_break:;
+              __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+            }
+            __pyx_L17:;
+          }
+          __pyx_L13:;
+        }
+        __pyx_L11:;
+
+        /* "_pydevd_bundle/pydevd_cython.pyx":1195
+ *             try:
+ *                 py_db, t, additional_info = self._args[0:3]
+ *                 if not additional_info.suspended_at_unhandled:  # Note: only check it here, don't set.             # <<<<<<<<<<<<<<
+ *                     if frame.f_lineno in self._raise_lines:
+ *                         stop_on_unhandled_exception(py_db, t, additional_info, self._last_exc_arg)
+ */
+      }
+    }
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1234
+ *             finally:
+ *                 # Remove reference to exception after handling it.
+ *                 self._last_exc_arg = None             # <<<<<<<<<<<<<<
+ * 
+ *         # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ */
+    /*finally:*/ {
+      /*normal exit:*/{
+        __Pyx_INCREF(Py_None);
+        __Pyx_GIVEREF(Py_None);
+        __Pyx_GOTREF(__pyx_v_self->_last_exc_arg);
+        __Pyx_DECREF(__pyx_v_self->_last_exc_arg);
+        __pyx_v_self->_last_exc_arg = Py_None;
+        goto __pyx_L9;
+      }
+      __pyx_L8_error:;
+      /*exception exit:*/{
+        __Pyx_PyThreadState_declare
+        __Pyx_PyThreadState_assign
+        __pyx_t_16 = 0; __pyx_t_17 = 0; __pyx_t_18 = 0; __pyx_t_19 = 0; __pyx_t_20 = 0; __pyx_t_21 = 0;
+        __Pyx_XDECREF(__pyx_t_10); __pyx_t_10 = 0;
+        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+        __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+        __Pyx_XDECREF(__pyx_t_13); __pyx_t_13 = 0;
+        __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+        if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_19, &__pyx_t_20, &__pyx_t_21);
+        if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_16, &__pyx_t_17, &__pyx_t_18) < 0)) __Pyx_ErrFetch(&__pyx_t_16, &__pyx_t_17, &__pyx_t_18);
+        __Pyx_XGOTREF(__pyx_t_16);
+        __Pyx_XGOTREF(__pyx_t_17);
+        __Pyx_XGOTREF(__pyx_t_18);
+        __Pyx_XGOTREF(__pyx_t_19);
+        __Pyx_XGOTREF(__pyx_t_20);
+        __Pyx_XGOTREF(__pyx_t_21);
+        __pyx_t_6 = __pyx_lineno; __pyx_t_14 = __pyx_clineno; __pyx_t_15 = __pyx_filename;
+        {
+          __Pyx_INCREF(Py_None);
+          __Pyx_GIVEREF(Py_None);
+          __Pyx_GOTREF(__pyx_v_self->_last_exc_arg);
+          __Pyx_DECREF(__pyx_v_self->_last_exc_arg);
+          __pyx_v_self->_last_exc_arg = Py_None;
+        }
+        if (PY_MAJOR_VERSION >= 3) {
+          __Pyx_XGIVEREF(__pyx_t_19);
+          __Pyx_XGIVEREF(__pyx_t_20);
+          __Pyx_XGIVEREF(__pyx_t_21);
+          __Pyx_ExceptionReset(__pyx_t_19, __pyx_t_20, __pyx_t_21);
+        }
+        __Pyx_XGIVEREF(__pyx_t_16);
+        __Pyx_XGIVEREF(__pyx_t_17);
+        __Pyx_XGIVEREF(__pyx_t_18);
+        __Pyx_ErrRestore(__pyx_t_16, __pyx_t_17, __pyx_t_18);
+        __pyx_t_16 = 0; __pyx_t_17 = 0; __pyx_t_18 = 0; __pyx_t_19 = 0; __pyx_t_20 = 0; __pyx_t_21 = 0;
+        __pyx_lineno = __pyx_t_6; __pyx_clineno = __pyx_t_14; __pyx_filename = __pyx_t_15;
+        goto __pyx_L1_error;
+      }
+      __pyx_L9:;
+    }
+
+    /* "_pydevd_bundle/pydevd_cython.pyx":1191
+ *             self._last_raise_line = frame.f_lineno
+ * 
+ *         elif event == 'return' and self._last_exc_arg is not None:             # <<<<<<<<<<<<<<
+ *             # For unhandled exceptions we actually track the return when at the topmost level.
+ *             try:
+ */
+  }
+  __pyx_L4:;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1237
+ * 
+ *         # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ *         return SafeCallWrapper(self.trace_dispatch_and_unhandled_exceptions)             # <<<<<<<<<<<<<<
+ *         # ELSE
+ * #         return self.trace_dispatch_and_unhandled_exceptions
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_trace_dispatch_and_unhandled_exc); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1237, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_13 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper), __pyx_t_3); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 1237, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_13);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_r = __pyx_t_13;
+  __pyx_t_13 = 0;
+  goto __pyx_L0;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1180
+ * # ENDIF
+ * 
+ *     def trace_dispatch_and_unhandled_exceptions(self, frame, event, arg):             # <<<<<<<<<<<<<<
+ *         # print('trace_dispatch_and_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
+ *         if self._frame_trace_dispatch is not None:
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_XDECREF(__pyx_t_10);
+  __Pyx_XDECREF(__pyx_t_13);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerNoBackFrame.trace_dispatch_and_unhandled_exceptions", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_py_db);
+  __Pyx_XDECREF(__pyx_v_t);
+  __Pyx_XDECREF(__pyx_v_additional_info);
+  __Pyx_XDECREF(__pyx_v_valid_try_except_infos);
+  __Pyx_XDECREF(__pyx_v_try_except_info);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "_pydevd_bundle/pydevd_cython.pyx":1242
+ *         # ENDIF
+ * 
+ *     def get_trace_dispatch_func(self):             # <<<<<<<<<<<<<<
+ *         return self.trace_dispatch_and_unhandled_exceptions
+ * 
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5get_trace_dispatch_func(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5get_trace_dispatch_func(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_trace_dispatch_func (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_4get_trace_dispatch_func(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_4get_trace_dispatch_func(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  __Pyx_RefNannySetupContext("get_trace_dispatch_func", 0);
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1243
+ * 
+ *     def get_trace_dispatch_func(self):
+ *         return self.trace_dispatch_and_unhandled_exceptions             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_trace_dispatch_and_unhandled_exc); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1243, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":1242
+ *         # ENDIF
+ * 
+ *     def get_trace_dispatch_func(self):             # <<<<<<<<<<<<<<
+ *         return self.trace_dispatch_and_unhandled_exceptions
+ * 
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerNoBackFrame.get_trace_dispatch_func", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "_pydevd_bundle/pydevd_cython.pyx":1143
+ * cdef class TopLevelThreadTracerNoBackFrame:
+ * #
+ *     cdef public object _frame_trace_dispatch;             # <<<<<<<<<<<<<<
+ *     cdef public tuple _args;
+ *     cdef public object _try_except_info;
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch_1__get__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch_1__get__(PyObject *__pyx_v_self) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch___get__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch___get__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__", 0);
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v_self->_frame_trace_dispatch);
+  __pyx_r = __pyx_v_self->_frame_trace_dispatch;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__set__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch_2__set__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self), ((PyObject *)__pyx_v_value));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch_2__set__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__set__", 0);
+  __Pyx_INCREF(__pyx_v_value);
+  __Pyx_GIVEREF(__pyx_v_value);
+  __Pyx_GOTREF(__pyx_v_self->_frame_trace_dispatch);
+  __Pyx_DECREF(__pyx_v_self->_frame_trace_dispatch);
+  __pyx_v_self->_frame_trace_dispatch = __pyx_v_value;
+
+  /* function exit code */
+  __pyx_r = 0;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch_5__del__(PyObject *__pyx_v_self); /*proto*/
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch_5__del__(PyObject *__pyx_v_self) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__del__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch_4__del__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch_4__del__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__del__", 0);
+  __Pyx_INCREF(Py_None);
+  __Pyx_GIVEREF(Py_None);
+  __Pyx_GOTREF(__pyx_v_self->_frame_trace_dispatch);
+  __Pyx_DECREF(__pyx_v_self->_frame_trace_dispatch);
+  __pyx_v_self->_frame_trace_dispatch = Py_None;
+
+  /* function exit code */
+  __pyx_r = 0;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "_pydevd_bundle/pydevd_cython.pyx":1144
+ * #
+ *     cdef public object _frame_trace_dispatch;
+ *     cdef public tuple _args;             # <<<<<<<<<<<<<<
+ *     cdef public object _try_except_info;
+ *     cdef public object _last_exc_arg;
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args_1__get__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args_1__get__(PyObject *__pyx_v_self) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args___get__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args___get__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__", 0);
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v_self->_args);
+  __pyx_r = __pyx_v_self->_args;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__set__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args_2__set__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self), ((PyObject *)__pyx_v_value));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args_2__set__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  __Pyx_RefNannySetupContext("__set__", 0);
+  if (!(likely(PyTuple_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(0, 1144, __pyx_L1_error)
+  __pyx_t_1 = __pyx_v_value;
+  __Pyx_INCREF(__pyx_t_1);
+  __Pyx_GIVEREF(__pyx_t_1);
+  __Pyx_GOTREF(__pyx_v_self->_args);
+  __Pyx_DECREF(__pyx_v_self->_args);
+  __pyx_v_self->_args = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* function exit code */
+  __pyx_r = 0;
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerNoBackFrame._args.__set__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = -1;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args_5__del__(PyObject *__pyx_v_self); /*proto*/
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args_5__del__(PyObject *__pyx_v_self) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__del__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args_4__del__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args_4__del__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__del__", 0);
+  __Pyx_INCREF(Py_None);
+  __Pyx_GIVEREF(Py_None);
+  __Pyx_GOTREF(__pyx_v_self->_args);
+  __Pyx_DECREF(__pyx_v_self->_args);
+  __pyx_v_self->_args = ((PyObject*)Py_None);
+
+  /* function exit code */
+  __pyx_r = 0;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "_pydevd_bundle/pydevd_cython.pyx":1145
+ *     cdef public object _frame_trace_dispatch;
+ *     cdef public tuple _args;
+ *     cdef public object _try_except_info;             # <<<<<<<<<<<<<<
+ *     cdef public object _last_exc_arg;
+ *     cdef public set _raise_lines;
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info_1__get__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info_1__get__(PyObject *__pyx_v_self) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info___get__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info___get__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__", 0);
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v_self->_try_except_info);
+  __pyx_r = __pyx_v_self->_try_except_info;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__set__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info_2__set__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self), ((PyObject *)__pyx_v_value));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info_2__set__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__set__", 0);
+  __Pyx_INCREF(__pyx_v_value);
+  __Pyx_GIVEREF(__pyx_v_value);
+  __Pyx_GOTREF(__pyx_v_self->_try_except_info);
+  __Pyx_DECREF(__pyx_v_self->_try_except_info);
+  __pyx_v_self->_try_except_info = __pyx_v_value;
+
+  /* function exit code */
+  __pyx_r = 0;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info_5__del__(PyObject *__pyx_v_self); /*proto*/
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info_5__del__(PyObject *__pyx_v_self) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__del__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info_4__del__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info_4__del__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__del__", 0);
+  __Pyx_INCREF(Py_None);
+  __Pyx_GIVEREF(Py_None);
+  __Pyx_GOTREF(__pyx_v_self->_try_except_info);
+  __Pyx_DECREF(__pyx_v_self->_try_except_info);
+  __pyx_v_self->_try_except_info = Py_None;
+
+  /* function exit code */
+  __pyx_r = 0;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "_pydevd_bundle/pydevd_cython.pyx":1146
+ *     cdef public tuple _args;
+ *     cdef public object _try_except_info;
+ *     cdef public object _last_exc_arg;             # <<<<<<<<<<<<<<
+ *     cdef public set _raise_lines;
+ *     cdef public int _last_raise_line;
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg_1__get__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg_1__get__(PyObject *__pyx_v_self) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg___get__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg___get__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__", 0);
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v_self->_last_exc_arg);
+  __pyx_r = __pyx_v_self->_last_exc_arg;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__set__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg_2__set__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self), ((PyObject *)__pyx_v_value));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg_2__set__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__set__", 0);
+  __Pyx_INCREF(__pyx_v_value);
+  __Pyx_GIVEREF(__pyx_v_value);
+  __Pyx_GOTREF(__pyx_v_self->_last_exc_arg);
+  __Pyx_DECREF(__pyx_v_self->_last_exc_arg);
+  __pyx_v_self->_last_exc_arg = __pyx_v_value;
+
+  /* function exit code */
+  __pyx_r = 0;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg_5__del__(PyObject *__pyx_v_self); /*proto*/
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg_5__del__(PyObject *__pyx_v_self) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__del__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg_4__del__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg_4__del__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__del__", 0);
+  __Pyx_INCREF(Py_None);
+  __Pyx_GIVEREF(Py_None);
+  __Pyx_GOTREF(__pyx_v_self->_last_exc_arg);
+  __Pyx_DECREF(__pyx_v_self->_last_exc_arg);
+  __pyx_v_self->_last_exc_arg = Py_None;
+
+  /* function exit code */
+  __pyx_r = 0;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "_pydevd_bundle/pydevd_cython.pyx":1147
+ *     cdef public object _try_except_info;
+ *     cdef public object _last_exc_arg;
+ *     cdef public set _raise_lines;             # <<<<<<<<<<<<<<
+ *     cdef public int _last_raise_line;
+ * #
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines_1__get__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines_1__get__(PyObject *__pyx_v_self) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines___get__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines___get__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__", 0);
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v_self->_raise_lines);
+  __pyx_r = __pyx_v_self->_raise_lines;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__set__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines_2__set__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self), ((PyObject *)__pyx_v_value));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines_2__set__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  __Pyx_RefNannySetupContext("__set__", 0);
+  if (!(likely(PySet_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "set", Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(0, 1147, __pyx_L1_error)
+  __pyx_t_1 = __pyx_v_value;
+  __Pyx_INCREF(__pyx_t_1);
+  __Pyx_GIVEREF(__pyx_t_1);
+  __Pyx_GOTREF(__pyx_v_self->_raise_lines);
+  __Pyx_DECREF(__pyx_v_self->_raise_lines);
+  __pyx_v_self->_raise_lines = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* function exit code */
+  __pyx_r = 0;
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerNoBackFrame._raise_lines.__set__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = -1;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines_5__del__(PyObject *__pyx_v_self); /*proto*/
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines_5__del__(PyObject *__pyx_v_self) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__del__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines_4__del__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines_4__del__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__del__", 0);
+  __Pyx_INCREF(Py_None);
+  __Pyx_GIVEREF(Py_None);
+  __Pyx_GOTREF(__pyx_v_self->_raise_lines);
+  __Pyx_DECREF(__pyx_v_self->_raise_lines);
+  __pyx_v_self->_raise_lines = ((PyObject*)Py_None);
+
+  /* function exit code */
+  __pyx_r = 0;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "_pydevd_bundle/pydevd_cython.pyx":1148
+ *     cdef public object _last_exc_arg;
+ *     cdef public set _raise_lines;
+ *     cdef public int _last_raise_line;             # <<<<<<<<<<<<<<
+ * #
+ *     def __init__(self, frame_trace_dispatch, tuple args):
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_last_raise_line_1__get__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_last_raise_line_1__get__(PyObject *__pyx_v_self) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_last_raise_line___get__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_last_raise_line___get__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  __Pyx_RefNannySetupContext("__get__", 0);
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->_last_raise_line); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1148, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerNoBackFrame._last_raise_line.__get__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_last_raise_line_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
+static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_last_raise_line_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__set__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_last_raise_line_2__set__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self), ((PyObject *)__pyx_v_value));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_last_raise_line_2__set__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  __Pyx_RefNannySetupContext("__set__", 0);
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_value); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1148, __pyx_L1_error)
+  __pyx_v_self->_last_raise_line = __pyx_t_1;
+
+  /* function exit code */
+  __pyx_r = 0;
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerNoBackFrame._last_raise_line.__set__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = -1;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "(tree fragment)":1
+ * def __reduce_cython__(self):             # <<<<<<<<<<<<<<
+ *     cdef bint use_setstate
+ *     state = (self._args, self._frame_trace_dispatch, self._last_exc_arg, self._last_raise_line, self._raise_lines, self._try_except_info)
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_7__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_7__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__reduce_cython__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_6__reduce_cython__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_6__reduce_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self) {
+  int __pyx_v_use_setstate;
+  PyObject *__pyx_v_state = NULL;
+  PyObject *__pyx_v__dict = NULL;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  int __pyx_t_3;
+  int __pyx_t_4;
+  int __pyx_t_5;
+  PyObject *__pyx_t_6 = NULL;
+  __Pyx_RefNannySetupContext("__reduce_cython__", 0);
+
+  /* "(tree fragment)":3
+ * def __reduce_cython__(self):
+ *     cdef bint use_setstate
+ *     state = (self._args, self._frame_trace_dispatch, self._last_exc_arg, self._last_raise_line, self._raise_lines, self._try_except_info)             # <<<<<<<<<<<<<<
+ *     _dict = getattr(self, '__dict__', None)
+ *     if _dict is not None:
+ */
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->_last_raise_line); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 3, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = PyTuple_New(6); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 3, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_INCREF(__pyx_v_self->_args);
+  __Pyx_GIVEREF(__pyx_v_self->_args);
+  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_v_self->_args);
+  __Pyx_INCREF(__pyx_v_self->_frame_trace_dispatch);
+  __Pyx_GIVEREF(__pyx_v_self->_frame_trace_dispatch);
+  PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_self->_frame_trace_dispatch);
+  __Pyx_INCREF(__pyx_v_self->_last_exc_arg);
+  __Pyx_GIVEREF(__pyx_v_self->_last_exc_arg);
+  PyTuple_SET_ITEM(__pyx_t_2, 2, __pyx_v_self->_last_exc_arg);
+  __Pyx_GIVEREF(__pyx_t_1);
+  PyTuple_SET_ITEM(__pyx_t_2, 3, __pyx_t_1);
+  __Pyx_INCREF(__pyx_v_self->_raise_lines);
+  __Pyx_GIVEREF(__pyx_v_self->_raise_lines);
+  PyTuple_SET_ITEM(__pyx_t_2, 4, __pyx_v_self->_raise_lines);
+  __Pyx_INCREF(__pyx_v_self->_try_except_info);
+  __Pyx_GIVEREF(__pyx_v_self->_try_except_info);
+  PyTuple_SET_ITEM(__pyx_t_2, 5, __pyx_v_self->_try_except_info);
+  __pyx_t_1 = 0;
+  __pyx_v_state = ((PyObject*)__pyx_t_2);
+  __pyx_t_2 = 0;
+
+  /* "(tree fragment)":4
+ *     cdef bint use_setstate
+ *     state = (self._args, self._frame_trace_dispatch, self._last_exc_arg, self._last_raise_line, self._raise_lines, self._try_except_info)
+ *     _dict = getattr(self, '__dict__', None)             # <<<<<<<<<<<<<<
+ *     if _dict is not None:
+ *         state += (_dict,)
+ */
+  __pyx_t_2 = __Pyx_GetAttr3(((PyObject *)__pyx_v_self), __pyx_n_s_dict, Py_None); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 4, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_v__dict = __pyx_t_2;
+  __pyx_t_2 = 0;
+
+  /* "(tree fragment)":5
+ *     state = (self._args, self._frame_trace_dispatch, self._last_exc_arg, self._last_raise_line, self._raise_lines, self._try_except_info)
+ *     _dict = getattr(self, '__dict__', None)
+ *     if _dict is not None:             # <<<<<<<<<<<<<<
+ *         state += (_dict,)
+ *         use_setstate = True
+ */
+  __pyx_t_3 = (__pyx_v__dict != Py_None);
+  __pyx_t_4 = (__pyx_t_3 != 0);
+  if (__pyx_t_4) {
+
+    /* "(tree fragment)":6
+ *     _dict = getattr(self, '__dict__', None)
+ *     if _dict is not None:
+ *         state += (_dict,)             # <<<<<<<<<<<<<<
+ *         use_setstate = True
+ *     else:
+ */
+    __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 6, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_INCREF(__pyx_v__dict);
+    __Pyx_GIVEREF(__pyx_v__dict);
+    PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_v__dict);
+    __pyx_t_1 = PyNumber_InPlaceAdd(__pyx_v_state, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 6, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_DECREF_SET(__pyx_v_state, ((PyObject*)__pyx_t_1));
+    __pyx_t_1 = 0;
+
+    /* "(tree fragment)":7
+ *     if _dict is not None:
+ *         state += (_dict,)
+ *         use_setstate = True             # <<<<<<<<<<<<<<
+ *     else:
+ *         use_setstate = self._args is not None or self._frame_trace_dispatch is not None or self._last_exc_arg is not None or self._raise_lines is not None or self._try_except_info is not None
+ */
+    __pyx_v_use_setstate = 1;
+
+    /* "(tree fragment)":5
+ *     state = (self._args, self._frame_trace_dispatch, self._last_exc_arg, self._last_raise_line, self._raise_lines, self._try_except_info)
+ *     _dict = getattr(self, '__dict__', None)
+ *     if _dict is not None:             # <<<<<<<<<<<<<<
+ *         state += (_dict,)
+ *         use_setstate = True
+ */
+    goto __pyx_L3;
+  }
+
+  /* "(tree fragment)":9
+ *         use_setstate = True
+ *     else:
+ *         use_setstate = self._args is not None or self._frame_trace_dispatch is not None or self._last_exc_arg is not None or self._raise_lines is not None or self._try_except_info is not None             # <<<<<<<<<<<<<<
+ *     if use_setstate:
+ *         return __pyx_unpickle_TopLevelThreadTracerNoBackFrame, (type(self), 0xf34c74e, None), state
+ */
+  /*else*/ {
+    __pyx_t_3 = (__pyx_v_self->_args != ((PyObject*)Py_None));
+    __pyx_t_5 = (__pyx_t_3 != 0);
+    if (!__pyx_t_5) {
+    } else {
+      __pyx_t_4 = __pyx_t_5;
+      goto __pyx_L4_bool_binop_done;
+    }
+    __pyx_t_5 = (__pyx_v_self->_frame_trace_dispatch != Py_None);
+    __pyx_t_3 = (__pyx_t_5 != 0);
+    if (!__pyx_t_3) {
+    } else {
+      __pyx_t_4 = __pyx_t_3;
+      goto __pyx_L4_bool_binop_done;
+    }
+    __pyx_t_3 = (__pyx_v_self->_last_exc_arg != Py_None);
+    __pyx_t_5 = (__pyx_t_3 != 0);
+    if (!__pyx_t_5) {
+    } else {
+      __pyx_t_4 = __pyx_t_5;
+      goto __pyx_L4_bool_binop_done;
+    }
+    __pyx_t_5 = (__pyx_v_self->_raise_lines != ((PyObject*)Py_None));
+    __pyx_t_3 = (__pyx_t_5 != 0);
+    if (!__pyx_t_3) {
+    } else {
+      __pyx_t_4 = __pyx_t_3;
+      goto __pyx_L4_bool_binop_done;
+    }
+    __pyx_t_3 = (__pyx_v_self->_try_except_info != Py_None);
+    __pyx_t_5 = (__pyx_t_3 != 0);
+    __pyx_t_4 = __pyx_t_5;
+    __pyx_L4_bool_binop_done:;
+    __pyx_v_use_setstate = __pyx_t_4;
+  }
+  __pyx_L3:;
+
+  /* "(tree fragment)":10
+ *     else:
+ *         use_setstate = self._args is not None or self._frame_trace_dispatch is not None or self._last_exc_arg is not None or self._raise_lines is not None or self._try_except_info is not None
+ *     if use_setstate:             # <<<<<<<<<<<<<<
+ *         return __pyx_unpickle_TopLevelThreadTracerNoBackFrame, (type(self), 0xf34c74e, None), state
+ *     else:
+ */
+  __pyx_t_4 = (__pyx_v_use_setstate != 0);
+  if (__pyx_t_4) {
+
+    /* "(tree fragment)":11
+ *         use_setstate = self._args is not None or self._frame_trace_dispatch is not None or self._last_exc_arg is not None or self._raise_lines is not None or self._try_except_info is not None
+ *     if use_setstate:
+ *         return __pyx_unpickle_TopLevelThreadTracerNoBackFrame, (type(self), 0xf34c74e, None), state             # <<<<<<<<<<<<<<
+ *     else:
+ *         return __pyx_unpickle_TopLevelThreadTracerNoBackFrame, (type(self), 0xf34c74e, state)
+ */
+    __Pyx_XDECREF(__pyx_r);
+    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyx_unpickle_TopLevelThreadTra_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 11, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_2 = PyTuple_New(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 11, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_INCREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    __Pyx_GIVEREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    PyTuple_SET_ITEM(__pyx_t_2, 0, ((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    __Pyx_INCREF(__pyx_int_255117134);
+    __Pyx_GIVEREF(__pyx_int_255117134);
+    PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_int_255117134);
+    __Pyx_INCREF(Py_None);
+    __Pyx_GIVEREF(Py_None);
+    PyTuple_SET_ITEM(__pyx_t_2, 2, Py_None);
+    __pyx_t_6 = PyTuple_New(3); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 11, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_GIVEREF(__pyx_t_1);
+    PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_1);
+    __Pyx_GIVEREF(__pyx_t_2);
+    PyTuple_SET_ITEM(__pyx_t_6, 1, __pyx_t_2);
+    __Pyx_INCREF(__pyx_v_state);
+    __Pyx_GIVEREF(__pyx_v_state);
+    PyTuple_SET_ITEM(__pyx_t_6, 2, __pyx_v_state);
+    __pyx_t_1 = 0;
+    __pyx_t_2 = 0;
+    __pyx_r = __pyx_t_6;
+    __pyx_t_6 = 0;
+    goto __pyx_L0;
+
+    /* "(tree fragment)":10
+ *     else:
+ *         use_setstate = self._args is not None or self._frame_trace_dispatch is not None or self._last_exc_arg is not None or self._raise_lines is not None or self._try_except_info is not None
+ *     if use_setstate:             # <<<<<<<<<<<<<<
+ *         return __pyx_unpickle_TopLevelThreadTracerNoBackFrame, (type(self), 0xf34c74e, None), state
+ *     else:
+ */
+  }
+
+  /* "(tree fragment)":13
+ *         return __pyx_unpickle_TopLevelThreadTracerNoBackFrame, (type(self), 0xf34c74e, None), state
+ *     else:
+ *         return __pyx_unpickle_TopLevelThreadTracerNoBackFrame, (type(self), 0xf34c74e, state)             # <<<<<<<<<<<<<<
+ * def __setstate_cython__(self, __pyx_state):
+ *     __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(self, __pyx_state)
+ */
+  /*else*/ {
+    __Pyx_XDECREF(__pyx_r);
+    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyx_unpickle_TopLevelThreadTra_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 13, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_2 = PyTuple_New(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 13, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_INCREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    __Pyx_GIVEREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    PyTuple_SET_ITEM(__pyx_t_2, 0, ((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    __Pyx_INCREF(__pyx_int_255117134);
+    __Pyx_GIVEREF(__pyx_int_255117134);
+    PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_int_255117134);
+    __Pyx_INCREF(__pyx_v_state);
+    __Pyx_GIVEREF(__pyx_v_state);
+    PyTuple_SET_ITEM(__pyx_t_2, 2, __pyx_v_state);
+    __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 13, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_GIVEREF(__pyx_t_6);
+    PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_6);
+    __Pyx_GIVEREF(__pyx_t_2);
+    PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_t_2);
+    __pyx_t_6 = 0;
+    __pyx_t_2 = 0;
+    __pyx_r = __pyx_t_1;
+    __pyx_t_1 = 0;
+    goto __pyx_L0;
+  }
+
+  /* "(tree fragment)":1
+ * def __reduce_cython__(self):             # <<<<<<<<<<<<<<
+ *     cdef bint use_setstate
+ *     state = (self._args, self._frame_trace_dispatch, self._last_exc_arg, self._last_raise_line, self._raise_lines, self._try_except_info)
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerNoBackFrame.__reduce_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_state);
+  __Pyx_XDECREF(__pyx_v__dict);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "(tree fragment)":14
+ *     else:
+ *         return __pyx_unpickle_TopLevelThreadTracerNoBackFrame, (type(self), 0xf34c74e, state)
+ * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
+ *     __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(self, __pyx_state)
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_9__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_9__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__setstate_cython__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_8__setstate_cython__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v_self), ((PyObject *)__pyx_v___pyx_state));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_8__setstate_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  __Pyx_RefNannySetupContext("__setstate_cython__", 0);
+
+  /* "(tree fragment)":15
+ *         return __pyx_unpickle_TopLevelThreadTracerNoBackFrame, (type(self), 0xf34c74e, state)
+ * def __setstate_cython__(self, __pyx_state):
+ *     __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(self, __pyx_state)             # <<<<<<<<<<<<<<
+ */
+  if (!(likely(PyTuple_CheckExact(__pyx_v___pyx_state))||((__pyx_v___pyx_state) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_v___pyx_state)->tp_name), 0))) __PYX_ERR(1, 15, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(__pyx_v_self, ((PyObject*)__pyx_v___pyx_state)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 15, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "(tree fragment)":14
+ *     else:
+ *         return __pyx_unpickle_TopLevelThreadTracerNoBackFrame, (type(self), 0xf34c74e, state)
+ * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
+ *     __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(self, __pyx_state)
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.TopLevelThreadTracerNoBackFrame.__setstate_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "_pydevd_bundle/pydevd_cython.pyx":1249
  * cdef class ThreadTracer:
  *     cdef public tuple _args;
  *     def __init__(self, tuple args):             # <<<<<<<<<<<<<<
@@ -23124,7 +25825,7 @@ static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_1__init__(Py
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 1118, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 1249, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 1) {
       goto __pyx_L5_argtuple_error;
@@ -23135,13 +25836,13 @@ static int __pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_1__init__(Py
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1118, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1249, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.ThreadTracer.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_args), (&PyTuple_Type), 1, "args", 1))) __PYX_ERR(0, 1118, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_args), (&PyTuple_Type), 1, "args", 1))) __PYX_ERR(0, 1249, __pyx_L1_error)
   __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer___init__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *)__pyx_v_self), __pyx_v_args);
 
   /* function exit code */
@@ -23158,7 +25859,7 @@ static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer___init__(str
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__init__", 0);
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1119
+  /* "_pydevd_bundle/pydevd_cython.pyx":1250
  *     cdef public tuple _args;
  *     def __init__(self, tuple args):
  *         self._args = args             # <<<<<<<<<<<<<<
@@ -23171,7 +25872,7 @@ static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer___init__(str
   __Pyx_DECREF(__pyx_v_self->_args);
   __pyx_v_self->_args = __pyx_v_args;
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1118
+  /* "_pydevd_bundle/pydevd_cython.pyx":1249
  * cdef class ThreadTracer:
  *     cdef public tuple _args;
  *     def __init__(self, tuple args):             # <<<<<<<<<<<<<<
@@ -23185,764 +25886,8 @@ static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer___init__(str
   return __pyx_r;
 }
 
-/* "_pydevd_bundle/pydevd_cython.pyx":1126
+/* "_pydevd_bundle/pydevd_cython.pyx":1258
  * # ENDIF
- * 
- *     def trace_unhandled_exceptions(self, frame, event, arg):             # <<<<<<<<<<<<<<
- *         # Note that we ignore the frame as this tracing method should only be put in topmost frames already.
- *         # print('trace_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
- */
-
-/* Python wrapper */
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_3trace_unhandled_exceptions(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_3trace_unhandled_exceptions(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  PyObject *__pyx_v_frame = 0;
-  PyObject *__pyx_v_event = 0;
-  PyObject *__pyx_v_arg = 0;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("trace_unhandled_exceptions (wrapper)", 0);
-  {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_frame,&__pyx_n_s_event,&__pyx_n_s_arg,0};
-    PyObject* values[3] = {0,0,0};
-    if (unlikely(__pyx_kwds)) {
-      Py_ssize_t kw_args;
-      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
-      switch (pos_args) {
-        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
-        CYTHON_FALLTHROUGH;
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        CYTHON_FALLTHROUGH;
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = PyDict_Size(__pyx_kwds);
-      switch (pos_args) {
-        case  0:
-        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_frame)) != 0)) kw_args--;
-        else goto __pyx_L5_argtuple_error;
-        CYTHON_FALLTHROUGH;
-        case  1:
-        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_event)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("trace_unhandled_exceptions", 1, 3, 3, 1); __PYX_ERR(0, 1126, __pyx_L3_error)
-        }
-        CYTHON_FALLTHROUGH;
-        case  2:
-        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_arg)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("trace_unhandled_exceptions", 1, 3, 3, 2); __PYX_ERR(0, 1126, __pyx_L3_error)
-        }
-      }
-      if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "trace_unhandled_exceptions") < 0)) __PYX_ERR(0, 1126, __pyx_L3_error)
-      }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
-      goto __pyx_L5_argtuple_error;
-    } else {
-      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-      values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
-    }
-    __pyx_v_frame = values[0];
-    __pyx_v_event = values[1];
-    __pyx_v_arg = values[2];
-  }
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("trace_unhandled_exceptions", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1126, __pyx_L3_error)
-  __pyx_L3_error:;
-  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.ThreadTracer.trace_unhandled_exceptions", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_2trace_unhandled_exceptions(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *)__pyx_v_self), __pyx_v_frame, __pyx_v_event, __pyx_v_arg);
-
-  /* function exit code */
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_2trace_unhandled_exceptions(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg) {
-  PyObject *__pyx_v_stop_on_unhandled_exception = NULL;
-  PyObject *__pyx_v_py_db = NULL;
-  PyObject *__pyx_v_t = NULL;
-  PyObject *__pyx_v_additional_info = NULL;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
-  int __pyx_t_2;
-  int __pyx_t_3;
-  PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
-  PyObject *__pyx_t_6 = NULL;
-  PyObject *__pyx_t_7 = NULL;
-  int __pyx_t_8;
-  __Pyx_RefNannySetupContext("trace_unhandled_exceptions", 0);
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1129
- *         # Note that we ignore the frame as this tracing method should only be put in topmost frames already.
- *         # print('trace_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
- *         if event == 'exception' and arg is not None:             # <<<<<<<<<<<<<<
- *             from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
- *             py_db, t, additional_info = self._args[0:3]
- */
-  __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_event, __pyx_n_s_exception, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1129, __pyx_L1_error)
-  if (__pyx_t_2) {
-  } else {
-    __pyx_t_1 = __pyx_t_2;
-    goto __pyx_L4_bool_binop_done;
-  }
-  __pyx_t_2 = (__pyx_v_arg != Py_None);
-  __pyx_t_3 = (__pyx_t_2 != 0);
-  __pyx_t_1 = __pyx_t_3;
-  __pyx_L4_bool_binop_done:;
-  if (__pyx_t_1) {
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1130
- *         # print('trace_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
- *         if event == 'exception' and arg is not None:
- *             from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception             # <<<<<<<<<<<<<<
- *             py_db, t, additional_info = self._args[0:3]
- *             if arg is not None:
- */
-    __pyx_t_4 = PyList_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1130, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_INCREF(__pyx_n_s_stop_on_unhandled_exception);
-    __Pyx_GIVEREF(__pyx_n_s_stop_on_unhandled_exception);
-    PyList_SET_ITEM(__pyx_t_4, 0, __pyx_n_s_stop_on_unhandled_exception);
-    __pyx_t_5 = __Pyx_Import(__pyx_n_s_pydevd_bundle_pydevd_breakpoint, __pyx_t_4, -1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1130, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = __Pyx_ImportFrom(__pyx_t_5, __pyx_n_s_stop_on_unhandled_exception); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1130, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_INCREF(__pyx_t_4);
-    __pyx_v_stop_on_unhandled_exception = __pyx_t_4;
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1131
- *         if event == 'exception' and arg is not None:
- *             from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
- *             py_db, t, additional_info = self._args[0:3]             # <<<<<<<<<<<<<<
- *             if arg is not None:
- *                 if not additional_info.suspended_at_unhandled:
- */
-    if (unlikely(__pyx_v_self->_args == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 1131, __pyx_L1_error)
-    }
-    __pyx_t_5 = __Pyx_PyTuple_GetSlice(__pyx_v_self->_args, 0, 3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1131, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    if (1) {
-      PyObject* sequence = __pyx_t_5;
-      Py_ssize_t size = __Pyx_PySequence_SIZE(sequence);
-      if (unlikely(size != 3)) {
-        if (size > 3) __Pyx_RaiseTooManyValuesError(3);
-        else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-        __PYX_ERR(0, 1131, __pyx_L1_error)
-      }
-      #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-      __pyx_t_4 = PyTuple_GET_ITEM(sequence, 0); 
-      __pyx_t_6 = PyTuple_GET_ITEM(sequence, 1); 
-      __pyx_t_7 = PyTuple_GET_ITEM(sequence, 2); 
-      __Pyx_INCREF(__pyx_t_4);
-      __Pyx_INCREF(__pyx_t_6);
-      __Pyx_INCREF(__pyx_t_7);
-      #else
-      __pyx_t_4 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1131, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_6 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1131, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __pyx_t_7 = PySequence_ITEM(sequence, 2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1131, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_7);
-      #endif
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    }
-    __pyx_v_py_db = __pyx_t_4;
-    __pyx_t_4 = 0;
-    __pyx_v_t = __pyx_t_6;
-    __pyx_t_6 = 0;
-    __pyx_v_additional_info = __pyx_t_7;
-    __pyx_t_7 = 0;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1132
- *             from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
- *             py_db, t, additional_info = self._args[0:3]
- *             if arg is not None:             # <<<<<<<<<<<<<<
- *                 if not additional_info.suspended_at_unhandled:
- *                     if frame.f_back is not None:
- */
-    __pyx_t_1 = (__pyx_v_arg != Py_None);
-    __pyx_t_3 = (__pyx_t_1 != 0);
-    if (__pyx_t_3) {
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1133
- *             py_db, t, additional_info = self._args[0:3]
- *             if arg is not None:
- *                 if not additional_info.suspended_at_unhandled:             # <<<<<<<<<<<<<<
- *                     if frame.f_back is not None:
- *                         additional_info.suspended_at_unhandled = True
- */
-      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_additional_info, __pyx_n_s_suspended_at_unhandled); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1133, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 1133, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_1 = ((!__pyx_t_3) != 0);
-      if (__pyx_t_1) {
-
-        /* "_pydevd_bundle/pydevd_cython.pyx":1134
- *             if arg is not None:
- *                 if not additional_info.suspended_at_unhandled:
- *                     if frame.f_back is not None:             # <<<<<<<<<<<<<<
- *                         additional_info.suspended_at_unhandled = True
- * 
- */
-        __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_frame, __pyx_n_s_f_back); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1134, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_5);
-        __pyx_t_1 = (__pyx_t_5 != Py_None);
-        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __pyx_t_3 = (__pyx_t_1 != 0);
-        if (__pyx_t_3) {
-
-          /* "_pydevd_bundle/pydevd_cython.pyx":1135
- *                 if not additional_info.suspended_at_unhandled:
- *                     if frame.f_back is not None:
- *                         additional_info.suspended_at_unhandled = True             # <<<<<<<<<<<<<<
- * 
- *                     stop_on_unhandled_exception(py_db, t, additional_info, arg)
- */
-          if (__Pyx_PyObject_SetAttrStr(__pyx_v_additional_info, __pyx_n_s_suspended_at_unhandled, Py_True) < 0) __PYX_ERR(0, 1135, __pyx_L1_error)
-
-          /* "_pydevd_bundle/pydevd_cython.pyx":1134
- *             if arg is not None:
- *                 if not additional_info.suspended_at_unhandled:
- *                     if frame.f_back is not None:             # <<<<<<<<<<<<<<
- *                         additional_info.suspended_at_unhandled = True
- * 
- */
-        }
-
-        /* "_pydevd_bundle/pydevd_cython.pyx":1137
- *                         additional_info.suspended_at_unhandled = True
- * 
- *                     stop_on_unhandled_exception(py_db, t, additional_info, arg)             # <<<<<<<<<<<<<<
- *         # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- *         return SafeCallWrapper(self.trace_unhandled_exceptions)
- */
-        __Pyx_INCREF(__pyx_v_stop_on_unhandled_exception);
-        __pyx_t_7 = __pyx_v_stop_on_unhandled_exception; __pyx_t_6 = NULL;
-        __pyx_t_8 = 0;
-        if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_7))) {
-          __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_7);
-          if (likely(__pyx_t_6)) {
-            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_7);
-            __Pyx_INCREF(__pyx_t_6);
-            __Pyx_INCREF(function);
-            __Pyx_DECREF_SET(__pyx_t_7, function);
-            __pyx_t_8 = 1;
-          }
-        }
-        #if CYTHON_FAST_PYCALL
-        if (PyFunction_Check(__pyx_t_7)) {
-          PyObject *__pyx_temp[5] = {__pyx_t_6, __pyx_v_py_db, __pyx_v_t, __pyx_v_additional_info, __pyx_v_arg};
-          __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_7, __pyx_temp+1-__pyx_t_8, 4+__pyx_t_8); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1137, __pyx_L1_error)
-          __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-          __Pyx_GOTREF(__pyx_t_5);
-        } else
-        #endif
-        #if CYTHON_FAST_PYCCALL
-        if (__Pyx_PyFastCFunction_Check(__pyx_t_7)) {
-          PyObject *__pyx_temp[5] = {__pyx_t_6, __pyx_v_py_db, __pyx_v_t, __pyx_v_additional_info, __pyx_v_arg};
-          __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_7, __pyx_temp+1-__pyx_t_8, 4+__pyx_t_8); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1137, __pyx_L1_error)
-          __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-          __Pyx_GOTREF(__pyx_t_5);
-        } else
-        #endif
-        {
-          __pyx_t_4 = PyTuple_New(4+__pyx_t_8); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1137, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_4);
-          if (__pyx_t_6) {
-            __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_6); __pyx_t_6 = NULL;
-          }
-          __Pyx_INCREF(__pyx_v_py_db);
-          __Pyx_GIVEREF(__pyx_v_py_db);
-          PyTuple_SET_ITEM(__pyx_t_4, 0+__pyx_t_8, __pyx_v_py_db);
-          __Pyx_INCREF(__pyx_v_t);
-          __Pyx_GIVEREF(__pyx_v_t);
-          PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_8, __pyx_v_t);
-          __Pyx_INCREF(__pyx_v_additional_info);
-          __Pyx_GIVEREF(__pyx_v_additional_info);
-          PyTuple_SET_ITEM(__pyx_t_4, 2+__pyx_t_8, __pyx_v_additional_info);
-          __Pyx_INCREF(__pyx_v_arg);
-          __Pyx_GIVEREF(__pyx_v_arg);
-          PyTuple_SET_ITEM(__pyx_t_4, 3+__pyx_t_8, __pyx_v_arg);
-          __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_4, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1137, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_5);
-          __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        }
-        __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-
-        /* "_pydevd_bundle/pydevd_cython.pyx":1133
- *             py_db, t, additional_info = self._args[0:3]
- *             if arg is not None:
- *                 if not additional_info.suspended_at_unhandled:             # <<<<<<<<<<<<<<
- *                     if frame.f_back is not None:
- *                         additional_info.suspended_at_unhandled = True
- */
-      }
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1132
- *             from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
- *             py_db, t, additional_info = self._args[0:3]
- *             if arg is not None:             # <<<<<<<<<<<<<<
- *                 if not additional_info.suspended_at_unhandled:
- *                     if frame.f_back is not None:
- */
-    }
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1129
- *         # Note that we ignore the frame as this tracing method should only be put in topmost frames already.
- *         # print('trace_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
- *         if event == 'exception' and arg is not None:             # <<<<<<<<<<<<<<
- *             from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
- *             py_db, t, additional_info = self._args[0:3]
- */
-  }
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1139
- *                     stop_on_unhandled_exception(py_db, t, additional_info, arg)
- *         # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- *         return SafeCallWrapper(self.trace_unhandled_exceptions)             # <<<<<<<<<<<<<<
- *         # ELSE
- * #         return self.trace_unhandled_exceptions
- */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_trace_unhandled_exceptions); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1139, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_7 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper), __pyx_t_5); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1139, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_7);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_r = __pyx_t_7;
-  __pyx_t_7 = 0;
-  goto __pyx_L0;
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1126
- * # ENDIF
- * 
- *     def trace_unhandled_exceptions(self, frame, event, arg):             # <<<<<<<<<<<<<<
- *         # Note that we ignore the frame as this tracing method should only be put in topmost frames already.
- *         # print('trace_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_XDECREF(__pyx_t_7);
-  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.ThreadTracer.trace_unhandled_exceptions", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_stop_on_unhandled_exception);
-  __Pyx_XDECREF(__pyx_v_py_db);
-  __Pyx_XDECREF(__pyx_v_t);
-  __Pyx_XDECREF(__pyx_v_additional_info);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "_pydevd_bundle/pydevd_cython.pyx":1144
- *         # ENDIF
- * 
- *     def trace_dispatch_and_unhandled_exceptions(self, frame, event, arg):             # <<<<<<<<<<<<<<
- *         # print('trace_dispatch_and_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
- *         if event == 'exception' and arg is not None:
- */
-
-/* Python wrapper */
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_5trace_dispatch_and_unhandled_exceptions(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_5trace_dispatch_and_unhandled_exceptions(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  PyObject *__pyx_v_frame = 0;
-  PyObject *__pyx_v_event = 0;
-  PyObject *__pyx_v_arg = 0;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("trace_dispatch_and_unhandled_exceptions (wrapper)", 0);
-  {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_frame,&__pyx_n_s_event,&__pyx_n_s_arg,0};
-    PyObject* values[3] = {0,0,0};
-    if (unlikely(__pyx_kwds)) {
-      Py_ssize_t kw_args;
-      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
-      switch (pos_args) {
-        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
-        CYTHON_FALLTHROUGH;
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        CYTHON_FALLTHROUGH;
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = PyDict_Size(__pyx_kwds);
-      switch (pos_args) {
-        case  0:
-        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_frame)) != 0)) kw_args--;
-        else goto __pyx_L5_argtuple_error;
-        CYTHON_FALLTHROUGH;
-        case  1:
-        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_event)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("trace_dispatch_and_unhandled_exceptions", 1, 3, 3, 1); __PYX_ERR(0, 1144, __pyx_L3_error)
-        }
-        CYTHON_FALLTHROUGH;
-        case  2:
-        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_arg)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("trace_dispatch_and_unhandled_exceptions", 1, 3, 3, 2); __PYX_ERR(0, 1144, __pyx_L3_error)
-        }
-      }
-      if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "trace_dispatch_and_unhandled_exceptions") < 0)) __PYX_ERR(0, 1144, __pyx_L3_error)
-      }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
-      goto __pyx_L5_argtuple_error;
-    } else {
-      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-      values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
-    }
-    __pyx_v_frame = values[0];
-    __pyx_v_event = values[1];
-    __pyx_v_arg = values[2];
-  }
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("trace_dispatch_and_unhandled_exceptions", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1144, __pyx_L3_error)
-  __pyx_L3_error:;
-  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.ThreadTracer.trace_dispatch_and_unhandled_exceptions", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_4trace_dispatch_and_unhandled_exceptions(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *)__pyx_v_self), __pyx_v_frame, __pyx_v_event, __pyx_v_arg);
-
-  /* function exit code */
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_4trace_dispatch_and_unhandled_exceptions(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg) {
-  PyObject *__pyx_v_ret = NULL;
-  PyObject *__pyx_v_pydb_frame_trace = NULL;
-  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *__pyx_v_py_db_frame_trace_and_unhandled_exceptions_trace = NULL;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
-  int __pyx_t_2;
-  int __pyx_t_3;
-  PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
-  PyObject *__pyx_t_6 = NULL;
-  int __pyx_t_7;
-  PyObject *__pyx_t_8 = NULL;
-  __Pyx_RefNannySetupContext("trace_dispatch_and_unhandled_exceptions", 0);
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1146
- *     def trace_dispatch_and_unhandled_exceptions(self, frame, event, arg):
- *         # print('trace_dispatch_and_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
- *         if event == 'exception' and arg is not None:             # <<<<<<<<<<<<<<
- *             self.trace_unhandled_exceptions(frame, event, arg)
- *             ret = self.trace_dispatch_and_unhandled_exceptions
- */
-  __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_event, __pyx_n_s_exception, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 1146, __pyx_L1_error)
-  if (__pyx_t_2) {
-  } else {
-    __pyx_t_1 = __pyx_t_2;
-    goto __pyx_L4_bool_binop_done;
-  }
-  __pyx_t_2 = (__pyx_v_arg != Py_None);
-  __pyx_t_3 = (__pyx_t_2 != 0);
-  __pyx_t_1 = __pyx_t_3;
-  __pyx_L4_bool_binop_done:;
-  if (__pyx_t_1) {
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1147
- *         # print('trace_dispatch_and_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
- *         if event == 'exception' and arg is not None:
- *             self.trace_unhandled_exceptions(frame, event, arg)             # <<<<<<<<<<<<<<
- *             ret = self.trace_dispatch_and_unhandled_exceptions
- *         else:
- */
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_trace_unhandled_exceptions); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1147, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_6 = NULL;
-    __pyx_t_7 = 0;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
-      __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_5);
-      if (likely(__pyx_t_6)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-        __Pyx_INCREF(__pyx_t_6);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_5, function);
-        __pyx_t_7 = 1;
-      }
-    }
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_5)) {
-      PyObject *__pyx_temp[4] = {__pyx_t_6, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
-      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 3+__pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1147, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __Pyx_GOTREF(__pyx_t_4);
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
-      PyObject *__pyx_temp[4] = {__pyx_t_6, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
-      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 3+__pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1147, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __Pyx_GOTREF(__pyx_t_4);
-    } else
-    #endif
-    {
-      __pyx_t_8 = PyTuple_New(3+__pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1147, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_8);
-      if (__pyx_t_6) {
-        __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_6); __pyx_t_6 = NULL;
-      }
-      __Pyx_INCREF(__pyx_v_frame);
-      __Pyx_GIVEREF(__pyx_v_frame);
-      PyTuple_SET_ITEM(__pyx_t_8, 0+__pyx_t_7, __pyx_v_frame);
-      __Pyx_INCREF(__pyx_v_event);
-      __Pyx_GIVEREF(__pyx_v_event);
-      PyTuple_SET_ITEM(__pyx_t_8, 1+__pyx_t_7, __pyx_v_event);
-      __Pyx_INCREF(__pyx_v_arg);
-      __Pyx_GIVEREF(__pyx_v_arg);
-      PyTuple_SET_ITEM(__pyx_t_8, 2+__pyx_t_7, __pyx_v_arg);
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1147, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    }
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1148
- *         if event == 'exception' and arg is not None:
- *             self.trace_unhandled_exceptions(frame, event, arg)
- *             ret = self.trace_dispatch_and_unhandled_exceptions             # <<<<<<<<<<<<<<
- *         else:
- *             pydb_frame_trace = self.__call__(frame, event, arg)
- */
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_trace_dispatch_and_unhandled_exc); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1148, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __pyx_v_ret = __pyx_t_4;
-    __pyx_t_4 = 0;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1146
- *     def trace_dispatch_and_unhandled_exceptions(self, frame, event, arg):
- *         # print('trace_dispatch_and_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
- *         if event == 'exception' and arg is not None:             # <<<<<<<<<<<<<<
- *             self.trace_unhandled_exceptions(frame, event, arg)
- *             ret = self.trace_dispatch_and_unhandled_exceptions
- */
-    goto __pyx_L3;
-  }
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1150
- *             ret = self.trace_dispatch_and_unhandled_exceptions
- *         else:
- *             pydb_frame_trace = self.__call__(frame, event, arg)             # <<<<<<<<<<<<<<
- *             if pydb_frame_trace is None:
- *                 # If the PyDBFrame did not return a tracer, just go with the simpler
- */
-  /*else*/ {
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_call_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1150, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_8 = NULL;
-    __pyx_t_7 = 0;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
-      __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_5);
-      if (likely(__pyx_t_8)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-        __Pyx_INCREF(__pyx_t_8);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_5, function);
-        __pyx_t_7 = 1;
-      }
-    }
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_5)) {
-      PyObject *__pyx_temp[4] = {__pyx_t_8, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
-      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 3+__pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1150, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-      __Pyx_GOTREF(__pyx_t_4);
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
-      PyObject *__pyx_temp[4] = {__pyx_t_8, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
-      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 3+__pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1150, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-      __Pyx_GOTREF(__pyx_t_4);
-    } else
-    #endif
-    {
-      __pyx_t_6 = PyTuple_New(3+__pyx_t_7); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1150, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      if (__pyx_t_8) {
-        __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_8); __pyx_t_8 = NULL;
-      }
-      __Pyx_INCREF(__pyx_v_frame);
-      __Pyx_GIVEREF(__pyx_v_frame);
-      PyTuple_SET_ITEM(__pyx_t_6, 0+__pyx_t_7, __pyx_v_frame);
-      __Pyx_INCREF(__pyx_v_event);
-      __Pyx_GIVEREF(__pyx_v_event);
-      PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_7, __pyx_v_event);
-      __Pyx_INCREF(__pyx_v_arg);
-      __Pyx_GIVEREF(__pyx_v_arg);
-      PyTuple_SET_ITEM(__pyx_t_6, 2+__pyx_t_7, __pyx_v_arg);
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_6, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1150, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    }
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __pyx_v_pydb_frame_trace = __pyx_t_4;
-    __pyx_t_4 = 0;
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1151
- *         else:
- *             pydb_frame_trace = self.__call__(frame, event, arg)
- *             if pydb_frame_trace is None:             # <<<<<<<<<<<<<<
- *                 # If the PyDBFrame did not return a tracer, just go with the simpler
- *                 # tracer for unhandled exceptions.
- */
-    __pyx_t_1 = (__pyx_v_pydb_frame_trace == Py_None);
-    __pyx_t_3 = (__pyx_t_1 != 0);
-    if (__pyx_t_3) {
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1154
- *                 # If the PyDBFrame did not return a tracer, just go with the simpler
- *                 # tracer for unhandled exceptions.
- *                 ret = self.trace_unhandled_exceptions             # <<<<<<<<<<<<<<
- *             else:
- *                 # Ok, this frame needs to be traced and needs to deal with unhandled exceptions. Create
- */
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_trace_unhandled_exceptions); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1154, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __pyx_v_ret = __pyx_t_4;
-      __pyx_t_4 = 0;
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1151
- *         else:
- *             pydb_frame_trace = self.__call__(frame, event, arg)
- *             if pydb_frame_trace is None:             # <<<<<<<<<<<<<<
- *                 # If the PyDBFrame did not return a tracer, just go with the simpler
- *                 # tracer for unhandled exceptions.
- */
-      goto __pyx_L6;
-    }
-
-    /* "_pydevd_bundle/pydevd_cython.pyx":1158
- *                 # Ok, this frame needs to be traced and needs to deal with unhandled exceptions. Create
- *                 # a class which does this for us.
- *                 py_db_frame_trace_and_unhandled_exceptions_trace = PyDbFrameTraceAndUnhandledExceptionsTrace(             # <<<<<<<<<<<<<<
- *                     pydb_frame_trace, self.trace_dispatch_and_unhandled_exceptions)
- *                 ret = py_db_frame_trace_and_unhandled_exceptions_trace.trace_dispatch
- */
-    /*else*/ {
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1159
- *                 # a class which does this for us.
- *                 py_db_frame_trace_and_unhandled_exceptions_trace = PyDbFrameTraceAndUnhandledExceptionsTrace(
- *                     pydb_frame_trace, self.trace_dispatch_and_unhandled_exceptions)             # <<<<<<<<<<<<<<
- *                 ret = py_db_frame_trace_and_unhandled_exceptions_trace.trace_dispatch
- *         # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- */
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_trace_dispatch_and_unhandled_exc); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1159, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1158
- *                 # Ok, this frame needs to be traced and needs to deal with unhandled exceptions. Create
- *                 # a class which does this for us.
- *                 py_db_frame_trace_and_unhandled_exceptions_trace = PyDbFrameTraceAndUnhandledExceptionsTrace(             # <<<<<<<<<<<<<<
- *                     pydb_frame_trace, self.trace_dispatch_and_unhandled_exceptions)
- *                 ret = py_db_frame_trace_and_unhandled_exceptions_trace.trace_dispatch
- */
-      __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1158, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_INCREF(__pyx_v_pydb_frame_trace);
-      __Pyx_GIVEREF(__pyx_v_pydb_frame_trace);
-      PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_v_pydb_frame_trace);
-      __Pyx_GIVEREF(__pyx_t_4);
-      PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_t_4);
-      __pyx_t_4 = 0;
-      __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace), __pyx_t_5, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1158, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_v_py_db_frame_trace_and_unhandled_exceptions_trace = ((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *)__pyx_t_4);
-      __pyx_t_4 = 0;
-
-      /* "_pydevd_bundle/pydevd_cython.pyx":1160
- *                 py_db_frame_trace_and_unhandled_exceptions_trace = PyDbFrameTraceAndUnhandledExceptionsTrace(
- *                     pydb_frame_trace, self.trace_dispatch_and_unhandled_exceptions)
- *                 ret = py_db_frame_trace_and_unhandled_exceptions_trace.trace_dispatch             # <<<<<<<<<<<<<<
- *         # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- *         return SafeCallWrapper(ret)
- */
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_py_db_frame_trace_and_unhandled_exceptions_trace), __pyx_n_s_trace_dispatch); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1160, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __pyx_v_ret = __pyx_t_4;
-      __pyx_t_4 = 0;
-    }
-    __pyx_L6:;
-  }
-  __pyx_L3:;
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1162
- *                 ret = py_db_frame_trace_and_unhandled_exceptions_trace.trace_dispatch
- *         # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- *         return SafeCallWrapper(ret)             # <<<<<<<<<<<<<<
- *         # ELSE
- * #         return ret
- */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_4 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper), __pyx_v_ret); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1162, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_r = __pyx_t_4;
-  __pyx_t_4 = 0;
-  goto __pyx_L0;
-
-  /* "_pydevd_bundle/pydevd_cython.pyx":1144
- *         # ENDIF
- * 
- *     def trace_dispatch_and_unhandled_exceptions(self, frame, event, arg):             # <<<<<<<<<<<<<<
- *         # print('trace_dispatch_and_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
- *         if event == 'exception' and arg is not None:
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_XDECREF(__pyx_t_8);
-  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.ThreadTracer.trace_dispatch_and_unhandled_exceptions", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_ret);
-  __Pyx_XDECREF(__pyx_v_pydb_frame_trace);
-  __Pyx_XDECREF((PyObject *)__pyx_v_py_db_frame_trace_and_unhandled_exceptions_trace);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "_pydevd_bundle/pydevd_cython.pyx":1167
- *         # ENDIF
  * 
  *     def __call__(self, frame, event, arg):             # <<<<<<<<<<<<<<
  *         ''' This is the callback used when we enter some context in the debugger.
@@ -23950,12 +25895,12 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_4trace
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_7__call__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__call__[] = " This is the callback used when we enter some context in the debugger.\n\n        We also decorate the thread we are in with info about the debugging.\n        The attributes added are:\n            pydev_state\n            pydev_step_stop\n            pydev_step_cmd\n            pydev_notify_kill\n\n        :param PyDB py_db:\n            This is the global debugger (this method should actually be added as a method to it).\n        ";
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_3__call__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static char __pyx_doc_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_2__call__[] = " This is the callback used when we enter some context in the debugger.\n\n        We also decorate the thread we are in with info about the debugging.\n        The attributes added are:\n            pydev_state\n            pydev_step_stop\n            pydev_step_cmd\n            pydev_notify_kill\n\n        :param PyDB py_db:\n            This is the global debugger (this method should actually be added as a method to it).\n        ";
 #if CYTHON_COMPILING_IN_CPYTHON
-struct wrapperbase __pyx_wrapperbase_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__call__;
+struct wrapperbase __pyx_wrapperbase_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_2__call__;
 #endif
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_7__call__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_3__call__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_frame = 0;
   PyObject *__pyx_v_event = 0;
   PyObject *__pyx_v_arg = 0;
@@ -23987,17 +25932,17 @@ static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_7__cal
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_event)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__call__", 1, 3, 3, 1); __PYX_ERR(0, 1167, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__call__", 1, 3, 3, 1); __PYX_ERR(0, 1258, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_arg)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__call__", 1, 3, 3, 2); __PYX_ERR(0, 1167, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__call__", 1, 3, 3, 2); __PYX_ERR(0, 1258, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__call__") < 0)) __PYX_ERR(0, 1167, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__call__") < 0)) __PYX_ERR(0, 1258, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
       goto __pyx_L5_argtuple_error;
@@ -24012,20 +25957,20 @@ static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_7__cal
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__call__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1167, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__call__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1258, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.ThreadTracer.__call__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__call__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *)__pyx_v_self), __pyx_v_frame, __pyx_v_event, __pyx_v_arg);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_2__call__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *)__pyx_v_self), __pyx_v_frame, __pyx_v_event, __pyx_v_arg);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__call__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg) {
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_2__call__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg) {
   PyObject *__pyx_v_filename = 0;
   int __pyx_v_pydev_step_cmd;
   PyObject *__pyx_v_frame_cache_key = 0;
@@ -24059,7 +26004,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
   PyObject *__pyx_t_17 = NULL;
   __Pyx_RefNannySetupContext("__call__", 0);
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1191
+  /* "_pydevd_bundle/pydevd_cython.pyx":1282
  *         # ENDIF
  *         # print('ENTER: trace_dispatch', frame.f_code.co_filename, frame.f_lineno, event, frame.f_code.co_name)
  *         py_db, t, additional_info, cache_skips, frame_skips_cache = self._args             # <<<<<<<<<<<<<<
@@ -24074,7 +26019,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
     if (unlikely(size != 5)) {
       if (size > 5) __Pyx_RaiseTooManyValuesError(5);
       else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-      __PYX_ERR(0, 1191, __pyx_L1_error)
+      __PYX_ERR(0, 1282, __pyx_L1_error)
     }
     #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
     __pyx_t_2 = PyTuple_GET_ITEM(sequence, 0); 
@@ -24092,7 +26037,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
       Py_ssize_t i;
       PyObject** temps[5] = {&__pyx_t_2,&__pyx_t_3,&__pyx_t_4,&__pyx_t_5,&__pyx_t_6};
       for (i=0; i < 5; i++) {
-        PyObject* item = PySequence_ITEM(sequence, i); if (unlikely(!item)) __PYX_ERR(0, 1191, __pyx_L1_error)
+        PyObject* item = PySequence_ITEM(sequence, i); if (unlikely(!item)) __PYX_ERR(0, 1282, __pyx_L1_error)
         __Pyx_GOTREF(item);
         *(temps[i]) = item;
       }
@@ -24100,10 +26045,10 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
     #endif
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   } else {
-    __Pyx_RaiseNoneNotIterableError(); __PYX_ERR(0, 1191, __pyx_L1_error)
+    __Pyx_RaiseNoneNotIterableError(); __PYX_ERR(0, 1282, __pyx_L1_error)
   }
-  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo))))) __PYX_ERR(0, 1191, __pyx_L1_error)
-  if (!(likely(PyDict_CheckExact(__pyx_t_5))||((__pyx_t_5) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "dict", Py_TYPE(__pyx_t_5)->tp_name), 0))) __PYX_ERR(0, 1191, __pyx_L1_error)
+  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo))))) __PYX_ERR(0, 1282, __pyx_L1_error)
+  if (!(likely(PyDict_CheckExact(__pyx_t_5))||((__pyx_t_5) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "dict", Py_TYPE(__pyx_t_5)->tp_name), 0))) __PYX_ERR(0, 1282, __pyx_L1_error)
   __pyx_v_py_db = __pyx_t_2;
   __pyx_t_2 = 0;
   __pyx_v_t = __pyx_t_3;
@@ -24115,7 +26060,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
   __pyx_v_frame_skips_cache = __pyx_t_6;
   __pyx_t_6 = 0;
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1192
+  /* "_pydevd_bundle/pydevd_cython.pyx":1283
  *         # print('ENTER: trace_dispatch', frame.f_code.co_filename, frame.f_lineno, event, frame.f_code.co_name)
  *         py_db, t, additional_info, cache_skips, frame_skips_cache = self._args
  *         pydev_step_cmd = additional_info.pydev_step_cmd             # <<<<<<<<<<<<<<
@@ -24125,7 +26070,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
   __pyx_t_7 = __pyx_v_additional_info->pydev_step_cmd;
   __pyx_v_pydev_step_cmd = __pyx_t_7;
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1193
+  /* "_pydevd_bundle/pydevd_cython.pyx":1284
  *         py_db, t, additional_info, cache_skips, frame_skips_cache = self._args
  *         pydev_step_cmd = additional_info.pydev_step_cmd
  *         is_stepping = pydev_step_cmd != -1             # <<<<<<<<<<<<<<
@@ -24134,7 +26079,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
   __pyx_v_is_stepping = (__pyx_v_pydev_step_cmd != -1L);
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1195
+  /* "_pydevd_bundle/pydevd_cython.pyx":1286
  *         is_stepping = pydev_step_cmd != -1
  * 
  *         try:             # <<<<<<<<<<<<<<
@@ -24150,34 +26095,34 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
     __Pyx_XGOTREF(__pyx_t_10);
     /*try:*/ {
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1196
+      /* "_pydevd_bundle/pydevd_cython.pyx":1287
  * 
  *         try:
  *             if py_db._finish_debugging_session:             # <<<<<<<<<<<<<<
  *                 if not py_db._termination_event_set:
  *                     # that was not working very well because jython gave some socket errors
  */
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_finish_debugging_session); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1196, __pyx_L3_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_finish_debugging_session); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1287, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_1);
-      __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_11 < 0)) __PYX_ERR(0, 1196, __pyx_L3_error)
+      __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_11 < 0)) __PYX_ERR(0, 1287, __pyx_L3_error)
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       if (__pyx_t_11) {
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1197
+        /* "_pydevd_bundle/pydevd_cython.pyx":1288
  *         try:
  *             if py_db._finish_debugging_session:
  *                 if not py_db._termination_event_set:             # <<<<<<<<<<<<<<
  *                     # that was not working very well because jython gave some socket errors
  *                     try:
  */
-        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_termination_event_set); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1197, __pyx_L3_error)
+        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_termination_event_set); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1288, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_1);
-        __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_11 < 0)) __PYX_ERR(0, 1197, __pyx_L3_error)
+        __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_11 < 0)) __PYX_ERR(0, 1288, __pyx_L3_error)
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         __pyx_t_12 = ((!__pyx_t_11) != 0);
         if (__pyx_t_12) {
 
-          /* "_pydevd_bundle/pydevd_cython.pyx":1199
+          /* "_pydevd_bundle/pydevd_cython.pyx":1290
  *                 if not py_db._termination_event_set:
  *                     # that was not working very well because jython gave some socket errors
  *                     try:             # <<<<<<<<<<<<<<
@@ -24193,28 +26138,28 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
             __Pyx_XGOTREF(__pyx_t_15);
             /*try:*/ {
 
-              /* "_pydevd_bundle/pydevd_cython.pyx":1200
+              /* "_pydevd_bundle/pydevd_cython.pyx":1291
  *                     # that was not working very well because jython gave some socket errors
  *                     try:
  *                         if py_db.output_checker is None:             # <<<<<<<<<<<<<<
  *                             kill_all_pydev_threads()
  *                     except:
  */
-              __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_output_checker); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1200, __pyx_L11_error)
+              __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_output_checker); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1291, __pyx_L11_error)
               __Pyx_GOTREF(__pyx_t_1);
               __pyx_t_12 = (__pyx_t_1 == Py_None);
               __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
               __pyx_t_11 = (__pyx_t_12 != 0);
               if (__pyx_t_11) {
 
-                /* "_pydevd_bundle/pydevd_cython.pyx":1201
+                /* "_pydevd_bundle/pydevd_cython.pyx":1292
  *                     try:
  *                         if py_db.output_checker is None:
  *                             kill_all_pydev_threads()             # <<<<<<<<<<<<<<
  *                     except:
  *                         traceback.print_exc()
  */
-                __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_kill_all_pydev_threads); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1201, __pyx_L11_error)
+                __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_kill_all_pydev_threads); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1292, __pyx_L11_error)
                 __Pyx_GOTREF(__pyx_t_6);
                 __pyx_t_5 = NULL;
                 if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_6))) {
@@ -24227,16 +26172,16 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
                   }
                 }
                 if (__pyx_t_5) {
-                  __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1201, __pyx_L11_error)
+                  __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1292, __pyx_L11_error)
                   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
                 } else {
-                  __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1201, __pyx_L11_error)
+                  __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1292, __pyx_L11_error)
                 }
                 __Pyx_GOTREF(__pyx_t_1);
                 __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
                 __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-                /* "_pydevd_bundle/pydevd_cython.pyx":1200
+                /* "_pydevd_bundle/pydevd_cython.pyx":1291
  *                     # that was not working very well because jython gave some socket errors
  *                     try:
  *                         if py_db.output_checker is None:             # <<<<<<<<<<<<<<
@@ -24245,7 +26190,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
               }
 
-              /* "_pydevd_bundle/pydevd_cython.pyx":1199
+              /* "_pydevd_bundle/pydevd_cython.pyx":1290
  *                 if not py_db._termination_event_set:
  *                     # that was not working very well because jython gave some socket errors
  *                     try:             # <<<<<<<<<<<<<<
@@ -24265,7 +26210,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
             __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
             __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-            /* "_pydevd_bundle/pydevd_cython.pyx":1202
+            /* "_pydevd_bundle/pydevd_cython.pyx":1293
  *                         if py_db.output_checker is None:
  *                             kill_all_pydev_threads()
  *                     except:             # <<<<<<<<<<<<<<
@@ -24274,21 +26219,21 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
             /*except:*/ {
               __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.ThreadTracer.__call__", __pyx_clineno, __pyx_lineno, __pyx_filename);
-              if (__Pyx_GetException(&__pyx_t_1, &__pyx_t_6, &__pyx_t_5) < 0) __PYX_ERR(0, 1202, __pyx_L13_except_error)
+              if (__Pyx_GetException(&__pyx_t_1, &__pyx_t_6, &__pyx_t_5) < 0) __PYX_ERR(0, 1293, __pyx_L13_except_error)
               __Pyx_GOTREF(__pyx_t_1);
               __Pyx_GOTREF(__pyx_t_6);
               __Pyx_GOTREF(__pyx_t_5);
 
-              /* "_pydevd_bundle/pydevd_cython.pyx":1203
+              /* "_pydevd_bundle/pydevd_cython.pyx":1294
  *                             kill_all_pydev_threads()
  *                     except:
  *                         traceback.print_exc()             # <<<<<<<<<<<<<<
  *                     py_db._termination_event_set = True
  *                 return None
  */
-              __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_traceback); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1203, __pyx_L13_except_error)
+              __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_traceback); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1294, __pyx_L13_except_error)
               __Pyx_GOTREF(__pyx_t_3);
-              __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_print_exc); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1203, __pyx_L13_except_error)
+              __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_print_exc); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1294, __pyx_L13_except_error)
               __Pyx_GOTREF(__pyx_t_2);
               __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
               __pyx_t_3 = NULL;
@@ -24302,10 +26247,10 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
                 }
               }
               if (__pyx_t_3) {
-                __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1203, __pyx_L13_except_error)
+                __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1294, __pyx_L13_except_error)
                 __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
               } else {
-                __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1203, __pyx_L13_except_error)
+                __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1294, __pyx_L13_except_error)
               }
               __Pyx_GOTREF(__pyx_t_4);
               __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -24317,7 +26262,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
             }
             __pyx_L13_except_error:;
 
-            /* "_pydevd_bundle/pydevd_cython.pyx":1199
+            /* "_pydevd_bundle/pydevd_cython.pyx":1290
  *                 if not py_db._termination_event_set:
  *                     # that was not working very well because jython gave some socket errors
  *                     try:             # <<<<<<<<<<<<<<
@@ -24337,16 +26282,16 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
             __pyx_L16_try_end:;
           }
 
-          /* "_pydevd_bundle/pydevd_cython.pyx":1204
+          /* "_pydevd_bundle/pydevd_cython.pyx":1295
  *                     except:
  *                         traceback.print_exc()
  *                     py_db._termination_event_set = True             # <<<<<<<<<<<<<<
  *                 return None
  * 
  */
-          if (__Pyx_PyObject_SetAttrStr(__pyx_v_py_db, __pyx_n_s_termination_event_set, Py_True) < 0) __PYX_ERR(0, 1204, __pyx_L3_error)
+          if (__Pyx_PyObject_SetAttrStr(__pyx_v_py_db, __pyx_n_s_termination_event_set, Py_True) < 0) __PYX_ERR(0, 1295, __pyx_L3_error)
 
-          /* "_pydevd_bundle/pydevd_cython.pyx":1197
+          /* "_pydevd_bundle/pydevd_cython.pyx":1288
  *         try:
  *             if py_db._finish_debugging_session:
  *                 if not py_db._termination_event_set:             # <<<<<<<<<<<<<<
@@ -24355,7 +26300,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
         }
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1205
+        /* "_pydevd_bundle/pydevd_cython.pyx":1296
  *                         traceback.print_exc()
  *                     py_db._termination_event_set = True
  *                 return None             # <<<<<<<<<<<<<<
@@ -24366,7 +26311,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         __pyx_r = Py_None; __Pyx_INCREF(Py_None);
         goto __pyx_L7_try_return;
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1196
+        /* "_pydevd_bundle/pydevd_cython.pyx":1287
  * 
  *         try:
  *             if py_db._finish_debugging_session:             # <<<<<<<<<<<<<<
@@ -24375,14 +26320,14 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
       }
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1208
+      /* "_pydevd_bundle/pydevd_cython.pyx":1299
  * 
  *             # if thread is not alive, cancel trace_dispatch processing
  *             if not is_thread_alive(t):             # <<<<<<<<<<<<<<
  *                 py_db.notify_thread_not_alive(get_thread_id(t))
  *                 return None  # suspend tracing
  */
-      __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_is_thread_alive); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1208, __pyx_L3_error)
+      __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_is_thread_alive); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1299, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_6);
       __pyx_t_1 = NULL;
       if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_6))) {
@@ -24395,13 +26340,13 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         }
       }
       if (!__pyx_t_1) {
-        __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_t); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1208, __pyx_L3_error)
+        __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_t); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1299, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_5);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_6)) {
           PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_t};
-          __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1208, __pyx_L3_error)
+          __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1299, __pyx_L3_error)
           __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
           __Pyx_GOTREF(__pyx_t_5);
         } else
@@ -24409,39 +26354,39 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
           PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_t};
-          __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1208, __pyx_L3_error)
+          __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1299, __pyx_L3_error)
           __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
           __Pyx_GOTREF(__pyx_t_5);
         } else
         #endif
         {
-          __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1208, __pyx_L3_error)
+          __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1299, __pyx_L3_error)
           __Pyx_GOTREF(__pyx_t_4);
           __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_1); __pyx_t_1 = NULL;
           __Pyx_INCREF(__pyx_v_t);
           __Pyx_GIVEREF(__pyx_v_t);
           PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_t);
-          __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_4, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1208, __pyx_L3_error)
+          __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_4, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1299, __pyx_L3_error)
           __Pyx_GOTREF(__pyx_t_5);
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
         }
       }
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_11 < 0)) __PYX_ERR(0, 1208, __pyx_L3_error)
+      __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_11 < 0)) __PYX_ERR(0, 1299, __pyx_L3_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __pyx_t_12 = ((!__pyx_t_11) != 0);
       if (__pyx_t_12) {
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1209
+        /* "_pydevd_bundle/pydevd_cython.pyx":1300
  *             # if thread is not alive, cancel trace_dispatch processing
  *             if not is_thread_alive(t):
  *                 py_db.notify_thread_not_alive(get_thread_id(t))             # <<<<<<<<<<<<<<
  *                 return None  # suspend tracing
  * 
  */
-        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_notify_thread_not_alive); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1209, __pyx_L3_error)
+        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_notify_thread_not_alive); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1300, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_6);
-        __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_get_thread_id); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1209, __pyx_L3_error)
+        __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_get_thread_id); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1300, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_1);
         __pyx_t_2 = NULL;
         if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_1))) {
@@ -24454,13 +26399,13 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
           }
         }
         if (!__pyx_t_2) {
-          __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_t); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1209, __pyx_L3_error)
+          __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_t); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1300, __pyx_L3_error)
           __Pyx_GOTREF(__pyx_t_4);
         } else {
           #if CYTHON_FAST_PYCALL
           if (PyFunction_Check(__pyx_t_1)) {
             PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_t};
-            __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1209, __pyx_L3_error)
+            __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1300, __pyx_L3_error)
             __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
             __Pyx_GOTREF(__pyx_t_4);
           } else
@@ -24468,19 +26413,19 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
           #if CYTHON_FAST_PYCCALL
           if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
             PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_t};
-            __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1209, __pyx_L3_error)
+            __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1300, __pyx_L3_error)
             __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
             __Pyx_GOTREF(__pyx_t_4);
           } else
           #endif
           {
-            __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1209, __pyx_L3_error)
+            __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1300, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_3);
             __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2); __pyx_t_2 = NULL;
             __Pyx_INCREF(__pyx_v_t);
             __Pyx_GIVEREF(__pyx_v_t);
             PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_t);
-            __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1209, __pyx_L3_error)
+            __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1300, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_4);
             __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
           }
@@ -24497,14 +26442,14 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
           }
         }
         if (!__pyx_t_1) {
-          __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1209, __pyx_L3_error)
+          __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1300, __pyx_L3_error)
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_5);
         } else {
           #if CYTHON_FAST_PYCALL
           if (PyFunction_Check(__pyx_t_6)) {
             PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_t_4};
-            __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1209, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1300, __pyx_L3_error)
             __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
             __Pyx_GOTREF(__pyx_t_5);
             __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -24513,20 +26458,20 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
           #if CYTHON_FAST_PYCCALL
           if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
             PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_t_4};
-            __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1209, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1300, __pyx_L3_error)
             __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
             __Pyx_GOTREF(__pyx_t_5);
             __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
           } else
           #endif
           {
-            __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1209, __pyx_L3_error)
+            __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1300, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_3);
             __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1); __pyx_t_1 = NULL;
             __Pyx_GIVEREF(__pyx_t_4);
             PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_t_4);
             __pyx_t_4 = 0;
-            __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_3, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1209, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_3, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1300, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_5);
             __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
           }
@@ -24534,18 +26479,18 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1210
+        /* "_pydevd_bundle/pydevd_cython.pyx":1301
  *             if not is_thread_alive(t):
  *                 py_db.notify_thread_not_alive(get_thread_id(t))
  *                 return None  # suspend tracing             # <<<<<<<<<<<<<<
  * 
- * 
+ *             if py_db.thread_analyser is not None:
  */
         __Pyx_XDECREF(__pyx_r);
         __pyx_r = Py_None; __Pyx_INCREF(Py_None);
         goto __pyx_L7_try_return;
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1208
+        /* "_pydevd_bundle/pydevd_cython.pyx":1299
  * 
  *             # if thread is not alive, cancel trace_dispatch processing
  *             if not is_thread_alive(t):             # <<<<<<<<<<<<<<
@@ -24554,30 +26499,30 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
       }
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1213
- * 
+      /* "_pydevd_bundle/pydevd_cython.pyx":1303
+ *                 return None  # suspend tracing
  * 
  *             if py_db.thread_analyser is not None:             # <<<<<<<<<<<<<<
  *                 py_db.thread_analyser.log_event(frame)
  * 
  */
-      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_thread_analyser); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1213, __pyx_L3_error)
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_thread_analyser); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1303, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
       __pyx_t_12 = (__pyx_t_5 != Py_None);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __pyx_t_11 = (__pyx_t_12 != 0);
       if (__pyx_t_11) {
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1214
+        /* "_pydevd_bundle/pydevd_cython.pyx":1304
  * 
  *             if py_db.thread_analyser is not None:
  *                 py_db.thread_analyser.log_event(frame)             # <<<<<<<<<<<<<<
  * 
  *             if py_db.asyncio_analyser is not None:
  */
-        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_thread_analyser); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1214, __pyx_L3_error)
+        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_thread_analyser); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1304, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_6);
-        __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_log_event); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1214, __pyx_L3_error)
+        __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_log_event); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1304, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
         __pyx_t_6 = NULL;
@@ -24591,13 +26536,13 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
           }
         }
         if (!__pyx_t_6) {
-          __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_frame); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1214, __pyx_L3_error)
+          __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_frame); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1304, __pyx_L3_error)
           __Pyx_GOTREF(__pyx_t_5);
         } else {
           #if CYTHON_FAST_PYCALL
           if (PyFunction_Check(__pyx_t_3)) {
             PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v_frame};
-            __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1214, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1304, __pyx_L3_error)
             __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
             __Pyx_GOTREF(__pyx_t_5);
           } else
@@ -24605,19 +26550,19 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
           #if CYTHON_FAST_PYCCALL
           if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
             PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v_frame};
-            __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1214, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1304, __pyx_L3_error)
             __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
             __Pyx_GOTREF(__pyx_t_5);
           } else
           #endif
           {
-            __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1214, __pyx_L3_error)
+            __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1304, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_4);
             __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_6); __pyx_t_6 = NULL;
             __Pyx_INCREF(__pyx_v_frame);
             __Pyx_GIVEREF(__pyx_v_frame);
             PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_frame);
-            __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1214, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1304, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_5);
             __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
           }
@@ -24625,8 +26570,8 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1213
- * 
+        /* "_pydevd_bundle/pydevd_cython.pyx":1303
+ *                 return None  # suspend tracing
  * 
  *             if py_db.thread_analyser is not None:             # <<<<<<<<<<<<<<
  *                 py_db.thread_analyser.log_event(frame)
@@ -24634,30 +26579,30 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
       }
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1216
+      /* "_pydevd_bundle/pydevd_cython.pyx":1306
  *                 py_db.thread_analyser.log_event(frame)
  * 
  *             if py_db.asyncio_analyser is not None:             # <<<<<<<<<<<<<<
  *                 py_db.asyncio_analyser.log_event(frame)
  * 
  */
-      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_asyncio_analyser); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1216, __pyx_L3_error)
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_asyncio_analyser); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1306, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
       __pyx_t_11 = (__pyx_t_5 != Py_None);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __pyx_t_12 = (__pyx_t_11 != 0);
       if (__pyx_t_12) {
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1217
+        /* "_pydevd_bundle/pydevd_cython.pyx":1307
  * 
  *             if py_db.asyncio_analyser is not None:
  *                 py_db.asyncio_analyser.log_event(frame)             # <<<<<<<<<<<<<<
  * 
  *             # Note: it's important that the context name is also given because we may hit something once
  */
-        __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_asyncio_analyser); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1217, __pyx_L3_error)
+        __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_asyncio_analyser); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1307, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_3);
-        __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_log_event); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1217, __pyx_L3_error)
+        __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_log_event); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1307, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         __pyx_t_3 = NULL;
@@ -24671,13 +26616,13 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
           }
         }
         if (!__pyx_t_3) {
-          __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_frame); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1217, __pyx_L3_error)
+          __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_frame); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1307, __pyx_L3_error)
           __Pyx_GOTREF(__pyx_t_5);
         } else {
           #if CYTHON_FAST_PYCALL
           if (PyFunction_Check(__pyx_t_4)) {
             PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_frame};
-            __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1217, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1307, __pyx_L3_error)
             __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
             __Pyx_GOTREF(__pyx_t_5);
           } else
@@ -24685,19 +26630,19 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
           #if CYTHON_FAST_PYCCALL
           if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
             PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_frame};
-            __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1217, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1307, __pyx_L3_error)
             __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
             __Pyx_GOTREF(__pyx_t_5);
           } else
           #endif
           {
-            __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1217, __pyx_L3_error)
+            __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1307, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_6);
             __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_3); __pyx_t_3 = NULL;
             __Pyx_INCREF(__pyx_v_frame);
             __Pyx_GIVEREF(__pyx_v_frame);
             PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_frame);
-            __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1217, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1307, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_5);
             __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
           }
@@ -24705,7 +26650,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1216
+        /* "_pydevd_bundle/pydevd_cython.pyx":1306
  *                 py_db.thread_analyser.log_event(frame)
  * 
  *             if py_db.asyncio_analyser is not None:             # <<<<<<<<<<<<<<
@@ -24714,29 +26659,29 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
       }
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1221
+      /* "_pydevd_bundle/pydevd_cython.pyx":1311
  *             # Note: it's important that the context name is also given because we may hit something once
  *             # in the global context and another in the local context.
  *             frame_cache_key = (frame.f_code.co_firstlineno, frame.f_code.co_name, frame.f_code.co_filename)             # <<<<<<<<<<<<<<
  *             if not is_stepping and frame_cache_key in cache_skips:
  *                 # print('skipped: trace_dispatch (cache hit)', frame_cache_key, frame.f_lineno, event, frame.f_code.co_name)
  */
-      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_frame, __pyx_n_s_f_code); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1221, __pyx_L3_error)
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_frame, __pyx_n_s_f_code); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1311, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_co_firstlineno); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1221, __pyx_L3_error)
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_co_firstlineno); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1311, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_frame, __pyx_n_s_f_code); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1221, __pyx_L3_error)
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_frame, __pyx_n_s_f_code); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1311, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_co_name); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1221, __pyx_L3_error)
+      __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_co_name); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1311, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_frame, __pyx_n_s_f_code); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1221, __pyx_L3_error)
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_frame, __pyx_n_s_f_code); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1311, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_co_filename); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1221, __pyx_L3_error)
+      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_co_filename); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1311, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_5 = PyTuple_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1221, __pyx_L3_error)
+      __pyx_t_5 = PyTuple_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1311, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_GIVEREF(__pyx_t_4);
       PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4);
@@ -24750,7 +26695,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
       __pyx_v_frame_cache_key = ((PyObject*)__pyx_t_5);
       __pyx_t_5 = 0;
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1222
+      /* "_pydevd_bundle/pydevd_cython.pyx":1312
  *             # in the global context and another in the local context.
  *             frame_cache_key = (frame.f_code.co_firstlineno, frame.f_code.co_name, frame.f_code.co_filename)
  *             if not is_stepping and frame_cache_key in cache_skips:             # <<<<<<<<<<<<<<
@@ -24765,15 +26710,15 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
       }
       if (unlikely(__pyx_v_cache_skips == Py_None)) {
         PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-        __PYX_ERR(0, 1222, __pyx_L3_error)
+        __PYX_ERR(0, 1312, __pyx_L3_error)
       }
-      __pyx_t_11 = (__Pyx_PyDict_ContainsTF(__pyx_v_frame_cache_key, __pyx_v_cache_skips, Py_EQ)); if (unlikely(__pyx_t_11 < 0)) __PYX_ERR(0, 1222, __pyx_L3_error)
+      __pyx_t_11 = (__Pyx_PyDict_ContainsTF(__pyx_v_frame_cache_key, __pyx_v_cache_skips, Py_EQ)); if (unlikely(__pyx_t_11 < 0)) __PYX_ERR(0, 1312, __pyx_L3_error)
       __pyx_t_16 = (__pyx_t_11 != 0);
       __pyx_t_12 = __pyx_t_16;
       __pyx_L24_bool_binop_done:;
       if (__pyx_t_12) {
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1224
+        /* "_pydevd_bundle/pydevd_cython.pyx":1314
  *             if not is_stepping and frame_cache_key in cache_skips:
  *                 # print('skipped: trace_dispatch (cache hit)', frame_cache_key, frame.f_lineno, event, frame.f_code.co_name)
  *                 return None             # <<<<<<<<<<<<<<
@@ -24784,7 +26729,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         __pyx_r = Py_None; __Pyx_INCREF(Py_None);
         goto __pyx_L7_try_return;
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1222
+        /* "_pydevd_bundle/pydevd_cython.pyx":1312
  *             # in the global context and another in the local context.
  *             frame_cache_key = (frame.f_code.co_firstlineno, frame.f_code.co_name, frame.f_code.co_filename)
  *             if not is_stepping and frame_cache_key in cache_skips:             # <<<<<<<<<<<<<<
@@ -24793,7 +26738,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
       }
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1226
+      /* "_pydevd_bundle/pydevd_cython.pyx":1316
  *                 return None
  * 
  *             try:             # <<<<<<<<<<<<<<
@@ -24809,29 +26754,29 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         __Pyx_XGOTREF(__pyx_t_13);
         /*try:*/ {
 
-          /* "_pydevd_bundle/pydevd_cython.pyx":1228
+          /* "_pydevd_bundle/pydevd_cython.pyx":1318
  *             try:
  *                 # Make fast path faster!
  *                 abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]             # <<<<<<<<<<<<<<
  *             except:
  *                 abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
  */
-          __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_NORM_PATHS_AND_BASE_CONTAINER); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1228, __pyx_L26_error)
+          __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_NORM_PATHS_AND_BASE_CONTAINER); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1318, __pyx_L26_error)
           __Pyx_GOTREF(__pyx_t_5);
-          __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_frame, __pyx_n_s_f_code); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1228, __pyx_L26_error)
+          __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_frame, __pyx_n_s_f_code); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1318, __pyx_L26_error)
           __Pyx_GOTREF(__pyx_t_3);
-          __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_co_filename); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1228, __pyx_L26_error)
+          __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_co_filename); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1318, __pyx_L26_error)
           __Pyx_GOTREF(__pyx_t_6);
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-          __pyx_t_3 = __Pyx_PyObject_GetItem(__pyx_t_5, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1228, __pyx_L26_error)
+          __pyx_t_3 = __Pyx_PyObject_GetItem(__pyx_t_5, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1318, __pyx_L26_error)
           __Pyx_GOTREF(__pyx_t_3);
           __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
           __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-          if (!(likely(PyTuple_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_t_3)->tp_name), 0))) __PYX_ERR(0, 1228, __pyx_L26_error)
+          if (!(likely(PyTuple_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_t_3)->tp_name), 0))) __PYX_ERR(0, 1318, __pyx_L26_error)
           __pyx_v_abs_path_real_path_and_base = ((PyObject*)__pyx_t_3);
           __pyx_t_3 = 0;
 
-          /* "_pydevd_bundle/pydevd_cython.pyx":1226
+          /* "_pydevd_bundle/pydevd_cython.pyx":1316
  *                 return None
  * 
  *             try:             # <<<<<<<<<<<<<<
@@ -24851,7 +26796,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
         __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1229
+        /* "_pydevd_bundle/pydevd_cython.pyx":1319
  *                 # Make fast path faster!
  *                 abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
  *             except:             # <<<<<<<<<<<<<<
@@ -24860,19 +26805,19 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
         /*except:*/ {
           __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.ThreadTracer.__call__", __pyx_clineno, __pyx_lineno, __pyx_filename);
-          if (__Pyx_GetException(&__pyx_t_3, &__pyx_t_6, &__pyx_t_5) < 0) __PYX_ERR(0, 1229, __pyx_L28_except_error)
+          if (__Pyx_GetException(&__pyx_t_3, &__pyx_t_6, &__pyx_t_5) < 0) __PYX_ERR(0, 1319, __pyx_L28_except_error)
           __Pyx_GOTREF(__pyx_t_3);
           __Pyx_GOTREF(__pyx_t_6);
           __Pyx_GOTREF(__pyx_t_5);
 
-          /* "_pydevd_bundle/pydevd_cython.pyx":1230
+          /* "_pydevd_bundle/pydevd_cython.pyx":1320
  *                 abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
  *             except:
  *                 abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)             # <<<<<<<<<<<<<<
  * 
  *             filename = abs_path_real_path_and_base[1]
  */
-          __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_get_abs_path_real_path_and_base); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1230, __pyx_L28_except_error)
+          __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_get_abs_path_real_path_and_base); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1320, __pyx_L28_except_error)
           __Pyx_GOTREF(__pyx_t_1);
           __pyx_t_2 = NULL;
           if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_1))) {
@@ -24885,13 +26830,13 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
             }
           }
           if (!__pyx_t_2) {
-            __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_frame); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1230, __pyx_L28_except_error)
+            __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_frame); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1320, __pyx_L28_except_error)
             __Pyx_GOTREF(__pyx_t_4);
           } else {
             #if CYTHON_FAST_PYCALL
             if (PyFunction_Check(__pyx_t_1)) {
               PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_frame};
-              __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1230, __pyx_L28_except_error)
+              __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1320, __pyx_L28_except_error)
               __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
               __Pyx_GOTREF(__pyx_t_4);
             } else
@@ -24899,25 +26844,25 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
             #if CYTHON_FAST_PYCCALL
             if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
               PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_frame};
-              __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1230, __pyx_L28_except_error)
+              __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1320, __pyx_L28_except_error)
               __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
               __Pyx_GOTREF(__pyx_t_4);
             } else
             #endif
             {
-              __pyx_t_17 = PyTuple_New(1+1); if (unlikely(!__pyx_t_17)) __PYX_ERR(0, 1230, __pyx_L28_except_error)
+              __pyx_t_17 = PyTuple_New(1+1); if (unlikely(!__pyx_t_17)) __PYX_ERR(0, 1320, __pyx_L28_except_error)
               __Pyx_GOTREF(__pyx_t_17);
               __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_17, 0, __pyx_t_2); __pyx_t_2 = NULL;
               __Pyx_INCREF(__pyx_v_frame);
               __Pyx_GIVEREF(__pyx_v_frame);
               PyTuple_SET_ITEM(__pyx_t_17, 0+1, __pyx_v_frame);
-              __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_17, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1230, __pyx_L28_except_error)
+              __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_17, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1320, __pyx_L28_except_error)
               __Pyx_GOTREF(__pyx_t_4);
               __Pyx_DECREF(__pyx_t_17); __pyx_t_17 = 0;
             }
           }
           __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-          if (!(likely(PyTuple_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(0, 1230, __pyx_L28_except_error)
+          if (!(likely(PyTuple_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(0, 1320, __pyx_L28_except_error)
           __Pyx_XDECREF_SET(__pyx_v_abs_path_real_path_and_base, ((PyObject*)__pyx_t_4));
           __pyx_t_4 = 0;
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -24927,7 +26872,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         }
         __pyx_L28_except_error:;
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1226
+        /* "_pydevd_bundle/pydevd_cython.pyx":1316
  *                 return None
  * 
  *             try:             # <<<<<<<<<<<<<<
@@ -24947,37 +26892,37 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         __pyx_L31_try_end:;
       }
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1232
+      /* "_pydevd_bundle/pydevd_cython.pyx":1322
  *                 abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
  * 
  *             filename = abs_path_real_path_and_base[1]             # <<<<<<<<<<<<<<
- *             file_type = get_file_type(abs_path_real_path_and_base[-1]) #we don't want to debug threading or anything related to pydevd
+ *             file_type = get_file_type(abs_path_real_path_and_base[-1])  # we don't want to debug threading or anything related to pydevd
  * 
  */
       if (unlikely(__pyx_v_abs_path_real_path_and_base == Py_None)) {
         PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-        __PYX_ERR(0, 1232, __pyx_L3_error)
+        __PYX_ERR(0, 1322, __pyx_L3_error)
       }
-      __pyx_t_5 = __Pyx_GetItemInt_Tuple(__pyx_v_abs_path_real_path_and_base, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1232, __pyx_L3_error)
+      __pyx_t_5 = __Pyx_GetItemInt_Tuple(__pyx_v_abs_path_real_path_and_base, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1322, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
-      if (!(likely(PyString_CheckExact(__pyx_t_5))||((__pyx_t_5) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_5)->tp_name), 0))) __PYX_ERR(0, 1232, __pyx_L3_error)
+      if (!(likely(PyString_CheckExact(__pyx_t_5))||((__pyx_t_5) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_5)->tp_name), 0))) __PYX_ERR(0, 1322, __pyx_L3_error)
       __pyx_v_filename = ((PyObject*)__pyx_t_5);
       __pyx_t_5 = 0;
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1233
+      /* "_pydevd_bundle/pydevd_cython.pyx":1323
  * 
  *             filename = abs_path_real_path_and_base[1]
- *             file_type = get_file_type(abs_path_real_path_and_base[-1]) #we don't want to debug threading or anything related to pydevd             # <<<<<<<<<<<<<<
+ *             file_type = get_file_type(abs_path_real_path_and_base[-1])  # we don't want to debug threading or anything related to pydevd             # <<<<<<<<<<<<<<
  * 
  *             if file_type is not None:
  */
-      __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_get_file_type); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1233, __pyx_L3_error)
+      __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_get_file_type); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1323, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_6);
       if (unlikely(__pyx_v_abs_path_real_path_and_base == Py_None)) {
         PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-        __PYX_ERR(0, 1233, __pyx_L3_error)
+        __PYX_ERR(0, 1323, __pyx_L3_error)
       }
-      __pyx_t_3 = __Pyx_GetItemInt_Tuple(__pyx_v_abs_path_real_path_and_base, -1L, long, 1, __Pyx_PyInt_From_long, 0, 1, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1233, __pyx_L3_error)
+      __pyx_t_3 = __Pyx_GetItemInt_Tuple(__pyx_v_abs_path_real_path_and_base, -1L, long, 1, __Pyx_PyInt_From_long, 0, 1, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1323, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_3);
       __pyx_t_4 = NULL;
       if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_6))) {
@@ -24990,14 +26935,14 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         }
       }
       if (!__pyx_t_4) {
-        __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1233, __pyx_L3_error)
+        __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1323, __pyx_L3_error)
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_GOTREF(__pyx_t_5);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_6)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_3};
-          __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1233, __pyx_L3_error)
+          __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1323, __pyx_L3_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_5);
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -25006,20 +26951,20 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_3};
-          __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1233, __pyx_L3_error)
+          __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1323, __pyx_L3_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_5);
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         } else
         #endif
         {
-          __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1233, __pyx_L3_error)
+          __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1323, __pyx_L3_error)
           __Pyx_GOTREF(__pyx_t_1);
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_4); __pyx_t_4 = NULL;
           __Pyx_GIVEREF(__pyx_t_3);
           PyTuple_SET_ITEM(__pyx_t_1, 0+1, __pyx_t_3);
           __pyx_t_3 = 0;
-          __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_1, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1233, __pyx_L3_error)
+          __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_1, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1323, __pyx_L3_error)
           __Pyx_GOTREF(__pyx_t_5);
           __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         }
@@ -25028,38 +26973,38 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
       __pyx_v_file_type = __pyx_t_5;
       __pyx_t_5 = 0;
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1235
- *             file_type = get_file_type(abs_path_real_path_and_base[-1]) #we don't want to debug threading or anything related to pydevd
+      /* "_pydevd_bundle/pydevd_cython.pyx":1325
+ *             file_type = get_file_type(abs_path_real_path_and_base[-1])  # we don't want to debug threading or anything related to pydevd
  * 
  *             if file_type is not None:             # <<<<<<<<<<<<<<
- *                 if file_type == 1: # inlining LIB_FILE = 1
+ *                 if file_type == 1:  # inlining LIB_FILE = 1
  *                     if not py_db.in_project_scope(filename):
  */
       __pyx_t_12 = (__pyx_v_file_type != Py_None);
       __pyx_t_16 = (__pyx_t_12 != 0);
       if (__pyx_t_16) {
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1236
+        /* "_pydevd_bundle/pydevd_cython.pyx":1326
  * 
  *             if file_type is not None:
- *                 if file_type == 1: # inlining LIB_FILE = 1             # <<<<<<<<<<<<<<
+ *                 if file_type == 1:  # inlining LIB_FILE = 1             # <<<<<<<<<<<<<<
  *                     if not py_db.in_project_scope(filename):
  *                         # print('skipped: trace_dispatch (not in scope)', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
  */
-        __pyx_t_5 = __Pyx_PyInt_EqObjC(__pyx_v_file_type, __pyx_int_1, 1, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1236, __pyx_L3_error)
+        __pyx_t_5 = __Pyx_PyInt_EqObjC(__pyx_v_file_type, __pyx_int_1, 1, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1326, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_5);
-        __pyx_t_16 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_16 < 0)) __PYX_ERR(0, 1236, __pyx_L3_error)
+        __pyx_t_16 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_16 < 0)) __PYX_ERR(0, 1326, __pyx_L3_error)
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
         if (__pyx_t_16) {
 
-          /* "_pydevd_bundle/pydevd_cython.pyx":1237
+          /* "_pydevd_bundle/pydevd_cython.pyx":1327
  *             if file_type is not None:
- *                 if file_type == 1: # inlining LIB_FILE = 1
+ *                 if file_type == 1:  # inlining LIB_FILE = 1
  *                     if not py_db.in_project_scope(filename):             # <<<<<<<<<<<<<<
  *                         # print('skipped: trace_dispatch (not in scope)', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
  *                         cache_skips[frame_cache_key] = 1
  */
-          __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_in_project_scope); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1237, __pyx_L3_error)
+          __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_in_project_scope); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1327, __pyx_L3_error)
           __Pyx_GOTREF(__pyx_t_6);
           __pyx_t_1 = NULL;
           if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_6))) {
@@ -25072,13 +27017,13 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
             }
           }
           if (!__pyx_t_1) {
-            __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_filename); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1237, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_filename); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1327, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_5);
           } else {
             #if CYTHON_FAST_PYCALL
             if (PyFunction_Check(__pyx_t_6)) {
               PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_filename};
-              __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1237, __pyx_L3_error)
+              __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1327, __pyx_L3_error)
               __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
               __Pyx_GOTREF(__pyx_t_5);
             } else
@@ -25086,30 +27031,30 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
             #if CYTHON_FAST_PYCCALL
             if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
               PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_filename};
-              __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1237, __pyx_L3_error)
+              __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1327, __pyx_L3_error)
               __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
               __Pyx_GOTREF(__pyx_t_5);
             } else
             #endif
             {
-              __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1237, __pyx_L3_error)
+              __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1327, __pyx_L3_error)
               __Pyx_GOTREF(__pyx_t_3);
               __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1); __pyx_t_1 = NULL;
               __Pyx_INCREF(__pyx_v_filename);
               __Pyx_GIVEREF(__pyx_v_filename);
               PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_filename);
-              __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_3, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1237, __pyx_L3_error)
+              __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_3, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1327, __pyx_L3_error)
               __Pyx_GOTREF(__pyx_t_5);
               __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
             }
           }
           __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-          __pyx_t_16 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_16 < 0)) __PYX_ERR(0, 1237, __pyx_L3_error)
+          __pyx_t_16 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_16 < 0)) __PYX_ERR(0, 1327, __pyx_L3_error)
           __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
           __pyx_t_12 = ((!__pyx_t_16) != 0);
           if (__pyx_t_12) {
 
-            /* "_pydevd_bundle/pydevd_cython.pyx":1239
+            /* "_pydevd_bundle/pydevd_cython.pyx":1329
  *                     if not py_db.in_project_scope(filename):
  *                         # print('skipped: trace_dispatch (not in scope)', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
  *                         cache_skips[frame_cache_key] = 1             # <<<<<<<<<<<<<<
@@ -25118,11 +27063,11 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
             if (unlikely(__pyx_v_cache_skips == Py_None)) {
               PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-              __PYX_ERR(0, 1239, __pyx_L3_error)
+              __PYX_ERR(0, 1329, __pyx_L3_error)
             }
-            if (unlikely(PyDict_SetItem(__pyx_v_cache_skips, __pyx_v_frame_cache_key, __pyx_int_1) < 0)) __PYX_ERR(0, 1239, __pyx_L3_error)
+            if (unlikely(PyDict_SetItem(__pyx_v_cache_skips, __pyx_v_frame_cache_key, __pyx_int_1) < 0)) __PYX_ERR(0, 1329, __pyx_L3_error)
 
-            /* "_pydevd_bundle/pydevd_cython.pyx":1240
+            /* "_pydevd_bundle/pydevd_cython.pyx":1330
  *                         # print('skipped: trace_dispatch (not in scope)', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
  *                         cache_skips[frame_cache_key] = 1
  *                         return None             # <<<<<<<<<<<<<<
@@ -25133,26 +27078,26 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
             __pyx_r = Py_None; __Pyx_INCREF(Py_None);
             goto __pyx_L7_try_return;
 
-            /* "_pydevd_bundle/pydevd_cython.pyx":1237
+            /* "_pydevd_bundle/pydevd_cython.pyx":1327
  *             if file_type is not None:
- *                 if file_type == 1: # inlining LIB_FILE = 1
+ *                 if file_type == 1:  # inlining LIB_FILE = 1
  *                     if not py_db.in_project_scope(filename):             # <<<<<<<<<<<<<<
  *                         # print('skipped: trace_dispatch (not in scope)', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
  *                         cache_skips[frame_cache_key] = 1
  */
           }
 
-          /* "_pydevd_bundle/pydevd_cython.pyx":1236
+          /* "_pydevd_bundle/pydevd_cython.pyx":1326
  * 
  *             if file_type is not None:
- *                 if file_type == 1: # inlining LIB_FILE = 1             # <<<<<<<<<<<<<<
+ *                 if file_type == 1:  # inlining LIB_FILE = 1             # <<<<<<<<<<<<<<
  *                     if not py_db.in_project_scope(filename):
  *                         # print('skipped: trace_dispatch (not in scope)', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
  */
           goto __pyx_L35;
         }
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1243
+        /* "_pydevd_bundle/pydevd_cython.pyx":1333
  *                 else:
  *                     # print('skipped: trace_dispatch', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
  *                     cache_skips[frame_cache_key] = 1             # <<<<<<<<<<<<<<
@@ -25162,11 +27107,11 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         /*else*/ {
           if (unlikely(__pyx_v_cache_skips == Py_None)) {
             PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-            __PYX_ERR(0, 1243, __pyx_L3_error)
+            __PYX_ERR(0, 1333, __pyx_L3_error)
           }
-          if (unlikely(PyDict_SetItem(__pyx_v_cache_skips, __pyx_v_frame_cache_key, __pyx_int_1) < 0)) __PYX_ERR(0, 1243, __pyx_L3_error)
+          if (unlikely(PyDict_SetItem(__pyx_v_cache_skips, __pyx_v_frame_cache_key, __pyx_int_1) < 0)) __PYX_ERR(0, 1333, __pyx_L3_error)
 
-          /* "_pydevd_bundle/pydevd_cython.pyx":1244
+          /* "_pydevd_bundle/pydevd_cython.pyx":1334
  *                     # print('skipped: trace_dispatch', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
  *                     cache_skips[frame_cache_key] = 1
  *                     return None             # <<<<<<<<<<<<<<
@@ -25179,16 +27124,16 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         }
         __pyx_L35:;
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1235
- *             file_type = get_file_type(abs_path_real_path_and_base[-1]) #we don't want to debug threading or anything related to pydevd
+        /* "_pydevd_bundle/pydevd_cython.pyx":1325
+ *             file_type = get_file_type(abs_path_real_path_and_base[-1])  # we don't want to debug threading or anything related to pydevd
  * 
  *             if file_type is not None:             # <<<<<<<<<<<<<<
- *                 if file_type == 1: # inlining LIB_FILE = 1
+ *                 if file_type == 1:  # inlining LIB_FILE = 1
  *                     if not py_db.in_project_scope(filename):
  */
       }
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1246
+      /* "_pydevd_bundle/pydevd_cython.pyx":1336
  *                     return None
  * 
  *             if is_stepping:             # <<<<<<<<<<<<<<
@@ -25198,23 +27143,23 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
       __pyx_t_12 = (__pyx_v_is_stepping != 0);
       if (__pyx_t_12) {
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1247
+        /* "_pydevd_bundle/pydevd_cython.pyx":1337
  * 
  *             if is_stepping:
  *                 if py_db.is_filter_enabled and py_db.is_ignored_by_filters(filename):             # <<<<<<<<<<<<<<
  *                     # ignore files matching stepping filters
  *                     return None
  */
-        __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_is_filter_enabled); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1247, __pyx_L3_error)
+        __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_is_filter_enabled); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1337, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_5);
-        __pyx_t_16 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_16 < 0)) __PYX_ERR(0, 1247, __pyx_L3_error)
+        __pyx_t_16 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_16 < 0)) __PYX_ERR(0, 1337, __pyx_L3_error)
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
         if (__pyx_t_16) {
         } else {
           __pyx_t_12 = __pyx_t_16;
           goto __pyx_L39_bool_binop_done;
         }
-        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_is_ignored_by_filters); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1247, __pyx_L3_error)
+        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_is_ignored_by_filters); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1337, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_6);
         __pyx_t_3 = NULL;
         if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_6))) {
@@ -25227,13 +27172,13 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
           }
         }
         if (!__pyx_t_3) {
-          __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_filename); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1247, __pyx_L3_error)
+          __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_filename); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1337, __pyx_L3_error)
           __Pyx_GOTREF(__pyx_t_5);
         } else {
           #if CYTHON_FAST_PYCALL
           if (PyFunction_Check(__pyx_t_6)) {
             PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_filename};
-            __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1247, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1337, __pyx_L3_error)
             __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
             __Pyx_GOTREF(__pyx_t_5);
           } else
@@ -25241,31 +27186,31 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
           #if CYTHON_FAST_PYCCALL
           if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
             PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_filename};
-            __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1247, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1337, __pyx_L3_error)
             __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
             __Pyx_GOTREF(__pyx_t_5);
           } else
           #endif
           {
-            __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1247, __pyx_L3_error)
+            __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1337, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_1);
             __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3); __pyx_t_3 = NULL;
             __Pyx_INCREF(__pyx_v_filename);
             __Pyx_GIVEREF(__pyx_v_filename);
             PyTuple_SET_ITEM(__pyx_t_1, 0+1, __pyx_v_filename);
-            __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_1, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1247, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_1, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1337, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_5);
             __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
           }
         }
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-        __pyx_t_16 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_16 < 0)) __PYX_ERR(0, 1247, __pyx_L3_error)
+        __pyx_t_16 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_16 < 0)) __PYX_ERR(0, 1337, __pyx_L3_error)
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
         __pyx_t_12 = __pyx_t_16;
         __pyx_L39_bool_binop_done:;
         if (__pyx_t_12) {
 
-          /* "_pydevd_bundle/pydevd_cython.pyx":1249
+          /* "_pydevd_bundle/pydevd_cython.pyx":1339
  *                 if py_db.is_filter_enabled and py_db.is_ignored_by_filters(filename):
  *                     # ignore files matching stepping filters
  *                     return None             # <<<<<<<<<<<<<<
@@ -25276,7 +27221,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
           __pyx_r = Py_None; __Pyx_INCREF(Py_None);
           goto __pyx_L7_try_return;
 
-          /* "_pydevd_bundle/pydevd_cython.pyx":1247
+          /* "_pydevd_bundle/pydevd_cython.pyx":1337
  * 
  *             if is_stepping:
  *                 if py_db.is_filter_enabled and py_db.is_ignored_by_filters(filename):             # <<<<<<<<<<<<<<
@@ -25285,23 +27230,23 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
         }
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1250
+        /* "_pydevd_bundle/pydevd_cython.pyx":1340
  *                     # ignore files matching stepping filters
  *                     return None
  *                 if py_db.is_filter_libraries and not py_db.in_project_scope(filename):             # <<<<<<<<<<<<<<
  *                     # ignore library files while stepping
  *                     return None
  */
-        __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_is_filter_libraries); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1250, __pyx_L3_error)
+        __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_is_filter_libraries); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1340, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_5);
-        __pyx_t_16 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_16 < 0)) __PYX_ERR(0, 1250, __pyx_L3_error)
+        __pyx_t_16 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_16 < 0)) __PYX_ERR(0, 1340, __pyx_L3_error)
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
         if (__pyx_t_16) {
         } else {
           __pyx_t_12 = __pyx_t_16;
           goto __pyx_L42_bool_binop_done;
         }
-        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_in_project_scope); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1250, __pyx_L3_error)
+        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_in_project_scope); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1340, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_6);
         __pyx_t_1 = NULL;
         if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_6))) {
@@ -25314,13 +27259,13 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
           }
         }
         if (!__pyx_t_1) {
-          __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_filename); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1250, __pyx_L3_error)
+          __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_filename); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1340, __pyx_L3_error)
           __Pyx_GOTREF(__pyx_t_5);
         } else {
           #if CYTHON_FAST_PYCALL
           if (PyFunction_Check(__pyx_t_6)) {
             PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_filename};
-            __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1250, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1340, __pyx_L3_error)
             __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
             __Pyx_GOTREF(__pyx_t_5);
           } else
@@ -25328,32 +27273,32 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
           #if CYTHON_FAST_PYCCALL
           if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
             PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_filename};
-            __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1250, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1340, __pyx_L3_error)
             __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
             __Pyx_GOTREF(__pyx_t_5);
           } else
           #endif
           {
-            __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1250, __pyx_L3_error)
+            __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1340, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_3);
             __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1); __pyx_t_1 = NULL;
             __Pyx_INCREF(__pyx_v_filename);
             __Pyx_GIVEREF(__pyx_v_filename);
             PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_filename);
-            __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_3, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1250, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_3, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1340, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_5);
             __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
           }
         }
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-        __pyx_t_16 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_16 < 0)) __PYX_ERR(0, 1250, __pyx_L3_error)
+        __pyx_t_16 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_16 < 0)) __PYX_ERR(0, 1340, __pyx_L3_error)
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
         __pyx_t_11 = ((!__pyx_t_16) != 0);
         __pyx_t_12 = __pyx_t_11;
         __pyx_L42_bool_binop_done:;
         if (__pyx_t_12) {
 
-          /* "_pydevd_bundle/pydevd_cython.pyx":1252
+          /* "_pydevd_bundle/pydevd_cython.pyx":1342
  *                 if py_db.is_filter_libraries and not py_db.in_project_scope(filename):
  *                     # ignore library files while stepping
  *                     return None             # <<<<<<<<<<<<<<
@@ -25364,7 +27309,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
           __pyx_r = Py_None; __Pyx_INCREF(Py_None);
           goto __pyx_L7_try_return;
 
-          /* "_pydevd_bundle/pydevd_cython.pyx":1250
+          /* "_pydevd_bundle/pydevd_cython.pyx":1340
  *                     # ignore files matching stepping filters
  *                     return None
  *                 if py_db.is_filter_libraries and not py_db.in_project_scope(filename):             # <<<<<<<<<<<<<<
@@ -25373,7 +27318,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
         }
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1246
+        /* "_pydevd_bundle/pydevd_cython.pyx":1336
  *                     return None
  * 
  *             if is_stepping:             # <<<<<<<<<<<<<<
@@ -25382,7 +27327,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
       }
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1255
+      /* "_pydevd_bundle/pydevd_cython.pyx":1345
  * 
  *             # print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
  *             if additional_info.is_tracing:             # <<<<<<<<<<<<<<
@@ -25392,7 +27337,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
       __pyx_t_12 = (__pyx_v_additional_info->is_tracing != 0);
       if (__pyx_t_12) {
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1256
+        /* "_pydevd_bundle/pydevd_cython.pyx":1346
  *             # print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
  *             if additional_info.is_tracing:
  *                 return None  # we don't wan't to trace code invoked from pydevd_frame.trace_dispatch             # <<<<<<<<<<<<<<
@@ -25403,7 +27348,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         __pyx_r = Py_None; __Pyx_INCREF(Py_None);
         goto __pyx_L7_try_return;
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1255
+        /* "_pydevd_bundle/pydevd_cython.pyx":1345
  * 
  *             # print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
  *             if additional_info.is_tracing:             # <<<<<<<<<<<<<<
@@ -25412,14 +27357,14 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
       }
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1262
+      /* "_pydevd_bundle/pydevd_cython.pyx":1352
  *             ret = PyDBFrame(
  *                 (
  *                     py_db, filename, additional_info, t, frame_skips_cache, frame_cache_key,             # <<<<<<<<<<<<<<
  *                 )
  *             ).trace_dispatch(frame, event, arg)
  */
-      __pyx_t_5 = PyTuple_New(6); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1262, __pyx_L3_error)
+      __pyx_t_5 = PyTuple_New(6); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1352, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_INCREF(__pyx_v_py_db);
       __Pyx_GIVEREF(__pyx_v_py_db);
@@ -25440,32 +27385,32 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
       __Pyx_GIVEREF(__pyx_v_frame_cache_key);
       PyTuple_SET_ITEM(__pyx_t_5, 5, __pyx_v_frame_cache_key);
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1260
+      /* "_pydevd_bundle/pydevd_cython.pyx":1350
  *             # Just create PyDBFrame directly (removed support for Python versions < 2.5, which required keeping a weak
  *             # reference to the frame).
  *             ret = PyDBFrame(             # <<<<<<<<<<<<<<
  *                 (
  *                     py_db, filename, additional_info, t, frame_skips_cache, frame_cache_key,
  */
-      __pyx_t_6 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDBFrame), __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1260, __pyx_L3_error)
+      __pyx_t_6 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDBFrame), __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1350, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1264
+      /* "_pydevd_bundle/pydevd_cython.pyx":1354
  *                     py_db, filename, additional_info, t, frame_skips_cache, frame_cache_key,
  *                 )
  *             ).trace_dispatch(frame, event, arg)             # <<<<<<<<<<<<<<
  *             if ret is None:
  *                 cache_skips[frame_cache_key] = 1
  */
-      if (!(likely(PyString_CheckExact(__pyx_v_event))||((__pyx_v_event) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_v_event)->tp_name), 0))) __PYX_ERR(0, 1264, __pyx_L3_error)
-      __pyx_t_5 = ((struct __pyx_vtabstruct_14_pydevd_bundle_13pydevd_cython_PyDBFrame *)((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBFrame *)__pyx_t_6)->__pyx_vtab)->trace_dispatch(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBFrame *)__pyx_t_6), __pyx_v_frame, ((PyObject*)__pyx_v_event), __pyx_v_arg, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1264, __pyx_L3_error)
+      if (!(likely(PyString_CheckExact(__pyx_v_event))||((__pyx_v_event) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_v_event)->tp_name), 0))) __PYX_ERR(0, 1354, __pyx_L3_error)
+      __pyx_t_5 = ((struct __pyx_vtabstruct_14_pydevd_bundle_13pydevd_cython_PyDBFrame *)((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBFrame *)__pyx_t_6)->__pyx_vtab)->trace_dispatch(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBFrame *)__pyx_t_6), __pyx_v_frame, ((PyObject*)__pyx_v_event), __pyx_v_arg, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1354, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __pyx_v_ret = __pyx_t_5;
       __pyx_t_5 = 0;
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1265
+      /* "_pydevd_bundle/pydevd_cython.pyx":1355
  *                 )
  *             ).trace_dispatch(frame, event, arg)
  *             if ret is None:             # <<<<<<<<<<<<<<
@@ -25476,7 +27421,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
       __pyx_t_11 = (__pyx_t_12 != 0);
       if (__pyx_t_11) {
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1266
+        /* "_pydevd_bundle/pydevd_cython.pyx":1356
  *             ).trace_dispatch(frame, event, arg)
  *             if ret is None:
  *                 cache_skips[frame_cache_key] = 1             # <<<<<<<<<<<<<<
@@ -25485,11 +27430,11 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
         if (unlikely(__pyx_v_cache_skips == Py_None)) {
           PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-          __PYX_ERR(0, 1266, __pyx_L3_error)
+          __PYX_ERR(0, 1356, __pyx_L3_error)
         }
-        if (unlikely(PyDict_SetItem(__pyx_v_cache_skips, __pyx_v_frame_cache_key, __pyx_int_1) < 0)) __PYX_ERR(0, 1266, __pyx_L3_error)
+        if (unlikely(PyDict_SetItem(__pyx_v_cache_skips, __pyx_v_frame_cache_key, __pyx_int_1) < 0)) __PYX_ERR(0, 1356, __pyx_L3_error)
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1267
+        /* "_pydevd_bundle/pydevd_cython.pyx":1357
  *             if ret is None:
  *                 cache_skips[frame_cache_key] = 1
  *                 return None             # <<<<<<<<<<<<<<
@@ -25500,7 +27445,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         __pyx_r = Py_None; __Pyx_INCREF(Py_None);
         goto __pyx_L7_try_return;
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1265
+        /* "_pydevd_bundle/pydevd_cython.pyx":1355
  *                 )
  *             ).trace_dispatch(frame, event, arg)
  *             if ret is None:             # <<<<<<<<<<<<<<
@@ -25509,7 +27454,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
       }
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1270
+      /* "_pydevd_bundle/pydevd_cython.pyx":1360
  * 
  *             # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
  *             return SafeCallWrapper(ret)             # <<<<<<<<<<<<<<
@@ -25517,13 +27462,13 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  * #             return ret
  */
       __Pyx_XDECREF(__pyx_r);
-      __pyx_t_5 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper), __pyx_v_ret); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1270, __pyx_L3_error)
+      __pyx_t_5 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper), __pyx_v_ret); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1360, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
       __pyx_r = __pyx_t_5;
       __pyx_t_5 = 0;
       goto __pyx_L7_try_return;
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1195
+      /* "_pydevd_bundle/pydevd_cython.pyx":1286
  *         is_stepping = pydev_step_cmd != -1
  * 
  *         try:             # <<<<<<<<<<<<<<
@@ -25540,7 +27485,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-    /* "_pydevd_bundle/pydevd_cython.pyx":1275
+    /* "_pydevd_bundle/pydevd_cython.pyx":1365
  *             # ENDIF
  * 
  *         except SystemExit:             # <<<<<<<<<<<<<<
@@ -25550,12 +27495,12 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
     __pyx_t_7 = __Pyx_PyErr_ExceptionMatches(__pyx_builtin_SystemExit);
     if (__pyx_t_7) {
       __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.ThreadTracer.__call__", __pyx_clineno, __pyx_lineno, __pyx_filename);
-      if (__Pyx_GetException(&__pyx_t_5, &__pyx_t_6, &__pyx_t_3) < 0) __PYX_ERR(0, 1275, __pyx_L5_except_error)
+      if (__Pyx_GetException(&__pyx_t_5, &__pyx_t_6, &__pyx_t_3) < 0) __PYX_ERR(0, 1365, __pyx_L5_except_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GOTREF(__pyx_t_3);
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1276
+      /* "_pydevd_bundle/pydevd_cython.pyx":1366
  * 
  *         except SystemExit:
  *             return None             # <<<<<<<<<<<<<<
@@ -25570,38 +27515,38 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
       goto __pyx_L6_except_return;
     }
 
-    /* "_pydevd_bundle/pydevd_cython.pyx":1278
+    /* "_pydevd_bundle/pydevd_cython.pyx":1368
  *             return None
  * 
  *         except Exception:             # <<<<<<<<<<<<<<
  *             if py_db._finish_debugging_session:
- *                 return None # Don't log errors when we're shutting down.
+ *                 return None  # Don't log errors when we're shutting down.
  */
     __pyx_t_7 = __Pyx_PyErr_ExceptionMatches(((PyObject *)(&((PyTypeObject*)PyExc_Exception)[0])));
     if (__pyx_t_7) {
       __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.ThreadTracer.__call__", __pyx_clineno, __pyx_lineno, __pyx_filename);
-      if (__Pyx_GetException(&__pyx_t_3, &__pyx_t_6, &__pyx_t_5) < 0) __PYX_ERR(0, 1278, __pyx_L5_except_error)
+      if (__Pyx_GetException(&__pyx_t_3, &__pyx_t_6, &__pyx_t_5) < 0) __PYX_ERR(0, 1368, __pyx_L5_except_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GOTREF(__pyx_t_5);
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1279
+      /* "_pydevd_bundle/pydevd_cython.pyx":1369
  * 
  *         except Exception:
  *             if py_db._finish_debugging_session:             # <<<<<<<<<<<<<<
- *                 return None # Don't log errors when we're shutting down.
+ *                 return None  # Don't log errors when we're shutting down.
  *             # Log it
  */
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_finish_debugging_session); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1279, __pyx_L5_except_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_finish_debugging_session); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1369, __pyx_L5_except_error)
       __Pyx_GOTREF(__pyx_t_1);
-      __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_11 < 0)) __PYX_ERR(0, 1279, __pyx_L5_except_error)
+      __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_11 < 0)) __PYX_ERR(0, 1369, __pyx_L5_except_error)
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       if (__pyx_t_11) {
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1280
+        /* "_pydevd_bundle/pydevd_cython.pyx":1370
  *         except Exception:
  *             if py_db._finish_debugging_session:
- *                 return None # Don't log errors when we're shutting down.             # <<<<<<<<<<<<<<
+ *                 return None  # Don't log errors when we're shutting down.             # <<<<<<<<<<<<<<
  *             # Log it
  *             try:
  */
@@ -25612,17 +27557,17 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
         goto __pyx_L6_except_return;
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1279
+        /* "_pydevd_bundle/pydevd_cython.pyx":1369
  * 
  *         except Exception:
  *             if py_db._finish_debugging_session:             # <<<<<<<<<<<<<<
- *                 return None # Don't log errors when we're shutting down.
+ *                 return None  # Don't log errors when we're shutting down.
  *             # Log it
  */
       }
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1282
- *                 return None # Don't log errors when we're shutting down.
+      /* "_pydevd_bundle/pydevd_cython.pyx":1372
+ *                 return None  # Don't log errors when we're shutting down.
  *             # Log it
  *             try:             # <<<<<<<<<<<<<<
  *                 if traceback is not None:
@@ -25637,30 +27582,30 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         __Pyx_XGOTREF(__pyx_t_15);
         /*try:*/ {
 
-          /* "_pydevd_bundle/pydevd_cython.pyx":1283
+          /* "_pydevd_bundle/pydevd_cython.pyx":1373
  *             # Log it
  *             try:
  *                 if traceback is not None:             # <<<<<<<<<<<<<<
  *                     # This can actually happen during the interpreter shutdown in Python 2.7
  *                     traceback.print_exc()
  */
-          __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_traceback); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1283, __pyx_L51_error)
+          __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_traceback); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1373, __pyx_L51_error)
           __Pyx_GOTREF(__pyx_t_1);
           __pyx_t_11 = (__pyx_t_1 != Py_None);
           __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
           __pyx_t_12 = (__pyx_t_11 != 0);
           if (__pyx_t_12) {
 
-            /* "_pydevd_bundle/pydevd_cython.pyx":1285
+            /* "_pydevd_bundle/pydevd_cython.pyx":1375
  *                 if traceback is not None:
  *                     # This can actually happen during the interpreter shutdown in Python 2.7
  *                     traceback.print_exc()             # <<<<<<<<<<<<<<
  *             except:
  *                 # Error logging? We're really in the interpreter shutdown...
  */
-            __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_traceback); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1285, __pyx_L51_error)
+            __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_traceback); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1375, __pyx_L51_error)
             __Pyx_GOTREF(__pyx_t_4);
-            __pyx_t_17 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_print_exc); if (unlikely(!__pyx_t_17)) __PYX_ERR(0, 1285, __pyx_L51_error)
+            __pyx_t_17 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_print_exc); if (unlikely(!__pyx_t_17)) __PYX_ERR(0, 1375, __pyx_L51_error)
             __Pyx_GOTREF(__pyx_t_17);
             __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
             __pyx_t_4 = NULL;
@@ -25674,16 +27619,16 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
               }
             }
             if (__pyx_t_4) {
-              __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_17, __pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1285, __pyx_L51_error)
+              __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_17, __pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1375, __pyx_L51_error)
               __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
             } else {
-              __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_17); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1285, __pyx_L51_error)
+              __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_17); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1375, __pyx_L51_error)
             }
             __Pyx_GOTREF(__pyx_t_1);
             __Pyx_DECREF(__pyx_t_17); __pyx_t_17 = 0;
             __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-            /* "_pydevd_bundle/pydevd_cython.pyx":1283
+            /* "_pydevd_bundle/pydevd_cython.pyx":1373
  *             # Log it
  *             try:
  *                 if traceback is not None:             # <<<<<<<<<<<<<<
@@ -25692,8 +27637,8 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
  */
           }
 
-          /* "_pydevd_bundle/pydevd_cython.pyx":1282
- *                 return None # Don't log errors when we're shutting down.
+          /* "_pydevd_bundle/pydevd_cython.pyx":1372
+ *                 return None  # Don't log errors when we're shutting down.
  *             # Log it
  *             try:             # <<<<<<<<<<<<<<
  *                 if traceback is not None:
@@ -25710,7 +27655,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         __Pyx_XDECREF(__pyx_t_17); __pyx_t_17 = 0;
         __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-        /* "_pydevd_bundle/pydevd_cython.pyx":1286
+        /* "_pydevd_bundle/pydevd_cython.pyx":1376
  *                     # This can actually happen during the interpreter shutdown in Python 2.7
  *                     traceback.print_exc()
  *             except:             # <<<<<<<<<<<<<<
@@ -25729,7 +27674,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
         __pyx_L58_try_end:;
       }
 
-      /* "_pydevd_bundle/pydevd_cython.pyx":1290
+      /* "_pydevd_bundle/pydevd_cython.pyx":1380
  *                 # (https://github.com/fabioz/PyDev.Debugger/issues/8)
  *                 pass
  *             return None             # <<<<<<<<<<<<<<
@@ -25746,7 +27691,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
     goto __pyx_L5_except_error;
     __pyx_L5_except_error:;
 
-    /* "_pydevd_bundle/pydevd_cython.pyx":1195
+    /* "_pydevd_bundle/pydevd_cython.pyx":1286
  *         is_stepping = pydev_step_cmd != -1
  * 
  *         try:             # <<<<<<<<<<<<<<
@@ -25772,8 +27717,8 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
     goto __pyx_L0;
   }
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1167
- *         # ENDIF
+  /* "_pydevd_bundle/pydevd_cython.pyx":1258
+ * # ENDIF
  * 
  *     def __call__(self, frame, event, arg):             # <<<<<<<<<<<<<<
  *         ''' This is the callback used when we enter some context in the debugger.
@@ -25807,8 +27752,8 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__cal
   return __pyx_r;
 }
 
-/* "_pydevd_bundle/pydevd_cython.pyx":1117
- *       return SafeCallWrapper(ret) if ret is not None else None
+/* "_pydevd_bundle/pydevd_cython.pyx":1248
+ * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
  * cdef class ThreadTracer:
  *     cdef public tuple _args;             # <<<<<<<<<<<<<<
  *     def __init__(self, tuple args):
@@ -25862,7 +27807,7 @@ static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_5_args_2__se
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__set__", 0);
-  if (!(likely(PyTuple_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(0, 1117, __pyx_L1_error)
+  if (!(likely(PyTuple_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(0, 1248, __pyx_L1_error)
   __pyx_t_1 = __pyx_v_value;
   __Pyx_INCREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -25919,19 +27864,19 @@ static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_5_args_4__de
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_9__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_9__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_5__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_5__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__reduce_cython__ (wrapper)", 0);
-  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_8__reduce_cython__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *)__pyx_v_self));
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_4__reduce_cython__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_8__reduce_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self) {
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_4__reduce_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self) {
   int __pyx_v_use_setstate;
   PyObject *__pyx_v_state = NULL;
   PyObject *__pyx_v__dict = NULL;
@@ -26151,19 +28096,19 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_8__red
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_11__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state); /*proto*/
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_11__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_7__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state); /*proto*/
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_7__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__setstate_cython__ (wrapper)", 0);
-  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_10__setstate_cython__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *)__pyx_v_self), ((PyObject *)__pyx_v___pyx_state));
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__setstate_cython__(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *)__pyx_v_self), ((PyObject *)__pyx_v___pyx_state));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_10__setstate_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__setstate_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -26199,7 +28144,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_10__se
   return __pyx_r;
 }
 
-/* "_pydevd_bundle/pydevd_cython.pyx":1305
+/* "_pydevd_bundle/pydevd_cython.pyx":1395
  *     _original_call = ThreadTracer.__call__
  * 
  *     def __call__(self, frame, event, arg):             # <<<<<<<<<<<<<<
@@ -26245,23 +28190,23 @@ static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_15__call__(PyObject *
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_frame)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__call__", 1, 4, 4, 1); __PYX_ERR(0, 1305, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__call__", 1, 4, 4, 1); __PYX_ERR(0, 1395, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_event)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__call__", 1, 4, 4, 2); __PYX_ERR(0, 1305, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__call__", 1, 4, 4, 2); __PYX_ERR(0, 1395, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_arg)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__call__", 1, 4, 4, 3); __PYX_ERR(0, 1305, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__call__", 1, 4, 4, 3); __PYX_ERR(0, 1395, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__call__") < 0)) __PYX_ERR(0, 1305, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__call__") < 0)) __PYX_ERR(0, 1395, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 4) {
       goto __pyx_L5_argtuple_error;
@@ -26278,7 +28223,7 @@ static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_15__call__(PyObject *
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__call__", 1, 4, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1305, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__call__", 1, 4, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1395, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.__call__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -26301,28 +28246,28 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_14__call__(CYTHON_UNU
   PyObject *__pyx_t_5 = NULL;
   __Pyx_RefNannySetupContext("__call__", 0);
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1306
+  /* "_pydevd_bundle/pydevd_cython.pyx":1396
  * 
  *     def __call__(self, frame, event, arg):
  *         _tid_to_last_frame[self._args[1].ident] = frame             # <<<<<<<<<<<<<<
  *         return _original_call(self, frame, event, arg)
  * 
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_tid_to_last_frame); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1306, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_tid_to_last_frame); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1396, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_args_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1306, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_args_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1396, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_2, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1306, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_2, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1396, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_ident); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1306, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_ident); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1396, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (unlikely(PyObject_SetItem(__pyx_t_1, __pyx_t_2, __pyx_v_frame) < 0)) __PYX_ERR(0, 1306, __pyx_L1_error)
+  if (unlikely(PyObject_SetItem(__pyx_t_1, __pyx_t_2, __pyx_v_frame) < 0)) __PYX_ERR(0, 1396, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1307
+  /* "_pydevd_bundle/pydevd_cython.pyx":1397
  *     def __call__(self, frame, event, arg):
  *         _tid_to_last_frame[self._args[1].ident] = frame
  *         return _original_call(self, frame, event, arg)             # <<<<<<<<<<<<<<
@@ -26330,7 +28275,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_14__call__(CYTHON_UNU
  *     ThreadTracer.__call__ = __call__
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_original_call); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1307, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_original_call); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1397, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_3 = NULL;
   __pyx_t_4 = 0;
@@ -26347,7 +28292,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_14__call__(CYTHON_UNU
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_1)) {
     PyObject *__pyx_temp[5] = {__pyx_t_3, __pyx_v_self, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
-    __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_4, 4+__pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1307, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_4, 4+__pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1397, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_GOTREF(__pyx_t_2);
   } else
@@ -26355,13 +28300,13 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_14__call__(CYTHON_UNU
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
     PyObject *__pyx_temp[5] = {__pyx_t_3, __pyx_v_self, __pyx_v_frame, __pyx_v_event, __pyx_v_arg};
-    __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_4, 4+__pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1307, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_4, 4+__pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1397, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_GOTREF(__pyx_t_2);
   } else
   #endif
   {
-    __pyx_t_5 = PyTuple_New(4+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1307, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_New(4+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1397, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     if (__pyx_t_3) {
       __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3); __pyx_t_3 = NULL;
@@ -26378,7 +28323,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_14__call__(CYTHON_UNU
     __Pyx_INCREF(__pyx_v_arg);
     __Pyx_GIVEREF(__pyx_v_arg);
     PyTuple_SET_ITEM(__pyx_t_5, 3+__pyx_t_4, __pyx_v_arg);
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1307, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1397, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
@@ -26387,7 +28332,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_14__call__(CYTHON_UNU
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1305
+  /* "_pydevd_bundle/pydevd_cython.pyx":1395
  *     _original_call = ThreadTracer.__call__
  * 
  *     def __call__(self, frame, event, arg):             # <<<<<<<<<<<<<<
@@ -27519,504 +29464,15 @@ static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_PyDBFra
 }
 
 /* "(tree fragment)":1
- * def __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
- *     if __pyx_checksum != 0x9168de9:
- *         from pickle import PickleError as __pyx_PickleError
- */
-
-/* Python wrapper */
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_21__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_14_pydevd_bundle_13pydevd_cython_21__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace = {"__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_21__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_21__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  PyObject *__pyx_v___pyx_type = 0;
-  long __pyx_v___pyx_checksum;
-  PyObject *__pyx_v___pyx_state = 0;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace (wrapper)", 0);
-  {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_pyx_type,&__pyx_n_s_pyx_checksum,&__pyx_n_s_pyx_state,0};
-    PyObject* values[3] = {0,0,0};
-    if (unlikely(__pyx_kwds)) {
-      Py_ssize_t kw_args;
-      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
-      switch (pos_args) {
-        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
-        CYTHON_FALLTHROUGH;
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        CYTHON_FALLTHROUGH;
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = PyDict_Size(__pyx_kwds);
-      switch (pos_args) {
-        case  0:
-        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pyx_type)) != 0)) kw_args--;
-        else goto __pyx_L5_argtuple_error;
-        CYTHON_FALLTHROUGH;
-        case  1:
-        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pyx_checksum)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace", 1, 3, 3, 1); __PYX_ERR(1, 1, __pyx_L3_error)
-        }
-        CYTHON_FALLTHROUGH;
-        case  2:
-        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pyx_state)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace", 1, 3, 3, 2); __PYX_ERR(1, 1, __pyx_L3_error)
-        }
-      }
-      if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace") < 0)) __PYX_ERR(1, 1, __pyx_L3_error)
-      }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
-      goto __pyx_L5_argtuple_error;
-    } else {
-      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-      values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
-    }
-    __pyx_v___pyx_type = values[0];
-    __pyx_v___pyx_checksum = __Pyx_PyInt_As_long(values[1]); if (unlikely((__pyx_v___pyx_checksum == (long)-1) && PyErr_Occurred())) __PYX_ERR(1, 1, __pyx_L3_error)
-    __pyx_v___pyx_state = values[2];
-  }
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(1, 1, __pyx_L3_error)
-  __pyx_L3_error:;
-  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_20__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace(__pyx_self, __pyx_v___pyx_type, __pyx_v___pyx_checksum, __pyx_v___pyx_state);
-
-  /* function exit code */
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_20__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state) {
-  PyObject *__pyx_v___pyx_PickleError = NULL;
-  PyObject *__pyx_v___pyx_result = NULL;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
-  PyObject *__pyx_t_6 = NULL;
-  int __pyx_t_7;
-  __Pyx_RefNannySetupContext("__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace", 0);
-
-  /* "(tree fragment)":2
- * def __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace(__pyx_type, long __pyx_checksum, __pyx_state):
- *     if __pyx_checksum != 0x9168de9:             # <<<<<<<<<<<<<<
- *         from pickle import PickleError as __pyx_PickleError
- *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x9168de9 = (_pydb_frame_trace, _unhandled_trace))" % __pyx_checksum)
- */
-  __pyx_t_1 = ((__pyx_v___pyx_checksum != 0x9168de9) != 0);
-  if (__pyx_t_1) {
-
-    /* "(tree fragment)":3
- * def __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace(__pyx_type, long __pyx_checksum, __pyx_state):
- *     if __pyx_checksum != 0x9168de9:
- *         from pickle import PickleError as __pyx_PickleError             # <<<<<<<<<<<<<<
- *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x9168de9 = (_pydb_frame_trace, _unhandled_trace))" % __pyx_checksum)
- *     __pyx_result = PyDbFrameTraceAndUnhandledExceptionsTrace.__new__(__pyx_type)
- */
-    __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 3, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_INCREF(__pyx_n_s_PickleError);
-    __Pyx_GIVEREF(__pyx_n_s_PickleError);
-    PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_PickleError);
-    __pyx_t_3 = __Pyx_Import(__pyx_n_s_pickle, __pyx_t_2, -1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 3, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_PickleError); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 3, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_INCREF(__pyx_t_2);
-    __pyx_v___pyx_PickleError = __pyx_t_2;
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-
-    /* "(tree fragment)":4
- *     if __pyx_checksum != 0x9168de9:
- *         from pickle import PickleError as __pyx_PickleError
- *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x9168de9 = (_pydb_frame_trace, _unhandled_trace))" % __pyx_checksum)             # <<<<<<<<<<<<<<
- *     __pyx_result = PyDbFrameTraceAndUnhandledExceptionsTrace.__new__(__pyx_type)
- *     if __pyx_state is not None:
- */
-    __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v___pyx_checksum); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 4, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_PyString_Format(__pyx_kp_s_Incompatible_checksums_s_vs_0x91, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 4, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __Pyx_INCREF(__pyx_v___pyx_PickleError);
-    __pyx_t_2 = __pyx_v___pyx_PickleError; __pyx_t_5 = NULL;
-    if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
-      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_2);
-      if (likely(__pyx_t_5)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-        __Pyx_INCREF(__pyx_t_5);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_2, function);
-      }
-    }
-    if (!__pyx_t_5) {
-      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 4, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __Pyx_GOTREF(__pyx_t_3);
-    } else {
-      #if CYTHON_FAST_PYCALL
-      if (PyFunction_Check(__pyx_t_2)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_t_4};
-        __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 4, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __Pyx_GOTREF(__pyx_t_3);
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      } else
-      #endif
-      #if CYTHON_FAST_PYCCALL
-      if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_t_4};
-        __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 4, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __Pyx_GOTREF(__pyx_t_3);
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      } else
-      #endif
-      {
-        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 4, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
-        __Pyx_GIVEREF(__pyx_t_4);
-        PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_4);
-        __pyx_t_4 = 0;
-        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 4, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      }
-    }
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __Pyx_Raise(__pyx_t_3, 0, 0, 0);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __PYX_ERR(1, 4, __pyx_L1_error)
-
-    /* "(tree fragment)":2
- * def __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace(__pyx_type, long __pyx_checksum, __pyx_state):
- *     if __pyx_checksum != 0x9168de9:             # <<<<<<<<<<<<<<
- *         from pickle import PickleError as __pyx_PickleError
- *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x9168de9 = (_pydb_frame_trace, _unhandled_trace))" % __pyx_checksum)
- */
-  }
-
-  /* "(tree fragment)":5
- *         from pickle import PickleError as __pyx_PickleError
- *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x9168de9 = (_pydb_frame_trace, _unhandled_trace))" % __pyx_checksum)
- *     __pyx_result = PyDbFrameTraceAndUnhandledExceptionsTrace.__new__(__pyx_type)             # <<<<<<<<<<<<<<
- *     if __pyx_state is not None:
- *         __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(<PyDbFrameTraceAndUnhandledExceptionsTrace> __pyx_result, __pyx_state)
- */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace), __pyx_n_s_new); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 5, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_6 = NULL;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
-    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_2);
-    if (likely(__pyx_t_6)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-      __Pyx_INCREF(__pyx_t_6);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_2, function);
-    }
-  }
-  if (!__pyx_t_6) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v___pyx_type); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 5, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-  } else {
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_2)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v___pyx_type};
-      __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 5, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __Pyx_GOTREF(__pyx_t_3);
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v___pyx_type};
-      __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 5, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __Pyx_GOTREF(__pyx_t_3);
-    } else
-    #endif
-    {
-      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 5, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_6); __pyx_t_6 = NULL;
-      __Pyx_INCREF(__pyx_v___pyx_type);
-      __Pyx_GIVEREF(__pyx_v___pyx_type);
-      PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v___pyx_type);
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 5, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    }
-  }
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_v___pyx_result = __pyx_t_3;
-  __pyx_t_3 = 0;
-
-  /* "(tree fragment)":6
- *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x9168de9 = (_pydb_frame_trace, _unhandled_trace))" % __pyx_checksum)
- *     __pyx_result = PyDbFrameTraceAndUnhandledExceptionsTrace.__new__(__pyx_type)
- *     if __pyx_state is not None:             # <<<<<<<<<<<<<<
- *         __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(<PyDbFrameTraceAndUnhandledExceptionsTrace> __pyx_result, __pyx_state)
- *     return __pyx_result
- */
-  __pyx_t_1 = (__pyx_v___pyx_state != Py_None);
-  __pyx_t_7 = (__pyx_t_1 != 0);
-  if (__pyx_t_7) {
-
-    /* "(tree fragment)":7
- *     __pyx_result = PyDbFrameTraceAndUnhandledExceptionsTrace.__new__(__pyx_type)
- *     if __pyx_state is not None:
- *         __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(<PyDbFrameTraceAndUnhandledExceptionsTrace> __pyx_result, __pyx_state)             # <<<<<<<<<<<<<<
- *     return __pyx_result
- * cdef __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(PyDbFrameTraceAndUnhandledExceptionsTrace __pyx_result, tuple __pyx_state):
- */
-    if (!(likely(PyTuple_CheckExact(__pyx_v___pyx_state))||((__pyx_v___pyx_state) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_v___pyx_state)->tp_name), 0))) __PYX_ERR(1, 7, __pyx_L1_error)
-    __pyx_t_3 = __pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *)__pyx_v___pyx_result), ((PyObject*)__pyx_v___pyx_state)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 7, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-
-    /* "(tree fragment)":6
- *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x9168de9 = (_pydb_frame_trace, _unhandled_trace))" % __pyx_checksum)
- *     __pyx_result = PyDbFrameTraceAndUnhandledExceptionsTrace.__new__(__pyx_type)
- *     if __pyx_state is not None:             # <<<<<<<<<<<<<<
- *         __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(<PyDbFrameTraceAndUnhandledExceptionsTrace> __pyx_result, __pyx_state)
- *     return __pyx_result
- */
-  }
-
-  /* "(tree fragment)":8
- *     if __pyx_state is not None:
- *         __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(<PyDbFrameTraceAndUnhandledExceptionsTrace> __pyx_result, __pyx_state)
- *     return __pyx_result             # <<<<<<<<<<<<<<
- * cdef __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(PyDbFrameTraceAndUnhandledExceptionsTrace __pyx_result, tuple __pyx_state):
- *     __pyx_result._pydb_frame_trace = __pyx_state[0]; __pyx_result._unhandled_trace = __pyx_state[1]
- */
-  __Pyx_XDECREF(__pyx_r);
-  __Pyx_INCREF(__pyx_v___pyx_result);
-  __pyx_r = __pyx_v___pyx_result;
-  goto __pyx_L0;
-
-  /* "(tree fragment)":1
- * def __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
- *     if __pyx_checksum != 0x9168de9:
- *         from pickle import PickleError as __pyx_PickleError
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v___pyx_PickleError);
-  __Pyx_XDECREF(__pyx_v___pyx_result);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "(tree fragment)":9
- *         __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(<PyDbFrameTraceAndUnhandledExceptionsTrace> __pyx_result, __pyx_state)
- *     return __pyx_result
- * cdef __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(PyDbFrameTraceAndUnhandledExceptionsTrace __pyx_result, tuple __pyx_state):             # <<<<<<<<<<<<<<
- *     __pyx_result._pydb_frame_trace = __pyx_state[0]; __pyx_result._unhandled_trace = __pyx_state[1]
- *     if len(__pyx_state) > 2 and hasattr(__pyx_result, '__dict__'):
- */
-
-static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *__pyx_v___pyx_result, PyObject *__pyx_v___pyx_state) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  int __pyx_t_2;
-  Py_ssize_t __pyx_t_3;
-  int __pyx_t_4;
-  int __pyx_t_5;
-  PyObject *__pyx_t_6 = NULL;
-  PyObject *__pyx_t_7 = NULL;
-  PyObject *__pyx_t_8 = NULL;
-  PyObject *__pyx_t_9 = NULL;
-  __Pyx_RefNannySetupContext("__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state", 0);
-
-  /* "(tree fragment)":10
- *     return __pyx_result
- * cdef __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(PyDbFrameTraceAndUnhandledExceptionsTrace __pyx_result, tuple __pyx_state):
- *     __pyx_result._pydb_frame_trace = __pyx_state[0]; __pyx_result._unhandled_trace = __pyx_state[1]             # <<<<<<<<<<<<<<
- *     if len(__pyx_state) > 2 and hasattr(__pyx_result, '__dict__'):
- *         __pyx_result.__dict__.update(__pyx_state[2])
- */
-  if (unlikely(__pyx_v___pyx_state == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(1, 10, __pyx_L1_error)
-  }
-  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 10, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GIVEREF(__pyx_t_1);
-  __Pyx_GOTREF(__pyx_v___pyx_result->_pydb_frame_trace);
-  __Pyx_DECREF(__pyx_v___pyx_result->_pydb_frame_trace);
-  __pyx_v___pyx_result->_pydb_frame_trace = __pyx_t_1;
-  __pyx_t_1 = 0;
-  if (unlikely(__pyx_v___pyx_state == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(1, 10, __pyx_L1_error)
-  }
-  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 10, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GIVEREF(__pyx_t_1);
-  __Pyx_GOTREF(__pyx_v___pyx_result->_unhandled_trace);
-  __Pyx_DECREF(__pyx_v___pyx_result->_unhandled_trace);
-  __pyx_v___pyx_result->_unhandled_trace = __pyx_t_1;
-  __pyx_t_1 = 0;
-
-  /* "(tree fragment)":11
- * cdef __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(PyDbFrameTraceAndUnhandledExceptionsTrace __pyx_result, tuple __pyx_state):
- *     __pyx_result._pydb_frame_trace = __pyx_state[0]; __pyx_result._unhandled_trace = __pyx_state[1]
- *     if len(__pyx_state) > 2 and hasattr(__pyx_result, '__dict__'):             # <<<<<<<<<<<<<<
- *         __pyx_result.__dict__.update(__pyx_state[2])
- */
-  if (unlikely(__pyx_v___pyx_state == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-    __PYX_ERR(1, 11, __pyx_L1_error)
-  }
-  __pyx_t_3 = PyTuple_GET_SIZE(__pyx_v___pyx_state); if (unlikely(__pyx_t_3 == ((Py_ssize_t)-1))) __PYX_ERR(1, 11, __pyx_L1_error)
-  __pyx_t_4 = ((__pyx_t_3 > 2) != 0);
-  if (__pyx_t_4) {
-  } else {
-    __pyx_t_2 = __pyx_t_4;
-    goto __pyx_L4_bool_binop_done;
-  }
-  __pyx_t_4 = __Pyx_HasAttr(((PyObject *)__pyx_v___pyx_result), __pyx_n_s_dict); if (unlikely(__pyx_t_4 == ((int)-1))) __PYX_ERR(1, 11, __pyx_L1_error)
-  __pyx_t_5 = (__pyx_t_4 != 0);
-  __pyx_t_2 = __pyx_t_5;
-  __pyx_L4_bool_binop_done:;
-  if (__pyx_t_2) {
-
-    /* "(tree fragment)":12
- *     __pyx_result._pydb_frame_trace = __pyx_state[0]; __pyx_result._unhandled_trace = __pyx_state[1]
- *     if len(__pyx_state) > 2 and hasattr(__pyx_result, '__dict__'):
- *         __pyx_result.__dict__.update(__pyx_state[2])             # <<<<<<<<<<<<<<
- */
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v___pyx_result), __pyx_n_s_dict); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 12, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_update); if (unlikely(!__pyx_t_7)) __PYX_ERR(1, 12, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_7);
-    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    if (unlikely(__pyx_v___pyx_state == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(1, 12, __pyx_L1_error)
-    }
-    __pyx_t_6 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 12, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_8 = NULL;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_7))) {
-      __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_7);
-      if (likely(__pyx_t_8)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_7);
-        __Pyx_INCREF(__pyx_t_8);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_7, function);
-      }
-    }
-    if (!__pyx_t_8) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __Pyx_GOTREF(__pyx_t_1);
-    } else {
-      #if CYTHON_FAST_PYCALL
-      if (PyFunction_Check(__pyx_t_7)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_t_6};
-        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-        __Pyx_GOTREF(__pyx_t_1);
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      } else
-      #endif
-      #if CYTHON_FAST_PYCCALL
-      if (__Pyx_PyFastCFunction_Check(__pyx_t_7)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_t_6};
-        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-        __Pyx_GOTREF(__pyx_t_1);
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      } else
-      #endif
-      {
-        __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(1, 12, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_9);
-        __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_8); __pyx_t_8 = NULL;
-        __Pyx_GIVEREF(__pyx_t_6);
-        PyTuple_SET_ITEM(__pyx_t_9, 0+1, __pyx_t_6);
-        __pyx_t_6 = 0;
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_9, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_1);
-        __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-      }
-    }
-    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-    /* "(tree fragment)":11
- * cdef __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(PyDbFrameTraceAndUnhandledExceptionsTrace __pyx_result, tuple __pyx_state):
- *     __pyx_result._pydb_frame_trace = __pyx_state[0]; __pyx_result._unhandled_trace = __pyx_state[1]
- *     if len(__pyx_state) > 2 and hasattr(__pyx_result, '__dict__'):             # <<<<<<<<<<<<<<
- *         __pyx_result.__dict__.update(__pyx_state[2])
- */
-  }
-
-  /* "(tree fragment)":9
- *         __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(<PyDbFrameTraceAndUnhandledExceptionsTrace> __pyx_result, __pyx_state)
- *     return __pyx_result
- * cdef __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(PyDbFrameTraceAndUnhandledExceptionsTrace __pyx_result, tuple __pyx_state):             # <<<<<<<<<<<<<<
- *     __pyx_result._pydb_frame_trace = __pyx_state[0]; __pyx_result._unhandled_trace = __pyx_state[1]
- *     if len(__pyx_state) > 2 and hasattr(__pyx_result, '__dict__'):
- */
-
-  /* function exit code */
-  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_XDECREF(__pyx_t_7);
-  __Pyx_XDECREF(__pyx_t_8);
-  __Pyx_XDECREF(__pyx_t_9);
-  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "(tree fragment)":1
  * def __pyx_unpickle_SafeCallWrapper(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
  *     if __pyx_checksum != 0x77c077b:
  *         from pickle import PickleError as __pyx_PickleError
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_23__pyx_unpickle_SafeCallWrapper(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_14_pydevd_bundle_13pydevd_cython_23__pyx_unpickle_SafeCallWrapper = {"__pyx_unpickle_SafeCallWrapper", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_23__pyx_unpickle_SafeCallWrapper, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_23__pyx_unpickle_SafeCallWrapper(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_21__pyx_unpickle_SafeCallWrapper(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_14_pydevd_bundle_13pydevd_cython_21__pyx_unpickle_SafeCallWrapper = {"__pyx_unpickle_SafeCallWrapper", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_21__pyx_unpickle_SafeCallWrapper, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_21__pyx_unpickle_SafeCallWrapper(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v___pyx_type = 0;
   long __pyx_v___pyx_checksum;
   PyObject *__pyx_v___pyx_state = 0;
@@ -28079,14 +29535,14 @@ static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_23__pyx_unpickle_Safe
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_22__pyx_unpickle_SafeCallWrapper(__pyx_self, __pyx_v___pyx_type, __pyx_v___pyx_checksum, __pyx_v___pyx_state);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_20__pyx_unpickle_SafeCallWrapper(__pyx_self, __pyx_v___pyx_type, __pyx_v___pyx_checksum, __pyx_v___pyx_state);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_22__pyx_unpickle_SafeCallWrapper(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_20__pyx_unpickle_SafeCallWrapper(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_v___pyx_PickleError = NULL;
   PyObject *__pyx_v___pyx_result = NULL;
   PyObject *__pyx_r = NULL;
@@ -28486,15 +29942,1028 @@ static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_SafeCal
 }
 
 /* "(tree fragment)":1
+ * def __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
+ *     if __pyx_checksum != 0x3d7902a:
+ *         from pickle import PickleError as __pyx_PickleError
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_23__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_14_pydevd_bundle_13pydevd_cython_23__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions = {"__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_23__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_23__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  PyObject *__pyx_v___pyx_type = 0;
+  long __pyx_v___pyx_checksum;
+  PyObject *__pyx_v___pyx_state = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions (wrapper)", 0);
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_pyx_type,&__pyx_n_s_pyx_checksum,&__pyx_n_s_pyx_state,0};
+    PyObject* values[3] = {0,0,0};
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+        CYTHON_FALLTHROUGH;
+        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        CYTHON_FALLTHROUGH;
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pyx_type)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+        CYTHON_FALLTHROUGH;
+        case  1:
+        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pyx_checksum)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions", 1, 3, 3, 1); __PYX_ERR(1, 1, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  2:
+        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pyx_state)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions", 1, 3, 3, 2); __PYX_ERR(1, 1, __pyx_L3_error)
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions") < 0)) __PYX_ERR(1, 1, __pyx_L3_error)
+      }
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+      values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+    }
+    __pyx_v___pyx_type = values[0];
+    __pyx_v___pyx_checksum = __Pyx_PyInt_As_long(values[1]); if (unlikely((__pyx_v___pyx_checksum == (long)-1) && PyErr_Occurred())) __PYX_ERR(1, 1, __pyx_L3_error)
+    __pyx_v___pyx_state = values[2];
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(1, 1, __pyx_L3_error)
+  __pyx_L3_error:;
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_22__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions(__pyx_self, __pyx_v___pyx_type, __pyx_v___pyx_checksum, __pyx_v___pyx_state);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_22__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state) {
+  PyObject *__pyx_v___pyx_PickleError = NULL;
+  PyObject *__pyx_v___pyx_result = NULL;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  PyObject *__pyx_t_6 = NULL;
+  int __pyx_t_7;
+  __Pyx_RefNannySetupContext("__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions", 0);
+
+  /* "(tree fragment)":2
+ * def __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions(__pyx_type, long __pyx_checksum, __pyx_state):
+ *     if __pyx_checksum != 0x3d7902a:             # <<<<<<<<<<<<<<
+ *         from pickle import PickleError as __pyx_PickleError
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x3d7902a = (_args))" % __pyx_checksum)
+ */
+  __pyx_t_1 = ((__pyx_v___pyx_checksum != 0x3d7902a) != 0);
+  if (__pyx_t_1) {
+
+    /* "(tree fragment)":3
+ * def __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions(__pyx_type, long __pyx_checksum, __pyx_state):
+ *     if __pyx_checksum != 0x3d7902a:
+ *         from pickle import PickleError as __pyx_PickleError             # <<<<<<<<<<<<<<
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x3d7902a = (_args))" % __pyx_checksum)
+ *     __pyx_result = TopLevelThreadTracerOnlyUnhandledExceptions.__new__(__pyx_type)
+ */
+    __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 3, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_INCREF(__pyx_n_s_PickleError);
+    __Pyx_GIVEREF(__pyx_n_s_PickleError);
+    PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_PickleError);
+    __pyx_t_3 = __Pyx_Import(__pyx_n_s_pickle, __pyx_t_2, -1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 3, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_PickleError); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 3, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_INCREF(__pyx_t_2);
+    __pyx_v___pyx_PickleError = __pyx_t_2;
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+    /* "(tree fragment)":4
+ *     if __pyx_checksum != 0x3d7902a:
+ *         from pickle import PickleError as __pyx_PickleError
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x3d7902a = (_args))" % __pyx_checksum)             # <<<<<<<<<<<<<<
+ *     __pyx_result = TopLevelThreadTracerOnlyUnhandledExceptions.__new__(__pyx_type)
+ *     if __pyx_state is not None:
+ */
+    __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v___pyx_checksum); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 4, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_4 = __Pyx_PyString_Format(__pyx_kp_s_Incompatible_checksums_s_vs_0x3d, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 4, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_INCREF(__pyx_v___pyx_PickleError);
+    __pyx_t_2 = __pyx_v___pyx_PickleError; __pyx_t_5 = NULL;
+    if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
+      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_2);
+      if (likely(__pyx_t_5)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+        __Pyx_INCREF(__pyx_t_5);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_2, function);
+      }
+    }
+    if (!__pyx_t_5) {
+      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 4, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_GOTREF(__pyx_t_3);
+    } else {
+      #if CYTHON_FAST_PYCALL
+      if (PyFunction_Check(__pyx_t_2)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_t_4};
+        __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 4, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      } else
+      #endif
+      #if CYTHON_FAST_PYCCALL
+      if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_t_4};
+        __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 4, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      } else
+      #endif
+      {
+        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 4, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_6);
+        __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
+        __Pyx_GIVEREF(__pyx_t_4);
+        PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_4);
+        __pyx_t_4 = 0;
+        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 4, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      }
+    }
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_Raise(__pyx_t_3, 0, 0, 0);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __PYX_ERR(1, 4, __pyx_L1_error)
+
+    /* "(tree fragment)":2
+ * def __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions(__pyx_type, long __pyx_checksum, __pyx_state):
+ *     if __pyx_checksum != 0x3d7902a:             # <<<<<<<<<<<<<<
+ *         from pickle import PickleError as __pyx_PickleError
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x3d7902a = (_args))" % __pyx_checksum)
+ */
+  }
+
+  /* "(tree fragment)":5
+ *         from pickle import PickleError as __pyx_PickleError
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x3d7902a = (_args))" % __pyx_checksum)
+ *     __pyx_result = TopLevelThreadTracerOnlyUnhandledExceptions.__new__(__pyx_type)             # <<<<<<<<<<<<<<
+ *     if __pyx_state is not None:
+ *         __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(<TopLevelThreadTracerOnlyUnhandledExceptions> __pyx_result, __pyx_state)
+ */
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions), __pyx_n_s_new); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 5, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_6 = NULL;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_6)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_6);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+    }
+  }
+  if (!__pyx_t_6) {
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v___pyx_type); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 5, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_2)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v___pyx_type};
+      __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 5, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_GOTREF(__pyx_t_3);
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v___pyx_type};
+      __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 5, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_GOTREF(__pyx_t_3);
+    } else
+    #endif
+    {
+      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 5, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_6); __pyx_t_6 = NULL;
+      __Pyx_INCREF(__pyx_v___pyx_type);
+      __Pyx_GIVEREF(__pyx_v___pyx_type);
+      PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v___pyx_type);
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 5, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_v___pyx_result = __pyx_t_3;
+  __pyx_t_3 = 0;
+
+  /* "(tree fragment)":6
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x3d7902a = (_args))" % __pyx_checksum)
+ *     __pyx_result = TopLevelThreadTracerOnlyUnhandledExceptions.__new__(__pyx_type)
+ *     if __pyx_state is not None:             # <<<<<<<<<<<<<<
+ *         __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(<TopLevelThreadTracerOnlyUnhandledExceptions> __pyx_result, __pyx_state)
+ *     return __pyx_result
+ */
+  __pyx_t_1 = (__pyx_v___pyx_state != Py_None);
+  __pyx_t_7 = (__pyx_t_1 != 0);
+  if (__pyx_t_7) {
+
+    /* "(tree fragment)":7
+ *     __pyx_result = TopLevelThreadTracerOnlyUnhandledExceptions.__new__(__pyx_type)
+ *     if __pyx_state is not None:
+ *         __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(<TopLevelThreadTracerOnlyUnhandledExceptions> __pyx_result, __pyx_state)             # <<<<<<<<<<<<<<
+ *     return __pyx_result
+ * cdef __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(TopLevelThreadTracerOnlyUnhandledExceptions __pyx_result, tuple __pyx_state):
+ */
+    if (!(likely(PyTuple_CheckExact(__pyx_v___pyx_state))||((__pyx_v___pyx_state) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_v___pyx_state)->tp_name), 0))) __PYX_ERR(1, 7, __pyx_L1_error)
+    __pyx_t_3 = __pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *)__pyx_v___pyx_result), ((PyObject*)__pyx_v___pyx_state)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 7, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+    /* "(tree fragment)":6
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x3d7902a = (_args))" % __pyx_checksum)
+ *     __pyx_result = TopLevelThreadTracerOnlyUnhandledExceptions.__new__(__pyx_type)
+ *     if __pyx_state is not None:             # <<<<<<<<<<<<<<
+ *         __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(<TopLevelThreadTracerOnlyUnhandledExceptions> __pyx_result, __pyx_state)
+ *     return __pyx_result
+ */
+  }
+
+  /* "(tree fragment)":8
+ *     if __pyx_state is not None:
+ *         __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(<TopLevelThreadTracerOnlyUnhandledExceptions> __pyx_result, __pyx_state)
+ *     return __pyx_result             # <<<<<<<<<<<<<<
+ * cdef __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(TopLevelThreadTracerOnlyUnhandledExceptions __pyx_result, tuple __pyx_state):
+ *     __pyx_result._args = __pyx_state[0]
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v___pyx_result);
+  __pyx_r = __pyx_v___pyx_result;
+  goto __pyx_L0;
+
+  /* "(tree fragment)":1
+ * def __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
+ *     if __pyx_checksum != 0x3d7902a:
+ *         from pickle import PickleError as __pyx_PickleError
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v___pyx_PickleError);
+  __Pyx_XDECREF(__pyx_v___pyx_result);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "(tree fragment)":9
+ *         __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(<TopLevelThreadTracerOnlyUnhandledExceptions> __pyx_result, __pyx_state)
+ *     return __pyx_result
+ * cdef __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(TopLevelThreadTracerOnlyUnhandledExceptions __pyx_result, tuple __pyx_state):             # <<<<<<<<<<<<<<
+ *     __pyx_result._args = __pyx_state[0]
+ *     if len(__pyx_state) > 1 and hasattr(__pyx_result, '__dict__'):
+ */
+
+static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *__pyx_v___pyx_result, PyObject *__pyx_v___pyx_state) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_t_2;
+  Py_ssize_t __pyx_t_3;
+  int __pyx_t_4;
+  int __pyx_t_5;
+  PyObject *__pyx_t_6 = NULL;
+  PyObject *__pyx_t_7 = NULL;
+  PyObject *__pyx_t_8 = NULL;
+  PyObject *__pyx_t_9 = NULL;
+  __Pyx_RefNannySetupContext("__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state", 0);
+
+  /* "(tree fragment)":10
+ *     return __pyx_result
+ * cdef __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(TopLevelThreadTracerOnlyUnhandledExceptions __pyx_result, tuple __pyx_state):
+ *     __pyx_result._args = __pyx_state[0]             # <<<<<<<<<<<<<<
+ *     if len(__pyx_state) > 1 and hasattr(__pyx_result, '__dict__'):
+ *         __pyx_result.__dict__.update(__pyx_state[1])
+ */
+  if (unlikely(__pyx_v___pyx_state == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+    __PYX_ERR(1, 10, __pyx_L1_error)
+  }
+  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 10, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (!(likely(PyTuple_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(1, 10, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_t_1);
+  __Pyx_GOTREF(__pyx_v___pyx_result->_args);
+  __Pyx_DECREF(__pyx_v___pyx_result->_args);
+  __pyx_v___pyx_result->_args = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "(tree fragment)":11
+ * cdef __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(TopLevelThreadTracerOnlyUnhandledExceptions __pyx_result, tuple __pyx_state):
+ *     __pyx_result._args = __pyx_state[0]
+ *     if len(__pyx_state) > 1 and hasattr(__pyx_result, '__dict__'):             # <<<<<<<<<<<<<<
+ *         __pyx_result.__dict__.update(__pyx_state[1])
+ */
+  if (unlikely(__pyx_v___pyx_state == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
+    __PYX_ERR(1, 11, __pyx_L1_error)
+  }
+  __pyx_t_3 = PyTuple_GET_SIZE(__pyx_v___pyx_state); if (unlikely(__pyx_t_3 == ((Py_ssize_t)-1))) __PYX_ERR(1, 11, __pyx_L1_error)
+  __pyx_t_4 = ((__pyx_t_3 > 1) != 0);
+  if (__pyx_t_4) {
+  } else {
+    __pyx_t_2 = __pyx_t_4;
+    goto __pyx_L4_bool_binop_done;
+  }
+  __pyx_t_4 = __Pyx_HasAttr(((PyObject *)__pyx_v___pyx_result), __pyx_n_s_dict); if (unlikely(__pyx_t_4 == ((int)-1))) __PYX_ERR(1, 11, __pyx_L1_error)
+  __pyx_t_5 = (__pyx_t_4 != 0);
+  __pyx_t_2 = __pyx_t_5;
+  __pyx_L4_bool_binop_done:;
+  if (__pyx_t_2) {
+
+    /* "(tree fragment)":12
+ *     __pyx_result._args = __pyx_state[0]
+ *     if len(__pyx_state) > 1 and hasattr(__pyx_result, '__dict__'):
+ *         __pyx_result.__dict__.update(__pyx_state[1])             # <<<<<<<<<<<<<<
+ */
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v___pyx_result), __pyx_n_s_dict); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 12, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_update); if (unlikely(!__pyx_t_7)) __PYX_ERR(1, 12, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    if (unlikely(__pyx_v___pyx_state == Py_None)) {
+      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+      __PYX_ERR(1, 12, __pyx_L1_error)
+    }
+    __pyx_t_6 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 12, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_8 = NULL;
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_7))) {
+      __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_7);
+      if (likely(__pyx_t_8)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_7);
+        __Pyx_INCREF(__pyx_t_8);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_7, function);
+      }
+    }
+    if (!__pyx_t_8) {
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+    } else {
+      #if CYTHON_FAST_PYCALL
+      if (PyFunction_Check(__pyx_t_7)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_t_6};
+        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      } else
+      #endif
+      #if CYTHON_FAST_PYCCALL
+      if (__Pyx_PyFastCFunction_Check(__pyx_t_7)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_t_6};
+        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      } else
+      #endif
+      {
+        __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(1, 12, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_9);
+        __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_8); __pyx_t_8 = NULL;
+        __Pyx_GIVEREF(__pyx_t_6);
+        PyTuple_SET_ITEM(__pyx_t_9, 0+1, __pyx_t_6);
+        __pyx_t_6 = 0;
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_9, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+      }
+    }
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+    /* "(tree fragment)":11
+ * cdef __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(TopLevelThreadTracerOnlyUnhandledExceptions __pyx_result, tuple __pyx_state):
+ *     __pyx_result._args = __pyx_state[0]
+ *     if len(__pyx_state) > 1 and hasattr(__pyx_result, '__dict__'):             # <<<<<<<<<<<<<<
+ *         __pyx_result.__dict__.update(__pyx_state[1])
+ */
+  }
+
+  /* "(tree fragment)":9
+ *         __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(<TopLevelThreadTracerOnlyUnhandledExceptions> __pyx_result, __pyx_state)
+ *     return __pyx_result
+ * cdef __pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state(TopLevelThreadTracerOnlyUnhandledExceptions __pyx_result, tuple __pyx_state):             # <<<<<<<<<<<<<<
+ *     __pyx_result._args = __pyx_state[0]
+ *     if len(__pyx_state) > 1 and hasattr(__pyx_result, '__dict__'):
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_XDECREF(__pyx_t_8);
+  __Pyx_XDECREF(__pyx_t_9);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions__set_state", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "(tree fragment)":1
+ * def __pyx_unpickle_TopLevelThreadTracerNoBackFrame(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
+ *     if __pyx_checksum != 0xf34c74e:
+ *         from pickle import PickleError as __pyx_PickleError
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_25__pyx_unpickle_TopLevelThreadTracerNoBackFrame(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_14_pydevd_bundle_13pydevd_cython_25__pyx_unpickle_TopLevelThreadTracerNoBackFrame = {"__pyx_unpickle_TopLevelThreadTracerNoBackFrame", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_25__pyx_unpickle_TopLevelThreadTracerNoBackFrame, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_25__pyx_unpickle_TopLevelThreadTracerNoBackFrame(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  PyObject *__pyx_v___pyx_type = 0;
+  long __pyx_v___pyx_checksum;
+  PyObject *__pyx_v___pyx_state = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__pyx_unpickle_TopLevelThreadTracerNoBackFrame (wrapper)", 0);
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_pyx_type,&__pyx_n_s_pyx_checksum,&__pyx_n_s_pyx_state,0};
+    PyObject* values[3] = {0,0,0};
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+        CYTHON_FALLTHROUGH;
+        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        CYTHON_FALLTHROUGH;
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pyx_type)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+        CYTHON_FALLTHROUGH;
+        case  1:
+        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pyx_checksum)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("__pyx_unpickle_TopLevelThreadTracerNoBackFrame", 1, 3, 3, 1); __PYX_ERR(1, 1, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  2:
+        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pyx_state)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("__pyx_unpickle_TopLevelThreadTracerNoBackFrame", 1, 3, 3, 2); __PYX_ERR(1, 1, __pyx_L3_error)
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__pyx_unpickle_TopLevelThreadTracerNoBackFrame") < 0)) __PYX_ERR(1, 1, __pyx_L3_error)
+      }
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+      values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+    }
+    __pyx_v___pyx_type = values[0];
+    __pyx_v___pyx_checksum = __Pyx_PyInt_As_long(values[1]); if (unlikely((__pyx_v___pyx_checksum == (long)-1) && PyErr_Occurred())) __PYX_ERR(1, 1, __pyx_L3_error)
+    __pyx_v___pyx_state = values[2];
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("__pyx_unpickle_TopLevelThreadTracerNoBackFrame", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(1, 1, __pyx_L3_error)
+  __pyx_L3_error:;
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.__pyx_unpickle_TopLevelThreadTracerNoBackFrame", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_24__pyx_unpickle_TopLevelThreadTracerNoBackFrame(__pyx_self, __pyx_v___pyx_type, __pyx_v___pyx_checksum, __pyx_v___pyx_state);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_24__pyx_unpickle_TopLevelThreadTracerNoBackFrame(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state) {
+  PyObject *__pyx_v___pyx_PickleError = NULL;
+  PyObject *__pyx_v___pyx_result = NULL;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  PyObject *__pyx_t_6 = NULL;
+  int __pyx_t_7;
+  __Pyx_RefNannySetupContext("__pyx_unpickle_TopLevelThreadTracerNoBackFrame", 0);
+
+  /* "(tree fragment)":2
+ * def __pyx_unpickle_TopLevelThreadTracerNoBackFrame(__pyx_type, long __pyx_checksum, __pyx_state):
+ *     if __pyx_checksum != 0xf34c74e:             # <<<<<<<<<<<<<<
+ *         from pickle import PickleError as __pyx_PickleError
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0xf34c74e = (_args, _frame_trace_dispatch, _last_exc_arg, _last_raise_line, _raise_lines, _try_except_info))" % __pyx_checksum)
+ */
+  __pyx_t_1 = ((__pyx_v___pyx_checksum != 0xf34c74e) != 0);
+  if (__pyx_t_1) {
+
+    /* "(tree fragment)":3
+ * def __pyx_unpickle_TopLevelThreadTracerNoBackFrame(__pyx_type, long __pyx_checksum, __pyx_state):
+ *     if __pyx_checksum != 0xf34c74e:
+ *         from pickle import PickleError as __pyx_PickleError             # <<<<<<<<<<<<<<
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0xf34c74e = (_args, _frame_trace_dispatch, _last_exc_arg, _last_raise_line, _raise_lines, _try_except_info))" % __pyx_checksum)
+ *     __pyx_result = TopLevelThreadTracerNoBackFrame.__new__(__pyx_type)
+ */
+    __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 3, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_INCREF(__pyx_n_s_PickleError);
+    __Pyx_GIVEREF(__pyx_n_s_PickleError);
+    PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_PickleError);
+    __pyx_t_3 = __Pyx_Import(__pyx_n_s_pickle, __pyx_t_2, -1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 3, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_PickleError); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 3, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_INCREF(__pyx_t_2);
+    __pyx_v___pyx_PickleError = __pyx_t_2;
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+    /* "(tree fragment)":4
+ *     if __pyx_checksum != 0xf34c74e:
+ *         from pickle import PickleError as __pyx_PickleError
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0xf34c74e = (_args, _frame_trace_dispatch, _last_exc_arg, _last_raise_line, _raise_lines, _try_except_info))" % __pyx_checksum)             # <<<<<<<<<<<<<<
+ *     __pyx_result = TopLevelThreadTracerNoBackFrame.__new__(__pyx_type)
+ *     if __pyx_state is not None:
+ */
+    __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v___pyx_checksum); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 4, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_4 = __Pyx_PyString_Format(__pyx_kp_s_Incompatible_checksums_s_vs_0xf3, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 4, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_INCREF(__pyx_v___pyx_PickleError);
+    __pyx_t_2 = __pyx_v___pyx_PickleError; __pyx_t_5 = NULL;
+    if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
+      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_2);
+      if (likely(__pyx_t_5)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+        __Pyx_INCREF(__pyx_t_5);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_2, function);
+      }
+    }
+    if (!__pyx_t_5) {
+      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 4, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_GOTREF(__pyx_t_3);
+    } else {
+      #if CYTHON_FAST_PYCALL
+      if (PyFunction_Check(__pyx_t_2)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_t_4};
+        __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 4, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      } else
+      #endif
+      #if CYTHON_FAST_PYCCALL
+      if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_t_4};
+        __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 4, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      } else
+      #endif
+      {
+        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 4, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_6);
+        __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
+        __Pyx_GIVEREF(__pyx_t_4);
+        PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_4);
+        __pyx_t_4 = 0;
+        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 4, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      }
+    }
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_Raise(__pyx_t_3, 0, 0, 0);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __PYX_ERR(1, 4, __pyx_L1_error)
+
+    /* "(tree fragment)":2
+ * def __pyx_unpickle_TopLevelThreadTracerNoBackFrame(__pyx_type, long __pyx_checksum, __pyx_state):
+ *     if __pyx_checksum != 0xf34c74e:             # <<<<<<<<<<<<<<
+ *         from pickle import PickleError as __pyx_PickleError
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0xf34c74e = (_args, _frame_trace_dispatch, _last_exc_arg, _last_raise_line, _raise_lines, _try_except_info))" % __pyx_checksum)
+ */
+  }
+
+  /* "(tree fragment)":5
+ *         from pickle import PickleError as __pyx_PickleError
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0xf34c74e = (_args, _frame_trace_dispatch, _last_exc_arg, _last_raise_line, _raise_lines, _try_except_info))" % __pyx_checksum)
+ *     __pyx_result = TopLevelThreadTracerNoBackFrame.__new__(__pyx_type)             # <<<<<<<<<<<<<<
+ *     if __pyx_state is not None:
+ *         __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(<TopLevelThreadTracerNoBackFrame> __pyx_result, __pyx_state)
+ */
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame), __pyx_n_s_new); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 5, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_6 = NULL;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_6)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_6);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+    }
+  }
+  if (!__pyx_t_6) {
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v___pyx_type); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 5, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_2)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v___pyx_type};
+      __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 5, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_GOTREF(__pyx_t_3);
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v___pyx_type};
+      __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 5, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_GOTREF(__pyx_t_3);
+    } else
+    #endif
+    {
+      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 5, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_6); __pyx_t_6 = NULL;
+      __Pyx_INCREF(__pyx_v___pyx_type);
+      __Pyx_GIVEREF(__pyx_v___pyx_type);
+      PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v___pyx_type);
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 5, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_v___pyx_result = __pyx_t_3;
+  __pyx_t_3 = 0;
+
+  /* "(tree fragment)":6
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0xf34c74e = (_args, _frame_trace_dispatch, _last_exc_arg, _last_raise_line, _raise_lines, _try_except_info))" % __pyx_checksum)
+ *     __pyx_result = TopLevelThreadTracerNoBackFrame.__new__(__pyx_type)
+ *     if __pyx_state is not None:             # <<<<<<<<<<<<<<
+ *         __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(<TopLevelThreadTracerNoBackFrame> __pyx_result, __pyx_state)
+ *     return __pyx_result
+ */
+  __pyx_t_1 = (__pyx_v___pyx_state != Py_None);
+  __pyx_t_7 = (__pyx_t_1 != 0);
+  if (__pyx_t_7) {
+
+    /* "(tree fragment)":7
+ *     __pyx_result = TopLevelThreadTracerNoBackFrame.__new__(__pyx_type)
+ *     if __pyx_state is not None:
+ *         __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(<TopLevelThreadTracerNoBackFrame> __pyx_result, __pyx_state)             # <<<<<<<<<<<<<<
+ *     return __pyx_result
+ * cdef __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(TopLevelThreadTracerNoBackFrame __pyx_result, tuple __pyx_state):
+ */
+    if (!(likely(PyTuple_CheckExact(__pyx_v___pyx_state))||((__pyx_v___pyx_state) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_v___pyx_state)->tp_name), 0))) __PYX_ERR(1, 7, __pyx_L1_error)
+    __pyx_t_3 = __pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)__pyx_v___pyx_result), ((PyObject*)__pyx_v___pyx_state)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 7, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+    /* "(tree fragment)":6
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0xf34c74e = (_args, _frame_trace_dispatch, _last_exc_arg, _last_raise_line, _raise_lines, _try_except_info))" % __pyx_checksum)
+ *     __pyx_result = TopLevelThreadTracerNoBackFrame.__new__(__pyx_type)
+ *     if __pyx_state is not None:             # <<<<<<<<<<<<<<
+ *         __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(<TopLevelThreadTracerNoBackFrame> __pyx_result, __pyx_state)
+ *     return __pyx_result
+ */
+  }
+
+  /* "(tree fragment)":8
+ *     if __pyx_state is not None:
+ *         __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(<TopLevelThreadTracerNoBackFrame> __pyx_result, __pyx_state)
+ *     return __pyx_result             # <<<<<<<<<<<<<<
+ * cdef __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(TopLevelThreadTracerNoBackFrame __pyx_result, tuple __pyx_state):
+ *     __pyx_result._args = __pyx_state[0]; __pyx_result._frame_trace_dispatch = __pyx_state[1]; __pyx_result._last_exc_arg = __pyx_state[2]; __pyx_result._last_raise_line = __pyx_state[3]; __pyx_result._raise_lines = __pyx_state[4]; __pyx_result._try_except_info = __pyx_state[5]
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v___pyx_result);
+  __pyx_r = __pyx_v___pyx_result;
+  goto __pyx_L0;
+
+  /* "(tree fragment)":1
+ * def __pyx_unpickle_TopLevelThreadTracerNoBackFrame(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
+ *     if __pyx_checksum != 0xf34c74e:
+ *         from pickle import PickleError as __pyx_PickleError
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.__pyx_unpickle_TopLevelThreadTracerNoBackFrame", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v___pyx_PickleError);
+  __Pyx_XDECREF(__pyx_v___pyx_result);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "(tree fragment)":9
+ *         __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(<TopLevelThreadTracerNoBackFrame> __pyx_result, __pyx_state)
+ *     return __pyx_result
+ * cdef __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(TopLevelThreadTracerNoBackFrame __pyx_result, tuple __pyx_state):             # <<<<<<<<<<<<<<
+ *     __pyx_result._args = __pyx_state[0]; __pyx_result._frame_trace_dispatch = __pyx_state[1]; __pyx_result._last_exc_arg = __pyx_state[2]; __pyx_result._last_raise_line = __pyx_state[3]; __pyx_result._raise_lines = __pyx_state[4]; __pyx_result._try_except_info = __pyx_state[5]
+ *     if len(__pyx_state) > 6 and hasattr(__pyx_result, '__dict__'):
+ */
+
+static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython___pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *__pyx_v___pyx_result, PyObject *__pyx_v___pyx_state) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_t_2;
+  int __pyx_t_3;
+  Py_ssize_t __pyx_t_4;
+  int __pyx_t_5;
+  int __pyx_t_6;
+  PyObject *__pyx_t_7 = NULL;
+  PyObject *__pyx_t_8 = NULL;
+  PyObject *__pyx_t_9 = NULL;
+  PyObject *__pyx_t_10 = NULL;
+  __Pyx_RefNannySetupContext("__pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state", 0);
+
+  /* "(tree fragment)":10
+ *     return __pyx_result
+ * cdef __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(TopLevelThreadTracerNoBackFrame __pyx_result, tuple __pyx_state):
+ *     __pyx_result._args = __pyx_state[0]; __pyx_result._frame_trace_dispatch = __pyx_state[1]; __pyx_result._last_exc_arg = __pyx_state[2]; __pyx_result._last_raise_line = __pyx_state[3]; __pyx_result._raise_lines = __pyx_state[4]; __pyx_result._try_except_info = __pyx_state[5]             # <<<<<<<<<<<<<<
+ *     if len(__pyx_state) > 6 and hasattr(__pyx_result, '__dict__'):
+ *         __pyx_result.__dict__.update(__pyx_state[6])
+ */
+  if (unlikely(__pyx_v___pyx_state == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+    __PYX_ERR(1, 10, __pyx_L1_error)
+  }
+  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 10, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (!(likely(PyTuple_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(1, 10, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_t_1);
+  __Pyx_GOTREF(__pyx_v___pyx_result->_args);
+  __Pyx_DECREF(__pyx_v___pyx_result->_args);
+  __pyx_v___pyx_result->_args = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+  if (unlikely(__pyx_v___pyx_state == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+    __PYX_ERR(1, 10, __pyx_L1_error)
+  }
+  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 10, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_GIVEREF(__pyx_t_1);
+  __Pyx_GOTREF(__pyx_v___pyx_result->_frame_trace_dispatch);
+  __Pyx_DECREF(__pyx_v___pyx_result->_frame_trace_dispatch);
+  __pyx_v___pyx_result->_frame_trace_dispatch = __pyx_t_1;
+  __pyx_t_1 = 0;
+  if (unlikely(__pyx_v___pyx_state == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+    __PYX_ERR(1, 10, __pyx_L1_error)
+  }
+  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 10, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_GIVEREF(__pyx_t_1);
+  __Pyx_GOTREF(__pyx_v___pyx_result->_last_exc_arg);
+  __Pyx_DECREF(__pyx_v___pyx_result->_last_exc_arg);
+  __pyx_v___pyx_result->_last_exc_arg = __pyx_t_1;
+  __pyx_t_1 = 0;
+  if (unlikely(__pyx_v___pyx_state == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+    __PYX_ERR(1, 10, __pyx_L1_error)
+  }
+  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 3, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 10, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyInt_As_int(__pyx_t_1); if (unlikely((__pyx_t_2 == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 10, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_v___pyx_result->_last_raise_line = __pyx_t_2;
+  if (unlikely(__pyx_v___pyx_state == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+    __PYX_ERR(1, 10, __pyx_L1_error)
+  }
+  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 4, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 10, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (!(likely(PySet_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "set", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(1, 10, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_t_1);
+  __Pyx_GOTREF(__pyx_v___pyx_result->_raise_lines);
+  __Pyx_DECREF(__pyx_v___pyx_result->_raise_lines);
+  __pyx_v___pyx_result->_raise_lines = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+  if (unlikely(__pyx_v___pyx_state == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+    __PYX_ERR(1, 10, __pyx_L1_error)
+  }
+  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 5, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 10, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_GIVEREF(__pyx_t_1);
+  __Pyx_GOTREF(__pyx_v___pyx_result->_try_except_info);
+  __Pyx_DECREF(__pyx_v___pyx_result->_try_except_info);
+  __pyx_v___pyx_result->_try_except_info = __pyx_t_1;
+  __pyx_t_1 = 0;
+
+  /* "(tree fragment)":11
+ * cdef __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(TopLevelThreadTracerNoBackFrame __pyx_result, tuple __pyx_state):
+ *     __pyx_result._args = __pyx_state[0]; __pyx_result._frame_trace_dispatch = __pyx_state[1]; __pyx_result._last_exc_arg = __pyx_state[2]; __pyx_result._last_raise_line = __pyx_state[3]; __pyx_result._raise_lines = __pyx_state[4]; __pyx_result._try_except_info = __pyx_state[5]
+ *     if len(__pyx_state) > 6 and hasattr(__pyx_result, '__dict__'):             # <<<<<<<<<<<<<<
+ *         __pyx_result.__dict__.update(__pyx_state[6])
+ */
+  if (unlikely(__pyx_v___pyx_state == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
+    __PYX_ERR(1, 11, __pyx_L1_error)
+  }
+  __pyx_t_4 = PyTuple_GET_SIZE(__pyx_v___pyx_state); if (unlikely(__pyx_t_4 == ((Py_ssize_t)-1))) __PYX_ERR(1, 11, __pyx_L1_error)
+  __pyx_t_5 = ((__pyx_t_4 > 6) != 0);
+  if (__pyx_t_5) {
+  } else {
+    __pyx_t_3 = __pyx_t_5;
+    goto __pyx_L4_bool_binop_done;
+  }
+  __pyx_t_5 = __Pyx_HasAttr(((PyObject *)__pyx_v___pyx_result), __pyx_n_s_dict); if (unlikely(__pyx_t_5 == ((int)-1))) __PYX_ERR(1, 11, __pyx_L1_error)
+  __pyx_t_6 = (__pyx_t_5 != 0);
+  __pyx_t_3 = __pyx_t_6;
+  __pyx_L4_bool_binop_done:;
+  if (__pyx_t_3) {
+
+    /* "(tree fragment)":12
+ *     __pyx_result._args = __pyx_state[0]; __pyx_result._frame_trace_dispatch = __pyx_state[1]; __pyx_result._last_exc_arg = __pyx_state[2]; __pyx_result._last_raise_line = __pyx_state[3]; __pyx_result._raise_lines = __pyx_state[4]; __pyx_result._try_except_info = __pyx_state[5]
+ *     if len(__pyx_state) > 6 and hasattr(__pyx_result, '__dict__'):
+ *         __pyx_result.__dict__.update(__pyx_state[6])             # <<<<<<<<<<<<<<
+ */
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v___pyx_result), __pyx_n_s_dict); if (unlikely(!__pyx_t_7)) __PYX_ERR(1, 12, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_update); if (unlikely(!__pyx_t_8)) __PYX_ERR(1, 12, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    if (unlikely(__pyx_v___pyx_state == Py_None)) {
+      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+      __PYX_ERR(1, 12, __pyx_L1_error)
+    }
+    __pyx_t_7 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 6, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_7)) __PYX_ERR(1, 12, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __pyx_t_9 = NULL;
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_8))) {
+      __pyx_t_9 = PyMethod_GET_SELF(__pyx_t_8);
+      if (likely(__pyx_t_9)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_8);
+        __Pyx_INCREF(__pyx_t_9);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_8, function);
+      }
+    }
+    if (!__pyx_t_9) {
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+    } else {
+      #if CYTHON_FAST_PYCALL
+      if (PyFunction_Check(__pyx_t_8)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_9, __pyx_t_7};
+        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      } else
+      #endif
+      #if CYTHON_FAST_PYCCALL
+      if (__Pyx_PyFastCFunction_Check(__pyx_t_8)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_9, __pyx_t_7};
+        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      } else
+      #endif
+      {
+        __pyx_t_10 = PyTuple_New(1+1); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 12, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_10);
+        __Pyx_GIVEREF(__pyx_t_9); PyTuple_SET_ITEM(__pyx_t_10, 0, __pyx_t_9); __pyx_t_9 = NULL;
+        __Pyx_GIVEREF(__pyx_t_7);
+        PyTuple_SET_ITEM(__pyx_t_10, 0+1, __pyx_t_7);
+        __pyx_t_7 = 0;
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_10, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
+      }
+    }
+    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+    /* "(tree fragment)":11
+ * cdef __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(TopLevelThreadTracerNoBackFrame __pyx_result, tuple __pyx_state):
+ *     __pyx_result._args = __pyx_state[0]; __pyx_result._frame_trace_dispatch = __pyx_state[1]; __pyx_result._last_exc_arg = __pyx_state[2]; __pyx_result._last_raise_line = __pyx_state[3]; __pyx_result._raise_lines = __pyx_state[4]; __pyx_result._try_except_info = __pyx_state[5]
+ *     if len(__pyx_state) > 6 and hasattr(__pyx_result, '__dict__'):             # <<<<<<<<<<<<<<
+ *         __pyx_result.__dict__.update(__pyx_state[6])
+ */
+  }
+
+  /* "(tree fragment)":9
+ *         __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(<TopLevelThreadTracerNoBackFrame> __pyx_result, __pyx_state)
+ *     return __pyx_result
+ * cdef __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(TopLevelThreadTracerNoBackFrame __pyx_result, tuple __pyx_state):             # <<<<<<<<<<<<<<
+ *     __pyx_result._args = __pyx_state[0]; __pyx_result._frame_trace_dispatch = __pyx_state[1]; __pyx_result._last_exc_arg = __pyx_state[2]; __pyx_result._last_raise_line = __pyx_state[3]; __pyx_result._raise_lines = __pyx_state[4]; __pyx_result._try_except_info = __pyx_state[5]
+ *     if len(__pyx_state) > 6 and hasattr(__pyx_result, '__dict__'):
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_XDECREF(__pyx_t_8);
+  __Pyx_XDECREF(__pyx_t_9);
+  __Pyx_XDECREF(__pyx_t_10);
+  __Pyx_AddTraceback("_pydevd_bundle.pydevd_cython.__pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "(tree fragment)":1
  * def __pyx_unpickle_ThreadTracer(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
  *     if __pyx_checksum != 0x3d7902a:
  *         from pickle import PickleError as __pyx_PickleError
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_25__pyx_unpickle_ThreadTracer(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_14_pydevd_bundle_13pydevd_cython_25__pyx_unpickle_ThreadTracer = {"__pyx_unpickle_ThreadTracer", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_25__pyx_unpickle_ThreadTracer, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_25__pyx_unpickle_ThreadTracer(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_27__pyx_unpickle_ThreadTracer(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_14_pydevd_bundle_13pydevd_cython_27__pyx_unpickle_ThreadTracer = {"__pyx_unpickle_ThreadTracer", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_27__pyx_unpickle_ThreadTracer, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_27__pyx_unpickle_ThreadTracer(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v___pyx_type = 0;
   long __pyx_v___pyx_checksum;
   PyObject *__pyx_v___pyx_state = 0;
@@ -28557,14 +31026,14 @@ static PyObject *__pyx_pw_14_pydevd_bundle_13pydevd_cython_25__pyx_unpickle_Thre
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_24__pyx_unpickle_ThreadTracer(__pyx_self, __pyx_v___pyx_type, __pyx_v___pyx_checksum, __pyx_v___pyx_state);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_26__pyx_unpickle_ThreadTracer(__pyx_self, __pyx_v___pyx_type, __pyx_v___pyx_checksum, __pyx_v___pyx_state);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_24__pyx_unpickle_ThreadTracer(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_26__pyx_unpickle_ThreadTracer(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_v___pyx_PickleError = NULL;
   PyObject *__pyx_v___pyx_result = NULL;
   PyObject *__pyx_r = NULL;
@@ -29451,123 +31920,6 @@ static PyTypeObject __pyx_type_14_pydevd_bundle_13pydevd_cython_PyDBFrame = {
   #endif
 };
 
-static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace(PyTypeObject *t, CYTHON_UNUSED PyObject *a, CYTHON_UNUSED PyObject *k) {
-  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *p;
-  PyObject *o;
-  if (likely((t->tp_flags & Py_TPFLAGS_IS_ABSTRACT) == 0)) {
-    o = (*t->tp_alloc)(t, 0);
-  } else {
-    o = (PyObject *) PyBaseObject_Type.tp_new(t, __pyx_empty_tuple, 0);
-  }
-  if (unlikely(!o)) return 0;
-  p = ((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *)o);
-  p->_pydb_frame_trace = Py_None; Py_INCREF(Py_None);
-  p->_unhandled_trace = Py_None; Py_INCREF(Py_None);
-  return o;
-}
-
-static void __pyx_tp_dealloc_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace(PyObject *o) {
-  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *p = (struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *)o;
-  #if CYTHON_USE_TP_FINALIZE
-  if (unlikely(PyType_HasFeature(Py_TYPE(o), Py_TPFLAGS_HAVE_FINALIZE) && Py_TYPE(o)->tp_finalize) && !_PyGC_FINALIZED(o)) {
-    if (PyObject_CallFinalizerFromDealloc(o)) return;
-  }
-  #endif
-  PyObject_GC_UnTrack(o);
-  Py_CLEAR(p->_pydb_frame_trace);
-  Py_CLEAR(p->_unhandled_trace);
-  (*Py_TYPE(o)->tp_free)(o);
-}
-
-static int __pyx_tp_traverse_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace(PyObject *o, visitproc v, void *a) {
-  int e;
-  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *p = (struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *)o;
-  if (p->_pydb_frame_trace) {
-    e = (*v)(p->_pydb_frame_trace, a); if (e) return e;
-  }
-  if (p->_unhandled_trace) {
-    e = (*v)(p->_unhandled_trace, a); if (e) return e;
-  }
-  return 0;
-}
-
-static int __pyx_tp_clear_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace(PyObject *o) {
-  PyObject* tmp;
-  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *p = (struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace *)o;
-  tmp = ((PyObject*)p->_pydb_frame_trace);
-  p->_pydb_frame_trace = Py_None; Py_INCREF(Py_None);
-  Py_XDECREF(tmp);
-  tmp = ((PyObject*)p->_unhandled_trace);
-  p->_unhandled_trace = Py_None; Py_INCREF(Py_None);
-  Py_XDECREF(tmp);
-  return 0;
-}
-
-static PyMethodDef __pyx_methods_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace[] = {
-  {"trace_dispatch", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_3trace_dispatch, METH_VARARGS|METH_KEYWORDS, 0},
-  {"__reduce_cython__", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_5__reduce_cython__, METH_NOARGS, 0},
-  {"__setstate_cython__", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_7__setstate_cython__, METH_O, 0},
-  {0, 0, 0, 0}
-};
-
-static PyTypeObject __pyx_type_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace = {
-  PyVarObject_HEAD_INIT(0, 0)
-  "_pydevd_bundle.pydevd_cython.PyDbFrameTraceAndUnhandledExceptionsTrace", /*tp_name*/
-  sizeof(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace), /*tp_basicsize*/
-  0, /*tp_itemsize*/
-  __pyx_tp_dealloc_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace, /*tp_dealloc*/
-  0, /*tp_print*/
-  0, /*tp_getattr*/
-  0, /*tp_setattr*/
-  #if PY_MAJOR_VERSION < 3
-  0, /*tp_compare*/
-  #endif
-  #if PY_MAJOR_VERSION >= 3
-  0, /*tp_as_async*/
-  #endif
-  0, /*tp_repr*/
-  0, /*tp_as_number*/
-  0, /*tp_as_sequence*/
-  0, /*tp_as_mapping*/
-  0, /*tp_hash*/
-  0, /*tp_call*/
-  0, /*tp_str*/
-  0, /*tp_getattro*/
-  0, /*tp_setattro*/
-  0, /*tp_as_buffer*/
-  Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
-  0, /*tp_doc*/
-  __pyx_tp_traverse_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace, /*tp_traverse*/
-  __pyx_tp_clear_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace, /*tp_clear*/
-  0, /*tp_richcompare*/
-  0, /*tp_weaklistoffset*/
-  0, /*tp_iter*/
-  0, /*tp_iternext*/
-  __pyx_methods_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace, /*tp_methods*/
-  0, /*tp_members*/
-  0, /*tp_getset*/
-  0, /*tp_base*/
-  0, /*tp_dict*/
-  0, /*tp_descr_get*/
-  0, /*tp_descr_set*/
-  0, /*tp_dictoffset*/
-  __pyx_pw_14_pydevd_bundle_13pydevd_cython_41PyDbFrameTraceAndUnhandledExceptionsTrace_1__init__, /*tp_init*/
-  0, /*tp_alloc*/
-  __pyx_tp_new_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace, /*tp_new*/
-  0, /*tp_free*/
-  0, /*tp_is_gc*/
-  0, /*tp_bases*/
-  0, /*tp_mro*/
-  0, /*tp_cache*/
-  0, /*tp_subclasses*/
-  0, /*tp_weaklist*/
-  0, /*tp_del*/
-  0, /*tp_version_tag*/
-  #if PY_VERSION_HEX >= 0x030400a1
-  0, /*tp_finalize*/
-  #endif
-};
-
 static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper(PyTypeObject *t, CYTHON_UNUSED PyObject *a, CYTHON_UNUSED PyObject *k) {
   struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper *p;
   PyObject *o;
@@ -29676,6 +32028,365 @@ static PyTypeObject __pyx_type_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper 
   #endif
 };
 
+static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions(PyTypeObject *t, CYTHON_UNUSED PyObject *a, CYTHON_UNUSED PyObject *k) {
+  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *p;
+  PyObject *o;
+  if (likely((t->tp_flags & Py_TPFLAGS_IS_ABSTRACT) == 0)) {
+    o = (*t->tp_alloc)(t, 0);
+  } else {
+    o = (PyObject *) PyBaseObject_Type.tp_new(t, __pyx_empty_tuple, 0);
+  }
+  if (unlikely(!o)) return 0;
+  p = ((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *)o);
+  p->_args = ((PyObject*)Py_None); Py_INCREF(Py_None);
+  return o;
+}
+
+static void __pyx_tp_dealloc_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions(PyObject *o) {
+  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *p = (struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *)o;
+  #if CYTHON_USE_TP_FINALIZE
+  if (unlikely(PyType_HasFeature(Py_TYPE(o), Py_TPFLAGS_HAVE_FINALIZE) && Py_TYPE(o)->tp_finalize) && !_PyGC_FINALIZED(o)) {
+    if (PyObject_CallFinalizerFromDealloc(o)) return;
+  }
+  #endif
+  PyObject_GC_UnTrack(o);
+  Py_CLEAR(p->_args);
+  (*Py_TYPE(o)->tp_free)(o);
+}
+
+static int __pyx_tp_traverse_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions(PyObject *o, visitproc v, void *a) {
+  int e;
+  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *p = (struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *)o;
+  if (p->_args) {
+    e = (*v)(p->_args, a); if (e) return e;
+  }
+  return 0;
+}
+
+static int __pyx_tp_clear_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions(PyObject *o) {
+  PyObject* tmp;
+  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *p = (struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions *)o;
+  tmp = ((PyObject*)p->_args);
+  p->_args = ((PyObject*)Py_None); Py_INCREF(Py_None);
+  Py_XDECREF(tmp);
+  return 0;
+}
+
+static PyObject *__pyx_getprop_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions__args(PyObject *o, CYTHON_UNUSED void *x) {
+  return __pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args_1__get__(o);
+}
+
+static int __pyx_setprop_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions__args(PyObject *o, PyObject *v, CYTHON_UNUSED void *x) {
+  if (v) {
+    return __pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args_3__set__(o, v);
+  }
+  else {
+    return __pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5_args_5__del__(o);
+  }
+}
+
+static PyMethodDef __pyx_methods_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions[] = {
+  {"trace_unhandled_exceptions", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_3trace_unhandled_exceptions, METH_VARARGS|METH_KEYWORDS, 0},
+  {"get_trace_dispatch_func", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_5get_trace_dispatch_func, METH_NOARGS, 0},
+  {"__reduce_cython__", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_7__reduce_cython__, METH_NOARGS, 0},
+  {"__setstate_cython__", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_9__setstate_cython__, METH_O, 0},
+  {0, 0, 0, 0}
+};
+
+static struct PyGetSetDef __pyx_getsets_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions[] = {
+  {(char *)"_args", __pyx_getprop_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions__args, __pyx_setprop_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions__args, (char *)0, 0},
+  {0, 0, 0, 0, 0}
+};
+
+static PyTypeObject __pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions = {
+  PyVarObject_HEAD_INIT(0, 0)
+  "_pydevd_bundle.pydevd_cython.TopLevelThreadTracerOnlyUnhandledExceptions", /*tp_name*/
+  sizeof(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions), /*tp_basicsize*/
+  0, /*tp_itemsize*/
+  __pyx_tp_dealloc_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions, /*tp_dealloc*/
+  0, /*tp_print*/
+  0, /*tp_getattr*/
+  0, /*tp_setattr*/
+  #if PY_MAJOR_VERSION < 3
+  0, /*tp_compare*/
+  #endif
+  #if PY_MAJOR_VERSION >= 3
+  0, /*tp_as_async*/
+  #endif
+  0, /*tp_repr*/
+  0, /*tp_as_number*/
+  0, /*tp_as_sequence*/
+  0, /*tp_as_mapping*/
+  0, /*tp_hash*/
+  0, /*tp_call*/
+  0, /*tp_str*/
+  0, /*tp_getattro*/
+  0, /*tp_setattro*/
+  0, /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
+  0, /*tp_doc*/
+  __pyx_tp_traverse_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions, /*tp_traverse*/
+  __pyx_tp_clear_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions, /*tp_clear*/
+  0, /*tp_richcompare*/
+  0, /*tp_weaklistoffset*/
+  0, /*tp_iter*/
+  0, /*tp_iternext*/
+  __pyx_methods_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions, /*tp_methods*/
+  0, /*tp_members*/
+  __pyx_getsets_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions, /*tp_getset*/
+  0, /*tp_base*/
+  0, /*tp_dict*/
+  0, /*tp_descr_get*/
+  0, /*tp_descr_set*/
+  0, /*tp_dictoffset*/
+  __pyx_pw_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyUnhandledExceptions_1__init__, /*tp_init*/
+  0, /*tp_alloc*/
+  __pyx_tp_new_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions, /*tp_new*/
+  0, /*tp_free*/
+  0, /*tp_is_gc*/
+  0, /*tp_bases*/
+  0, /*tp_mro*/
+  0, /*tp_cache*/
+  0, /*tp_subclasses*/
+  0, /*tp_weaklist*/
+  0, /*tp_del*/
+  0, /*tp_version_tag*/
+  #if PY_VERSION_HEX >= 0x030400a1
+  0, /*tp_finalize*/
+  #endif
+};
+
+static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame(PyTypeObject *t, CYTHON_UNUSED PyObject *a, CYTHON_UNUSED PyObject *k) {
+  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *p;
+  PyObject *o;
+  if (likely((t->tp_flags & Py_TPFLAGS_IS_ABSTRACT) == 0)) {
+    o = (*t->tp_alloc)(t, 0);
+  } else {
+    o = (PyObject *) PyBaseObject_Type.tp_new(t, __pyx_empty_tuple, 0);
+  }
+  if (unlikely(!o)) return 0;
+  p = ((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)o);
+  p->_frame_trace_dispatch = Py_None; Py_INCREF(Py_None);
+  p->_args = ((PyObject*)Py_None); Py_INCREF(Py_None);
+  p->_try_except_info = Py_None; Py_INCREF(Py_None);
+  p->_last_exc_arg = Py_None; Py_INCREF(Py_None);
+  p->_raise_lines = ((PyObject*)Py_None); Py_INCREF(Py_None);
+  return o;
+}
+
+static void __pyx_tp_dealloc_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame(PyObject *o) {
+  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *p = (struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)o;
+  #if CYTHON_USE_TP_FINALIZE
+  if (unlikely(PyType_HasFeature(Py_TYPE(o), Py_TPFLAGS_HAVE_FINALIZE) && Py_TYPE(o)->tp_finalize) && !_PyGC_FINALIZED(o)) {
+    if (PyObject_CallFinalizerFromDealloc(o)) return;
+  }
+  #endif
+  PyObject_GC_UnTrack(o);
+  Py_CLEAR(p->_frame_trace_dispatch);
+  Py_CLEAR(p->_args);
+  Py_CLEAR(p->_try_except_info);
+  Py_CLEAR(p->_last_exc_arg);
+  Py_CLEAR(p->_raise_lines);
+  (*Py_TYPE(o)->tp_free)(o);
+}
+
+static int __pyx_tp_traverse_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame(PyObject *o, visitproc v, void *a) {
+  int e;
+  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *p = (struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)o;
+  if (p->_frame_trace_dispatch) {
+    e = (*v)(p->_frame_trace_dispatch, a); if (e) return e;
+  }
+  if (p->_args) {
+    e = (*v)(p->_args, a); if (e) return e;
+  }
+  if (p->_try_except_info) {
+    e = (*v)(p->_try_except_info, a); if (e) return e;
+  }
+  if (p->_last_exc_arg) {
+    e = (*v)(p->_last_exc_arg, a); if (e) return e;
+  }
+  if (p->_raise_lines) {
+    e = (*v)(p->_raise_lines, a); if (e) return e;
+  }
+  return 0;
+}
+
+static int __pyx_tp_clear_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame(PyObject *o) {
+  PyObject* tmp;
+  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *p = (struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame *)o;
+  tmp = ((PyObject*)p->_frame_trace_dispatch);
+  p->_frame_trace_dispatch = Py_None; Py_INCREF(Py_None);
+  Py_XDECREF(tmp);
+  tmp = ((PyObject*)p->_args);
+  p->_args = ((PyObject*)Py_None); Py_INCREF(Py_None);
+  Py_XDECREF(tmp);
+  tmp = ((PyObject*)p->_try_except_info);
+  p->_try_except_info = Py_None; Py_INCREF(Py_None);
+  Py_XDECREF(tmp);
+  tmp = ((PyObject*)p->_last_exc_arg);
+  p->_last_exc_arg = Py_None; Py_INCREF(Py_None);
+  Py_XDECREF(tmp);
+  tmp = ((PyObject*)p->_raise_lines);
+  p->_raise_lines = ((PyObject*)Py_None); Py_INCREF(Py_None);
+  Py_XDECREF(tmp);
+  return 0;
+}
+
+static PyObject *__pyx_getprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__frame_trace_dispatch(PyObject *o, CYTHON_UNUSED void *x) {
+  return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch_1__get__(o);
+}
+
+static int __pyx_setprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__frame_trace_dispatch(PyObject *o, PyObject *v, CYTHON_UNUSED void *x) {
+  if (v) {
+    return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch_3__set__(o, v);
+  }
+  else {
+    return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_21_frame_trace_dispatch_5__del__(o);
+  }
+}
+
+static PyObject *__pyx_getprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__args(PyObject *o, CYTHON_UNUSED void *x) {
+  return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args_1__get__(o);
+}
+
+static int __pyx_setprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__args(PyObject *o, PyObject *v, CYTHON_UNUSED void *x) {
+  if (v) {
+    return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args_3__set__(o, v);
+  }
+  else {
+    return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5_args_5__del__(o);
+  }
+}
+
+static PyObject *__pyx_getprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__try_except_info(PyObject *o, CYTHON_UNUSED void *x) {
+  return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info_1__get__(o);
+}
+
+static int __pyx_setprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__try_except_info(PyObject *o, PyObject *v, CYTHON_UNUSED void *x) {
+  if (v) {
+    return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info_3__set__(o, v);
+  }
+  else {
+    return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_try_except_info_5__del__(o);
+  }
+}
+
+static PyObject *__pyx_getprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__last_exc_arg(PyObject *o, CYTHON_UNUSED void *x) {
+  return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg_1__get__(o);
+}
+
+static int __pyx_setprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__last_exc_arg(PyObject *o, PyObject *v, CYTHON_UNUSED void *x) {
+  if (v) {
+    return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg_3__set__(o, v);
+  }
+  else {
+    return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_13_last_exc_arg_5__del__(o);
+  }
+}
+
+static PyObject *__pyx_getprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__raise_lines(PyObject *o, CYTHON_UNUSED void *x) {
+  return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines_1__get__(o);
+}
+
+static int __pyx_setprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__raise_lines(PyObject *o, PyObject *v, CYTHON_UNUSED void *x) {
+  if (v) {
+    return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines_3__set__(o, v);
+  }
+  else {
+    return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_12_raise_lines_5__del__(o);
+  }
+}
+
+static PyObject *__pyx_getprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__last_raise_line(PyObject *o, CYTHON_UNUSED void *x) {
+  return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_last_raise_line_1__get__(o);
+}
+
+static int __pyx_setprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__last_raise_line(PyObject *o, PyObject *v, CYTHON_UNUSED void *x) {
+  if (v) {
+    return __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_16_last_raise_line_3__set__(o, v);
+  }
+  else {
+    PyErr_SetString(PyExc_NotImplementedError, "__del__");
+    return -1;
+  }
+}
+
+static PyMethodDef __pyx_methods_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame[] = {
+  {"trace_dispatch_and_unhandled_exceptions", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_3trace_dispatch_and_unhandled_exceptions, METH_VARARGS|METH_KEYWORDS, 0},
+  {"get_trace_dispatch_func", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_5get_trace_dispatch_func, METH_NOARGS, 0},
+  {"__reduce_cython__", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_7__reduce_cython__, METH_NOARGS, 0},
+  {"__setstate_cython__", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_9__setstate_cython__, METH_O, 0},
+  {0, 0, 0, 0}
+};
+
+static struct PyGetSetDef __pyx_getsets_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame[] = {
+  {(char *)"_frame_trace_dispatch", __pyx_getprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__frame_trace_dispatch, __pyx_setprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__frame_trace_dispatch, (char *)0, 0},
+  {(char *)"_args", __pyx_getprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__args, __pyx_setprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__args, (char *)0, 0},
+  {(char *)"_try_except_info", __pyx_getprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__try_except_info, __pyx_setprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__try_except_info, (char *)0, 0},
+  {(char *)"_last_exc_arg", __pyx_getprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__last_exc_arg, __pyx_setprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__last_exc_arg, (char *)0, 0},
+  {(char *)"_raise_lines", __pyx_getprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__raise_lines, __pyx_setprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__raise_lines, (char *)0, 0},
+  {(char *)"_last_raise_line", __pyx_getprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__last_raise_line, __pyx_setprop_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame__last_raise_line, (char *)0, 0},
+  {0, 0, 0, 0, 0}
+};
+
+static PyTypeObject __pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame = {
+  PyVarObject_HEAD_INIT(0, 0)
+  "_pydevd_bundle.pydevd_cython.TopLevelThreadTracerNoBackFrame", /*tp_name*/
+  sizeof(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame), /*tp_basicsize*/
+  0, /*tp_itemsize*/
+  __pyx_tp_dealloc_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame, /*tp_dealloc*/
+  0, /*tp_print*/
+  0, /*tp_getattr*/
+  0, /*tp_setattr*/
+  #if PY_MAJOR_VERSION < 3
+  0, /*tp_compare*/
+  #endif
+  #if PY_MAJOR_VERSION >= 3
+  0, /*tp_as_async*/
+  #endif
+  0, /*tp_repr*/
+  0, /*tp_as_number*/
+  0, /*tp_as_sequence*/
+  0, /*tp_as_mapping*/
+  0, /*tp_hash*/
+  0, /*tp_call*/
+  0, /*tp_str*/
+  0, /*tp_getattro*/
+  0, /*tp_setattro*/
+  0, /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
+  0, /*tp_doc*/
+  __pyx_tp_traverse_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame, /*tp_traverse*/
+  __pyx_tp_clear_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame, /*tp_clear*/
+  0, /*tp_richcompare*/
+  0, /*tp_weaklistoffset*/
+  0, /*tp_iter*/
+  0, /*tp_iternext*/
+  __pyx_methods_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame, /*tp_methods*/
+  0, /*tp_members*/
+  __pyx_getsets_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame, /*tp_getset*/
+  0, /*tp_base*/
+  0, /*tp_dict*/
+  0, /*tp_descr_get*/
+  0, /*tp_descr_set*/
+  0, /*tp_dictoffset*/
+  __pyx_pw_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBackFrame_1__init__, /*tp_init*/
+  0, /*tp_alloc*/
+  __pyx_tp_new_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame, /*tp_new*/
+  0, /*tp_free*/
+  0, /*tp_is_gc*/
+  0, /*tp_bases*/
+  0, /*tp_mro*/
+  0, /*tp_cache*/
+  0, /*tp_subclasses*/
+  0, /*tp_weaklist*/
+  0, /*tp_del*/
+  0, /*tp_version_tag*/
+  #if PY_VERSION_HEX >= 0x030400a1
+  0, /*tp_finalize*/
+  #endif
+};
+
 static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_ThreadTracer(PyTypeObject *t, CYTHON_UNUSED PyObject *a, CYTHON_UNUSED PyObject *k) {
   struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_ThreadTracer *p;
   PyObject *o;
@@ -29734,10 +32445,8 @@ static int __pyx_setprop_14_pydevd_bundle_13pydevd_cython_12ThreadTracer__args(P
 }
 
 static PyMethodDef __pyx_methods_14_pydevd_bundle_13pydevd_cython_ThreadTracer[] = {
-  {"trace_unhandled_exceptions", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_3trace_unhandled_exceptions, METH_VARARGS|METH_KEYWORDS, 0},
-  {"trace_dispatch_and_unhandled_exceptions", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_5trace_dispatch_and_unhandled_exceptions, METH_VARARGS|METH_KEYWORDS, 0},
-  {"__reduce_cython__", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_9__reduce_cython__, METH_NOARGS, 0},
-  {"__setstate_cython__", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_11__setstate_cython__, METH_O, 0},
+  {"__reduce_cython__", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_5__reduce_cython__, METH_NOARGS, 0},
+  {"__setstate_cython__", (PyCFunction)__pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_7__setstate_cython__, METH_O, 0},
   {0, 0, 0, 0}
 };
 
@@ -29766,7 +32475,7 @@ static PyTypeObject __pyx_type_14_pydevd_bundle_13pydevd_cython_ThreadTracer = {
   0, /*tp_as_sequence*/
   0, /*tp_as_mapping*/
   0, /*tp_hash*/
-  __pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_7__call__, /*tp_call*/
+  __pyx_pw_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_3__call__, /*tp_call*/
   0, /*tp_str*/
   0, /*tp_getattro*/
   0, /*tp_setattro*/
@@ -29872,7 +32581,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s_Incompatible_checksums_s_vs_0x2f, __pyx_k_Incompatible_checksums_s_vs_0x2f, sizeof(__pyx_k_Incompatible_checksums_s_vs_0x2f), 0, 0, 1, 0},
   {&__pyx_kp_s_Incompatible_checksums_s_vs_0x3d, __pyx_k_Incompatible_checksums_s_vs_0x3d, sizeof(__pyx_k_Incompatible_checksums_s_vs_0x3d), 0, 0, 1, 0},
   {&__pyx_kp_s_Incompatible_checksums_s_vs_0x77, __pyx_k_Incompatible_checksums_s_vs_0x77, sizeof(__pyx_k_Incompatible_checksums_s_vs_0x77), 0, 0, 1, 0},
-  {&__pyx_kp_s_Incompatible_checksums_s_vs_0x91, __pyx_k_Incompatible_checksums_s_vs_0x91, sizeof(__pyx_k_Incompatible_checksums_s_vs_0x91), 0, 0, 1, 0},
+  {&__pyx_kp_s_Incompatible_checksums_s_vs_0xf3, __pyx_k_Incompatible_checksums_s_vs_0xf3, sizeof(__pyx_k_Incompatible_checksums_s_vs_0xf3), 0, 0, 1, 0},
   {&__pyx_kp_s_Incompatible_checksums_s_vs_0xfa, __pyx_k_Incompatible_checksums_s_vs_0xfa, sizeof(__pyx_k_Incompatible_checksums_s_vs_0xfa), 0, 0, 1, 0},
   {&__pyx_n_s_KeyboardInterrupt, __pyx_k_KeyboardInterrupt, sizeof(__pyx_k_KeyboardInterrupt), 0, 0, 1, 1},
   {&__pyx_n_s_Lock, __pyx_k_Lock, sizeof(__pyx_k_Lock), 0, 0, 1, 1},
@@ -29930,6 +32639,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_co_firstlineno, __pyx_k_co_firstlineno, sizeof(__pyx_k_co_firstlineno), 0, 0, 1, 1},
   {&__pyx_n_s_co_flags, __pyx_k_co_flags, sizeof(__pyx_k_co_flags), 0, 0, 1, 1},
   {&__pyx_n_s_co_name, __pyx_k_co_name, sizeof(__pyx_k_co_name), 0, 0, 1, 1},
+  {&__pyx_n_s_collect_try_except_info, __pyx_k_collect_try_except_info, sizeof(__pyx_k_collect_try_except_info), 0, 0, 1, 1},
   {&__pyx_n_s_compile, __pyx_k_compile, sizeof(__pyx_k_compile), 0, 0, 1, 1},
   {&__pyx_n_s_condition, __pyx_k_condition, sizeof(__pyx_k_condition), 0, 0, 1, 1},
   {&__pyx_n_s_conditional_breakpoint_exception, __pyx_k_conditional_breakpoint_exception, sizeof(__pyx_k_conditional_breakpoint_exception), 0, 0, 1, 1},
@@ -29948,6 +32658,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_eval, __pyx_k_eval, sizeof(__pyx_k_eval), 0, 0, 1, 1},
   {&__pyx_n_s_event, __pyx_k_event, sizeof(__pyx_k_event), 0, 0, 1, 1},
   {&__pyx_n_s_exc_info, __pyx_k_exc_info, sizeof(__pyx_k_exc_info), 0, 0, 1, 1},
+  {&__pyx_n_s_except_line, __pyx_k_except_line, sizeof(__pyx_k_except_line), 0, 0, 1, 1},
   {&__pyx_n_s_exception, __pyx_k_exception, sizeof(__pyx_k_exception), 0, 0, 1, 1},
   {&__pyx_n_s_exception_break, __pyx_k_exception_break, sizeof(__pyx_k_exception_break), 0, 0, 1, 1},
   {&__pyx_n_s_exec, __pyx_k_exec, sizeof(__pyx_k_exec), 0, 0, 1, 1},
@@ -29967,8 +32678,10 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_filename_to_lines_where_exceptio, __pyx_k_filename_to_lines_where_exceptio, sizeof(__pyx_k_filename_to_lines_where_exceptio), 0, 0, 1, 1},
   {&__pyx_n_s_filename_to_stat_info, __pyx_k_filename_to_stat_info, sizeof(__pyx_k_filename_to_stat_info), 0, 0, 1, 1},
   {&__pyx_n_s_finish_debugging_session, __pyx_k_finish_debugging_session, sizeof(__pyx_k_finish_debugging_session), 0, 0, 1, 1},
+  {&__pyx_n_s_force_only_unhandled_tracer, __pyx_k_force_only_unhandled_tracer, sizeof(__pyx_k_force_only_unhandled_tracer), 0, 0, 1, 1},
   {&__pyx_n_s_format_exception_only, __pyx_k_format_exception_only, sizeof(__pyx_k_format_exception_only), 0, 0, 1, 1},
   {&__pyx_n_s_frame, __pyx_k_frame, sizeof(__pyx_k_frame), 0, 0, 1, 1},
+  {&__pyx_n_s_frame_trace_dispatch, __pyx_k_frame_trace_dispatch, sizeof(__pyx_k_frame_trace_dispatch), 0, 0, 1, 1},
   {&__pyx_n_s_func_name, __pyx_k_func_name, sizeof(__pyx_k_func_name), 0, 0, 1, 1},
   {&__pyx_n_s_get, __pyx_k_get, sizeof(__pyx_k_get), 0, 0, 1, 1},
   {&__pyx_n_s_getDeclaredField, __pyx_k_getDeclaredField, sizeof(__pyx_k_getDeclaredField), 0, 0, 1, 1},
@@ -29982,6 +32695,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_get_file_type, __pyx_k_get_file_type, sizeof(__pyx_k_get_file_type), 0, 0, 1, 1},
   {&__pyx_n_s_get_func_name, __pyx_k_get_func_name, sizeof(__pyx_k_get_func_name), 0, 0, 1, 1},
   {&__pyx_n_s_get_thread_id, __pyx_k_get_thread_id, sizeof(__pyx_k_get_thread_id), 0, 0, 1, 1},
+  {&__pyx_n_s_get_trace_dispatch_func, __pyx_k_get_trace_dispatch_func, sizeof(__pyx_k_get_trace_dispatch_func), 0, 0, 1, 1},
   {&__pyx_n_s_getline, __pyx_k_getline, sizeof(__pyx_k_getline), 0, 0, 1, 1},
   {&__pyx_n_s_getstate, __pyx_k_getstate, sizeof(__pyx_k_getstate), 0, 0, 1, 1},
   {&__pyx_n_s_globalThreadStates, __pyx_k_globalThreadStates, sizeof(__pyx_k_globalThreadStates), 0, 0, 1, 1},
@@ -30008,6 +32722,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_is_filter_enabled, __pyx_k_is_filter_enabled, sizeof(__pyx_k_is_filter_enabled), 0, 0, 1, 1},
   {&__pyx_n_s_is_filter_libraries, __pyx_k_is_filter_libraries, sizeof(__pyx_k_is_filter_libraries), 0, 0, 1, 1},
   {&__pyx_n_s_is_ignored_by_filters, __pyx_k_is_ignored_by_filters, sizeof(__pyx_k_is_ignored_by_filters), 0, 0, 1, 1},
+  {&__pyx_n_s_is_line_in_except_block, __pyx_k_is_line_in_except_block, sizeof(__pyx_k_is_line_in_except_block), 0, 0, 1, 1},
+  {&__pyx_n_s_is_line_in_try_block, __pyx_k_is_line_in_try_block, sizeof(__pyx_k_is_line_in_try_block), 0, 0, 1, 1},
   {&__pyx_n_s_is_logpoint, __pyx_k_is_logpoint, sizeof(__pyx_k_is_logpoint), 0, 0, 1, 1},
   {&__pyx_n_s_is_thread_alive, __pyx_k_is_thread_alive, sizeof(__pyx_k_is_thread_alive), 0, 0, 1, 1},
   {&__pyx_n_s_java_lang, __pyx_k_java_lang, sizeof(__pyx_k_java_lang), 0, 0, 1, 1},
@@ -30034,7 +32750,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_new_frame, __pyx_k_new_frame, sizeof(__pyx_k_new_frame), 0, 0, 1, 1},
   {&__pyx_n_s_notify_on_first_raise_only, __pyx_k_notify_on_first_raise_only, sizeof(__pyx_k_notify_on_first_raise_only), 0, 0, 1, 1},
   {&__pyx_n_s_notify_thread_not_alive, __pyx_k_notify_thread_not_alive, sizeof(__pyx_k_notify_thread_not_alive), 0, 0, 1, 1},
-  {&__pyx_n_s_only_trace_for_unhandled_excepti, __pyx_k_only_trace_for_unhandled_excepti, sizeof(__pyx_k_only_trace_for_unhandled_excepti), 0, 0, 1, 1},
   {&__pyx_n_s_org_python_core, __pyx_k_org_python_core, sizeof(__pyx_k_org_python_core), 0, 0, 1, 1},
   {&__pyx_n_s_original_call, __pyx_k_original_call, sizeof(__pyx_k_original_call), 0, 0, 1, 1},
   {&__pyx_n_s_os, __pyx_k_os, sizeof(__pyx_k_os), 0, 0, 1, 1},
@@ -30047,7 +32762,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_pop, __pyx_k_pop, sizeof(__pyx_k_pop), 0, 0, 1, 1},
   {&__pyx_n_s_print_exc, __pyx_k_print_exc, sizeof(__pyx_k_print_exc), 0, 0, 1, 1},
   {&__pyx_n_s_py_db, __pyx_k_py_db, sizeof(__pyx_k_py_db), 0, 0, 1, 1},
-  {&__pyx_n_s_pydb_frame_trace, __pyx_k_pydb_frame_trace, sizeof(__pyx_k_pydb_frame_trace), 0, 0, 1, 1},
   {&__pyx_n_s_pydev_bundle, __pyx_k_pydev_bundle, sizeof(__pyx_k_pydev_bundle), 0, 0, 1, 1},
   {&__pyx_n_s_pydev_bundle_pydev_is_thread_al, __pyx_k_pydev_bundle_pydev_is_thread_al, sizeof(__pyx_k_pydev_bundle_pydev_is_thread_al), 0, 0, 1, 1},
   {&__pyx_n_s_pydev_do_not_trace, __pyx_k_pydev_do_not_trace, sizeof(__pyx_k_pydev_do_not_trace), 0, 0, 1, 1},
@@ -30055,10 +32769,12 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_pydev_imps__pydev_saved_modules, __pyx_k_pydev_imps__pydev_saved_modules, sizeof(__pyx_k_pydev_imps__pydev_saved_modules), 0, 0, 1, 1},
   {&__pyx_n_s_pydev_log, __pyx_k_pydev_log, sizeof(__pyx_k_pydev_log), 0, 0, 1, 1},
   {&__pyx_n_s_pydev_message, __pyx_k_pydev_message, sizeof(__pyx_k_pydev_message), 0, 0, 1, 1},
+  {&__pyx_n_s_pydev_monkey, __pyx_k_pydev_monkey, sizeof(__pyx_k_pydev_monkey), 0, 0, 1, 1},
   {&__pyx_n_s_pydevd, __pyx_k_pydevd, sizeof(__pyx_k_pydevd), 0, 0, 1, 1},
   {&__pyx_n_s_pydevd_bundle, __pyx_k_pydevd_bundle, sizeof(__pyx_k_pydevd_bundle), 0, 0, 1, 1},
   {&__pyx_n_s_pydevd_bundle_pydevd_additional, __pyx_k_pydevd_bundle_pydevd_additional, sizeof(__pyx_k_pydevd_bundle_pydevd_additional), 0, 0, 1, 1},
   {&__pyx_n_s_pydevd_bundle_pydevd_breakpoint, __pyx_k_pydevd_bundle_pydevd_breakpoint, sizeof(__pyx_k_pydevd_bundle_pydevd_breakpoint), 0, 0, 1, 1},
+  {&__pyx_n_s_pydevd_bundle_pydevd_collect_tr, __pyx_k_pydevd_bundle_pydevd_collect_tr, sizeof(__pyx_k_pydevd_bundle_pydevd_collect_tr), 0, 0, 1, 1},
   {&__pyx_n_s_pydevd_bundle_pydevd_comm, __pyx_k_pydevd_bundle_pydevd_comm, sizeof(__pyx_k_pydevd_bundle_pydevd_comm), 0, 0, 1, 1},
   {&__pyx_n_s_pydevd_bundle_pydevd_constants, __pyx_k_pydevd_bundle_pydevd_constants, sizeof(__pyx_k_pydevd_bundle_pydevd_constants), 0, 0, 1, 1},
   {&__pyx_n_s_pydevd_bundle_pydevd_cython, __pyx_k_pydevd_bundle_pydevd_cython, sizeof(__pyx_k_pydevd_bundle_pydevd_cython), 0, 0, 1, 1},
@@ -30081,12 +32797,14 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_pyx_type, __pyx_k_pyx_type, sizeof(__pyx_k_pyx_type), 0, 0, 1, 1},
   {&__pyx_n_s_pyx_unpickle_PyDBAdditionalThr, __pyx_k_pyx_unpickle_PyDBAdditionalThr, sizeof(__pyx_k_pyx_unpickle_PyDBAdditionalThr), 0, 0, 1, 1},
   {&__pyx_n_s_pyx_unpickle_PyDBFrame, __pyx_k_pyx_unpickle_PyDBFrame, sizeof(__pyx_k_pyx_unpickle_PyDBFrame), 0, 0, 1, 1},
-  {&__pyx_n_s_pyx_unpickle_PyDbFrameTraceAnd, __pyx_k_pyx_unpickle_PyDbFrameTraceAnd, sizeof(__pyx_k_pyx_unpickle_PyDbFrameTraceAnd), 0, 0, 1, 1},
   {&__pyx_n_s_pyx_unpickle_SafeCallWrapper, __pyx_k_pyx_unpickle_SafeCallWrapper, sizeof(__pyx_k_pyx_unpickle_SafeCallWrapper), 0, 0, 1, 1},
   {&__pyx_n_s_pyx_unpickle_ThreadTracer, __pyx_k_pyx_unpickle_ThreadTracer, sizeof(__pyx_k_pyx_unpickle_ThreadTracer), 0, 0, 1, 1},
+  {&__pyx_n_s_pyx_unpickle_TopLevelThreadTra, __pyx_k_pyx_unpickle_TopLevelThreadTra, sizeof(__pyx_k_pyx_unpickle_TopLevelThreadTra), 0, 0, 1, 1},
+  {&__pyx_n_s_pyx_unpickle_TopLevelThreadTra_2, __pyx_k_pyx_unpickle_TopLevelThreadTra_2, sizeof(__pyx_k_pyx_unpickle_TopLevelThreadTra_2), 0, 0, 1, 1},
   {&__pyx_n_s_pyx_vtable, __pyx_k_pyx_vtable, sizeof(__pyx_k_pyx_vtable), 0, 0, 1, 1},
   {&__pyx_n_s_qname, __pyx_k_qname, sizeof(__pyx_k_qname), 0, 0, 1, 1},
   {&__pyx_n_s_quitting, __pyx_k_quitting, sizeof(__pyx_k_quitting), 0, 0, 1, 1},
+  {&__pyx_n_s_raise_lines_in_except, __pyx_k_raise_lines_in_except, sizeof(__pyx_k_raise_lines_in_except), 0, 0, 1, 1},
   {&__pyx_n_s_re, __pyx_k_re, sizeof(__pyx_k_re), 0, 0, 1, 1},
   {&__pyx_n_s_reduce, __pyx_k_reduce, sizeof(__pyx_k_reduce), 0, 0, 1, 1},
   {&__pyx_n_s_reduce_cython, __pyx_k_reduce_cython, sizeof(__pyx_k_reduce_cython), 0, 0, 1, 1},
@@ -30148,6 +32866,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_threadingCurrentThread, __pyx_k_threadingCurrentThread, sizeof(__pyx_k_threadingCurrentThread), 0, 0, 1, 1},
   {&__pyx_n_s_tid_to_last_frame, __pyx_k_tid_to_last_frame, sizeof(__pyx_k_tid_to_last_frame), 0, 0, 1, 1},
   {&__pyx_n_s_toArray, __pyx_k_toArray, sizeof(__pyx_k_toArray), 0, 0, 1, 1},
+  {&__pyx_n_s_top_level_thread_tracer, __pyx_k_top_level_thread_tracer, sizeof(__pyx_k_top_level_thread_tracer), 0, 0, 1, 1},
+  {&__pyx_n_s_top_level_thread_tracer_2, __pyx_k_top_level_thread_tracer_2, sizeof(__pyx_k_top_level_thread_tracer_2), 0, 0, 1, 1},
   {&__pyx_n_s_trace_dispatch, __pyx_k_trace_dispatch, sizeof(__pyx_k_trace_dispatch), 0, 0, 1, 1},
   {&__pyx_n_s_trace_dispatch_and_unhandled_exc, __pyx_k_trace_dispatch_and_unhandled_exc, sizeof(__pyx_k_trace_dispatch_and_unhandled_exc), 0, 0, 1, 1},
   {&__pyx_n_s_trace_exception, __pyx_k_trace_exception, sizeof(__pyx_k_trace_exception), 0, 0, 1, 1},
@@ -30155,7 +32875,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_trace_unhandled_exceptions, __pyx_k_trace_unhandled_exceptions, sizeof(__pyx_k_trace_unhandled_exceptions), 0, 0, 1, 1},
   {&__pyx_n_s_traceback, __pyx_k_traceback, sizeof(__pyx_k_traceback), 0, 0, 1, 1},
   {&__pyx_n_s_tracer, __pyx_k_tracer, sizeof(__pyx_k_tracer), 0, 0, 1, 1},
-  {&__pyx_n_s_unhandled_trace, __pyx_k_unhandled_trace, sizeof(__pyx_k_unhandled_trace), 0, 0, 1, 1},
   {&__pyx_n_s_update, __pyx_k_update, sizeof(__pyx_k_update), 0, 0, 1, 1},
   {&__pyx_kp_s_utf_8, __pyx_k_utf_8, sizeof(__pyx_k_utf_8), 0, 0, 1, 0},
   {&__pyx_n_s_val, __pyx_k_val, sizeof(__pyx_k_val), 0, 0, 1, 1},
@@ -30175,7 +32894,7 @@ static int __Pyx_InitCachedBuiltins(void) {
   __pyx_builtin_GeneratorExit = __Pyx_GetBuiltinName(__pyx_n_s_GeneratorExit); if (!__pyx_builtin_GeneratorExit) __PYX_ERR(0, 623, __pyx_L1_error)
   __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) __PYX_ERR(0, 875, __pyx_L1_error)
   __pyx_builtin_KeyboardInterrupt = __Pyx_GetBuiltinName(__pyx_n_s_KeyboardInterrupt); if (!__pyx_builtin_KeyboardInterrupt) __PYX_ERR(0, 930, __pyx_L1_error)
-  __pyx_builtin_SystemExit = __Pyx_GetBuiltinName(__pyx_n_s_SystemExit); if (!__pyx_builtin_SystemExit) __PYX_ERR(0, 1275, __pyx_L1_error)
+  __pyx_builtin_SystemExit = __Pyx_GetBuiltinName(__pyx_n_s_SystemExit); if (!__pyx_builtin_SystemExit) __PYX_ERR(0, 1365, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -30218,25 +32937,25 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__4);
   __Pyx_GIVEREF(__pyx_tuple__4);
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1006
+  /* "_pydevd_bundle/pydevd_cython.pyx":1031
  *             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):
  *                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
  *                 t = f_unhandled.f_locals.get('self')             # <<<<<<<<<<<<<<
+ *                 force_only_unhandled_tracer = True
  *                 if t is not None and isinstance(t, threading.Thread):
- *                     thread = t
  */
-  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 1006, __pyx_L1_error)
+  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 1031, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__6);
   __Pyx_GIVEREF(__pyx_tuple__6);
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1033
+  /* "_pydevd_bundle/pydevd_cython.pyx":1062
  * 
  *     if getattr(thread, 'pydev_do_not_trace', None):
  *         SetTrace(None, apply_to_pydevd_thread=True)             # <<<<<<<<<<<<<<
  *         return None
  * 
  */
-  __pyx_tuple__7 = PyTuple_Pack(1, Py_None); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 1033, __pyx_L1_error)
+  __pyx_tuple__7 = PyTuple_Pack(1, Py_None); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 1062, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__7);
   __Pyx_GIVEREF(__pyx_tuple__7);
 
@@ -30386,29 +33105,29 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GIVEREF(__pyx_tuple__24);
   __pyx_codeobj__25 = (PyObject*)__Pyx_PyCode_New(3, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__24, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_pydevd_bundle_pydevd_cython_pyx, __pyx_n_s_handle_breakpoint_expression, 233, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__25)) __PYX_ERR(0, 233, __pyx_L1_error)
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":984
- * global_cache_frame_skips = {}
+  /* "_pydevd_bundle/pydevd_cython.pyx":1003
+ * 
  * 
  * def trace_dispatch(py_db, frame, event, arg):             # <<<<<<<<<<<<<<
- *     # Note: this is always the first entry-point in the tracing for any thread.
- *     # After entering here we'll set a new tracing function for this thread
+ *     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ *     cdef str filename;
  */
-  __pyx_tuple__26 = PyTuple_Pack(13, __pyx_n_s_py_db, __pyx_n_s_frame, __pyx_n_s_event, __pyx_n_s_arg, __pyx_n_s_thread, __pyx_n_s_f_unhandled, __pyx_n_s_only_trace_for_unhandled_excepti, __pyx_n_s_filename, __pyx_n_s_name_2, __pyx_n_s_t, __pyx_n_s_additional_info, __pyx_n_s_thread_tracer, __pyx_n_s_f_trace); if (unlikely(!__pyx_tuple__26)) __PYX_ERR(0, 984, __pyx_L1_error)
+  __pyx_tuple__26 = PyTuple_Pack(15, __pyx_n_s_py_db, __pyx_n_s_frame, __pyx_n_s_event, __pyx_n_s_arg, __pyx_n_s_filename, __pyx_n_s_name_2, __pyx_n_s_args, __pyx_n_s_thread, __pyx_n_s_f_unhandled, __pyx_n_s_force_only_unhandled_tracer, __pyx_n_s_t, __pyx_n_s_additional_info, __pyx_n_s_top_level_thread_tracer_2, __pyx_n_s_f_trace, __pyx_n_s_thread_tracer); if (unlikely(!__pyx_tuple__26)) __PYX_ERR(0, 1003, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__26);
   __Pyx_GIVEREF(__pyx_tuple__26);
-  __pyx_codeobj__27 = (PyObject*)__Pyx_PyCode_New(4, 0, 13, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__26, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_pydevd_bundle_pydevd_cython_pyx, __pyx_n_s_trace_dispatch, 984, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__27)) __PYX_ERR(0, 984, __pyx_L1_error)
+  __pyx_codeobj__27 = (PyObject*)__Pyx_PyCode_New(4, 0, 15, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__26, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_pydevd_bundle_pydevd_cython_pyx, __pyx_n_s_trace_dispatch, 1003, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__27)) __PYX_ERR(0, 1003, __pyx_L1_error)
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1305
+  /* "_pydevd_bundle/pydevd_cython.pyx":1395
  *     _original_call = ThreadTracer.__call__
  * 
  *     def __call__(self, frame, event, arg):             # <<<<<<<<<<<<<<
  *         _tid_to_last_frame[self._args[1].ident] = frame
  *         return _original_call(self, frame, event, arg)
  */
-  __pyx_tuple__28 = PyTuple_Pack(4, __pyx_n_s_self, __pyx_n_s_frame, __pyx_n_s_event, __pyx_n_s_arg); if (unlikely(!__pyx_tuple__28)) __PYX_ERR(0, 1305, __pyx_L1_error)
+  __pyx_tuple__28 = PyTuple_Pack(4, __pyx_n_s_self, __pyx_n_s_frame, __pyx_n_s_event, __pyx_n_s_arg); if (unlikely(!__pyx_tuple__28)) __PYX_ERR(0, 1395, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__28);
   __Pyx_GIVEREF(__pyx_tuple__28);
-  __pyx_codeobj__29 = (PyObject*)__Pyx_PyCode_New(4, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__28, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_pydevd_bundle_pydevd_cython_pyx, __pyx_n_s_call_2, 1305, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__29)) __PYX_ERR(0, 1305, __pyx_L1_error)
+  __pyx_codeobj__29 = (PyObject*)__Pyx_PyCode_New(4, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__28, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_pydevd_bundle_pydevd_cython_pyx, __pyx_n_s_call_2, 1395, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__29)) __PYX_ERR(0, 1395, __pyx_L1_error)
 
   /* "(tree fragment)":1
  * def __pyx_unpickle_PyDBAdditionalThreadInfo(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
@@ -30426,15 +33145,19 @@ static int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__34 = PyTuple_Pack(5, __pyx_n_s_pyx_type, __pyx_n_s_pyx_checksum, __pyx_n_s_pyx_state, __pyx_n_s_pyx_PickleError, __pyx_n_s_pyx_result); if (unlikely(!__pyx_tuple__34)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__34);
   __Pyx_GIVEREF(__pyx_tuple__34);
-  __pyx_codeobj__35 = (PyObject*)__Pyx_PyCode_New(3, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__34, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle_PyDbFrameTraceAnd, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__35)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_codeobj__35 = (PyObject*)__Pyx_PyCode_New(3, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__34, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle_SafeCallWrapper, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__35)) __PYX_ERR(1, 1, __pyx_L1_error)
   __pyx_tuple__36 = PyTuple_Pack(5, __pyx_n_s_pyx_type, __pyx_n_s_pyx_checksum, __pyx_n_s_pyx_state, __pyx_n_s_pyx_PickleError, __pyx_n_s_pyx_result); if (unlikely(!__pyx_tuple__36)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__36);
   __Pyx_GIVEREF(__pyx_tuple__36);
-  __pyx_codeobj__37 = (PyObject*)__Pyx_PyCode_New(3, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__36, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle_SafeCallWrapper, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__37)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_codeobj__37 = (PyObject*)__Pyx_PyCode_New(3, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__36, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle_TopLevelThreadTra, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__37)) __PYX_ERR(1, 1, __pyx_L1_error)
   __pyx_tuple__38 = PyTuple_Pack(5, __pyx_n_s_pyx_type, __pyx_n_s_pyx_checksum, __pyx_n_s_pyx_state, __pyx_n_s_pyx_PickleError, __pyx_n_s_pyx_result); if (unlikely(!__pyx_tuple__38)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__38);
   __Pyx_GIVEREF(__pyx_tuple__38);
-  __pyx_codeobj__39 = (PyObject*)__Pyx_PyCode_New(3, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__38, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle_ThreadTracer, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__39)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_codeobj__39 = (PyObject*)__Pyx_PyCode_New(3, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__38, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle_TopLevelThreadTra_2, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__39)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_tuple__40 = PyTuple_Pack(5, __pyx_n_s_pyx_type, __pyx_n_s_pyx_checksum, __pyx_n_s_pyx_state, __pyx_n_s_pyx_PickleError, __pyx_n_s_pyx_result); if (unlikely(!__pyx_tuple__40)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__40);
+  __Pyx_GIVEREF(__pyx_tuple__40);
+  __pyx_codeobj__41 = (PyObject*)__Pyx_PyCode_New(3, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__40, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle_ThreadTracer, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__41)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -30452,7 +33175,7 @@ static int __Pyx_InitGlobals(void) {
   __pyx_int_49832843 = PyInt_FromLong(49832843L); if (unlikely(!__pyx_int_49832843)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_64458794 = PyInt_FromLong(64458794L); if (unlikely(!__pyx_int_64458794)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_125568891 = PyInt_FromLong(125568891L); if (unlikely(!__pyx_int_125568891)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_int_152473065 = PyInt_FromLong(152473065L); if (unlikely(!__pyx_int_152473065)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_int_255117134 = PyInt_FromLong(255117134L); if (unlikely(!__pyx_int_255117134)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_262582659 = PyInt_FromLong(262582659L); if (unlikely(!__pyx_int_262582659)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_neg_1 = PyInt_FromLong(-1); if (unlikely(!__pyx_int_neg_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   return 0;
@@ -30515,39 +33238,47 @@ static int __Pyx_modinit_type_init_code(void) {
   if (PyObject_SetAttrString(__pyx_m, "PyDBFrame", (PyObject *)&__pyx_type_14_pydevd_bundle_13pydevd_cython_PyDBFrame) < 0) __PYX_ERR(0, 248, __pyx_L1_error)
   if (__Pyx_setup_reduce((PyObject*)&__pyx_type_14_pydevd_bundle_13pydevd_cython_PyDBFrame) < 0) __PYX_ERR(0, 248, __pyx_L1_error)
   __pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDBFrame = &__pyx_type_14_pydevd_bundle_13pydevd_cython_PyDBFrame;
-  if (PyType_Ready(&__pyx_type_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace) < 0) __PYX_ERR(0, 1072, __pyx_L1_error)
-  __pyx_type_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace.tp_print = 0;
-  if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_type_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace.tp_dictoffset && __pyx_type_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace.tp_getattro == PyObject_GenericGetAttr)) {
-    __pyx_type_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace.tp_getattro = __Pyx_PyObject_GenericGetAttr;
-  }
-  if (PyObject_SetAttrString(__pyx_m, "PyDbFrameTraceAndUnhandledExceptionsTrace", (PyObject *)&__pyx_type_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace) < 0) __PYX_ERR(0, 1072, __pyx_L1_error)
-  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace) < 0) __PYX_ERR(0, 1072, __pyx_L1_error)
-  __pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace = &__pyx_type_14_pydevd_bundle_13pydevd_cython_PyDbFrameTraceAndUnhandledExceptionsTrace;
-  if (PyType_Ready(&__pyx_type_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper) < 0) __PYX_ERR(0, 1104, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper) < 0) __PYX_ERR(0, 987, __pyx_L1_error)
   __pyx_type_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper.tp_print = 0;
   if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_type_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper.tp_dictoffset && __pyx_type_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper.tp_getattro == PyObject_GenericGetAttr)) {
     __pyx_type_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper.tp_getattro = __Pyx_PyObject_GenericGetAttr;
   }
-  if (PyObject_SetAttrString(__pyx_m, "SafeCallWrapper", (PyObject *)&__pyx_type_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper) < 0) __PYX_ERR(0, 1104, __pyx_L1_error)
-  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper) < 0) __PYX_ERR(0, 1104, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "SafeCallWrapper", (PyObject *)&__pyx_type_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper) < 0) __PYX_ERR(0, 987, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper) < 0) __PYX_ERR(0, 987, __pyx_L1_error)
   __pyx_ptype_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper = &__pyx_type_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper;
-  if (PyType_Ready(&__pyx_type_14_pydevd_bundle_13pydevd_cython_ThreadTracer) < 0) __PYX_ERR(0, 1116, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions) < 0) __PYX_ERR(0, 1109, __pyx_L1_error)
+  __pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions.tp_print = 0;
+  if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions.tp_dictoffset && __pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions.tp_getattro == PyObject_GenericGetAttr)) {
+    __pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions.tp_getattro = __Pyx_PyObject_GenericGetAttr;
+  }
+  if (PyObject_SetAttrString(__pyx_m, "TopLevelThreadTracerOnlyUnhandledExceptions", (PyObject *)&__pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions) < 0) __PYX_ERR(0, 1109, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions) < 0) __PYX_ERR(0, 1109, __pyx_L1_error)
+  __pyx_ptype_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions = &__pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerOnlyUnhandledExceptions;
+  if (PyType_Ready(&__pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame) < 0) __PYX_ERR(0, 1141, __pyx_L1_error)
+  __pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame.tp_print = 0;
+  if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame.tp_dictoffset && __pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame.tp_getattro == PyObject_GenericGetAttr)) {
+    __pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame.tp_getattro = __Pyx_PyObject_GenericGetAttr;
+  }
+  if (PyObject_SetAttrString(__pyx_m, "TopLevelThreadTracerNoBackFrame", (PyObject *)&__pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame) < 0) __PYX_ERR(0, 1141, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame) < 0) __PYX_ERR(0, 1141, __pyx_L1_error)
+  __pyx_ptype_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame = &__pyx_type_14_pydevd_bundle_13pydevd_cython_TopLevelThreadTracerNoBackFrame;
+  if (PyType_Ready(&__pyx_type_14_pydevd_bundle_13pydevd_cython_ThreadTracer) < 0) __PYX_ERR(0, 1247, __pyx_L1_error)
   __pyx_type_14_pydevd_bundle_13pydevd_cython_ThreadTracer.tp_print = 0;
   if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_type_14_pydevd_bundle_13pydevd_cython_ThreadTracer.tp_dictoffset && __pyx_type_14_pydevd_bundle_13pydevd_cython_ThreadTracer.tp_getattro == PyObject_GenericGetAttr)) {
     __pyx_type_14_pydevd_bundle_13pydevd_cython_ThreadTracer.tp_getattro = __Pyx_PyObject_GenericGetAttr;
   }
   #if CYTHON_COMPILING_IN_CPYTHON
   {
-    PyObject *wrapper = PyObject_GetAttrString((PyObject *)&__pyx_type_14_pydevd_bundle_13pydevd_cython_ThreadTracer, "__call__"); if (unlikely(!wrapper)) __PYX_ERR(0, 1116, __pyx_L1_error)
+    PyObject *wrapper = PyObject_GetAttrString((PyObject *)&__pyx_type_14_pydevd_bundle_13pydevd_cython_ThreadTracer, "__call__"); if (unlikely(!wrapper)) __PYX_ERR(0, 1247, __pyx_L1_error)
     if (Py_TYPE(wrapper) == &PyWrapperDescr_Type) {
-      __pyx_wrapperbase_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__call__ = *((PyWrapperDescrObject *)wrapper)->d_base;
-      __pyx_wrapperbase_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__call__.doc = __pyx_doc_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__call__;
-      ((PyWrapperDescrObject *)wrapper)->d_base = &__pyx_wrapperbase_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_6__call__;
+      __pyx_wrapperbase_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_2__call__ = *((PyWrapperDescrObject *)wrapper)->d_base;
+      __pyx_wrapperbase_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_2__call__.doc = __pyx_doc_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_2__call__;
+      ((PyWrapperDescrObject *)wrapper)->d_base = &__pyx_wrapperbase_14_pydevd_bundle_13pydevd_cython_12ThreadTracer_2__call__;
     }
   }
   #endif
-  if (PyObject_SetAttrString(__pyx_m, "ThreadTracer", (PyObject *)&__pyx_type_14_pydevd_bundle_13pydevd_cython_ThreadTracer) < 0) __PYX_ERR(0, 1116, __pyx_L1_error)
-  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_14_pydevd_bundle_13pydevd_cython_ThreadTracer) < 0) __PYX_ERR(0, 1116, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "ThreadTracer", (PyObject *)&__pyx_type_14_pydevd_bundle_13pydevd_cython_ThreadTracer) < 0) __PYX_ERR(0, 1247, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_14_pydevd_bundle_13pydevd_cython_ThreadTracer) < 0) __PYX_ERR(0, 1247, __pyx_L1_error)
   __pyx_ptype_14_pydevd_bundle_13pydevd_cython_ThreadTracer = &__pyx_type_14_pydevd_bundle_13pydevd_cython_ThreadTracer;
   __Pyx_RefNannyFinishContext();
   return 0;
@@ -32179,8 +34910,8 @@ if (!__Pyx_RefNanny) {
  * # from _pydevd_bundle.pydevd_frame import PyDBFrame
  * # ENDIF
  * from os.path import basename, splitext             # <<<<<<<<<<<<<<
- * 
- * threadingCurrentThread = threading.currentThread
+ * from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
+ * from _pydevd_bundle.pydevd_collect_try_except_info import collect_try_except_info
  */
   __pyx_t_1 = PyList_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 966, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -32203,142 +34934,183 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
+  /* "_pydevd_bundle/pydevd_cython.pyx":967
+ * # ENDIF
+ * from os.path import basename, splitext
+ * from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception             # <<<<<<<<<<<<<<
+ * from _pydevd_bundle.pydevd_collect_try_except_info import collect_try_except_info
+ * 
+ */
+  __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 967, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_INCREF(__pyx_n_s_stop_on_unhandled_exception);
+  __Pyx_GIVEREF(__pyx_n_s_stop_on_unhandled_exception);
+  PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_stop_on_unhandled_exception);
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_pydevd_bundle_pydevd_breakpoint, __pyx_t_2, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 967, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_1, __pyx_n_s_stop_on_unhandled_exception); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 967, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_stop_on_unhandled_exception, __pyx_t_2) < 0) __PYX_ERR(0, 967, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
   /* "_pydevd_bundle/pydevd_cython.pyx":968
  * from os.path import basename, splitext
+ * from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
+ * from _pydevd_bundle.pydevd_collect_try_except_info import collect_try_except_info             # <<<<<<<<<<<<<<
+ * 
+ * threadingCurrentThread = threading.currentThread
+ */
+  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 968, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_INCREF(__pyx_n_s_collect_try_except_info);
+  __Pyx_GIVEREF(__pyx_n_s_collect_try_except_info);
+  PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_collect_try_except_info);
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_pydevd_bundle_pydevd_collect_tr, __pyx_t_1, -1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 968, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_collect_try_except_info); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 968, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_collect_try_except_info, __pyx_t_1) < 0) __PYX_ERR(0, 968, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "_pydevd_bundle/pydevd_cython.pyx":970
+ * from _pydevd_bundle.pydevd_collect_try_except_info import collect_try_except_info
  * 
  * threadingCurrentThread = threading.currentThread             # <<<<<<<<<<<<<<
  * get_file_type = DONT_TRACE.get
  * 
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_threading); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 968, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_threading); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 970, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_currentThread); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 968, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_currentThread); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 970, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_threadingCurrentThread, __pyx_t_1) < 0) __PYX_ERR(0, 968, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_threadingCurrentThread, __pyx_t_1) < 0) __PYX_ERR(0, 970, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":969
+  /* "_pydevd_bundle/pydevd_cython.pyx":971
  * 
  * threadingCurrentThread = threading.currentThread
  * get_file_type = DONT_TRACE.get             # <<<<<<<<<<<<<<
  * 
  * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_DONT_TRACE); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 969, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_DONT_TRACE); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 971, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_get); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 969, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_get); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 971, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_get_file_type, __pyx_t_2) < 0) __PYX_ERR(0, 969, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_get_file_type, __pyx_t_2) < 0) __PYX_ERR(0, 971, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":981
+  /* "_pydevd_bundle/pydevd_cython.pyx":983
  * # - Breakpoints are changed
  * # It can be used when running regularly (without step over/step in/step return)
  * global_cache_skips = {}             # <<<<<<<<<<<<<<
  * global_cache_frame_skips = {}
  * 
  */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 981, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 983, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_global_cache_skips, __pyx_t_2) < 0) __PYX_ERR(0, 981, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_global_cache_skips, __pyx_t_2) < 0) __PYX_ERR(0, 983, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":982
+  /* "_pydevd_bundle/pydevd_cython.pyx":984
  * # It can be used when running regularly (without step over/step in/step return)
  * global_cache_skips = {}
  * global_cache_frame_skips = {}             # <<<<<<<<<<<<<<
  * 
- * def trace_dispatch(py_db, frame, event, arg):
+ * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
  */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 982, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 984, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_global_cache_frame_skips, __pyx_t_2) < 0) __PYX_ERR(0, 982, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_global_cache_frame_skips, __pyx_t_2) < 0) __PYX_ERR(0, 984, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":984
- * global_cache_frame_skips = {}
+  /* "_pydevd_bundle/pydevd_cython.pyx":1003
+ * 
  * 
  * def trace_dispatch(py_db, frame, event, arg):             # <<<<<<<<<<<<<<
- *     # Note: this is always the first entry-point in the tracing for any thread.
- *     # After entering here we'll set a new tracing function for this thread
+ *     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+ *     cdef str filename;
  */
-  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_14_pydevd_bundle_13pydevd_cython_13trace_dispatch, NULL, __pyx_n_s_pydevd_bundle_pydevd_cython); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 984, __pyx_L1_error)
+  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_14_pydevd_bundle_13pydevd_cython_13trace_dispatch, NULL, __pyx_n_s_pydevd_bundle_pydevd_cython); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1003, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_trace_dispatch, __pyx_t_2) < 0) __PYX_ERR(0, 984, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_trace_dispatch, __pyx_t_2) < 0) __PYX_ERR(0, 1003, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "_pydevd_bundle/pydevd_cython.pyx":1293
+  /* "_pydevd_bundle/pydevd_cython.pyx":1383
  * 
  * 
  * if IS_IRONPYTHON:             # <<<<<<<<<<<<<<
  *     # This is far from ideal, as we'll leak frames (we'll always have the last created frame, not really
  *     # the last topmost frame saved -- this should be Ok for our usage, but it may leak frames and things
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_IS_IRONPYTHON); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1293, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_IS_IRONPYTHON); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1383, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_4 < 0)) __PYX_ERR(0, 1293, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_4 < 0)) __PYX_ERR(0, 1383, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (__pyx_t_4) {
 
-    /* "_pydevd_bundle/pydevd_cython.pyx":1301
+    /* "_pydevd_bundle/pydevd_cython.pyx":1391
  *     #
  *     # See: https://github.com/IronLanguages/main/issues/1630
  *     from _pydevd_bundle.pydevd_additional_thread_info_regular import _tid_to_last_frame             # <<<<<<<<<<<<<<
  * 
  *     _original_call = ThreadTracer.__call__
  */
-    __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1301, __pyx_L1_error)
+    __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1391, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_INCREF(__pyx_n_s_tid_to_last_frame);
     __Pyx_GIVEREF(__pyx_n_s_tid_to_last_frame);
     PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_tid_to_last_frame);
-    __pyx_t_1 = __Pyx_Import(__pyx_n_s_pydevd_bundle_pydevd_additional, __pyx_t_2, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1301, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_Import(__pyx_n_s_pydevd_bundle_pydevd_additional, __pyx_t_2, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1391, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_1, __pyx_n_s_tid_to_last_frame); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1301, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_1, __pyx_n_s_tid_to_last_frame); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1391, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyDict_SetItem(__pyx_d, __pyx_n_s_tid_to_last_frame, __pyx_t_2) < 0) __PYX_ERR(0, 1301, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_d, __pyx_n_s_tid_to_last_frame, __pyx_t_2) < 0) __PYX_ERR(0, 1391, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "_pydevd_bundle/pydevd_cython.pyx":1303
+    /* "_pydevd_bundle/pydevd_cython.pyx":1393
  *     from _pydevd_bundle.pydevd_additional_thread_info_regular import _tid_to_last_frame
  * 
  *     _original_call = ThreadTracer.__call__             # <<<<<<<<<<<<<<
  * 
  *     def __call__(self, frame, event, arg):
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_ThreadTracer), __pyx_n_s_call_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1303, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_ThreadTracer), __pyx_n_s_call_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1393, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (PyDict_SetItem(__pyx_d, __pyx_n_s_original_call, __pyx_t_1) < 0) __PYX_ERR(0, 1303, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_d, __pyx_n_s_original_call, __pyx_t_1) < 0) __PYX_ERR(0, 1393, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "_pydevd_bundle/pydevd_cython.pyx":1305
+    /* "_pydevd_bundle/pydevd_cython.pyx":1395
  *     _original_call = ThreadTracer.__call__
  * 
  *     def __call__(self, frame, event, arg):             # <<<<<<<<<<<<<<
  *         _tid_to_last_frame[self._args[1].ident] = frame
  *         return _original_call(self, frame, event, arg)
  */
-    __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_14_pydevd_bundle_13pydevd_cython_15__call__, NULL, __pyx_n_s_pydevd_bundle_pydevd_cython); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1305, __pyx_L1_error)
+    __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_14_pydevd_bundle_13pydevd_cython_15__call__, NULL, __pyx_n_s_pydevd_bundle_pydevd_cython); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1395, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (PyDict_SetItem(__pyx_d, __pyx_n_s_call_2, __pyx_t_1) < 0) __PYX_ERR(0, 1305, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_d, __pyx_n_s_call_2, __pyx_t_1) < 0) __PYX_ERR(0, 1395, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "_pydevd_bundle/pydevd_cython.pyx":1309
+    /* "_pydevd_bundle/pydevd_cython.pyx":1399
  *         return _original_call(self, frame, event, arg)
  * 
  *     ThreadTracer.__call__ = __call__             # <<<<<<<<<<<<<<
- * 
  */
-    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_call_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1309, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_call_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1399, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (__Pyx_PyObject_SetAttrStr(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_ThreadTracer), __pyx_n_s_call_2, __pyx_t_1) < 0) __PYX_ERR(0, 1309, __pyx_L1_error)
+    if (__Pyx_PyObject_SetAttrStr(((PyObject *)__pyx_ptype_14_pydevd_bundle_13pydevd_cython_ThreadTracer), __pyx_n_s_call_2, __pyx_t_1) < 0) __PYX_ERR(0, 1399, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "_pydevd_bundle/pydevd_cython.pyx":1293
+    /* "_pydevd_bundle/pydevd_cython.pyx":1383
  * 
  * 
  * if IS_IRONPYTHON:             # <<<<<<<<<<<<<<
@@ -32370,33 +35142,45 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "(tree fragment)":1
- * def __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
- *     if __pyx_checksum != 0x9168de9:
+ * def __pyx_unpickle_SafeCallWrapper(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
+ *     if __pyx_checksum != 0x77c077b:
  *         from pickle import PickleError as __pyx_PickleError
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_14_pydevd_bundle_13pydevd_cython_21__pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace, NULL, __pyx_n_s_pydevd_bundle_pydevd_cython); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_PyDbFrameTraceAnd, __pyx_t_1) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-  /* "(tree fragment)":9
- *         __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(<PyDbFrameTraceAndUnhandledExceptionsTrace> __pyx_result, __pyx_state)
- *     return __pyx_result
- * cdef __pyx_unpickle_PyDbFrameTraceAndUnhandledExceptionsTrace__set_state(PyDbFrameTraceAndUnhandledExceptionsTrace __pyx_result, tuple __pyx_state):             # <<<<<<<<<<<<<<
- *     __pyx_result._pydb_frame_trace = __pyx_state[0]; __pyx_result._unhandled_trace = __pyx_state[1]
- *     if len(__pyx_state) > 2 and hasattr(__pyx_result, '__dict__'):
- */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_14_pydevd_bundle_13pydevd_cython_23__pyx_unpickle_SafeCallWrapper, NULL, __pyx_n_s_pydevd_bundle_pydevd_cython); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_14_pydevd_bundle_13pydevd_cython_21__pyx_unpickle_SafeCallWrapper, NULL, __pyx_n_s_pydevd_bundle_pydevd_cython); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_SafeCallWrapper, __pyx_t_1) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
+  /* "(tree fragment)":9
+ *         __pyx_unpickle_SafeCallWrapper__set_state(<SafeCallWrapper> __pyx_result, __pyx_state)
+ *     return __pyx_result
+ * cdef __pyx_unpickle_SafeCallWrapper__set_state(SafeCallWrapper __pyx_result, tuple __pyx_state):             # <<<<<<<<<<<<<<
+ *     __pyx_result.method_object = __pyx_state[0]
+ *     if len(__pyx_state) > 1 and hasattr(__pyx_result, '__dict__'):
+ */
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_14_pydevd_bundle_13pydevd_cython_23__pyx_unpickle_TopLevelThreadTracerOnlyUnhandledExceptions, NULL, __pyx_n_s_pydevd_bundle_pydevd_cython); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_TopLevelThreadTra, __pyx_t_1) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
   /* "(tree fragment)":1
- * def __pyx_unpickle_ThreadTracer(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
- *     if __pyx_checksum != 0x3d7902a:
+ * def __pyx_unpickle_TopLevelThreadTracerNoBackFrame(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
+ *     if __pyx_checksum != 0xf34c74e:
  *         from pickle import PickleError as __pyx_PickleError
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_14_pydevd_bundle_13pydevd_cython_25__pyx_unpickle_ThreadTracer, NULL, __pyx_n_s_pydevd_bundle_pydevd_cython); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_14_pydevd_bundle_13pydevd_cython_25__pyx_unpickle_TopLevelThreadTracerNoBackFrame, NULL, __pyx_n_s_pydevd_bundle_pydevd_cython); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_TopLevelThreadTra_2, __pyx_t_1) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "(tree fragment)":9
+ *         __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(<TopLevelThreadTracerNoBackFrame> __pyx_result, __pyx_state)
+ *     return __pyx_result
+ * cdef __pyx_unpickle_TopLevelThreadTracerNoBackFrame__set_state(TopLevelThreadTracerNoBackFrame __pyx_result, tuple __pyx_state):             # <<<<<<<<<<<<<<
+ *     __pyx_result._args = __pyx_state[0]; __pyx_result._frame_trace_dispatch = __pyx_state[1]; __pyx_result._last_exc_arg = __pyx_state[2]; __pyx_result._last_raise_line = __pyx_state[3]; __pyx_result._raise_lines = __pyx_state[4]; __pyx_result._try_except_info = __pyx_state[5]
+ *     if len(__pyx_state) > 6 and hasattr(__pyx_result, '__dict__'):
+ */
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_14_pydevd_bundle_13pydevd_cython_27__pyx_unpickle_ThreadTracer, NULL, __pyx_n_s_pydevd_bundle_pydevd_cython); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_ThreadTracer, __pyx_t_1) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -33982,85 +36766,6 @@ static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key) {
 }
 #endif
 
-/* Import */
-        static PyObject *__Pyx_Import(PyObject *name, PyObject *from_list, int level) {
-    PyObject *empty_list = 0;
-    PyObject *module = 0;
-    PyObject *global_dict = 0;
-    PyObject *empty_dict = 0;
-    PyObject *list;
-    #if PY_MAJOR_VERSION < 3
-    PyObject *py_import;
-    py_import = __Pyx_PyObject_GetAttrStr(__pyx_b, __pyx_n_s_import);
-    if (!py_import)
-        goto bad;
-    #endif
-    if (from_list)
-        list = from_list;
-    else {
-        empty_list = PyList_New(0);
-        if (!empty_list)
-            goto bad;
-        list = empty_list;
-    }
-    global_dict = PyModule_GetDict(__pyx_m);
-    if (!global_dict)
-        goto bad;
-    empty_dict = PyDict_New();
-    if (!empty_dict)
-        goto bad;
-    {
-        #if PY_MAJOR_VERSION >= 3
-        if (level == -1) {
-            if (strchr(__Pyx_MODULE_NAME, '.')) {
-                module = PyImport_ImportModuleLevelObject(
-                    name, global_dict, empty_dict, list, 1);
-                if (!module) {
-                    if (!PyErr_ExceptionMatches(PyExc_ImportError))
-                        goto bad;
-                    PyErr_Clear();
-                }
-            }
-            level = 0;
-        }
-        #endif
-        if (!module) {
-            #if PY_MAJOR_VERSION < 3
-            PyObject *py_level = PyInt_FromLong(level);
-            if (!py_level)
-                goto bad;
-            module = PyObject_CallFunctionObjArgs(py_import,
-                name, global_dict, empty_dict, list, py_level, NULL);
-            Py_DECREF(py_level);
-            #else
-            module = PyImport_ImportModuleLevelObject(
-                name, global_dict, empty_dict, list, level);
-            #endif
-        }
-    }
-bad:
-    #if PY_MAJOR_VERSION < 3
-    Py_XDECREF(py_import);
-    #endif
-    Py_XDECREF(empty_list);
-    Py_XDECREF(empty_dict);
-    return module;
-}
-
-/* ImportFrom */
-        static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name) {
-    PyObject* value = __Pyx_PyObject_GetAttrStr(module, name);
-    if (unlikely(!value) && PyErr_ExceptionMatches(PyExc_AttributeError)) {
-        PyErr_Format(PyExc_ImportError,
-        #if PY_MAJOR_VERSION < 3
-            "cannot import name %.230s", PyString_AS_STRING(name));
-        #else
-            "cannot import name %S", name);
-        #endif
-    }
-    return value;
-}
-
 /* SliceTupleAndList */
         #if CYTHON_COMPILING_IN_CPYTHON
 static CYTHON_INLINE void __Pyx_crop_slice(Py_ssize_t* _start, Py_ssize_t* _stop, Py_ssize_t* _length) {
@@ -34119,6 +36824,60 @@ static CYTHON_INLINE PyObject* __Pyx_PyTuple_GetSlice(
     return dest;
 }
 #endif
+
+/* pyfrozenset_new */
+        static CYTHON_INLINE PyObject* __Pyx_PyFrozenSet_New(PyObject* it) {
+    if (it) {
+        PyObject* result;
+#if CYTHON_COMPILING_IN_PYPY
+        PyObject* args;
+        args = PyTuple_Pack(1, it);
+        if (unlikely(!args))
+            return NULL;
+        result = PyObject_Call((PyObject*)&PyFrozenSet_Type, args, NULL);
+        Py_DECREF(args);
+        return result;
+#else
+        if (PyFrozenSet_CheckExact(it)) {
+            Py_INCREF(it);
+            return it;
+        }
+        result = PyFrozenSet_New(it);
+        if (unlikely(!result))
+            return NULL;
+        if (likely(PySet_GET_SIZE(result)))
+            return result;
+        Py_DECREF(result);
+#endif
+    }
+#if CYTHON_USE_TYPE_SLOTS
+    return PyFrozenSet_Type.tp_new(&PyFrozenSet_Type, __pyx_empty_tuple, NULL);
+#else
+    return PyObject_Call((PyObject*)&PyFrozenSet_Type, __pyx_empty_tuple, NULL);
+#endif
+}
+
+/* PySetContains */
+        static int __Pyx_PySet_ContainsUnhashable(PyObject *set, PyObject *key) {
+    int result = -1;
+    if (PySet_Check(key) && PyErr_ExceptionMatches(PyExc_TypeError)) {
+        PyObject *tmpkey;
+        PyErr_Clear();
+        tmpkey = __Pyx_PyFrozenSet_New(key);
+        if (tmpkey != NULL) {
+            result = PySet_Contains(set, tmpkey);
+            Py_DECREF(tmpkey);
+        }
+    }
+    return result;
+}
+static CYTHON_INLINE int __Pyx_PySet_ContainsTF(PyObject* key, PyObject* set, int eq) {
+    int result = PySet_Contains(set, key);
+    if (unlikely(result < 0)) {
+        result = __Pyx_PySet_ContainsUnhashable(set, key);
+    }
+    return unlikely(result < 0) ? result : (result == (eq == Py_EQ));
+}
 
 /* ObjectGetItem */
         #if CYTHON_USE_TYPE_SLOTS
@@ -34239,6 +36998,85 @@ static PyObject* __Pyx_PyInt_EqObjC(PyObject *op1, PyObject *op2, CYTHON_UNUSED 
     return PyObject_RichCompare(op1, op2, Py_EQ);
 }
 #endif
+
+/* Import */
+        static PyObject *__Pyx_Import(PyObject *name, PyObject *from_list, int level) {
+    PyObject *empty_list = 0;
+    PyObject *module = 0;
+    PyObject *global_dict = 0;
+    PyObject *empty_dict = 0;
+    PyObject *list;
+    #if PY_MAJOR_VERSION < 3
+    PyObject *py_import;
+    py_import = __Pyx_PyObject_GetAttrStr(__pyx_b, __pyx_n_s_import);
+    if (!py_import)
+        goto bad;
+    #endif
+    if (from_list)
+        list = from_list;
+    else {
+        empty_list = PyList_New(0);
+        if (!empty_list)
+            goto bad;
+        list = empty_list;
+    }
+    global_dict = PyModule_GetDict(__pyx_m);
+    if (!global_dict)
+        goto bad;
+    empty_dict = PyDict_New();
+    if (!empty_dict)
+        goto bad;
+    {
+        #if PY_MAJOR_VERSION >= 3
+        if (level == -1) {
+            if (strchr(__Pyx_MODULE_NAME, '.')) {
+                module = PyImport_ImportModuleLevelObject(
+                    name, global_dict, empty_dict, list, 1);
+                if (!module) {
+                    if (!PyErr_ExceptionMatches(PyExc_ImportError))
+                        goto bad;
+                    PyErr_Clear();
+                }
+            }
+            level = 0;
+        }
+        #endif
+        if (!module) {
+            #if PY_MAJOR_VERSION < 3
+            PyObject *py_level = PyInt_FromLong(level);
+            if (!py_level)
+                goto bad;
+            module = PyObject_CallFunctionObjArgs(py_import,
+                name, global_dict, empty_dict, list, py_level, NULL);
+            Py_DECREF(py_level);
+            #else
+            module = PyImport_ImportModuleLevelObject(
+                name, global_dict, empty_dict, list, level);
+            #endif
+        }
+    }
+bad:
+    #if PY_MAJOR_VERSION < 3
+    Py_XDECREF(py_import);
+    #endif
+    Py_XDECREF(empty_list);
+    Py_XDECREF(empty_dict);
+    return module;
+}
+
+/* ImportFrom */
+        static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name) {
+    PyObject* value = __Pyx_PyObject_GetAttrStr(module, name);
+    if (unlikely(!value) && PyErr_ExceptionMatches(PyExc_AttributeError)) {
+        PyErr_Format(PyExc_ImportError,
+        #if PY_MAJOR_VERSION < 3
+            "cannot import name %.230s", PyString_AS_STRING(name));
+        #else
+            "cannot import name %S", name);
+        #endif
+    }
+    return value;
+}
 
 /* PyObject_GenericGetAttrNoDict */
         #if CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP && PY_VERSION_HEX < 0x03070000
