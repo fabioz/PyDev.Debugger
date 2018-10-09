@@ -6,7 +6,7 @@
 <path>/${PROJECT_DIR_NAME}/jython_test_deps/ant.jar</path>
 <path>/${PROJECT_DIR_NAME}/jython_test_deps/junit.jar</path>
 </pydev_pathproperty>
-<pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 3.0</pydev_property>
+<pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python interpreter</pydev_property>
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_INTERPRETER">Default</pydev_property>
 <pydev_property name="org.python.pydev.PYTHON_ADDITIONAL_GRAMMAR_VALIDATION">2.6, 2.7, 3.6</pydev_property>
 </pydev_project>
