@@ -162,8 +162,8 @@ from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_dont_trace
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
-from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
-    CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
+from _pydevd_bundle.pydevd_comm_constants import (CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
+    CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE)
 from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
     dict_keys, RETURN_VALUES_DICT, NO_FTRACE
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
@@ -801,9 +801,12 @@ cdef class PyDBFrame:
                         main_debugger.remove_return_values_flag = False
 
                 if stop:
-                    self.set_suspend(thread, CMD_SET_BREAK)
-                    if breakpoint and breakpoint.suspend_policy == "ALL":
-                        main_debugger.suspend_all_other_threads(thread)
+                    self.set_suspend(
+                        thread, 
+                        CMD_SET_BREAK, 
+                        suspend_other_threads=breakpoint and breakpoint.suspend_policy == "ALL",
+                    )
+                        
                 elif flag and plugin_manager is not None:
                     result = plugin_manager.suspend(main_debugger, thread, frame, bp_type)
                     if result:
@@ -1315,7 +1318,7 @@ cdef class ThreadTracer:
                 if not py_db._termination_event_set:
                     # that was not working very well because jython gave some socket errors
                     try:
-                        if py_db.output_checker is None:
+                        if py_db.output_checker_thread is None:
                             kill_all_pydev_threads()
                     except:
                         traceback.print_exc()
