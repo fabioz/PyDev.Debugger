@@ -14,10 +14,13 @@ import sys
 import threading
 import time
 import traceback
+import platform
 
 from _pydev_bundle import pydev_localhost
 
 IS_PY3K = sys.version_info[0] >= 3
+IS_PY36_OR_GREATER = sys.version_info[0:2] >= (3, 6)
+IS_CPYTHON = platform.python_implementation() == 'CPython'
 
 # Note: copied (don't import because we want it to be independent on the actual code because of backward compatibility).
 CMD_RUN = 101
@@ -315,10 +318,18 @@ class DebuggerRunner(object):
                 print('executing', ' '.join(args))
 
             with self.run_process(args, writer) as dct_with_stdout_stder:
-                wait_for_condition(lambda: writer.finished_initialization)
-
-                writer.get_stdout = lambda: ''.join(dct_with_stdout_stder['stdout'])
-                writer.get_stderr = lambda: ''.join(dct_with_stdout_stder['stderr'])
+                try:
+                    wait_for_condition(lambda: writer.finished_initialization)
+                except TimeoutError:
+                    sys.stderr.write('Timed out waiting for initialization\n')
+                    sys.stderr.write('stdout:\n%s\n\nstderr:\n%s\n' % (
+                        ''.join(dct_with_stdout_stder['stdout']),
+                        ''.join(dct_with_stdout_stder['stderr']),
+                    ))
+                    raise
+                finally:
+                    writer.get_stdout = lambda: ''.join(dct_with_stdout_stder['stdout'])
+                    writer.get_stderr = lambda: ''.join(dct_with_stdout_stder['stderr'])
 
                 yield writer
         finally:
@@ -370,6 +381,14 @@ class DebuggerRunner(object):
 
             while True:
                 if process.poll() is not None:
+                    if writer.EXPECTED_RETURNCODE != 'any':
+                        expected_returncode = writer.EXPECTED_RETURNCODE
+                        if not isinstance(expected_returncode, (list, tuple)):
+                            expected_returncode = (expected_returncode,)
+                            
+                        if process.returncode not in expected_returncode:
+                            self.fail_with_message('Expected process.returncode to be %s. Found: %s' % (
+                                writer.EXPECTED_RETURNCODE, process.returncode), stdout, stderr, writer)
                     break
                 else:
                     if writer is not None:
@@ -435,6 +454,7 @@ class AbstractWriterThread(threading.Thread):
     FORCE_KILL_PROCESS_WHEN_FINISHED_OK = False
     IS_MODULE = False
     TEST_FILE = None
+    EXPECTED_RETURNCODE = 0
 
     def __init__(self, *args, **kwargs):
         threading.Thread.__init__(self, *args, **kwargs)
@@ -546,8 +566,14 @@ class AbstractWriterThread(threading.Thread):
         if SHOW_WRITES_AND_READS:
             print('Test Writer Thread Written %s%s' % (meaning, s,))
         msg = s + '\n'
+
+        if not hasattr(self, 'sock'):
+            print('%s.sock not available when sending: %s' % (self, msg))
+            return
+
         if IS_PY3K:
             msg = msg.encode('utf-8')
+
         self.sock.send(msg)
 
     def get_next_message(self, context_message, timeout=None):
@@ -559,6 +585,7 @@ class AbstractWriterThread(threading.Thread):
         if SHOW_WRITES_AND_READS:
             print('start_socket')
 
+        self._sequence = -1
         if port is None:
             socket_name = get_socket_name(close=True)
         else:
@@ -579,7 +606,6 @@ class AbstractWriterThread(threading.Thread):
         reader_thread.start()
         self.sock = new_sock
 
-        self._sequence = -1
         # initial command is always the version
         self.write_version()
         self.log.append('start_socket')
