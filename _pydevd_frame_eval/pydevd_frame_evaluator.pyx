@@ -16,6 +16,10 @@ get_file_type = DONT_TRACE.get
 
 _thread_local_info = threading.local()
 
+def clear_thread_local_info():
+    global _thread_local_info
+    _thread_local_info = threading.local()
+
 
 cdef class ThreadInfo:
 
@@ -286,6 +290,8 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
     additional_info.is_tracing = True
     try:
         main_debugger: object = GlobalDebuggerHolder.global_dbg
+        if main_debugger is None:
+            return _PyEval_EvalFrameDefault(frame_obj, exc)
         frame = <object> frame_obj
         
         if thread_info.thread_trace_func is None:

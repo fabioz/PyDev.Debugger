@@ -780,8 +780,8 @@ static const char *__pyx_filename;
 
 
 static const char *__pyx_f[] = {
-  "_pydevd_bundle\\pydevd_cython.pyx",
-  "_pydevd_bundle\\pydevd_cython.pxd",
+  "_pydevd_bundle/pydevd_cython.pyx",
+  "_pydevd_bundle/pydevd_cython.pxd",
   "stringsource",
   "type.pxd",
 };
@@ -1810,7 +1810,7 @@ static const char __pyx_k_pydevd_bundle_pydevd_additional[] = "_pydevd_bundle.py
 static const char __pyx_k_pydevd_bundle_pydevd_breakpoint[] = "_pydevd_bundle.pydevd_breakpoints";
 static const char __pyx_k_pydevd_bundle_pydevd_collect_tr[] = "_pydevd_bundle.pydevd_collect_try_except_info";
 static const char __pyx_k_pydevd_bundle_pydevd_comm_const[] = "_pydevd_bundle.pydevd_comm_constants";
-static const char __pyx_k_pydevd_bundle_pydevd_cython_pyx[] = "_pydevd_bundle\\pydevd_cython.pyx";
+static const char __pyx_k_pydevd_bundle_pydevd_cython_pyx[] = "_pydevd_bundle/pydevd_cython.pyx";
 static const char __pyx_k_pydevd_bundle_pydevd_dont_trace[] = "_pydevd_bundle.pydevd_dont_trace_files";
 static const char __pyx_k_pydevd_bundle_pydevd_frame_util[] = "_pydevd_bundle.pydevd_frame_utils";
 static const char __pyx_k_pydevd_bundle_pydevd_kill_all_p[] = "_pydevd_bundle.pydevd_kill_all_pydevd_threads";
