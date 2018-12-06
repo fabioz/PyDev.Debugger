@@ -7,6 +7,7 @@ from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items, NEXT_VALUE_SEPARATOR, Null
+import signal
 
 try:
     import cStringIO as StringIO #may not always be available @UnusedImport
@@ -114,7 +115,6 @@ class DebugConsoleStdIn(BaseStdIn):
             cmd = self.debugger.cmd_factory.make_input_requested_message(is_started)
             self.debugger.writer.add_command(cmd)
         except Exception:
-            import traceback
             traceback.print_exc()
             return '\n'
 
@@ -373,8 +373,6 @@ class BaseInterpreterInterface:
                 called = False
                 try:
                     # Fix for #PyDev-500: Console interrupt can't interrupt on sleep
-                    import os
-                    import signal
                     if os.name == 'posix':
                         # On Linux we can't interrupt 0 as in Windows because it's
                         # actually owned by a process -- on the good side, signals
