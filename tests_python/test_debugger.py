@@ -2516,6 +2516,119 @@ def test_top_level_exceptions_on_attach(case_setup_remote, check_scenario):
         writer.log.append('finished ok')
         writer.finished_ok = True
 
+
+# fails with frame eval
+def test_case_first_line(case_setup):
+    with case_setup.test_file('_debugger_case_first_line.py') as writer:
+        writer.write_add_breakpoint(2, '')
+
+        writer.log.append('making initial run')
+        writer.write_make_initial_run()
+
+        writer.log.append('waiting for breakpoint hit')
+        hit = writer.wait_for_breakpoint_hit()
+        thread_id = hit.thread_id
+
+        writer.log.append('run thread')
+        writer.write_run_thread(thread_id)
+
+        writer.finished_ok = True
+
+
+# works fine
+def test_case_second_line(case_setup):
+    with case_setup.test_file('_debugger_case_first_line.py') as writer:
+        writer.write_add_breakpoint(3, '')
+
+        writer.log.append('making initial run')
+        writer.write_make_initial_run()
+
+        writer.log.append('waiting for breakpoint hit')
+        hit = writer.wait_for_breakpoint_hit()
+        thread_id = hit.thread_id
+
+        writer.log.append('run thread')
+        writer.write_run_thread(thread_id)
+
+        writer.finished_ok = True
+
+
+# works fine
+def test_case_first_line_two_breaks(case_setup):
+    with case_setup.test_file('_debugger_case_first_line.py') as writer:
+        writer.write_add_breakpoint(2, '')
+        writer.write_add_breakpoint(4, '')
+
+        writer.log.append('making initial run')
+        writer.write_make_initial_run()
+
+        writer.log.append('waiting for breakpoint hit')
+        hit = writer.wait_for_breakpoint_hit()
+        thread_id = hit.thread_id
+
+        writer.log.append('run thread')
+        writer.write_run_thread(thread_id)
+
+        writer.log.append('waiting for breakpoint hit')
+        hit = writer.wait_for_breakpoint_hit()
+        thread_id = hit.thread_id
+
+        writer.log.append('run thread')
+        writer.write_run_thread(thread_id)
+
+        writer.finished_ok = True
+
+
+# works fine with frame eval
+@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+def test_case_one_break_frame_eval(case_setup):
+    with case_setup.test_file('_debugger_case_tracing.py') as writer:
+        writer.write_add_breakpoint(4, 'foo')
+
+        writer.log.append('making initial run')
+        writer.write_make_initial_run()
+
+        writer.log.append('waiting for breakpoint hit')
+        hit = writer.wait_for_breakpoint_hit()
+        thread_id = hit.thread_id
+        assert hit.suspend_type == "frame_eval"
+
+        writer.log.append('run thread')
+        writer.write_run_thread(thread_id)
+
+        writer.finished_ok = True
+
+
+# fails with frame eval
+@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+def test_case_two_breaks_frame_eval(case_setup):
+    with case_setup.test_file('_debugger_case_tracing.py') as writer:
+        writer.write_add_breakpoint(4, 'foo')
+        writer.write_add_breakpoint(6, 'foo')
+
+        writer.log.append('making initial run')
+        writer.write_make_initial_run()
+
+        writer.log.append('waiting for breakpoint hit')
+        hit = writer.wait_for_breakpoint_hit()
+        thread_id = hit.thread_id
+        # even the first breakpoint isn't suspended on frame eval
+        assert hit.suspend_type == "frame_eval"
+
+        writer.log.append('run thread')
+        writer.write_run_thread(thread_id)
+
+        writer.log.append('waiting for breakpoint hit')
+        hit = writer.wait_for_breakpoint_hit()
+        thread_id = hit.thread_id
+        assert hit.suspend_type == "trace"
+
+        writer.log.append('run thread')
+        writer.write_run_thread(thread_id)
+
+        writer.finished_ok = True
+
+
 # Jython needs some vars to be set locally.
 # set JAVA_HOME=c:\bin\jdk1.8.0_172
 # set PATH=%PATH%;C:\bin\jython2.7.0\bin
