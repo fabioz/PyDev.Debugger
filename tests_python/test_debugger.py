@@ -2580,7 +2580,7 @@ def test_case_first_line_two_breaks(case_setup):
 
 
 # works fine with frame eval
-@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.skipif(not IS_PY36_OR_GREATER or not IS_CPYTHON or not TEST_CYTHON, reason='CPython only test.')
 def test_case_one_break_frame_eval(case_setup):
     with case_setup.test_file('_debugger_case_tracing.py') as writer:
         writer.write_add_breakpoint(4, 'foo')
@@ -2600,7 +2600,7 @@ def test_case_one_break_frame_eval(case_setup):
 
 
 # fails with frame eval
-@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.skipif(not IS_PY36_OR_GREATER or not IS_CPYTHON or not TEST_CYTHON, reason='CPython only test.')
 def test_case_two_breaks_frame_eval(case_setup):
     with case_setup.test_file('_debugger_case_tracing.py') as writer:
         writer.write_add_breakpoint(4, 'foo')
