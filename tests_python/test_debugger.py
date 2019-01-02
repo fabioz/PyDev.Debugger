@@ -2553,7 +2553,7 @@ def test_frame_eval_limitations(case_setup, filename, break_at_lines):
             hit = writer.wait_for_breakpoint_hit()
             thread_id = hit.thread_id
 
-            if IS_PY36_OR_GREATER:
+            if IS_PY36_OR_GREATER and TEST_CYTHON:
                 assert hit.suspend_type == break_mode
             else:
                 # Before 3.6 frame eval is not available.
