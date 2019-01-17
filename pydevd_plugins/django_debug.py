@@ -22,6 +22,7 @@ except:
 
 
 class DjangoLineBreakpoint(LineBreakpoint):
+
     def __init__(self, file, line, condition, func_name, expression, hit_condition=None, is_logpoint=False):
         self.file = file
         LineBreakpoint.__init__(self, line, condition, func_name, expression, hit_condition=hit_condition, is_logpoint=is_logpoint)
@@ -30,7 +31,7 @@ class DjangoLineBreakpoint(LineBreakpoint):
         return self.file == template_frame_file and self.line == template_frame_line
 
     def __str__(self):
-        return "DjangoLineBreakpoint: %s-%d" %(self.file, self.line)
+        return "DjangoLineBreakpoint: %s-%d" % (self.file, self.line)
 
 
 def add_line_breakpoint(plugin, pydb, type, file, line, condition, expression, func_name, hit_condition=None, is_logpoint=False):
@@ -41,6 +42,7 @@ def add_line_breakpoint(plugin, pydb, type, file, line, condition, expression, f
         return breakpoint, pydb.django_breakpoints
     return None
 
+
 def add_exception_breakpoint(plugin, pydb, type, exception):
     if type == 'django':
         if not hasattr(pydb, 'django_exception_break'):
@@ -49,9 +51,11 @@ def add_exception_breakpoint(plugin, pydb, type, exception):
         return True
     return False
 
+
 def _init_plugin_breaks(pydb):
     pydb.django_exception_break = {}
     pydb.django_breakpoints = {}
+
 
 def remove_exception_breakpoint(plugin, pydb, type, exception):
     if type == 'django':
@@ -62,10 +66,12 @@ def remove_exception_breakpoint(plugin, pydb, type, exception):
             pass
     return False
 
+
 def get_breakpoints(plugin, pydb, type):
     if type == 'django-line':
         return pydb.django_breakpoints
     return None
+
 
 def _inherits(cls, *names):
     if cls.__name__ in names:
@@ -149,8 +155,6 @@ def suspend_django(main_debugger, thread, frame, cmd=CMD_SET_BREAK):
     if frame.f_lineno is None:
         return None
 
-    pydevd_vars.add_additional_frame_by_id(get_current_thread_id(thread), {id(frame): frame})
-
     main_debugger.set_suspend(thread, cmd)
     thread.additional_info.suspend_type = DJANGO_SUSPEND
 
@@ -166,6 +170,7 @@ def _find_django_render_frame(frame):
 #=======================================================================================================================
 # Django Frame
 #=======================================================================================================================
+
 
 def _read_file(filename):
     # type: (str) -> str
@@ -283,6 +288,7 @@ def _get_template_line(frame):
 
 
 class DjangoTemplateFrame:
+
     def __init__(self, frame):
         file_name = _get_template_file_name(frame)
         self.back_context = frame.f_locals['context']
@@ -325,10 +331,10 @@ def _is_django_exception_break_context(frame):
         name = None
     return name in ['_resolve_lookup', 'find_template']
 
-
 #=======================================================================================================================
 # Django Step Commands
 #=======================================================================================================================
+
 
 def can_not_skip(plugin, main_debugger, pydb_frame, frame):
     return main_debugger.django_breakpoints and _is_django_render_call(frame)
@@ -356,7 +362,7 @@ def cmd_step_into(plugin, main_debugger, frame, event, args, stop_info, stop):
         plugin_stop = stop_info['django_stop']
         stop = stop and _is_django_resolve_call(frame.f_back) and not _is_django_context_get_call(frame)
         if stop:
-            info.pydev_django_resolve_frame = True # we remember that we've go into python code from django rendering frame
+            info.pydev_django_resolve_frame = True  # we remember that we've go into python code from django rendering frame
     return stop, plugin_stop
 
 
@@ -371,7 +377,7 @@ def cmd_step_over(plugin, main_debugger, frame, event, args, stop_info, stop):
         return stop, plugin_stop
     else:
         if event == 'return' and info.pydev_django_resolve_frame and _is_django_resolve_call(frame.f_back):
-            #we return to Django suspend mode and should not stop before django rendering frame
+            # we return to Django suspend mode and should not stop before django rendering frame
             info.pydev_step_stop = frame.f_back
             info.pydev_django_resolve_frame = False
             thread.additional_info.suspend_type = DJANGO_SUSPEND
@@ -420,6 +426,7 @@ def suspend(plugin, main_debugger, thread, frame, bp_type):
     if bp_type == 'django':
         return suspend_django(main_debugger, thread, frame)
     return None
+
 
 def exception_break(plugin, main_debugger, pydb_frame, frame, args, arg):
     main_debugger = args[0]
