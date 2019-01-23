@@ -1,12 +1,12 @@
-from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
 import inspect
-from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_iter_items, DJANGO_SUSPEND, IS_PY2, get_current_thread_id
-from pydevd_file_utils import get_abs_path_real_path_and_base_from_file, normcase
-from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint
-from _pydevd_bundle import pydevd_vars
 import traceback
+
 from _pydev_bundle import pydev_log
+from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint
+from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
+from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_iter_items, DJANGO_SUSPEND, IS_PY2
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, FCode, just_raised, ignore_exception_trace
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_file, normcase
 
 IS_DJANGO18 = False
 IS_DJANGO19 = False
@@ -336,7 +336,7 @@ def _is_django_exception_break_context(frame):
 #=======================================================================================================================
 
 
-def can_not_skip(plugin, main_debugger, pydb_frame, frame):
+def can_not_skip(plugin, main_debugger, frame):
     return main_debugger.django_breakpoints and _is_django_render_call(frame)
 
 

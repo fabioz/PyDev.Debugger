@@ -410,7 +410,6 @@ def case_setup_m_switch_entry_point():
                 assert hasattr(WriterThread, key)
                 setattr(WriterThread, key, value)
             with runner.check_case(WriterThread) as writer:
-
                 yield writer
 
     return CaseSetup()

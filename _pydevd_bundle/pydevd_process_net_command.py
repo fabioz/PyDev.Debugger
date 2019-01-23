@@ -557,7 +557,7 @@ class _PyDevCommandProcessor(object):
             thread_id, internal_get_next_statement_targets, seq, thread_id, frame_id)
 
     def cmd_set_project_roots(self, py_db, cmd_id, seq, text):
-        pydevd_utils.set_project_roots(text.split(u'\t'))
+        self.api.set_project_roots(py_db, text.split(u'\t'))
 
     def cmd_thread_dump_to_stderr(self, py_db, cmd_id, seq, text):
         pydevd_utils.dump_threads()
