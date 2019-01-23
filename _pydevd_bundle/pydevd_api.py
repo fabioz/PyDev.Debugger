@@ -424,7 +424,7 @@ class PyDevdAPI(object):
         except:
             pydev_log.debug("Error while removing exception %s" % sys.exc_info()[0])
 
-        py_db.on_breakpoints_changed(remove=True)
+        py_db.on_breakpoints_changed(removed=True)
 
     def remove_plugins_exception_breakpoint(self, py_db, exception_type, exception):
         # I.e.: no need to initialize lazy (if we didn't have it in the first place, we can't remove
@@ -440,7 +440,7 @@ class PyDevdAPI(object):
         else:
             raise NameError(exception_type)
 
-        py_db.on_breakpoints_changed(remove=True)
+        py_db.on_breakpoints_changed(removed=True)
 
     def set_project_roots(self, py_db, project_roots):
         '''
