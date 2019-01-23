@@ -148,3 +148,31 @@ def test_glob_matching():
         assert glob_matches_path(build('/'), r'**', sep, altsep)
         assert glob_matches_path(build('/'), r'*', sep, altsep)
 
+
+def test_rules_to_exclude_filter(tmpdir):
+    from _pydevd_bundle.pydevd_process_net_command_json import _convert_rules_to_exclude_filters
+    from _pydevd_bundle.pydevd_filtering import ExcludeFilter
+    dira = tmpdir.mkdir('a')
+    dirb = dira.mkdir('b')
+
+    def filename_to_server(filename):
+        return filename
+
+    def on_error(msg):
+        raise AssertionError(msg)
+
+    rules = [
+        {'path': str(dira), 'include': False},
+        {'path': str(dirb), 'include': True},
+        {'path': '**/foo/*.py', 'include': True},
+        {'module': 'bar', 'include': False},
+        {'module': 'bar.foo', 'include': True},
+    ]
+    exclude_filters = _convert_rules_to_exclude_filters(rules, filename_to_server, on_error)
+    assert exclude_filters == [
+        ExcludeFilter(name=str(dirb) + '/**', exclude=False, is_path=True),
+        ExcludeFilter(name=str(dira) + '/**', exclude=True, is_path=True),
+        ExcludeFilter(name='**/foo/*.py', exclude=False, is_path=True),
+        ExcludeFilter(name='bar.foo', exclude=False, is_path=False),
+        ExcludeFilter(name='bar', exclude=True, is_path=False),
+    ]

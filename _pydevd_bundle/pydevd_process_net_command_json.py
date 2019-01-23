@@ -1,15 +1,76 @@
 from functools import reduce, partial
+import itertools
 import json
+import os
 import re
 
 from _pydevd_bundle._debug_adapter import pydevd_base_schema
+from _pydevd_bundle._debug_adapter.pydevd_schema import SourceBreakpoint
 from _pydevd_bundle.pydevd_api import PyDevdAPI
 from _pydevd_bundle.pydevd_comm_constants import CMD_RETURN
-from _pydevd_bundle.pydevd_net_command import NetCommand
-from _pydevd_bundle._debug_adapter.pydevd_schema import SourceBreakpoint
-import itertools
+from _pydevd_bundle.pydevd_filtering import ExcludeFilter
 from _pydevd_bundle.pydevd_json_debug_options import _extract_debug_options
-import os
+from _pydevd_bundle.pydevd_net_command import NetCommand
+
+
+def _convert_rules_to_exclude_filters(rules, filename_to_server, on_error):
+    exclude_filters = []
+    if not isinstance(rules, list):
+        on_error('Invalid "rules" (expected list of dicts). Found: %s' % (rules,))
+
+    else:
+        directory_exclude_filters = []
+        module_exclude_filters = []
+        glob_exclude_filters = []
+
+        for rule in rules:
+            if not isinstance(rule, dict):
+                on_error('Invalid "rules" (expected list of dicts). Found: %s' % (rules,))
+                continue
+
+            include = rule.get('include')
+            if include is None:
+                on_error('Invalid "rule" (expected dict with "include"). Found: %s' % (rule,))
+                continue
+
+            path = rule.get('path')
+            module = rule.get('module')
+            if path is None and module is None:
+                on_error('Invalid "rule" (expected dict with "path" or "module"). Found: %s' % (rule,))
+                continue
+
+            if path is not None:
+                glob_pattern = path
+                if '*' not in path and '?' not in path:
+                    path = filename_to_server(path)
+
+                    if os.path.isdir(glob_pattern):
+                        # If a directory was specified, add a '/**'
+                        # to be consistent with the glob pattern required
+                        # by pydevd.
+                        if not glob_pattern.endswith('/') and not glob_pattern.endswith('\\'):
+                            glob_pattern += '/'
+                        glob_pattern += '**'
+                    directory_exclude_filters.append(ExcludeFilter(glob_pattern, not include, True))
+                else:
+                    glob_exclude_filters.append(ExcludeFilter(glob_pattern, not include, True))
+
+            elif module is not None:
+                module_exclude_filters.append(ExcludeFilter(module, not include, False))
+
+            else:
+                on_error('Internal error: expected path or module to be specified.')
+
+        # Note that we have to sort the directory/module exclude filters so that the biggest
+        # paths match first.
+        # i.e.: if we have:
+        # /sub1/sub2/sub3
+        # a rule with /sub1/sub2 would match before a rule only with /sub1.
+        directory_exclude_filters = sorted(directory_exclude_filters, key=lambda exclude_filter:-len(exclude_filter.name))
+        module_exclude_filters = sorted(module_exclude_filters, key=lambda exclude_filter:-len(exclude_filter.name))
+        exclude_filters = directory_exclude_filters + glob_exclude_filters + module_exclude_filters
+
+    return exclude_filters
 
 
 class _PyDevJsonCommandProcessor(object):
@@ -91,46 +152,8 @@ class _PyDevJsonCommandProcessor(object):
         exclude_filters = []
 
         if rules is not None:
-            if not isinstance(rules, list):
-                self.api.send_error_message(py_db, 'Invalid "rules" (expected list of dicts). Found: %s' % (rules,))
-
-            else:
-                for rule in rules:
-                    if not isinstance(rule, dict):
-                        self.api.send_error_message(py_db, 'Invalid "rules" (expected list of dicts). Found: %s' % (rules,))
-                        continue
-
-                    include = rule.get('include')
-                    if include is None:
-                        self.api.send_error_message(py_db, 'Invalid "rule" (expected dict with "include"). Found: %s' % (rule,))
-                        continue
-
-                    path = rule.get('path')
-                    module = rule.get('module')
-                    if path is None and module is None:
-                        self.api.send_error_message(py_db, 'Invalid "rule" (expected dict with "path" or "module"). Found: %s' % (rule,))
-                        continue
-
-                    if path is not None:
-                        glob_pattern = path
-                        if '*' not in path and '?' not in path:
-                            path = self.api.filename_to_server(path)
-
-                            if os.path.isdir(glob_pattern):
-                                # If a directory was specified, add a '/**'
-                                # to be consistent with the glob pattern required
-                                # by pydevd.
-                                if not glob_pattern.endswith('/') and not glob_pattern.endswith('\\'):
-                                    glob_pattern += '/'
-                                glob_pattern += '**'
-
-                        exclude_filters.append(self.api.ExcludeFilter(glob_pattern, not include, True))
-
-                    elif module is not None:
-                        exclude_filters.append(self.api.ExcludeFilter(module, not include, False))
-
-                    else:
-                        self.api.send_error_message(py_db, 'Internal error: expected path or module to be specified.')
+            exclude_filters = _convert_rules_to_exclude_filters(
+                rules, self.api.filename_to_server, lambda msg:self.api.send_error_message(py_db, msg))
 
         self.api.set_exclude_filters(py_db, exclude_filters)
 
