@@ -2836,14 +2836,13 @@ def test_step_over_my_code(case_setup):
 
 
 @pytest.fixture(
-    name='step_method',
     params=[
         'step_over',
         'step_return',
         'step_in',
     ]
 )
-def _step_method(request):
+def step_method(request):
     return request.param
 
 
@@ -2893,16 +2892,12 @@ def test_step_over_my_code_global_settings(case_setup, environ, step_method):
         hit = writer.wait_for_breakpoint_hit(reason=stop_reason)
         assert hit.name == '<module>'
 
-        stop_reason = do_step()
-
         if IS_JYTHON:
-            # Jython got to the exit functions (CPython does it builtin,
-            # so we have no traces from Python).
-            hit = writer.wait_for_breakpoint_hit(stop_reason)  # Reverts to step in
-            assert hit.name == '_run_exitfuncs'
+            # Jython may get to exit functions, so, just resume the thread.
             writer.write_run_thread(hit.thread_id)
 
         elif step_method != 'step_return':
+            stop_reason = do_step()
             if step_method == 'step_over':
                 stop_reason = REASON_STEP_OVER
 
