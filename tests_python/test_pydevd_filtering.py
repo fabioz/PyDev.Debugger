@@ -152,8 +152,13 @@ def test_glob_matching():
 def test_rules_to_exclude_filter(tmpdir):
     from _pydevd_bundle.pydevd_process_net_command_json import _convert_rules_to_exclude_filters
     from _pydevd_bundle.pydevd_filtering import ExcludeFilter
+    from random import shuffle
     dira = tmpdir.mkdir('a')
     dirb = dira.mkdir('b')
+    fileb = dirb.join('fileb.py')
+    fileb2 = dirb.join('fileb2.py')
+    with fileb.open('w') as stream:
+        stream.write('')
 
     def filename_to_server(filename):
         return filename
@@ -164,12 +169,17 @@ def test_rules_to_exclude_filter(tmpdir):
     rules = [
         {'path': str(dira), 'include': False},
         {'path': str(dirb), 'include': True},
+        {'path': str(fileb), 'include': True},
+        {'path': str(fileb2), 'include': True},
         {'path': '**/foo/*.py', 'include': True},
         {'module': 'bar', 'include': False},
         {'module': 'bar.foo', 'include': True},
     ]
+    shuffle(rules)
     exclude_filters = _convert_rules_to_exclude_filters(rules, filename_to_server, on_error)
     assert exclude_filters == [
+        ExcludeFilter(name=str(fileb2), exclude=False, is_path=True),
+        ExcludeFilter(name=str(fileb), exclude=False, is_path=True),
         ExcludeFilter(name=str(dirb) + '/**', exclude=False, is_path=True),
         ExcludeFilter(name=str(dira) + '/**', exclude=True, is_path=True),
         ExcludeFilter(name='**/foo/*.py', exclude=False, is_path=True),
