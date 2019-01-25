@@ -899,7 +899,7 @@ from _pydevd_bundle.pydevd_constants import get_current_thread_id, IS_IRONPYTHON
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 from _pydevd_bundle.pydevd_comm_constants import CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_OVER, \
-    CMD_STEP_OVER_MY_CODE
+    CMD_STEP_OVER_MY_CODE, CMD_STEP_RETURN, CMD_STEP_RETURN_MY_CODE
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 from cpython.object cimport PyObject
 from cpython.ref cimport Py_INCREF, Py_XDECREF
@@ -1288,11 +1288,13 @@ cdef class ThreadTracer:
                     # When stepping we can't take into account caching based on the breakpoints (only global filtering).
                     if cache_skips.get(frame_cache_key) == 1:
                         back_frame = frame.f_back
-                        if back_frame is not None and pydev_step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE):
+                        if back_frame is not None and pydev_step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_RETURN, CMD_STEP_RETURN_MY_CODE):
                             back_frame_cache_key = (back_frame.f_code.co_firstlineno, back_frame.f_code.co_name, back_frame.f_code.co_filename)
                             if cache_skips.get(back_frame_cache_key) == 1:
+                                # if DEBUG: print('skipped: trace_dispatch (cache hit: 1)', frame_cache_key, frame.f_lineno, event, frame.f_code.co_name)
                                 return None if event == 'call' else NO_FTRACE
                         else:
+                            # if DEBUG: print('skipped: trace_dispatch (cache hit: 2)', frame_cache_key, frame.f_lineno, event, frame.f_code.co_name)
                             return None if event == 'call' else NO_FTRACE
 
             try:
@@ -1322,7 +1324,7 @@ cdef class ThreadTracer:
                     # return event showing the back frame as the current frame, so, we need
                     # to check not only the current frame but the back frame too.
                     back_frame = frame.f_back
-                    if back_frame is not None and pydev_step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE):
+                    if back_frame is not None and pydev_step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_RETURN, CMD_STEP_RETURN_MY_CODE):
                         if py_db.apply_files_filter(back_frame, back_frame.f_code.co_filename, False):
                             back_frame_cache_key = (back_frame.f_code.co_firstlineno, back_frame.f_code.co_name, back_frame.f_code.co_filename)
                             cache_skips[back_frame_cache_key] = 1

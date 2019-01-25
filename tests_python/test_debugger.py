@@ -2895,7 +2895,14 @@ def test_step_over_my_code_global_settings(case_setup, environ, step_method):
 
         stop_reason = do_step()
 
-        if step_method != 'step_return':
+        if IS_JYTHON:
+            # Jython got to the exit functions (CPython does it builtin,
+            # so we have no traces from Python).
+            hit = writer.wait_for_breakpoint_hit(stop_reason)  # Reverts to step in
+            assert hit.name == '_run_exitfuncs'
+            writer.write_run_thread(hit.thread_id)
+
+        elif step_method != 'step_return':
             if step_method == 'step_over':
                 stop_reason = REASON_STEP_OVER
 
@@ -2903,12 +2910,6 @@ def test_step_over_my_code_global_settings(case_setup, environ, step_method):
             assert hit.name == '<module>'
 
             writer.write_step_over(hit.thread_id)
-            if IS_JYTHON and environ != {'PYDEVD_FILTER_LIBRARIES': '1'}:
-                # Jython got to the exit functions (CPython does it builtin,
-                # so we have no traces from Python).
-                hit = writer.wait_for_breakpoint_hit(stop_reason)  # Reverts to step in
-                assert hit.name == '_run_exitfuncs'
-                writer.write_run_thread(hit.thread_id)
 
         writer.finished_ok = True
 
