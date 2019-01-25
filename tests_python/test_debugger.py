@@ -2896,15 +2896,18 @@ def test_step_over_my_code_global_settings(case_setup, environ, step_method):
             # Jython may get to exit functions, so, just resume the thread.
             writer.write_run_thread(hit.thread_id)
 
-        elif step_method != 'step_return':
+        else:
             stop_reason = do_step()
-            if step_method == 'step_over':
-                stop_reason = REASON_STEP_OVER
 
-            hit = writer.wait_for_breakpoint_hit(reason=stop_reason)
-            assert hit.name == '<module>'
+            if step_method != 'step_return':
+                stop_reason = do_step()
+                if step_method == 'step_over':
+                    stop_reason = REASON_STEP_OVER
 
-            writer.write_step_over(hit.thread_id)
+                hit = writer.wait_for_breakpoint_hit(reason=stop_reason)
+                assert hit.name == '<module>'
+
+                writer.write_step_over(hit.thread_id)
 
         writer.finished_ok = True
 
