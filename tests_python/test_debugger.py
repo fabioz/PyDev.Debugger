@@ -2835,17 +2835,41 @@ def test_step_over_my_code(case_setup):
         writer.finished_ok = True
 
 
+@pytest.fixture(
+    name='step_method',
+    params=[
+        'step_over',
+        'step_return',
+        'step_in',
+    ]
+)
+def _step_method(request):
+    return request.param
+
+
 @pytest.mark.parametrize("environ", [
     {'PYDEVD_FILTER_LIBRARIES': '1'},  # Global setting for step over
     {'PYDEVD_FILTERS': json.dumps({'**/other.py': True})},  # specify as json
     {'PYDEVD_FILTERS': '**/other.py'},  # specify ';' separated list
 ])
-def test_step_over_my_code_global_settings(case_setup, environ):
+def test_step_over_my_code_global_settings(case_setup, environ, step_method):
 
     def get_environ(writer):
         env = os.environ.copy()
         env.update(environ)
         return env
+
+    def do_step():
+        if step_method == 'step_over':
+            writer.write_step_over(hit.thread_id)
+            return REASON_STEP_INTO  # Note: goes from step over to step into
+        elif step_method == 'step_return':
+            writer.write_step_return(hit.thread_id)
+            return REASON_STEP_RETURN
+        else:
+            assert step_method == 'step_in'
+            writer.write_step_in(hit.thread_id)
+            return REASON_STEP_INTO
 
     with case_setup.test_file('my_code/my_code.py', get_environ=get_environ) as writer:
         writer.write_set_project_roots([debugger_unittest._get_debugger_test_file('my_code')])
@@ -2861,25 +2885,30 @@ def test_step_over_my_code_global_settings(case_setup, environ):
         hit = writer.wait_for_breakpoint_hit(reason=REASON_STEP_INTO)
         assert hit.name == 'callback2'
 
-        writer.write_step_over(hit.thread_id)
-        hit = writer.wait_for_breakpoint_hit(reason=REASON_STEP_INTO)  # Note: goes from step over to step into
+        stop_reason = do_step()
+        hit = writer.wait_for_breakpoint_hit(reason=stop_reason)
         assert hit.name == 'callback1'
 
-        writer.write_step_over(hit.thread_id)
-        hit = writer.wait_for_breakpoint_hit(reason=REASON_STEP_INTO)  # Note: goes from step over to step into
+        stop_reason = do_step()
+        hit = writer.wait_for_breakpoint_hit(reason=stop_reason)
         assert hit.name == '<module>'
 
-        writer.write_step_over(hit.thread_id)
-        hit = writer.wait_for_breakpoint_hit(reason=REASON_STEP_OVER)
-        assert hit.name == '<module>'
+        stop_reason = do_step()
 
-        writer.write_step_over(hit.thread_id)
-        if IS_JYTHON and environ != {'PYDEVD_FILTER_LIBRARIES': '1'}:
-            # Jython got to the exit functions (CPython does it builtin,
-            # so we have no traces from Python).
-            hit = writer.wait_for_breakpoint_hit(REASON_STEP_INTO)  # Reverts to step in
-            assert hit.name == '_run_exitfuncs'
-            writer.write_run_thread(hit.thread_id)
+        if step_method != 'step_return':
+            if step_method == 'step_over':
+                stop_reason = REASON_STEP_OVER
+
+            hit = writer.wait_for_breakpoint_hit(reason=stop_reason)
+            assert hit.name == '<module>'
+
+            writer.write_step_over(hit.thread_id)
+            if IS_JYTHON and environ != {'PYDEVD_FILTER_LIBRARIES': '1'}:
+                # Jython got to the exit functions (CPython does it builtin,
+                # so we have no traces from Python).
+                hit = writer.wait_for_breakpoint_hit(stop_reason)  # Reverts to step in
+                assert hit.name == '_run_exitfuncs'
+                writer.write_run_thread(hit.thread_id)
 
         writer.finished_ok = True
 
