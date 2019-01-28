@@ -64,6 +64,7 @@ each command has a format:
 '''
 
 import itertools
+import os
 
 from _pydev_bundle.pydev_imports import _queue
 from _pydev_imps._pydev_saved_modules import time
@@ -435,7 +436,9 @@ def start_client(host, port):
         pass  # May not be available everywhere.
 
     try:
-        s.settimeout(10)  # 10 seconds timeout
+        # 10 seconds default timeout
+        timeout = int(os.environ.get('PYDEVD_CONNECT_TIMEOUT', 10))
+        s.settimeout(timeout)
         s.connect((host, port))
         s.settimeout(None)  # no timeout after connected
         pydevd_log(1, "Connected.")
