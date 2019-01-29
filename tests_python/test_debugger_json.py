@@ -223,7 +223,7 @@ def test_case_skipping_filters(case_setup, custom_setup):
         else:
             raise AssertionError('Unhandled: %s' % (custom_setup,))
 
-        json_facade.write_add_breakpoints(writer.get_line_index_with_content('break here'))
+        json_facade.write_set_breakpoints(writer.get_line_index_with_content('break here'))
         json_facade.write_make_initial_run()
 
         json_facade.wait_for_json_message(ThreadEvent, lambda event: event.body.reason == 'started')
