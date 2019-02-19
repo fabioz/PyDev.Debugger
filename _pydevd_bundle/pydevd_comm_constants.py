@@ -82,13 +82,16 @@ CMD_REDIRECT_OUTPUT = 200
 CMD_GET_NEXT_STATEMENT_TARGETS = 201
 CMD_SET_PROJECT_ROOTS = 202
 
+CMD_MODULE_EVENT = 203
+
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_SET_PROTOCOL = 503
 CMD_ERROR = 901
 
 # this number can be changed if there's need to do so
-MAX_IO_MSG_SIZE = 1000  # if the io is too big, we'll not send all (could make the debugger too non-responsive)
+# if the io is too big, we'll not send all (could make the debugger too non-responsive)
+MAX_IO_MSG_SIZE = 10000
 
 VERSION_STRING = "@@BUILD_NUMBER@@"
 
@@ -164,6 +167,7 @@ ID_TO_MEANING = {
     '200': 'CMD_REDIRECT_OUTPUT',
     '201': 'CMD_GET_NEXT_STATEMENT_TARGETS',
     '202': 'CMD_SET_PROJECT_ROOTS',
+    '203': 'CMD_MODULE_EVENT',
 
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',
