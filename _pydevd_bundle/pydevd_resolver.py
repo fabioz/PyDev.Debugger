@@ -235,10 +235,7 @@ class DictResolver:
         raise UnableToResolveVariableException()
 
     def key_to_str(self, key):
-        if not pydevd_constants.IS_PY3K:
-            if isinstance(key, unicode):
-                return "u'%s'" % key
-        return '%r' % key
+        return '%r' % (key,)
 
     def init_dict(self):
         return {}
