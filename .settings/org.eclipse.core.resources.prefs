@@ -11,4 +11,5 @@ encoding//pydevd_attach_to_process/winappdbg/interactive.py=utf-8
 encoding//tests_python/resources/_debugger_case_redirect.py=utf-8
 encoding//tests_python/test_convert_utilities.py=utf-8
 encoding//tests_python/test_debugger.py=utf-8
+encoding//tests_python/test_debugger_json.py=utf-8
 encoding//tests_python/test_extract_token.py=utf-8
