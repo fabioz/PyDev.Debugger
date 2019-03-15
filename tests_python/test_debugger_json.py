@@ -2,10 +2,10 @@ import pytest
 
 from _pydevd_bundle._debug_adapter import pydevd_schema, pydevd_base_schema
 from _pydevd_bundle._debug_adapter.pydevd_base_schema import from_json
-from _pydevd_bundle._debug_adapter.pydevd_schema import ThreadEvent, ModuleEvent
+from _pydevd_bundle._debug_adapter.pydevd_schema import ThreadEvent, ModuleEvent, StoppedEvent
 from tests_python import debugger_unittest
 from tests_python.debugger_unittest import IS_JYTHON, REASON_STEP_INTO, REASON_STEP_OVER, \
-    REASON_CAUGHT_EXCEPTION
+    REASON_CAUGHT_EXCEPTION, REASON_THREAD_SUSPEND, REASON_STEP_RETURN
 import json
 from collections import namedtuple
 from _pydevd_bundle.pydevd_constants import int_types
@@ -730,6 +730,205 @@ def test_stack_and_variables(case_setup):
                 'type': 'list',
                 'evaluateName': 'variable_for_test_1',
             }
+
+        writer.write_run_thread(hit.thread_id)
+
+        writer.finished_ok = True
+
+
+def test_hex_variables(case_setup):
+    with case_setup.test_file('_debugger_case_local_variables_hex.py') as writer:
+        json_facade = JsonFacade(writer)
+
+        writer.write_set_protocol('http_json')
+        writer.write_add_breakpoint(writer.get_line_index_with_content('Break here'))
+
+        json_facade.write_make_initial_run()
+
+        hit = writer.wait_for_breakpoint_hit()
+
+        # : :type stack_trace_response: StackTraceResponse
+        # : :type stack_trace_response_body: StackTraceResponseBody
+        # : :type stack_frame: StackFrame
+        stack_trace_request = json_facade.write_request(
+            pydevd_schema.StackTraceRequest(pydevd_schema.StackTraceArguments(threadId=hit.thread_id)))
+        stack_trace_response = json_facade.wait_for_response(stack_trace_request)
+        stack_trace_response_body = stack_trace_response.body
+        assert len(stack_trace_response_body.stackFrames) == 2
+        stack_frame = next(iter(stack_trace_response_body.stackFrames))
+        assert stack_frame['name'] == 'Call'
+        assert stack_frame['source']['path'].endswith('_debugger_case_local_variables_hex.py')
+
+        scopes_request = json_facade.write_request(pydevd_schema.ScopesRequest(
+            pydevd_schema.ScopesArguments(stack_frame['id'])))
+
+        scopes_response = json_facade.wait_for_response(scopes_request)
+        scopes = scopes_response.body.scopes
+        assert len(scopes) == 1
+        scope = pydevd_schema.Scope(**next(iter(scopes)))
+        assert scope.name == 'Locals'
+        assert not scope.expensive
+        frame_variables_reference = scope.variablesReference
+        assert isinstance(frame_variables_reference, int)
+
+        fmt = {'hex': True}
+        variables_request = json_facade.write_request(
+            pydevd_schema.VariablesRequest(pydevd_schema.VariablesArguments(frame_variables_reference, format=fmt)))
+        variables_response = json_facade.wait_for_response(variables_request)
+
+        # : :type variables_response: VariablesResponse
+        variable_for_test_1, variable_for_test_2, variable_for_test_3, variable_for_test_4 = sorted(list(
+            v for v in variables_response.body.variables if v['name'].startswith('variables_for_test')
+        ), key=lambda v: v['name'])
+        assert variable_for_test_1 == {
+            'name': 'variables_for_test_1',
+            'value': "0x64",
+            'type': 'int',
+            'evaluateName': 'variables_for_test_1'
+        }
+
+        assert isinstance(variable_for_test_2.pop('variablesReference'), int)
+        assert variable_for_test_2 == {
+            'name': 'variables_for_test_2',
+            'value': "[0x1, 0xa, 0x64]",
+            'type': 'list',
+            'evaluateName': 'variables_for_test_2'
+        }
+
+        assert isinstance(variable_for_test_3.pop('variablesReference'), int)
+        assert variable_for_test_3 == {
+            'name': 'variables_for_test_3',
+            'value': '{0xa: 0xa, 0x64: 0x64, 0x3e8: 0x3e8}',
+            'type': 'dict',
+            'evaluateName': 'variables_for_test_3'
+        }
+
+        assert isinstance(variable_for_test_4.pop('variablesReference'), int)
+        assert variable_for_test_4 == {
+            'name': 'variables_for_test_4',
+            'value': '{(0x1, 0xa, 0x64): (0x2710, 0x186a0, 0x186a0)}',
+            'type': 'dict',
+            'evaluateName': 'variables_for_test_4'
+        }
+
+        writer.write_run_thread(hit.thread_id)
+
+        writer.finished_ok = True
+
+
+def test_pause_and_continue(case_setup):
+    with case_setup.test_file('_debugger_case_pause_continue.py') as writer:
+        json_facade = JsonFacade(writer)
+
+        writer.write_set_protocol('http_json')
+        writer.write_add_breakpoint(writer.get_line_index_with_content('Break here'))
+
+        json_facade.write_make_initial_run()
+
+        hit = writer.wait_for_breakpoint_hit()
+
+        continue_request = json_facade.write_request(
+            pydevd_schema.ContinueRequest(pydevd_schema.ContinueArguments('*')))
+        continue_response = json_facade.wait_for_response(continue_request)
+        assert continue_response.body.allThreadsContinued
+
+        pause_request = json_facade.write_request(
+            pydevd_schema.PauseRequest(pydevd_schema.PauseArguments('*')))
+        pause_response = json_facade.wait_for_response(pause_request)
+        hit = writer.wait_for_breakpoint_hit(reason=REASON_THREAD_SUSPEND)
+
+        stack_trace_request = json_facade.write_request(
+            pydevd_schema.StackTraceRequest(pydevd_schema.StackTraceArguments(threadId=hit.thread_id)))
+        stack_trace_response = json_facade.wait_for_response(stack_trace_request)
+        stack_frame = next(iter(stack_trace_response.body.stackFrames))
+
+        scopes_request = json_facade.write_request(pydevd_schema.ScopesRequest(
+            pydevd_schema.ScopesArguments(stack_frame['id'])))
+        scopes_response = json_facade.wait_for_response(scopes_request)
+        scope = pydevd_schema.Scope(**next(iter(scopes_response.body.scopes)))
+        frame_variables_reference = scope.variablesReference
+
+        set_variable_request = json_facade.write_request(
+            pydevd_schema.SetVariableRequest(pydevd_schema.SetVariableArguments(
+                frame_variables_reference, 'loop', 'False'
+        )))
+        set_variable_response = json_facade.wait_for_response(set_variable_request)
+        set_variable_response_as_dict = set_variable_response.to_dict()['body']
+        assert set_variable_response_as_dict == {'value': "False", 'type': 'bool'}
+
+        continue_request = json_facade.write_request(
+        pydevd_schema.ContinueRequest(pydevd_schema.ContinueArguments('*')))
+        continue_response = json_facade.wait_for_response(continue_request)
+        assert continue_response.body.allThreadsContinued
+
+        writer.finished_ok = True
+
+
+def test_stepping(case_setup):
+    with case_setup.test_file('_debugger_case_stepping.py') as writer:
+        json_facade = JsonFacade(writer)
+
+        writer.write_set_protocol('http_json')
+        writer.write_add_breakpoint(writer.get_line_index_with_content('Break here 1'))
+        writer.write_add_breakpoint(writer.get_line_index_with_content('Break here 2'))
+
+        json_facade.write_make_initial_run()
+
+        hit = writer.wait_for_breakpoint_hit()
+
+        # Test Step-Over or 'next'
+        stack_trace_request = json_facade.write_request(
+            pydevd_schema.StackTraceRequest(pydevd_schema.StackTraceArguments(threadId=hit.thread_id)))
+        stack_trace_response = json_facade.wait_for_response(stack_trace_request)
+        stack_frame = next(iter(stack_trace_response.body.stackFrames))
+        before_step_over_line = stack_frame['line']
+
+        next_request = json_facade.write_request(
+            pydevd_schema.NextRequest(pydevd_schema.NextArguments(hit.thread_id)))
+        next_response = json_facade.wait_for_response(next_request)
+        hit = writer.wait_for_breakpoint_hit(REASON_STEP_OVER)
+
+        stack_trace_request = json_facade.write_request(
+            pydevd_schema.StackTraceRequest(pydevd_schema.StackTraceArguments(threadId=hit.thread_id)))
+        stack_trace_response = json_facade.wait_for_response(stack_trace_request)
+        stack_frame = next(iter(stack_trace_response.body.stackFrames))
+        after_step_over_line = stack_frame['line']
+
+        assert int(before_step_over_line) + 1 == int(after_step_over_line)
+
+        # Test step into or 'stepIn'
+        stepin_request = json_facade.write_request(
+            pydevd_schema.StepInRequest(pydevd_schema.StepInArguments(hit.thread_id)))
+        stepin_response = json_facade.wait_for_response(stepin_request)
+        hit = writer.wait_for_breakpoint_hit(REASON_STEP_INTO)
+
+        stack_trace_request = json_facade.write_request(
+            pydevd_schema.StackTraceRequest(pydevd_schema.StackTraceArguments(threadId=hit.thread_id)))
+        stack_trace_response = json_facade.wait_for_response(stack_trace_request)
+        stack_frame = next(iter(stack_trace_response.body.stackFrames))
+
+        assert stack_frame['name'] == 'step_into'
+
+        # Test step return or 'stepOut'
+        writer.write_run_thread(hit.thread_id)
+        hit = writer.wait_for_breakpoint_hit()
+
+        stack_trace_request = json_facade.write_request(
+            pydevd_schema.StackTraceRequest(pydevd_schema.StackTraceArguments(threadId=hit.thread_id)))
+        stack_trace_response = json_facade.wait_for_response(stack_trace_request)
+        stack_frame = next(iter(stack_trace_response.body.stackFrames))
+        assert stack_frame['name'] == 'step_out'
+
+        stepout_request = json_facade.write_request(
+            pydevd_schema.StepInRequest(pydevd_schema.StepInArguments(hit.thread_id)))
+        stepout_response = json_facade.wait_for_response(stepout_request)
+        hit = writer.wait_for_breakpoint_hit(REASON_STEP_RETURN)
+
+        stack_trace_request = json_facade.write_request(
+            pydevd_schema.StackTraceRequest(pydevd_schema.StackTraceArguments(threadId=hit.thread_id)))
+        stack_trace_response = json_facade.wait_for_response(stack_trace_request)
+        stack_frame = next(iter(stack_trace_response.body.stackFrames))
+        assert stack_frame['name'] == 'Call'
 
         writer.write_run_thread(hit.thread_id)
 
