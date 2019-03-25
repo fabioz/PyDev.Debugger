@@ -209,7 +209,7 @@ class _PyDevJsonCommandProcessor(object):
         def on_resumed():
             body = {'allThreadsContinued': thread_id == '*'}
             response = pydevd_base_schema.build_response(request, kwargs={'body': body})
-            cmd = NetCommand(CMD_RETURN, 0, response.to_dict(), is_json=True)
+            cmd = NetCommand(CMD_RETURN, 0, response, is_json=True)
             py_db.writer.add_command(cmd)
 
         # Only send resumed notification when it has actually resumed!
