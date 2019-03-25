@@ -66,7 +66,7 @@ from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
 from _pydevd_bundle.pydevd_collect_try_except_info import collect_try_except_info
 from _pydevd_bundle.pydevd_suspended_frames import SuspendedFramesManager
 
-__version_info__ = (1, 5, 1)
+__version_info__ = (1, 6, 0)
 __version_info_str__ = []
 for v in __version_info__:
     __version_info_str__.append(str(v))
