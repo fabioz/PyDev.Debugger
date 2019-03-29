@@ -1022,6 +1022,7 @@ def test_exception_details(case_setup):
         writer.finished_ok = True
 
 
+@pytest.mark.skipif(IS_JYTHON, reason='No goto on Jython.')
 def test_goto(case_setup):
     with case_setup.test_file('_debugger_case_set_next_statement.py') as writer:
         json_facade = JsonFacade(writer)
