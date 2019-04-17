@@ -7,7 +7,7 @@ from tests_python.debug_constants import IS_PY26, IS_PY3K
 
 def test_is_main_thread():
     from _pydevd_bundle.pydevd_utils import is_current_thread_main_thread
-    if not is_current_thread_main_thread() or True:
+    if not is_current_thread_main_thread():
         error_msg = 'Current thread does not seem to be a main thread. Details:\n'
         current_thread = threading.current_thread()
         error_msg += 'Current thread: %s\n' % (current_thread,)
