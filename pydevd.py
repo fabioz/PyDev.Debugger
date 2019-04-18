@@ -339,7 +339,7 @@ class ThreadsSuspendedSingleNotification(AbstractSingleNotificationBehavior):
     def send_suspend_notification(self, thread_id, stop_reason):
         py_db = self._py_db()
         if py_db is not None:
-            py_db.writer.add_command(py_db.cmd_factory.make_thread_suspend_single_notification(thread_id, stop_reason))
+            py_db.writer.add_command(py_db.cmd_factory.make_thread_suspend_single_notification(py_db, thread_id, stop_reason))
 
     @overrides(AbstractSingleNotificationBehavior.notify_thread_suspended)
     @contextmanager
