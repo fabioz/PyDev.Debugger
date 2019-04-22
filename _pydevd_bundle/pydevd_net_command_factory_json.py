@@ -14,7 +14,7 @@ from _pydevd_bundle.pydevd_comm_constants import CMD_THREAD_CREATE, CMD_RETURN, 
     CMD_WRITE_TO_CONSOLE, CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_OVER, CMD_STEP_OVER_MY_CODE, \
     CMD_STEP_RETURN, CMD_STEP_CAUGHT_EXCEPTION, CMD_ADD_EXCEPTION_BREAK, CMD_SET_BREAK, \
     CMD_SET_NEXT_STATEMENT, CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION, \
-    CMD_THREAD_RESUME_SINGLE_NOTIFICATION
+    CMD_THREAD_RESUME_SINGLE_NOTIFICATION, CMD_THREAD_KILL
 from _pydevd_bundle.pydevd_constants import get_thread_id, dict_values
 from _pydevd_bundle.pydevd_net_command import NetCommand
 from _pydevd_bundle.pydevd_net_command_factory_xml import NetCommandFactory
@@ -98,6 +98,14 @@ class NetCommandFactoryJson(NetCommandFactory):
         )
 
         return NetCommand(CMD_THREAD_CREATE, 0, msg, is_json=True)
+
+    @overrides(NetCommandFactory.make_thread_killed_message)
+    def make_thread_killed_message(self, tid):
+        msg = pydevd_schema.ThreadEvent(
+            pydevd_schema.ThreadEventBody('exited', tid),
+        )
+
+        return NetCommand(CMD_THREAD_KILL, 0, msg, is_json=True)
 
     @overrides(NetCommandFactory.make_list_threads_message)
     def make_list_threads_message(self, seq):

@@ -35,6 +35,23 @@ class JsonFacade(object):
         writer.write_set_protocol('http_json')
         writer.write_multi_threads_single_notification(True)
 
+    def collect_messages_until_accepted(self, expected_class, accept_message=lambda obj:True):
+
+        collected_messages = []
+
+        def accept_json_message(msg):
+            if msg.startswith('{'):
+                decoded_msg = from_json(msg)
+                if isinstance(decoded_msg, expected_class):
+                    if accept_message(decoded_msg):
+                        return True
+                collected_messages.append(decoded_msg)
+
+            return False
+
+        msg = self.writer.wait_for_message(accept_json_message, unquote_msg=False, expect_xml=False)
+        return collected_messages, from_json(msg)
+
     def wait_for_json_message(self, expected_class, accept_message=lambda obj:True):
 
         def accept_json_message(msg):
@@ -350,6 +367,29 @@ def test_case_json_protocol(case_setup):
 
         # Removes breakpoints and proceeds running.
         json_facade.write_disconnect()
+
+        writer.finished_ok = True
+
+
+def test_case_started_exited_threads_protocol(case_setup):
+    with case_setup.test_file('_debugger_case_thread_started_exited.py') as writer:
+        json_facade = JsonFacade(writer)
+
+        json_facade.write_launch()
+        break_line = writer.get_line_index_with_content('Break here')
+        json_facade.write_set_breakpoints(break_line)
+
+        json_facade.write_make_initial_run()
+
+        collected_messages, _stopped_event = json_facade.collect_messages_until_accepted(StoppedEvent)
+        started_events = [x for x in collected_messages if isinstance(x, ThreadEvent) and x.body.reason == 'started']
+        exited_events = [x for x in collected_messages if isinstance(x, ThreadEvent) and x.body.reason == 'exited']
+        assert len(started_events) == 4
+        assert len(exited_events) == 3  # Main is still running.
+        json_facade.write_continue()
+
+        # Wait for main to exit.
+        json_facade.wait_for_json_message(ThreadEvent, lambda event: event.body.reason == 'exited')
 
         writer.finished_ok = True
 
