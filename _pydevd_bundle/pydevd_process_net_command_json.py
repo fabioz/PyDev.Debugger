@@ -22,13 +22,15 @@ from _pydevd_bundle.pydevd_utils import convert_dap_log_message_to_expression
 import pydevd_file_utils
 from _pydevd_bundle._debug_adapter.pydevd_schema import CompletionsResponseBody
 
-
 try:
     import dis
 except ImportError:
+
     def _get_code_lines(code):
         raise NotImplementedError
+
 else:
+
     def _get_code_lines(code):
         if not isinstance(code, types.CodeType):
             path = code
@@ -52,6 +54,7 @@ else:
                         yield lineno
 
         return iterate()
+
 
 def _convert_rules_to_exclude_filters(rules, filename_to_server, on_error):
     exclude_filters = []
@@ -239,6 +242,13 @@ class _PyDevJsonCommandProcessor(object):
 
         self.api.request_completions(py_db, seq, thread_id, frame_id, text, line=line, column=column)
 
+    def _resolve_remote_root(self, local_root, remote_root):
+        if remote_root == '.':
+            cwd = os.getcwd()
+            append_pathsep = local_root.endswith('\\') or local_root.endswith('/')
+            return cwd + (os.path.sep if append_pathsep else '')
+        return remote_root
+
     def _set_debug_options(self, py_db, args):
         rules = args.get('rules')
         exclude_filters = []
@@ -258,10 +268,22 @@ class _PyDevJsonCommandProcessor(object):
         debug_stdlib = self._debug_options.get('DEBUG_STDLIB', False)
         self.api.set_use_libraries_filter(py_db, not debug_stdlib)
 
+        path_mappings = []
+        for pathMapping in args.get('pathMappings', []):
+            localRoot = pathMapping.get('localRoot', '')
+            remoteRoot = pathMapping.get('remoteRoot', '')
+            remoteRoot = self._resolve_remote_root(localRoot, remoteRoot)
+            if (localRoot != '') and (remoteRoot != ''):
+                path_mappings.append((localRoot, remoteRoot))
+
+        if bool(path_mappings):
+            pydevd_file_utils.setup_client_server_paths(path_mappings)
+
     def on_launch_request(self, py_db, request):
         '''
         :param LaunchRequest request:
         '''
+        self.api.set_enable_thread_notifications(py_db, True)
         self._set_debug_options(py_db, request.arguments.kwargs)
         response = pydevd_base_schema.build_response(request)
         return NetCommand(CMD_RETURN, 0, response, is_json=True)
@@ -270,6 +292,7 @@ class _PyDevJsonCommandProcessor(object):
         '''
         :param AttachRequest request:
         '''
+        self.api.set_enable_thread_notifications(py_db, True)
         self._set_debug_options(py_db, request.arguments.kwargs)
         response = pydevd_base_schema.build_response(request)
         return NetCommand(CMD_RETURN, 0, response, is_json=True)
@@ -390,6 +413,7 @@ class _PyDevJsonCommandProcessor(object):
         '''
         :param DisconnectRequest request:
         '''
+        self.api.set_enable_thread_notifications(py_db, False)
         self.api.remove_all_breakpoints(py_db, filename='*')
         self.api.remove_all_exception_breakpoints(py_db)
         self.api.request_resume_thread(thread_id='*')
@@ -702,7 +726,9 @@ class _PyDevJsonCommandProcessor(object):
         response_args = {'body': body}
 
         if content is None:
-            if server_filename:
+            if source_reference == 0:
+                message = 'Source unavailable'
+            elif server_filename:
                 message = 'Unable to retrieve source for %s' % (server_filename,)
             else:
                 message = 'Invalid sourceReference %d' % (source_reference,)

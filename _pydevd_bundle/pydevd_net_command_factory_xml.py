@@ -73,7 +73,7 @@ class NetCommandFactory(object):
         frame_description = pydevd_xml.make_valid_xml_value(frame_description)
         return NetCommand(CMD_THREAD_CREATE, 0, '<xml><thread name="%s" id="%s"/></xml>' % (frame_description, frame_id))
 
-    def make_list_threads_message(self, seq):
+    def make_list_threads_message(self, py_db, seq):
         """ returns thread listing as XML """
         try:
             threads = get_non_pydevd_threads()
