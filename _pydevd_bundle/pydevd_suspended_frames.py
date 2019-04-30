@@ -147,7 +147,7 @@ class _ObjectVariable(_AbstractVariable):
 
         if not evaluate_name:
             # Note: right now we only pass control to the resolver in the cases where
-            # there's an evaluate name (the idea being that if we can evaluate it,
+            # there's no evaluate name (the idea being that if we can evaluate it,
             # we can use that evaluation to set the value too -- if in the future
             # a case where this isn't true is found this logic may need to be changed).
             _type, _type_name, container_resolver = get_type(self.value)

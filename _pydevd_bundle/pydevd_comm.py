@@ -735,9 +735,6 @@ def internal_change_variable_json(py_db, request):
     deal with changing at a frame level, so, currently changing the contents of something
     in a different scope is currently not supported.
 
-    TODO: make the resolvers structure resolve the name and change accordingly -- for instance, the
-    list resolver should change the value considering the index.
-
     :param SetVariableRequest request:
     '''
     # : :type arguments: SetVariableArguments

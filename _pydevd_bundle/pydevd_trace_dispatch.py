@@ -2,7 +2,6 @@
 # Should give warning only here if cython is not available but supported.
 
 import os
-import sys
 from _pydevd_bundle.pydevd_constants import CYTHON_SUPPORTED
 from _pydev_bundle import pydev_log
 
