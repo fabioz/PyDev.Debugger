@@ -1851,7 +1851,7 @@ def test_wait_for_attach(case_setup_remote_attach_to):
         # Change value of 'a' for test to finish.
         json_facade.write_set_variable(json_hit.frame_id, 'a', '10')
 
-        json_facade.write_disconnect()
+        json_facade.write_disconnect(wait_for_response=False)
         writer.finished_ok = True
 
 
