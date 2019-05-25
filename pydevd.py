@@ -36,13 +36,15 @@ from _pydevd_bundle.pydevd_comm_constants import (CMD_THREAD_SUSPEND, CMD_STEP_I
 from _pydevd_bundle.pydevd_constants import (IS_JYTH_LESS25, get_thread_id, get_current_thread_id,
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame,
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, IS_PY34_OR_GREATER, IS_PY2, NULL,
-    NO_FTRACE, IS_IRONPYTHON)
+    NO_FTRACE, IS_IRONPYTHON, JSON_PROTOCOL)
+from _pydevd_bundle.pydevd_defaults import PydevdCustomization
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 from _pydevd_bundle.pydevd_extension_api import DebuggerEventHandler
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, remove_exception_from_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from _pydevd_bundle.pydevd_net_command_factory_xml import NetCommandFactory
+from _pydevd_bundle.pydevd_net_command_factory_json import NetCommandFactoryJson
 from _pydevd_bundle.pydevd_trace_dispatch import (
     trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips, fix_top_level_trace_and_get_trace_func)
 from _pydevd_bundle.pydevd_utils import save_main_module, is_current_thread_main_thread
@@ -200,12 +202,12 @@ class CheckOutputThread(PyDBDaemonThread):
                     pydev_log.debug("No threads alive, finishing debug session")
                     self.py_db.finish_debugging_session()
                     kill_all_pydev_threads()
+                    self.wait_pydb_threads_to_finish()
                 except:
                     pydev_log.exception()
 
                 self.killReceived = True
-
-            self.wait_pydb_threads_to_finish()
+                return
 
             self.py_db.check_output_redirect()
 
@@ -216,7 +218,7 @@ class CheckOutputThread(PyDBDaemonThread):
         while time.time() < started_at + timeout:
             if len(pydb_daemon_threads) == 1 and pydb_daemon_threads.get(self, None):
                 return
-            time.sleep(0.01)
+            time.sleep(1 / 30.)
         pydev_log.debug("The following pydb threads may not have finished correctly: %s",
                         ', '.join([t.getName() for t in pydb_daemon_threads if t is not self]))
 
@@ -396,6 +398,9 @@ class PyDB(object):
         self._files_filtering = FilesFiltering()
 
         self.breakpoints = {}
+
+        # Set communication protocol
+        PyDevdAPI().set_protocol(self, 0, PydevdCustomization.DEFAULT_PROTOCOL)
 
         # mtime to be raised when breakpoints change
         self.mtime = 0
@@ -770,22 +775,23 @@ class PyDB(object):
         :return: True if it should be excluded, False if it should be included and None
             if no rule matched the given file.
         '''
+        cache_key = (filename, frame.f_code.co_name)
         try:
-            return self._exclude_by_filter_cache[filename]
+            return self._exclude_by_filter_cache[cache_key]
         except KeyError:
             cache = self._exclude_by_filter_cache
 
             abs_real_path_and_basename = get_abs_path_real_path_and_base_from_file(filename)
             # pydevd files are always filtered out
             if self.get_file_type(abs_real_path_and_basename) == self.PYDEV_FILE:
-                cache[filename] = True
+                cache[cache_key] = True
             else:
                 module_name = None
                 if self._files_filtering.require_module:
-                    module_name = frame.f_globals.get('__name__')
-                cache[filename] = self._files_filtering.exclude_by_filter(filename, module_name)
+                    module_name = frame.f_globals.get('__name__', '')
+                cache[cache_key] = self._files_filtering.exclude_by_filter(filename, module_name)
 
-            return cache[filename]
+            return cache[cache_key]
 
     def apply_files_filter(self, frame, filename, force_check_project_scope):
         '''
@@ -809,7 +815,7 @@ class PyDB(object):
             if self.plugin is not None and (self.has_plugin_line_breaks or self.has_plugin_exception_breaks):
                 # If it's explicitly needed by some plugin, we can't skip it.
                 if not self.plugin.can_skip(self, frame):
-                    # print('include (include by plugins): %s' % filename)
+                    pydev_log.debug_once('File traced (included by plugins): %s', filename)
                     self._apply_filter_cache[cache_key] = False
                     return False
 
@@ -818,21 +824,30 @@ class PyDB(object):
                 if exclude_by_filter is not None:
                     if exclude_by_filter:
                         # ignore files matching stepping filters
-                        # print('exclude (filtered out): %s' % filename)
+                        pydev_log.debug_once('File not traced (excluded by filters): %s', filename)
+
                         self._apply_filter_cache[cache_key] = True
                         return True
                     else:
-                        # print('include (explicitly included): %s' % filename)
+                        pydev_log.debug_once('File traced (explicitly included by filters): %s', filename)
+
                         self._apply_filter_cache[cache_key] = False
                         return False
 
             if (self._is_libraries_filter_enabled or force_check_project_scope) and not self.in_project_scope(filename):
-                # print('exclude (not on project): %s' % filename)
                 # ignore library files while stepping
                 self._apply_filter_cache[cache_key] = True
+                if force_check_project_scope:
+                    pydev_log.debug_once('File not traced (not in project): %s', filename)
+                else:
+                    pydev_log.debug_once('File not traced (not in project - force_check_project_scope): %s', filename)
+
                 return True
 
-            # print('include (on project): %s' % filename)
+            if force_check_project_scope:
+                pydev_log.debug_once('File traced: %s (force_check_project_scope)', filename)
+            else:
+                pydev_log.debug_once('File traced: %s', filename)
             self._apply_filter_cache[cache_key] = False
             return False
 
@@ -874,6 +889,9 @@ class PyDB(object):
 
     def get_use_libraries_filter(self):
         return self._files_filtering.use_libraries_filter()
+
+    def get_require_module_for_filters(self):
+        return self._files_filtering.require_module
 
     def has_threads_alive(self):
         for t in pydevd_utils.get_non_pydevd_threads():
@@ -2436,6 +2454,9 @@ def main():
 
     is_module = setup['module']
     patch_stdin(debugger)
+
+    if setup['json-dap']:
+        PyDevdAPI().set_protocol(debugger, 0, JSON_PROTOCOL)
 
     if fix_app_engine_debug:
         sys.stderr.write("pydev debugger: google app engine integration enabled\n")
