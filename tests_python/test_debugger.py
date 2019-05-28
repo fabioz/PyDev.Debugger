@@ -17,7 +17,7 @@ from tests_python.debugger_unittest import (CMD_SET_PROPERTY_TRACE, REASON_CAUGH
     IS_APPVEYOR, wait_for_condition, CMD_GET_FRAME, CMD_GET_BREAKPOINT_EXCEPTION,
     CMD_THREAD_SUSPEND, CMD_STEP_OVER, REASON_STEP_OVER, CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION,
     CMD_THREAD_RESUME_SINGLE_NOTIFICATION, REASON_STEP_RETURN, REASON_STEP_RETURN_MY_CODE,
-    REASON_STEP_OVER_MY_CODE, REASON_STEP_INTO, CMD_THREAD_KILL)
+    REASON_STEP_OVER_MY_CODE, REASON_STEP_INTO, CMD_THREAD_KILL, IS_PYPY)
 from _pydevd_bundle.pydevd_constants import IS_WINDOWS
 from _pydevd_bundle.pydevd_comm_constants import CMD_RELOAD_CODE
 import json
@@ -2755,7 +2755,7 @@ def test_custom_frames(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif((not (IS_PY36 or IS_PY27)) or IS_JYTHON, reason='Gevent only installed on Py36/Py27 for tests.')
+@pytest.mark.skipif((not (IS_PY36 or IS_PY27)) or IS_JYTHON or IS_PYPY, reason='Gevent only installed on Py36/Py27 for tests.')
 def test_gevent(case_setup):
 
     def get_environ(writer):

@@ -2,7 +2,7 @@ import pytest
 import sys
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_IRONPYTHON
 from tests_python.debug_constants import TEST_CYTHON
-from tests_python.debug_constants import TEST_JYTHON
+from tests_python.debug_constants import PYDEVD_TEST_VM
 import site
 import os
 from _pydev_bundle import pydev_log
@@ -10,7 +10,7 @@ from _pydev_bundle import pydev_log
 
 def pytest_report_header(config):
     print('PYDEVD_USE_CYTHON: %s' % (TEST_CYTHON,))
-    print('PYDEVD_TEST_JYTHON: %s' % (TEST_JYTHON,))
+    print('PYDEVD_TEST_VM: %s' % (PYDEVD_TEST_VM,))
     try:
         import multiprocessing
     except ImportError:
@@ -19,6 +19,7 @@ def pytest_report_header(config):
         print('Number of processors: %s' % (multiprocessing.cpu_count(),))
 
     print('Relevant system paths:')
+    print('sys.executable: %s' % (sys.executable,))
     print('sys.prefix: %s' % (sys.prefix,))
 
     if hasattr(sys, 'base_prefix'):

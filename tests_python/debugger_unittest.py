@@ -111,6 +111,7 @@ import platform
 IS_CPYTHON = platform.python_implementation() == 'CPython'
 IS_IRONPYTHON = platform.python_implementation() == 'IronPython'
 IS_JYTHON = platform.python_implementation() == 'Jython'
+IS_PYPY = platform.python_implementation() == 'PyPy'
 IS_APPVEYOR = os.environ.get('APPVEYOR', '') in ('True', 'true', '1')
 
 try:
