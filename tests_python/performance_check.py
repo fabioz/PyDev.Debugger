@@ -2,22 +2,32 @@ from tests_python import debugger_unittest
 import sys
 import re
 import os
+from tests_python.debugger_unittest import overrides
 
-CHECK_BASELINE, CHECK_REGULAR, CHECK_CYTHON, CHECK_FRAME_EVAL = 'baseline', 'regular', 'cython', 'frame_eval'
+CHECK_BASELINE = 'baseline'
+CHECK_REGULAR = 'regular'
+CHECK_CYTHON = 'cython'
+CHECK_FRAME_EVAL = 'frame_eval'
+CHECK_SIMPLE_TRACE = 'simple_trace'
+CHECK_NO_TRACE = 'no_trace'
 
 pytest_plugins = [
     str('tests_python.debugger_fixtures'),
 ]
 
-RUNS = 5
+RUNS = 3
 
 
 class PerformanceWriterThread(debugger_unittest.AbstractWriterThread):
 
     CHECK = None
 
-    debugger_unittest.AbstractWriterThread.get_environ  # overrides
+    def __init__(self):
+        debugger_unittest.AbstractWriterThread.__init__(self)
+        if self.CHECK in (CHECK_SIMPLE_TRACE, CHECK_NO_TRACE):
+            self.port = -1
 
+    @overrides(debugger_unittest.AbstractWriterThread.get_environ)
     def get_environ(self):
         env = os.environ.copy()
         if self.CHECK == CHECK_BASELINE:
@@ -35,12 +45,15 @@ class PerformanceWriterThread(debugger_unittest.AbstractWriterThread):
             env['PYDEVD_USE_CYTHON'] = 'NO'
             env['PYDEVD_USE_FRAME_EVAL'] = 'NO'
 
+        elif self.CHECK in (CHECK_SIMPLE_TRACE, CHECK_NO_TRACE):
+            env['PYDEVD_USE_CYTHON'] = 'NO'
+            env['PYDEVD_USE_FRAME_EVAL'] = 'NO'
+
         else:
             raise AssertionError("Don't know what to check.")
         return env
 
-    debugger_unittest.AbstractWriterThread.get_pydevd_file  # overrides
-
+    @overrides(debugger_unittest.AbstractWriterThread.get_pydevd_file)
     def get_pydevd_file(self):
         if self.CHECK == CHECK_BASELINE:
             return os.path.abspath(os.path.join(r'X:\PyDev.Debugger.baseline', 'pydevd.py'))
@@ -48,9 +61,34 @@ class PerformanceWriterThread(debugger_unittest.AbstractWriterThread):
         dirname = os.path.dirname(dirname)
         return os.path.abspath(os.path.join(dirname, 'pydevd.py'))
 
+    @overrides(debugger_unittest.AbstractWriterThread.update_command_line_args)
+    def update_command_line_args(self, args):
+        if self.CHECK == CHECK_SIMPLE_TRACE:
+            # Run it with the simplest possible tracing function.
+            return args[-1:] + ['--simple-trace']
+
+        if self.CHECK == CHECK_NO_TRACE:
+            # Just run it directly without any tracing.
+            return args[-1:]
+
+        return debugger_unittest.AbstractWriterThread.update_command_line_args(self, args)
+
+    @overrides(debugger_unittest.AbstractWriterThread.run)
+    def run(self):
+        if self.CHECK in (CHECK_SIMPLE_TRACE, CHECK_NO_TRACE):
+            return
+        return debugger_unittest.AbstractWriterThread.run(self)
+
+    @overrides(debugger_unittest.AbstractWriterThread.write_make_initial_run)
+    def write_make_initial_run(self, *args, **kwargs):
+        if self.CHECK in (CHECK_SIMPLE_TRACE, CHECK_NO_TRACE):
+            return
+        return debugger_unittest.AbstractWriterThread.write_make_initial_run(self, *args, **kwargs)
+
 
 class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
 
+    @overrides(debugger_unittest.DebuggerRunner.get_command_line)
     def get_command_line(self):
         return [sys.executable]
 
@@ -75,7 +113,11 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
             def store_stdout(stdout, stderr):
                 stdout_ref.append(stdout)
 
-            with self.check_case(writer_thread_class) as writer:
+            kwargs = {}
+            if PerformanceCheck.CHECK in (CHECK_SIMPLE_TRACE, CHECK_NO_TRACE):
+                kwargs['wait_for_port'] = False
+
+            with self.check_case(writer_thread_class, **kwargs) as writer:
                 writer.additional_output_checks = store_stdout
                 yield writer
 
@@ -136,14 +178,29 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
 
     def method_calls_with_breakpoint(self):
         for writer in self.obtain_results('method_calls_with_breakpoint', '_performance_1.py'):
-            writer.write_add_breakpoint(17, 'method')
+            bline = writer.get_line_index_with_content('Unreachable breakpoint here')
+            writer.write_add_breakpoint(bline, 'method')
             writer.write_make_initial_run()
             writer.finished_ok = True
 
         return self.performance_msg
 
-    def method_calls_without_breakpoint(self):
-        for writer in self.obtain_results('method_calls_without_breakpoint', '_performance_1.py'):
+    def method_calls_without_breakpoint_performance1(self):
+        for writer in self.obtain_results('method_calls_without_breakpoint_performance1', '_performance_1.py'):
+            writer.write_make_initial_run()
+            writer.finished_ok = True
+
+        return self.performance_msg
+
+    def method_calls_without_breakpoint_performance2(self):
+        for writer in self.obtain_results('method_calls_without_breakpoint_performance2', '_performance_2.py'):
+            writer.write_make_initial_run()
+            writer.finished_ok = True
+
+        return self.performance_msg
+
+    def method_calls_without_breakpoint_performance3(self):
+        for writer in self.obtain_results('method_calls_without_breakpoint_performance3', '_performance_3.py'):
             writer.write_make_initial_run()
             writer.finished_ok = True
 
@@ -151,7 +208,8 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
 
     def method_calls_with_step_over(self):
         for writer in self.obtain_results('method_calls_with_step_over', '_performance_1.py'):
-            writer.write_add_breakpoint(26, None)
+            bline = writer.get_line_index_with_content('Initial breakpoint for a step-over here')
+            writer.write_add_breakpoint(bline, None)
 
             writer.write_make_initial_run()
             hit = writer.wait_for_breakpoint_hit('111')
@@ -182,7 +240,8 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
 
     def global_scope_2_with_breakpoint(self):
         for writer in self.obtain_results('global_scope_2_with_breakpoint', '_performance_3.py'):
-            writer.write_add_breakpoint(17, None)
+            bline = writer.get_line_index_with_content('Breakpoint here')
+            writer.write_add_breakpoint(bline, None)
             writer.write_make_initial_run()
             writer.finished_ok = True
 
@@ -192,26 +251,27 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
 if __name__ == '__main__':
     # Local times gotten (python 3.6)
     # Checking: regular
-    # method_calls_with_breakpoint: 1.244s
-    # method_calls_without_breakpoint: 0.286s
-    # method_calls_with_step_over: 2.795s
-    # method_calls_with_exception_breakpoint: 0.272s
-    # global_scope_1_with_breakpoint: 4.212s
-    # global_scope_2_with_breakpoint: 3.256s
+    # method_calls_with_breakpoint: 1.066s
+    # method_calls_without_breakpoint_performance1: 0.210s
+    # method_calls_with_step_over: 2.504s
+    # method_calls_with_exception_breakpoint: 0.203s
+    # global_scope_1_with_breakpoint: 0.282s
+    # global_scope_2_with_breakpoint: 2.846s
     # Checking: cython
-    # method_calls_with_breakpoint: 0.639s
-    # method_calls_without_breakpoint: 0.188s
-    # method_calls_with_step_over: 1.387s
-    # method_calls_with_exception_breakpoint: 0.189s
-    # global_scope_1_with_breakpoint: 2.107s
-    # global_scope_2_with_breakpoint: 1.591s
+    # method_calls_with_breakpoint: 0.547s
+    # method_calls_without_breakpoint_performance1: 0.150s
+    # method_calls_with_step_over: 1.136s
+    # method_calls_with_exception_breakpoint: 0.135s
+    # global_scope_1_with_breakpoint: 0.285s
+    # global_scope_2_with_breakpoint: 1.390s
     # Checking: frame_eval
-    # method_calls_with_breakpoint: 0.182s
-    # method_calls_without_breakpoint: 0.175s
-    # method_calls_with_step_over: 0.211s
-    # method_calls_with_exception_breakpoint: 0.179s
-    # global_scope_1_with_breakpoint: 0.379s
-    # global_scope_2_with_breakpoint: 0.204s
+    # method_calls_with_breakpoint: 0.125s
+    # method_calls_without_breakpoint_performance1: 0.125s
+    # method_calls_with_step_over: 0.126s
+    # method_calls_with_exception_breakpoint: 0.125s
+    # global_scope_1_with_breakpoint: 0.804s
+    # global_scope_2_with_breakpoint: 0.158s
+    # TotalTime for profile: 162.72s
 
     debugger_unittest.SHOW_WRITES_AND_READS = False
     debugger_unittest.SHOW_OTHER_DEBUG_INFO = False
@@ -221,21 +281,35 @@ if __name__ == '__main__':
     start_time = time.time()
 
     msgs = []
+#     for check in (
+#             # CHECK_BASELINE, -- Checks against the version checked out at X:\PyDev.Debugger.baseline.
+#             CHECK_REGULAR,
+#             CHECK_CYTHON,
+#             CHECK_FRAME_EVAL,
+#         ):
+#         PerformanceWriterThread.CHECK = check
+#         msgs.append('Checking: %s' % (check,))
+#         check_debugger_performance = CheckDebuggerPerformance()
+#         msgs.append(check_debugger_performance.method_calls_with_breakpoint())
+#         msgs.append(check_debugger_performance.method_calls_with_step_over())
+#         msgs.append(check_debugger_performance.method_calls_with_exception_breakpoint())
+#         msgs.append(check_debugger_performance.global_scope_1_with_breakpoint())
+#         msgs.append(check_debugger_performance.global_scope_2_with_breakpoint())
+
     for check in (
             # CHECK_BASELINE, -- Checks against the version checked out at X:\PyDev.Debugger.baseline.
             CHECK_REGULAR,
             CHECK_CYTHON,
             CHECK_FRAME_EVAL,
+            CHECK_SIMPLE_TRACE,
+            CHECK_NO_TRACE,
         ):
         PerformanceWriterThread.CHECK = check
         msgs.append('Checking: %s' % (check,))
         check_debugger_performance = CheckDebuggerPerformance()
-        msgs.append(check_debugger_performance.method_calls_with_breakpoint())
-        msgs.append(check_debugger_performance.method_calls_without_breakpoint())
-        msgs.append(check_debugger_performance.method_calls_with_step_over())
-        msgs.append(check_debugger_performance.method_calls_with_exception_breakpoint())
-        msgs.append(check_debugger_performance.global_scope_1_with_breakpoint())
-        msgs.append(check_debugger_performance.global_scope_2_with_breakpoint())
+        msgs.append(check_debugger_performance.method_calls_without_breakpoint_performance1())
+        msgs.append(check_debugger_performance.method_calls_without_breakpoint_performance2())
+        msgs.append(check_debugger_performance.method_calls_without_breakpoint_performance3())
 
     for msg in msgs:
         print(msg)

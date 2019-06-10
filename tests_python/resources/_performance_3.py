@@ -1,4 +1,13 @@
 import time
+import sys
+
+if '--simple-trace' in sys.argv or True:
+
+    def trace_dispatch(frame, event, arg):
+        return trace_dispatch
+
+    sys.settrace(trace_dispatch)
+
 start_time = time.time()
 
 try:
@@ -16,5 +25,5 @@ print("Completed main task")
 if False:
     pass  # Breakpoint here
 
-print('TotalTime>>%s<<' % (time.time()-start_time,))
+print('TotalTime>>%s<<' % (time.time() - start_time,))
 print('TEST SUCEEDED')

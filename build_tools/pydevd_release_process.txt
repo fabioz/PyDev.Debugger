@@ -133,12 +133,12 @@ deactivate
 
 cd /D x:\pydev\plugins\org.python.pydev.core\pysrc
 set PYTHONPATH=x:\pydev\plugins\org.python.pydev.core\pysrc
-C:\bin\Miniconda\envs\py36_64\python build_tools\build.py
+C:\bin\Miniconda3\envs\py36_64\python build_tools\build.py
 
 
 cd /D X:\ptvsd_workspace\ptvsd\src\ptvsd\_vendored\pydevd
 set PYTHONPATH=X:\ptvsd_workspace\ptvsd\src\ptvsd\_vendored\pydevd
-C:\bin\Miniconda\envs\py36_64\python build_tools\build.py
+C:\bin\Miniconda3\envs\py36_64\python build_tools\build.py
 
 
 cd ~/Desktop/Pydev/plugins/org.python.pydev.core/pysrc
@@ -152,8 +152,8 @@ cd /D x:\PyDev.Debugger
 
 set PYTHONPATH=x:\PyDev.Debugger
 deactivate
-C:\bin\Miniconda\envs\py36_64\python build_tools\build.py
-C:\bin\Miniconda\envs\py36_64\python build_tools\build_binaries_windows.py
+C:\bin\Miniconda3\envs\py36_64\python build_tools\build.py
+C:\bin\Miniconda3\envs\py36_64\python build_tools\build_binaries_windows.py
 
 rm dist/pydevd*
 

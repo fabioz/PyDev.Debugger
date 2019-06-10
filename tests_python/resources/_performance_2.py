@@ -1,5 +1,5 @@
-import time
 import sys
+import time
 import itertools
 
 try:
@@ -11,6 +11,13 @@ from itertools import groupby
 count = itertools.count(0)
 def next_val():
     return next(count) % 25
+
+if '--simple-trace' in sys.argv or True:
+
+    def trace_dispatch(frame, event, arg):
+        return trace_dispatch
+
+    sys.settrace(trace_dispatch)
 
 start_time = time.time()
 letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
