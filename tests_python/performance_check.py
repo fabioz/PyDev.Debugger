@@ -251,51 +251,51 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
 if __name__ == '__main__':
     # Local times gotten (python 3.6)
     # Checking: regular
-    # method_calls_with_breakpoint: 1.124s
-    # method_calls_with_step_over: 2.618s
-    # method_calls_with_exception_breakpoint: 0.225s
-    # global_scope_1_with_breakpoint: 0.277s
-    # global_scope_2_with_breakpoint: 3.006s
-
+    # method_calls_with_breakpoint: 1.155s
+    # method_calls_with_step_over: 2.823s
+    # method_calls_with_exception_breakpoint: 0.239s
+    # global_scope_1_with_breakpoint: 0.163s
+    # global_scope_2_with_breakpoint: 3.128s
+    #
     # Checking: cython
-    # method_calls_with_breakpoint: 0.552s
-    # method_calls_with_step_over: 1.093s
-    # method_calls_with_exception_breakpoint: 0.179s
-    # global_scope_1_with_breakpoint: 0.287s
-    # global_scope_2_with_breakpoint: 1.398s
-
+    # method_calls_with_breakpoint: 0.539s
+    # method_calls_with_step_over: 1.173s
+    # method_calls_with_exception_breakpoint: 0.157s
+    # global_scope_1_with_breakpoint: 0.166s
+    # global_scope_2_with_breakpoint: 1.405s
+    #
     # Checking: frame_eval
-    # method_calls_with_breakpoint: 0.125s
-    # method_calls_with_step_over: 0.131s
-    # method_calls_with_exception_breakpoint: 0.130s
-    # global_scope_1_with_breakpoint: 0.826s
-    # global_scope_2_with_breakpoint: 0.187s
-
+    # method_calls_with_breakpoint: 0.131s
+    # method_calls_with_step_over: 0.136s
+    # method_calls_with_exception_breakpoint: 0.136s
+    # global_scope_1_with_breakpoint: 0.388s
+    # global_scope_2_with_breakpoint: 0.180s
+    #
     # Checking: regular
-    # method_calls_without_breakpoint_performance1: 0.222s
-    # method_calls_without_breakpoint_performance2: 0.281s
-    # method_calls_without_breakpoint_performance3: 0.183s
-
+    # method_calls_without_breakpoint_performance1: 0.223s
+    # method_calls_without_breakpoint_performance2: 0.165s
+    # method_calls_without_breakpoint_performance3: 0.187s
+    #
     # Checking: cython
-    # method_calls_without_breakpoint_performance1: 0.157s
-    # method_calls_without_breakpoint_performance2: 0.290s
-    # method_calls_without_breakpoint_performance3: 0.183s
-
+    # method_calls_without_breakpoint_performance1: 0.145s
+    # method_calls_without_breakpoint_performance2: 0.167s
+    # method_calls_without_breakpoint_performance3: 0.171s
+    #
     # Checking: frame_eval
-    # method_calls_without_breakpoint_performance1: 0.147s
-    # method_calls_without_breakpoint_performance2: 0.844s
-    # method_calls_without_breakpoint_performance3: 0.184s
-
+    # method_calls_without_breakpoint_performance1: 0.135s
+    # method_calls_without_breakpoint_performance2: 0.378s
+    # method_calls_without_breakpoint_performance3: 0.177s
+    #
     # Checking: simple_trace
-    # method_calls_without_breakpoint_performance1: 0.093s
-    # method_calls_without_breakpoint_performance2: 0.205s
-    # method_calls_without_breakpoint_performance3: 0.186s
-
+    # method_calls_without_breakpoint_performance1: 0.078s
+    # method_calls_without_breakpoint_performance2: 0.171s
+    # method_calls_without_breakpoint_performance3: 0.194s
+    #
     # Checking: no_trace
     # method_calls_without_breakpoint_performance1: 0.016s
-    # method_calls_without_breakpoint_performance2: 0.290s
-    # method_calls_without_breakpoint_performance3: 0.189s
-    # TotalTime for profile: 218.58s
+    # method_calls_without_breakpoint_performance2: 0.172s
+    # method_calls_without_breakpoint_performance3: 0.208s
+    # TotalTime for profile: 217.98s
 
     debugger_unittest.SHOW_WRITES_AND_READS = False
     debugger_unittest.SHOW_OTHER_DEBUG_INFO = False
@@ -312,7 +312,7 @@ if __name__ == '__main__':
             CHECK_FRAME_EVAL,
         ):
         PerformanceWriterThread.CHECK = check
-        msgs.append('Checking: %s' % (check,))
+        msgs.append('\nChecking: %s' % (check,))
         check_debugger_performance = CheckDebuggerPerformance()
         msgs.append(check_debugger_performance.method_calls_with_breakpoint())
         msgs.append(check_debugger_performance.method_calls_with_step_over())
@@ -329,7 +329,7 @@ if __name__ == '__main__':
             CHECK_NO_TRACE,
         ):
         PerformanceWriterThread.CHECK = check
-        msgs.append('Checking: %s' % (check,))
+        msgs.append('\nChecking: %s' % (check,))
         check_debugger_performance = CheckDebuggerPerformance()
         msgs.append(check_debugger_performance.method_calls_without_breakpoint_performance1())
         msgs.append(check_debugger_performance.method_calls_without_breakpoint_performance2())

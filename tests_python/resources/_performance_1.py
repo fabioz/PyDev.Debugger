@@ -31,10 +31,6 @@ if __name__ == '__main__':
     if '--simple-trace' in sys.argv:
 
         def trace_dispatch(frame, event, arg):
-            if event == 'call':
-                if frame.f_trace is not None:
-                    return frame.f_trace(frame, event, arg)
-
             return None
 
         sys.settrace(trace_dispatch)
