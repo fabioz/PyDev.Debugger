@@ -15,7 +15,7 @@ pytest_plugins = [
     str('tests_python.debugger_fixtures'),
 ]
 
-RUNS = 3
+RUNS = 5
 
 
 class PerformanceWriterThread(debugger_unittest.AbstractWriterThread):
@@ -251,27 +251,51 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
 if __name__ == '__main__':
     # Local times gotten (python 3.6)
     # Checking: regular
-    # method_calls_with_breakpoint: 1.066s
-    # method_calls_without_breakpoint_performance1: 0.210s
-    # method_calls_with_step_over: 2.504s
-    # method_calls_with_exception_breakpoint: 0.203s
-    # global_scope_1_with_breakpoint: 0.282s
-    # global_scope_2_with_breakpoint: 2.846s
+    # method_calls_with_breakpoint: 1.124s
+    # method_calls_with_step_over: 2.618s
+    # method_calls_with_exception_breakpoint: 0.225s
+    # global_scope_1_with_breakpoint: 0.277s
+    # global_scope_2_with_breakpoint: 3.006s
+
     # Checking: cython
-    # method_calls_with_breakpoint: 0.547s
-    # method_calls_without_breakpoint_performance1: 0.150s
-    # method_calls_with_step_over: 1.136s
-    # method_calls_with_exception_breakpoint: 0.135s
-    # global_scope_1_with_breakpoint: 0.285s
-    # global_scope_2_with_breakpoint: 1.390s
+    # method_calls_with_breakpoint: 0.552s
+    # method_calls_with_step_over: 1.093s
+    # method_calls_with_exception_breakpoint: 0.179s
+    # global_scope_1_with_breakpoint: 0.287s
+    # global_scope_2_with_breakpoint: 1.398s
+
     # Checking: frame_eval
     # method_calls_with_breakpoint: 0.125s
-    # method_calls_without_breakpoint_performance1: 0.125s
-    # method_calls_with_step_over: 0.126s
-    # method_calls_with_exception_breakpoint: 0.125s
-    # global_scope_1_with_breakpoint: 0.804s
-    # global_scope_2_with_breakpoint: 0.158s
-    # TotalTime for profile: 162.72s
+    # method_calls_with_step_over: 0.131s
+    # method_calls_with_exception_breakpoint: 0.130s
+    # global_scope_1_with_breakpoint: 0.826s
+    # global_scope_2_with_breakpoint: 0.187s
+
+    # Checking: regular
+    # method_calls_without_breakpoint_performance1: 0.222s
+    # method_calls_without_breakpoint_performance2: 0.281s
+    # method_calls_without_breakpoint_performance3: 0.183s
+
+    # Checking: cython
+    # method_calls_without_breakpoint_performance1: 0.157s
+    # method_calls_without_breakpoint_performance2: 0.290s
+    # method_calls_without_breakpoint_performance3: 0.183s
+
+    # Checking: frame_eval
+    # method_calls_without_breakpoint_performance1: 0.147s
+    # method_calls_without_breakpoint_performance2: 0.844s
+    # method_calls_without_breakpoint_performance3: 0.184s
+
+    # Checking: simple_trace
+    # method_calls_without_breakpoint_performance1: 0.208s
+    # method_calls_without_breakpoint_performance2: 0.297s
+    # method_calls_without_breakpoint_performance3: 0.196s
+
+    # Checking: no_trace
+    # method_calls_without_breakpoint_performance1: 0.016s
+    # method_calls_without_breakpoint_performance2: 0.290s
+    # method_calls_without_breakpoint_performance3: 0.189s
+    # TotalTime for profile: 218.58s
 
     debugger_unittest.SHOW_WRITES_AND_READS = False
     debugger_unittest.SHOW_OTHER_DEBUG_INFO = False
@@ -281,20 +305,20 @@ if __name__ == '__main__':
     start_time = time.time()
 
     msgs = []
-#     for check in (
-#             # CHECK_BASELINE, -- Checks against the version checked out at X:\PyDev.Debugger.baseline.
-#             CHECK_REGULAR,
-#             CHECK_CYTHON,
-#             CHECK_FRAME_EVAL,
-#         ):
-#         PerformanceWriterThread.CHECK = check
-#         msgs.append('Checking: %s' % (check,))
-#         check_debugger_performance = CheckDebuggerPerformance()
-#         msgs.append(check_debugger_performance.method_calls_with_breakpoint())
-#         msgs.append(check_debugger_performance.method_calls_with_step_over())
-#         msgs.append(check_debugger_performance.method_calls_with_exception_breakpoint())
-#         msgs.append(check_debugger_performance.global_scope_1_with_breakpoint())
-#         msgs.append(check_debugger_performance.global_scope_2_with_breakpoint())
+    for check in (
+            # CHECK_BASELINE, -- Checks against the version checked out at X:\PyDev.Debugger.baseline.
+            CHECK_REGULAR,
+            CHECK_CYTHON,
+            CHECK_FRAME_EVAL,
+        ):
+        PerformanceWriterThread.CHECK = check
+        msgs.append('Checking: %s' % (check,))
+        check_debugger_performance = CheckDebuggerPerformance()
+        msgs.append(check_debugger_performance.method_calls_with_breakpoint())
+        msgs.append(check_debugger_performance.method_calls_with_step_over())
+        msgs.append(check_debugger_performance.method_calls_with_exception_breakpoint())
+        msgs.append(check_debugger_performance.global_scope_1_with_breakpoint())
+        msgs.append(check_debugger_performance.global_scope_2_with_breakpoint())
 
     for check in (
             # CHECK_BASELINE, -- Checks against the version checked out at X:\PyDev.Debugger.baseline.
