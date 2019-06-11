@@ -1416,17 +1416,15 @@ class PyDB(object):
         return stop, old_line, response_msg
 
     def cancel_async_evaluation(self, thread_id, frame_id):
-        self._main_lock.acquire()
-        try:
-            all_threads = threadingEnumerate()
-            for t in all_threads:
-                if getattr(t, 'is_pydev_daemon_thread', False) and hasattr(t, 'cancel_event') and t.thread_id == thread_id and \
-                        t.frame_id == frame_id:
-                    t.cancel_event.set()
-        except:
-            pydev_log.exception()
-        finally:
-            self._main_lock.release()
+        with self._main_lock:
+            try:
+                all_threads = threadingEnumerate()
+                for t in all_threads:
+                    if getattr(t, 'is_pydev_daemon_thread', False) and hasattr(t, 'cancel_event') and t.thread_id == thread_id and \
+                            t.frame_id == frame_id:
+                        t.cancel_event.set()
+            except:
+                pydev_log.exception()
 
     def find_frame(self, thread_id, frame_id):
         """ returns a frame on the thread that has a given frame_id """
