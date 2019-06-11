@@ -253,7 +253,6 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
     #     return _PyEval_EvalFrameDefault(frame_obj, exc)
 
     cdef ThreadInfo thread_info
-    cdef int STATE_SUSPEND = 2
     cdef int CMD_STEP_INTO = 107
     cdef int CMD_STEP_OVER = 108
     cdef int CMD_STEP_OVER_MY_CODE = 159
@@ -285,13 +284,12 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
     # if DEBUG:
     #     print('get_bytecode_while_frame_eval', frame.f_lineno, frame.f_code.co_name, frame.f_code.co_filename)
     
-    main_debugger: object = GlobalDebuggerHolder.global_dbg
-    if main_debugger is None:
-        return _PyEval_EvalFrameDefault(frame_obj, exc)
-    
     thread_info.inside_frame_eval += 1
     additional_info.is_tracing = True
     try:
+        main_debugger: object = GlobalDebuggerHolder.global_dbg
+        if main_debugger is None:
+            return _PyEval_EvalFrameDefault(frame_obj, exc)
         frame = <object> frame_obj
         
         if thread_info.thread_trace_func is None:

@@ -287,9 +287,9 @@ if __name__ == '__main__':
     # method_calls_without_breakpoint_performance3: 0.184s
 
     # Checking: simple_trace
-    # method_calls_without_breakpoint_performance1: 0.208s
-    # method_calls_without_breakpoint_performance2: 0.297s
-    # method_calls_without_breakpoint_performance3: 0.196s
+    # method_calls_without_breakpoint_performance1: 0.093s
+    # method_calls_without_breakpoint_performance2: 0.205s
+    # method_calls_without_breakpoint_performance3: 0.186s
 
     # Checking: no_trace
     # method_calls_without_breakpoint_performance1: 0.016s
