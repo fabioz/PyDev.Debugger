@@ -22,6 +22,10 @@ from pydevd_tracing import get_exception_traceback_str
 
 
 class PyDevdAPI(object):
+    '''
+    Note: all methods here require the PyDB.main_lock to be acquired prior to being called (which
+    is expected when processing any command received from the network).
+    '''
 
     def run(self, py_db):
         py_db.ready_to_run = True
@@ -107,6 +111,8 @@ class PyDevdAPI(object):
             # take care of suspending other threads.
             break
 
+        py_db.update_tracing()
+
     def set_enable_thread_notifications(self, py_db, enable):
         '''
         When disabled, no thread notifications (for creation/removal) will be
@@ -124,9 +130,9 @@ class PyDevdAPI(object):
         self.remove_all_exception_breakpoints(py_db)
         self.notify_disconnect(py_db)
         if resume_threads:
-            self.request_resume_thread(thread_id='*')
+            self.request_resume_thread(py_db, thread_id='*')
 
-    def request_resume_thread(self, thread_id):
+    def request_resume_thread(self, py_db, thread_id):
         threads = []
         if thread_id == '*':
             threads = pydevd_utils.get_non_pydevd_threads()
@@ -145,6 +151,8 @@ class PyDevdAPI(object):
             additional_info.pydev_step_cmd = -1
             additional_info.pydev_step_stop = None
             additional_info.pydev_state = STATE_RUN
+
+        py_db.update_tracing()
 
     def request_completions(self, py_db, seq, thread_id, frame_id, act_tok, line=-1, column=-1):
         py_db.post_method_as_internal_command(

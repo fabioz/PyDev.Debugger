@@ -42,28 +42,25 @@ class _PyDevCommandProcessor(object):
             py_db.writer.add_command(cmd)
             return
 
-        py_db._main_lock.acquire()
-        try:
-            cmd = on_command(py_db, cmd_id, seq, text)
-            if cmd is not None:
-                py_db.writer.add_command(cmd)
-        except:
-            if traceback is not None and sys is not None and pydev_log_exception is not None:
-                pydev_log_exception()
-
-                stream = StringIO()
-                traceback.print_exc(file=stream)
-                cmd = py_db.cmd_factory.make_error_message(
-                    seq,
-                    "Unexpected exception in process_net_command.\nInitial params: %s. Exception: %s" % (
-                        ((cmd_id, seq, text), stream.getvalue())
-                    )
-                )
+        with py_db.main_lock:
+            try:
+                cmd = on_command(py_db, cmd_id, seq, text)
                 if cmd is not None:
                     py_db.writer.add_command(cmd)
+            except:
+                if traceback is not None and sys is not None and pydev_log_exception is not None:
+                    pydev_log_exception()
 
-        finally:
-            py_db._main_lock.release()
+                    stream = StringIO()
+                    traceback.print_exc(file=stream)
+                    cmd = py_db.cmd_factory.make_error_message(
+                        seq,
+                        "Unexpected exception in process_net_command.\nInitial params: %s. Exception: %s" % (
+                            ((cmd_id, seq, text), stream.getvalue())
+                        )
+                    )
+                    if cmd is not None:
+                        py_db.writer.add_command(cmd)
 
     def cmd_run(self, py_db, cmd_id, seq, text):
         return self.api.run(py_db)
@@ -125,7 +122,7 @@ class _PyDevCommandProcessor(object):
         return version_msg
 
     def cmd_thread_run(self, py_db, cmd_id, seq, text):
-        return self.api.request_resume_thread(text.strip())
+        return self.api.request_resume_thread(py_db, text.strip())
 
     def _cmd_step(self, py_db, cmd_id, seq, text):
         return self.api.request_step(py_db, text.strip(), cmd_id)

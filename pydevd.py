@@ -44,12 +44,11 @@ from _pydevd_bundle.pydevd_extension_api import DebuggerEventHandler
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, remove_exception_from_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from _pydevd_bundle.pydevd_net_command_factory_xml import NetCommandFactory
-from _pydevd_bundle.pydevd_net_command_factory_json import NetCommandFactoryJson
 from _pydevd_bundle.pydevd_trace_dispatch import (
     trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips, fix_top_level_trace_and_get_trace_func)
 from _pydevd_bundle.pydevd_utils import save_main_module, is_current_thread_main_thread
 from _pydevd_frame_eval.pydevd_frame_eval_main import (
-    frame_eval_func, dummy_trace_dispatch)
+    start_frame_eval, dummy_trace_dispatch, stop_frame_eval)
 import pydev_ipython  # @UnusedImport
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
@@ -397,6 +396,8 @@ class PyDB(object):
         self.suspended_frames_manager = SuspendedFramesManager()
         self._files_filtering = FilesFiltering()
 
+        # Built from the info on file_to_id_to_line_breakpoint.
+        # filename -> dict(line -> breakpoint)
         self.breakpoints = {}
 
         # Set communication protocol
@@ -414,7 +415,7 @@ class PyDB(object):
         self.break_on_caught_exceptions = {}
 
         self.ready_to_run = False
-        self._main_lock = thread.allocate_lock()
+        self.main_lock = thread.allocate_lock()
         self._lock_running_thread_ids = thread.allocate_lock()
         self._py_db_command_thread_event = threading.Event()
         if set_as_global:
@@ -493,7 +494,8 @@ class PyDB(object):
         else:
             self.trace_dispatch = partial(_trace_dispatch, self)
         self.fix_top_level_trace_and_get_trace_func = fix_top_level_trace_and_get_trace_func
-        self.frame_eval_func = frame_eval_func
+        self.start_frame_eval = start_frame_eval
+        self.stop_frame_eval = stop_frame_eval
         self.dummy_trace_dispatch = dummy_trace_dispatch
 
         # Note: this is different from pydevd_constants.thread_get_ident because we want Jython
@@ -651,6 +653,44 @@ class PyDB(object):
             thread_trace_func = self.trace_dispatch
         return thread_trace_func
 
+    def is_tracing_required(self):
+        '''
+        We require tracing when we have breakpoints or there is a thread currently paused
+        or stepping.
+
+        :return bool:
+            True if tracing is required and False otherwise.
+
+        :note:
+            No locking is done here, but `main_lock` should usually be obtained as the related
+            conditions may change from another thread if the lock is not obtained.
+        '''
+        if (
+            self.break_on_caught_exceptions or
+            self.has_plugin_exception_breaks or
+            self.signature_factory or
+            self.breakpoints
+        ):
+            return True
+
+        threads = pydevd_utils.get_non_pydevd_threads()
+
+        for t in threads:
+            if t is None:
+                continue
+            additional_info = set_additional_thread_info(t)
+            if additional_info.pydev_step_cmd != -1 or additional_info.pydev_state == STATE_SUSPEND:
+                return True
+
+        return False
+
+    def update_tracing(self):
+        if self.start_frame_eval is not None:
+            if self.is_tracing_required():
+                self.start_frame_eval()
+            else:
+                self.stop_frame_eval()
+
     def enable_tracing(self, thread_trace_func=None):
         '''
         Enables tracing.
@@ -660,8 +700,8 @@ class PyDB(object):
         `PyDB.enable_tracing` is called with a `thread_trace_func`, the given function will
         be the default for the given thread.
         '''
-        if self.frame_eval_func is not None:
-            self.frame_eval_func()
+        if self.start_frame_eval is not None:
+            self.start_frame_eval()
             pydevd_tracing.SetTrace(self.dummy_trace_dispatch)
             return
 
@@ -673,6 +713,9 @@ class PyDB(object):
         pydevd_tracing.SetTrace(thread_trace_func)
 
     def disable_tracing(self):
+        if self.stop_frame_eval is not None:
+            self.stop_frame_eval()
+
         pydevd_tracing.SetTrace(None)
 
     def on_breakpoints_changed(self, removed=False):
@@ -688,6 +731,8 @@ class PyDB(object):
             # When removing breakpoints we can leave tracing as was, but if a breakpoint was added
             # we have to reset the tracing for the existing functions to be re-evaluated.
             self.set_tracing_for_untraced_contexts()
+
+        self.update_tracing()
 
     def set_tracing_for_untraced_contexts(self, ignore_current_thread=False):
         # Enable the tracing for existing threads (because there may be frames being executed that
@@ -1145,7 +1190,7 @@ class PyDB(object):
     def process_internal_commands(self):
         '''This function processes internal commands
         '''
-        with self._main_lock:
+        with self.main_lock:
             self.check_output_redirect()
 
             program_threads_alive = {}
@@ -1228,11 +1273,15 @@ class PyDB(object):
                             queue.put(int_cmd)
 
     def consolidate_breakpoints(self, file, id_to_breakpoint, breakpoints):
-        break_dict = {}
-        for _breakpoint_id, pybreakpoint in dict_iter_items(id_to_breakpoint):
-            break_dict[pybreakpoint.line] = pybreakpoint
+        if not id_to_breakpoint:
+            breakpoints.pop(file, None)
+        else:
+            break_dict = {}
+            for _breakpoint_id, pybreakpoint in dict_iter_items(id_to_breakpoint):
+                break_dict[pybreakpoint.line] = pybreakpoint
 
-        breakpoints[file] = break_dict
+            breakpoints[file] = break_dict
+
         self._clear_skip_caches()
 
     def _clear_skip_caches(self):
@@ -1416,7 +1465,7 @@ class PyDB(object):
         return stop, old_line, response_msg
 
     def cancel_async_evaluation(self, thread_id, frame_id):
-        with self._main_lock:
+        with self.main_lock:
             try:
                 all_threads = threadingEnumerate()
                 for t in all_threads:

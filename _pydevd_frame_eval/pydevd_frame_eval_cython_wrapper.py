@@ -32,7 +32,7 @@ except ImportError:
     except ImportError:
         raise
 
-frame_eval_func = mod.frame_eval_func
+start_frame_eval = mod.start_frame_eval
 
 stop_frame_eval = mod.stop_frame_eval
 

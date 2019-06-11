@@ -352,13 +352,26 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
     return _PyEval_EvalFrameDefault(frame_obj, exc)
 
 
-def frame_eval_func():
+_is_frame_eval_active = False
+
+
+def get_is_frame_eval_active():
+    return _is_frame_eval_active
+
+
+def start_frame_eval():
     cdef PyThreadState *state = PyThreadState_Get()
     state.interp.eval_frame = get_bytecode_while_frame_eval
     global dummy_tracing_holder
     dummy_tracing_holder.set_trace_func(dummy_trace_dispatch)
+    
+    global _is_frame_eval_active
+    _is_frame_eval_active = True
 
 
 def stop_frame_eval():
+    global _is_frame_eval_active
+    _is_frame_eval_active = False
+    
     cdef PyThreadState *state = PyThreadState_Get()
     state.interp.eval_frame = _PyEval_EvalFrameDefault

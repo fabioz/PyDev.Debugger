@@ -193,7 +193,7 @@ class _PyDevJsonCommandProcessor(object):
             if DEBUG:
                 print('Handled in pydevd: %s (in _PyDevJsonCommandProcessor).\n' % (method_name,))
 
-        with py_db._main_lock:
+        with py_db.main_lock:
             cmd = on_request(py_db, request)
             if cmd is not None:
                 py_db.writer.add_command(cmd)
@@ -361,7 +361,7 @@ class _PyDevJsonCommandProcessor(object):
         # request a new pause which would be paused without sending any notification as
         # it didn't really run in the first place).
         py_db.threads_suspended_single_notification.add_on_resumed_callback(on_resumed)
-        self.api.request_resume_thread(thread_id)
+        self.api.request_resume_thread(py_db, thread_id)
 
     def on_next_request(self, py_db, request):
         '''
