@@ -3,6 +3,7 @@ import itertools
 import json
 import linecache
 import os
+import platform
 import sys
 import types
 from functools import partial
@@ -22,7 +23,9 @@ from _pydevd_bundle.pydevd_comm_constants import (
     CMD_PROCESS_EVENT, CMD_RETURN, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO,
 	CMD_STEP_INTO_MY_CODE, CMD_STEP_OVER, CMD_STEP_OVER_MY_CODE,
 	CMD_STEP_RETURN, CMD_STEP_RETURN_MY_CODE)
-from _pydevd_bundle.pydevd_constants import DebugInfoHolder
+from _pydevd_bundle.pydevd_constants import (
+    DebugInfoHolder, IS_64BIT_PROCESS, PY_VERSION_STR, PY_IMPL_VERSION_STR,
+    PY_IMPL_NAME)
 from _pydevd_bundle.pydevd_filtering import ExcludeFilter
 from _pydevd_bundle.pydevd_json_debug_options import _extract_debug_options
 from _pydevd_bundle.pydevd_net_command import NetCommand
@@ -762,20 +765,29 @@ class _PyDevJsonCommandProcessor(object):
         arguments = request.arguments  # : :type arguments: SetVariableArguments
         variables_reference = arguments.variablesReference
 
+        if arguments.name.startswith('(return) '):
+            response = pydevd_base_schema.build_response(
+                request,
+                kwargs={
+                    'body': SetVariableResponseBody(''),
+                    'success': False,
+                    'message': 'Cannot change return value'
+                })
+            return NetCommand(CMD_RETURN, 0, response, is_json=True)
+
         thread_id = py_db.suspended_frames_manager.get_thread_id_for_variable_reference(
             variables_reference)
         if thread_id is not None:
             self.api.request_change_variable_json(py_db, request, thread_id)
         else:
-            body = SetVariableResponseBody('')
-            variables_response = pydevd_base_schema.build_response(
+            response = pydevd_base_schema.build_response(
                 request,
                 kwargs={
-                    'body': body,
+                    'body': SetVariableResponseBody(''),
                     'success': False,
                     'message': 'Unable to find thread to evaluate variable reference.'
                 })
-            return NetCommand(CMD_RETURN, 0, variables_response, is_json=True)
+            return NetCommand(CMD_RETURN, 0, response, is_json=True)
 
     def on_modules_request(self, py_db, request):
         modules_manager = py_db.cmd_factory.modules_manager  # : :type modules_manager: ModulesManager
@@ -892,6 +904,39 @@ class _PyDevJsonCommandProcessor(object):
         # EnableStepFiltering: true of false
 
         response = pydevd_base_schema.build_response(request, kwargs={'body': {}})
+        return NetCommand(CMD_RETURN, 0, response, is_json=True)
+
+    def on_pydevdsysteminfo_request(self, py_db, request):
+        try:
+            pid = os.getpid()
+        except AttributeError:
+            pid = None
+
+        try:
+            impl_desc = platform.python_implementation()
+        except AttributeError:
+            impl_desc = PY_IMPL_NAME
+
+        py_info = pydevd_schema.PydevdPythonInfo(
+            version=PY_VERSION_STR,
+            implementation=pydevd_schema.PydevdPythonImplementationInfo(
+                name=PY_IMPL_NAME,
+                version=PY_IMPL_VERSION_STR,
+                description=impl_desc,
+            )
+        )
+        platform_info = pydevd_schema.PydevdPlatformInfo(name=sys.platform)
+        process_info = pydevd_schema.PydevdProcessInfo(
+            pid=pid,
+            executable=sys.executable,
+            bitness=64 if IS_64BIT_PROCESS else 32,
+        )
+        body = {
+            'python': py_info,
+            'platform': platform_info,
+            'process': process_info,
+        }
+        response = pydevd_base_schema.build_response(request, kwargs={'body': body})
         return NetCommand(CMD_RETURN, 0, response, is_json=True)
 
 
