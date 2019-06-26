@@ -23,7 +23,6 @@ from _pydevd_bundle.pydevd_comm_constants import CMD_RELOAD_CODE
 import json
 import pydevd_file_utils
 import subprocess
-import attach_pydevd
 import threading
 try:
     from urllib import unquote
@@ -2438,12 +2437,14 @@ def test_subprocess_quoted_args(case_setup_multiprocessing):
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 def test_attach_to_pid(case_setup_remote):
+    import pydevd
     with case_setup_remote.test_file('_debugger_case_attach_to_pid.py', wait_for_port=False) as writer:
 
         assert writer.process is not None
 
         def attach():
-            subprocess.call([sys.executable, attach_pydevd.__file__, '--pid', str(writer.process.pid), '--port', str(writer.port)])
+            attach_pydevd_file = os.path.join(os.path.dirname(pydevd.__file__), 'pydevd_attach_to_process', 'attach_pydevd')
+            subprocess.call([sys.executable, attach_pydevd_file, '--pid', str(writer.process.pid), '--port', str(writer.port)])
 
         threading.Thread(target=attach).start()
 
