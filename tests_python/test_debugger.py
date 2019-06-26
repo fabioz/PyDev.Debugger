@@ -22,6 +22,9 @@ from _pydevd_bundle.pydevd_constants import IS_WINDOWS
 from _pydevd_bundle.pydevd_comm_constants import CMD_RELOAD_CODE
 import json
 import pydevd_file_utils
+import subprocess
+import attach_pydevd
+import threading
 try:
     from urllib import unquote
 except ImportError:
@@ -2429,6 +2432,33 @@ def test_subprocess_quoted_args(case_setup_multiprocessing):
         secondary_process_thread_communication.join(10)
         if secondary_process_thread_communication.isAlive():
             raise AssertionError('The SecondaryProcessThreadCommunication did not finish')
+
+        writer.finished_ok = True
+
+
+@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+def test_attach_to_pid(case_setup_remote):
+    with case_setup_remote.test_file('_debugger_case_attach_to_pid.py', wait_for_port=False) as writer:
+
+        assert writer.process is not None
+
+        def attach():
+            subprocess.call([sys.executable, attach_pydevd.__file__, '--pid', str(writer.process.pid), '--port', str(writer.port)])
+
+        threading.Thread(target=attach).start()
+
+        wait_for_condition(lambda: writer.finished_initialization)
+
+        bp_line = writer.get_line_index_with_content('break here')
+        writer.write_add_breakpoint(bp_line)
+        writer.write_make_initial_run()
+
+        hit = writer.wait_for_breakpoint_hit(line=bp_line)
+
+        writer.write_change_variable(hit.thread_id, hit.frame_id, 'wait', 'False')
+        writer.wait_for_var('<xml><var name="" type="bool"')
+
+        writer.write_run_thread(hit.thread_id)
 
         writer.finished_ok = True
 
