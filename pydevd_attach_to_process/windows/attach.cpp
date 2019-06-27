@@ -350,10 +350,6 @@ std::wstring GetCurrentModuleFilename() {
     return std::wstring();
 }
 
-struct AttachInfo {
-    PyEval_Lock* InitThreads;
-    HANDLE Event;
-};
 
 HANDLE g_initedEvent;
 int AttachCallback(void *initThreads) {
@@ -495,7 +491,7 @@ void SuspendThreads(ThreadMap &suspendedThreads, Py_AddPendingCall* addPendingCa
                                 GetThreadContext(hThread, &context);
 
 #if defined(_X86_)
-                                if(context.Eip >= *((DWORD*)addPendingCall) && context.Eip <= (*((DWORD*)addPendingCall)) + 0x100) {
+                                if (context.Eip >= *((DWORD*)addPendingCall) && context.Eip <= (*((DWORD*)addPendingCall)) + 0x100) {
                                     addingPendingCall = true;
                                 }
 #elif defined(_AMD64_)
@@ -593,7 +589,7 @@ bool IsPythonModule(HMODULE module, bool &isDebug) {
             DEFINE_PROC_NO_CHECK(isInit, Py_IsInitialized*, "Py_IsInitialized", 0);
             DEFINE_PROC_NO_CHECK(gilEnsure, PyGILState_Ensure*, "PyGILState_Ensure", 51);
             DEFINE_PROC_NO_CHECK(gilRelease, PyGILState_Release*, "PyGILState_Release", 51);
-            if(isInit == nullptr || gilEnsure == nullptr || gilRelease == nullptr){
+            if (isInit == nullptr || gilEnsure == nullptr || gilRelease == nullptr) {
                 return false;
             }
             
@@ -624,13 +620,13 @@ extern "C"
         auto isInit = (Py_IsInitialized*)GetProcAddress(module, "Py_IsInitialized");
 
         if (isInit == nullptr) {
-            if(showDebugInfo){
+            if (showDebugInfo) {
                 std::cout << "Py_IsInitialized not found. " << std::endl << std::flush;
             }
             return 1;
         }
         if (!isInit()) {
-            if(showDebugInfo){
+            if (showDebugInfo) {
                 std::cout << "Py_IsInitialized returned false. " << std::endl << std::flush;
             }
             return 2;
@@ -699,7 +695,7 @@ extern "C"
             pyRun_SimpleString == nullptr ||
             (curPythonThread == nullptr && getPythonThread == nullptr)) {
                 // we're missing some APIs, we cannot attach.
-                if(showDebugInfo){
+                if (showDebugInfo) {
                     std::cout << "Error, missing Python API!! " << std::endl << std::flush;
                 }
                 return 3;
@@ -708,7 +704,7 @@ extern "C"
         auto head = interpHead();
         if (head == nullptr) {
             // this interpreter is loaded but not initialized.
-            if(showDebugInfo){
+            if (showDebugInfo) {
                 std::cout << "Interpreter not initialized! " << std::endl << std::flush;
             }
             return 4;
@@ -718,7 +714,7 @@ extern "C"
 
         // check that we're a supported version
         if (version == PythonVersion_Unknown) {
-            if(showDebugInfo){
+            if (showDebugInfo) {
                 std::cout << "Python version unknown! " << std::endl << std::flush;
             }
             return 5;
@@ -847,19 +843,19 @@ extern "C"
                 if (addedPendingCall) {
                     // we've added our call to initialize multi-threading, we can now wait
                     // until Python code actually starts running.
-                    if(showDebugInfo){
+                    if (showDebugInfo) {
                         std::cout << "Waiting for threads to be initialized! " << std::endl << std::flush;
                     }
                     
                     ::WaitForSingleObject(g_initedEvent, INFINITE);
                 } else {
-                    if(showDebugInfo){
+                    if (showDebugInfo) {
                         std::cout << "Connect timeout! " << std::endl << std::flush;
                     }
                     return 6;
                 }
             } else {
-                if(showDebugInfo){
+                if (showDebugInfo) {
                     std::cout << "Threads initialized! " << std::endl << std::flush;
                 }
             }
@@ -870,7 +866,7 @@ extern "C"
                  setSwitchInterval(saveLongIntervalCheck);
              }
         } else {
-            if(showDebugInfo){
+            if (showDebugInfo) {
                 std::cout << "Threads already initialized! " << std::endl << std::flush;
             }
         }
@@ -904,7 +900,7 @@ extern "C"
         
         bool showDebugInfo = (*attachInfo & SHOW_DEBUG_INFO) != 0;
         
-        if(showDebugInfo){
+        if (showDebugInfo) {
             std::cout << "AttachAndRunPythonCode started (showing debug info). " << std::endl << std::flush;
         }
         
@@ -931,19 +927,19 @@ extern "C"
              if (IsPythonModule(hMods[i], isDebug)) {
                  int temp = DoAttach(hMods[i], isDebug, command, showDebugInfo);
                  if (temp == 0) {
-                    if(showDebugInfo){
+                    if (showDebugInfo) {
                         std::cout << "Attach finished successfully." << std::endl << std::flush;
                     }
                     return 0;
                  } else {
-                     if(temp > attached){
+                     if (temp > attached) {
                          attached = temp;
                      }
                  }
              }
          }
 
-        if(showDebugInfo){
+        if (showDebugInfo) {
             std::cout << "Error when injecting code in target process. Error code (on windows): " << attached << std::endl << std::flush;
         }
         return attached;
@@ -960,20 +956,27 @@ extern "C"
 
 
     // ======================================== Code related to setting tracing to existing threads.
+    
+    struct ModuleInfo {
+        HMODULE module;
+        bool isDebug;
+        int errorGettingModule; // 0 means ok, negative values some error (should never be positive).
+    };
+    
 
-
-
-    /**
-     * This function may be called to set a tracing function to existing python threads.
-     **/
-    DECLDIR int AttachDebuggerTracing(bool showDebugInfo, void* pSetTraceFunc, void* pTraceFunc, unsigned int threadId)
-    {
+    ModuleInfo GetPythonModule() {
         HANDLE hProcess = GetCurrentProcess();
+        ModuleInfo moduleInfo;
+        moduleInfo.module = nullptr;
+        moduleInfo.isDebug = false;
+        moduleInfo.errorGettingModule = 0;
+        
         DWORD modSize = sizeof(HMODULE) * 1024;
         HMODULE* hMods = (HMODULE*)_malloca(modSize);
         if (hMods == nullptr) {
             std::cout << "hmods not allocated! " << std::endl << std::flush;
-            return -2;
+            moduleInfo.errorGettingModule = -1;
+            return moduleInfo;
         }
 
         DWORD modsNeeded;
@@ -983,35 +986,169 @@ extern "C"
             hMods = (HMODULE*)_malloca(modsNeeded);
             if (hMods == nullptr) {
                 std::cout << "hmods not allocated (2)! " << std::endl << std::flush;
-                return -3;
+                moduleInfo.errorGettingModule = -2;
+                return moduleInfo;
             }
             modSize = modsNeeded;
         }
-        int attached = -10;
-        {
-            for (size_t i = 0; i < modsNeeded / sizeof(HMODULE); i++) {
-                bool isDebug;
-                if (IsPythonModule(hMods[i], isDebug)) {
-                    if(showDebugInfo){
-                        std::cout << "Setting sys trace for existing threads." << std::endl << std::flush;
-                    }
-                    PyObjectHolder traceFunc(isDebug, (PyObject*) pTraceFunc, true);
-                    PyObjectHolder setTraceFunc(isDebug, (PyObject*) pSetTraceFunc, true);
-                    int temp = InternalSetSysTraceFunc(hMods[i], isDebug, showDebugInfo, &traceFunc, &setTraceFunc, threadId);
-                    if (temp == 0) {
-                        // we've successfully attached the debugger
-                        return 0;
-                    }else{
-                       if(temp > attached){
-                           //I.e.: the higher the value the more significant it is.
-                           attached = temp;
-                        }
-                    }
-                }
+        
+        for (size_t i = 0; i < modsNeeded / sizeof(HMODULE); i++) {
+            bool isDebug;
+            if (IsPythonModule(hMods[i], isDebug)) {
+                moduleInfo.isDebug = isDebug;
+                moduleInfo.module = hMods[i]; 
+                return moduleInfo;
+            }
+        }
+        std::cout << "Unable to find python module. " << std::endl << std::flush;
+        moduleInfo.errorGettingModule = -3;
+        return moduleInfo;
+    }
+    
+    struct InitializeThreadingInfo {
+        Py_AddPendingCall* addPendingCall;
+        PyImport_ImportModule* pyImportMod;
+        HANDLE event;
+    };
+    
+    int InitializeThreading(void *pInitializeThreadingInfo) {
+        // initialize us for threading, this will acquire the GIL if not already created, and is a nop if the GIL is created.
+        // This leaves us in the proper state when we return back to the runtime whether the GIL was created or not before
+        // we were called.
+        std::cout << "Initializing threading on main thread (with addPendingCall). " << std::endl << std::flush;
+        InitializeThreadingInfo* initializeThreadingInfo = ((InitializeThreadingInfo*)pInitializeThreadingInfo);
+//         initializeThreadingInfo->a
+//         ((InitializeThreadingInfo*)initThreads)();
+        SetEvent(initializeThreadingInfo->event);
+        return 0;
+    }
+
+    
+    DECLDIR int ImportThreadingOnMain() {
+        ModuleInfo moduleInfo = GetPythonModule();
+        if (moduleInfo.errorGettingModule != 0) {
+            return moduleInfo.errorGettingModule;
+        }
+        HMODULE module = moduleInfo.module;
+        
+        auto addPendingCall = (Py_AddPendingCall*)GetProcAddress(module, "Py_AddPendingCall");
+        auto pyImportMod = (PyImport_ImportModule*) GetProcAddress(module, "PyImport_ImportModule");
+        auto event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+        
+        HandleHolder holder(event);
+        
+        InitializeThreadingInfo initializeThreadingInfo;
+        initializeThreadingInfo.addPendingCall = addPendingCall;
+        initializeThreadingInfo.pyImportMod = pyImportMod;
+        initializeThreadingInfo.event = event;
+        
+        addPendingCall(&InitializeThreading, &initializeThreadingInfo);
+        
+        ::WaitForSingleObject(initializeThreadingInfo.event, INFINITE);
+
+        return 0;
+    }
+
+
+    /**
+     * A negative value means there was some error getting it.
+     */
+    DECLDIR int GetMainThreadId() {
+        ModuleInfo moduleInfo = GetPythonModule();
+        if (moduleInfo.errorGettingModule != 0) {
+            return moduleInfo.errorGettingModule;
+        }
+        HMODULE module = moduleInfo.module;
+        
+        DEFINE_PROC(interpHead, PyInterpreterState_Head*, "PyInterpreterState_Head", -100);
+        DEFINE_PROC(threadHead, PyInterpreterState_ThreadHead*, "PyInterpreterState_ThreadHead", -110);
+        
+        auto head = interpHead();
+        if (head == nullptr) {
+            // this interpreter is loaded but not initialized.
+            PRINT("Interpreter not initialized!");
+            return -120;
+        }
+        
+        auto version = GetPythonVersion(module);
+        DEFINE_PROC(gilEnsure, PyGILState_Ensure*, "PyGILState_Ensure", -130);
+        DEFINE_PROC(gilRelease, PyGILState_Release*, "PyGILState_Release", -140);
+
+        GilHolder gilLock(gilEnsure, gilRelease);   // acquire and hold the GIL until done...
+        auto curThread = threadHead(head);
+        return GetPythonThreadId(version, curThread);
+    }
+    
+    
+    DECLDIR int PrintDebugInfo() {
+        PRINT("Getting debug info...");
+        ModuleInfo moduleInfo = GetPythonModule();
+        if (moduleInfo.errorGettingModule != 0) {
+            PRINT("Error getting python module");
+            return 0;
+        }
+        HMODULE module = moduleInfo.module;
+        
+        DEFINE_PROC(interpHead, PyInterpreterState_Head*, "PyInterpreterState_Head", 0);
+        DEFINE_PROC(threadHead, PyInterpreterState_ThreadHead*, "PyInterpreterState_ThreadHead", 0);
+        DEFINE_PROC(threadNext, PyThreadState_Next*, "PyThreadState_Next", 160);
+        DEFINE_PROC(gilEnsure, PyGILState_Ensure*, "PyGILState_Ensure", 0);
+        DEFINE_PROC(gilRelease, PyGILState_Release*, "PyGILState_Release", 0);
+        
+        auto head = interpHead();
+        if (head == nullptr) {
+            // this interpreter is loaded but not initialized.
+            PRINT("Interpreter not initialized!");
+            return 0;
+        }
+        
+        auto version = GetPythonVersion(module);
+        printf("Python version: %d\n", version);
+
+        GilHolder gilLock(gilEnsure, gilRelease);   // acquire and hold the GIL until done...
+        auto curThread = threadHead(head);
+        if (curThread == nullptr) {
+            PRINT("Thread head is NULL.")
+            return 0;
+        }
+        
+        for (auto curThread = threadHead(head); curThread != nullptr; curThread = threadNext(curThread)) {
+            printf("Found thread id: %d\n", GetPythonThreadId(version, curThread));
+        }
+
+        PRINT("Finished getting debug info.")
+        return 0;
+    }
+    
+    
+    /**
+     * This function may be called to set a tracing function to existing python threads.
+     **/
+    DECLDIR int AttachDebuggerTracing(bool showDebugInfo, void* pSetTraceFunc, void* pTraceFunc, unsigned int threadId)
+    {
+        ModuleInfo moduleInfo = GetPythonModule();
+        if (moduleInfo.errorGettingModule != 0) {
+            return moduleInfo.errorGettingModule;
+        }
+        HMODULE module = moduleInfo.module;
+        if (showDebugInfo) {
+            std::cout << "Setting sys trace for existing threads." << std::endl << std::flush;
+        }
+        int attached = 0;
+        PyObjectHolder traceFunc(moduleInfo.isDebug, (PyObject*) pTraceFunc, true);
+        PyObjectHolder setTraceFunc(moduleInfo.isDebug, (PyObject*) pSetTraceFunc, true);
+        int temp = InternalSetSysTraceFunc(module, moduleInfo.isDebug, showDebugInfo, &traceFunc, &setTraceFunc, threadId);
+        if (temp == 0) {
+            // we've successfully attached the debugger
+            return 0;
+        } else {
+           if (temp > attached) {
+               //I.e.: the higher the value the more significant it is.
+               attached = temp;
             }
         }
 
-        if(showDebugInfo){
+        if (showDebugInfo) {
             std::cout << "Setting sys trace for existing threads failed with code: " << attached << "." << std::endl << std::flush;
         }
         return attached;

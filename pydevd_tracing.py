@@ -105,9 +105,9 @@ def restore_sys_set_trace_func():
         TracingFunctionHolder._original_tracing = None
 
 
-def set_trace_to_threads(tracing_func, target_threads=None):
+def load_python_helper_lib():
     if not IS_CPYTHON or ctypes is None or sys.version_info[:2] > (3, 7):
-        return -1
+        return None
 
     if IS_WINDOWS:
         if IS_64BIT_PROCESS:
@@ -135,16 +135,22 @@ def set_trace_to_threads(tracing_func, target_threads=None):
 
     else:
         pydev_log.info('Unable to set trace to all threads in platform: %s', sys.platform)
-        return -1
+        return None
 
     if not os.path.exists(filename):
         pydev_log.critical('Expected: %s to exist.', filename)
-        return -1
+        return None
 
     try:
-        lib = ctypes.cdll.LoadLibrary(filename)
+        return ctypes.cdll.LoadLibrary(filename)
     except:
         pydev_log.exception('Error loading: %s', filename)
+        return None
+
+
+def set_trace_to_threads(tracing_func, target_threads=None):
+    lib = load_python_helper_lib()
+    if lib is None:
         return -1
 
     if hasattr(sys, 'getswitchinterval'):

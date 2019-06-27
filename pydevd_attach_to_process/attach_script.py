@@ -1,5 +1,73 @@
+
+
+def load_python_helper_lib():
+    import sys
+    try:
+        import ctypes
+    except ImportError:
+        ctypes = None
+
+    import platform
+    import os
+    IS_64BIT_PROCESS = sys.maxsize > (2 ** 32)
+    IS_WINDOWS = sys.platform == 'win32'
+    IS_LINUX = sys.platform in ('linux', 'linux2')
+    IS_MAC = sys.platform == 'darwin'
+    IS_CPYTHON = platform.python_implementation() == 'CPython'
+
+    if not IS_CPYTHON or ctypes is None or sys.version_info[:2] > (3, 7):
+        return None
+
+    if IS_WINDOWS:
+        if IS_64BIT_PROCESS:
+            suffix = 'amd64'
+        else:
+            suffix = 'x86'
+
+        filename = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'pydevd_attach_to_process', 'attach_%s.dll' % (suffix,))
+
+    elif IS_LINUX:
+        if IS_64BIT_PROCESS:
+            suffix = 'amd64'
+        else:
+            suffix = 'x86'
+
+        filename = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'pydevd_attach_to_process', 'attach_linux_%s.so' % (suffix,))
+
+    elif IS_MAC:
+        if IS_64BIT_PROCESS:
+            suffix = 'x86_64.dylib'
+        else:
+            suffix = 'x86.dylib'
+
+        filename = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'pydevd_attach_to_process', 'attach_%s' % (suffix,))
+
+    else:
+        return None
+
+    if not os.path.exists(filename):
+        return None
+
+    try:
+        return ctypes.cdll.LoadLibrary(filename)
+    except:
+        return None
+
+
 def attach(port, host, protocol=''):
     try:
+        import sys
+        if 'threading' not in sys.modules:
+            lib = load_python_helper_lib()
+            if lib is not None:
+                lib.ImportThreadingOnMain()
+
+            import threading
+            print(threading.current_thread().ident)
+            print(threading._shutdown.im_self.ident)  # @UndefinedVariable
+            print('lib.GetMainThreadId()', lib.GetMainThreadId())
+            lib.PrintDebugInfo()
+
         if protocol:
             from _pydevd_bundle import pydevd_defaults
             pydevd_defaults.PydevdCustomization.DEFAULT_PROTOCOL = protocol

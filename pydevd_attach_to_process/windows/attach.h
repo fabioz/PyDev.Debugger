@@ -25,6 +25,15 @@ extern "C"
 {
     DECLDIR int AttachAndRunPythonCode(const char *command, int *result );
     
+    DECLDIR int GetMainThreadId();
+    
+    DECLDIR int ImportThreadingOnMain();
+    
+    /*
+     * Helper to print debug information from the current process
+     */
+    DECLDIR int PrintDebugInfo();
+    
     
     /*
     Could be used with ctypes (note that the threading should be initialized, so, 
