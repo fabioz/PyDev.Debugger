@@ -2443,7 +2443,7 @@ def test_attach_to_pid(case_setup_remote):
         assert writer.process is not None
 
         def attach():
-            attach_pydevd_file = os.path.join(os.path.dirname(pydevd.__file__), 'pydevd_attach_to_process', 'attach_pydevd')
+            attach_pydevd_file = os.path.join(os.path.dirname(pydevd.__file__), 'pydevd_attach_to_process', 'attach_pydevd.py')
             subprocess.call([sys.executable, attach_pydevd_file, '--pid', str(writer.process.pid), '--port', str(writer.port)])
 
         threading.Thread(target=attach).start()
