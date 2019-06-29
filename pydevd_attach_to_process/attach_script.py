@@ -57,16 +57,20 @@ def load_python_helper_lib():
 def attach(port, host, protocol=''):
     try:
         import sys
-        if 'threading' not in sys.modules:
-            lib = load_python_helper_lib()
-            if lib is not None:
-                lib.ImportThreadingOnMain()
+        lib = load_python_helper_lib()
+        lib.PrintDebugInfo()
 
-            import threading
-            print(threading.current_thread().ident)
+#         if 'threading' not in sys.modules:
+#             if lib is not None:
+#                 lib.ImportThreadingOnMain()
+
+        import threading
+        print(threading.current_thread().ident)
+        try:
             print(threading._shutdown.im_self.ident)  # @UndefinedVariable
-            print('lib.GetMainThreadId()', lib.GetMainThreadId())
-            lib.PrintDebugInfo()
+        except:
+            print(threading.main_thread().ident)  # @UndefinedVariable
+        print('lib.GetMainThreadId()', lib.GetMainThreadId())
 
         if protocol:
             from _pydevd_bundle import pydevd_defaults

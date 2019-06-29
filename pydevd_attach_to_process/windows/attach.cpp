@@ -76,7 +76,7 @@ typedef PyObject* (PyDict_GetItemString)(PyObject *p, const char *key);
 typedef PyObject* (PyEval_GetBuiltins)();
 typedef int (PyDict_SetItemString)(PyObject *dp, const char *key, PyObject *item);
 typedef int (PyEval_ThreadsInitialized)();
-typedef void (Py_AddPendingCall)(int (*func)(void *), void*);
+typedef int (Py_AddPendingCall)(int (*func)(void *), void*);
 typedef PyObject* (PyString_FromString)(const char* s);
 typedef void PyEval_SetTrace(Py_tracefunc func, PyObject *obj);
 typedef PyObject* (PyErr_Print)();
@@ -88,257 +88,7 @@ typedef PyGILState_STATE PyGILState_EnsureFunc(void);
 typedef void PyGILState_ReleaseFunc(PyGILState_STATE);
 typedef PyThreadState *PyThreadState_NewFunc(PyInterpreterState *interp);
 
-#define MAX_INTERPRETERS 10
 
-class InterpreterInfo {
-public:
-    InterpreterInfo(HMODULE module, bool debug) :
-        Interpreter(module),
-        CurrentThread(nullptr),
-        CurrentThreadGetter(nullptr),
-        NewThreadFunction(nullptr),
-        PyGILState_Ensure(nullptr),
-        Version(PythonVersion_Unknown),
-        Call(nullptr),
-        IsDebug(debug),
-        SetTrace(nullptr),
-        PyThreadState_New(nullptr),
-        ThreadState_Swap(nullptr) {
-    }
-
-    ~InterpreterInfo() {
-        if (NewThreadFunction != nullptr) {
-            delete NewThreadFunction;
-        }
-    }
-
-    PyObjectHolder* NewThreadFunction;
-    PyThreadState** CurrentThread;
-    _PyThreadState_UncheckedGet *CurrentThreadGetter;
-
-    HMODULE Interpreter;
-    PyGILState_EnsureFunc* PyGILState_Ensure;
-    PyEval_SetTrace* SetTrace;
-    PyThreadState_NewFunc* PyThreadState_New;
-    PyThreadState_Swap* ThreadState_Swap;
-
-    PythonVersion GetVersion() {
-        if (Version == PythonVersion_Unknown) {
-            Version = ::GetPythonVersion(Interpreter);
-        }
-        return Version;
-    }
-
-    PyObject_CallFunctionObjArgs* GetCall() {
-        if (Call == nullptr) {
-            Call = (PyObject_CallFunctionObjArgs*)GetProcAddress(Interpreter, "PyObject_CallFunctionObjArgs");
-        }
-
-        return Call;
-    }
-
-    bool EnsureSetTrace() {
-        if (SetTrace == nullptr) {
-            auto setTrace = (PyEval_SetTrace*)(void*)GetProcAddress(Interpreter, "PyEval_SetTrace");
-            SetTrace = setTrace;
-        }
-        return SetTrace != nullptr;
-    }
-
-    bool EnsureThreadStateSwap() {
-        if (ThreadState_Swap == nullptr) {
-            auto swap = (PyThreadState_Swap*)(void*)GetProcAddress(Interpreter, "PyThreadState_Swap");
-            ThreadState_Swap = swap;
-        }
-        return ThreadState_Swap != nullptr;
-    }
-
-    bool EnsureCurrentThread() {
-        if (CurrentThread == nullptr && CurrentThreadGetter == nullptr) {
-            CurrentThreadGetter = (_PyThreadState_UncheckedGet*)GetProcAddress(Interpreter, "_PyThreadState_UncheckedGet");
-            CurrentThread = (PyThreadState**)(void*)GetProcAddress(Interpreter, "_PyThreadState_Current");
-        }
-
-        return CurrentThread != nullptr || CurrentThreadGetter != nullptr;
-    }
-
-    PyThreadState *GetCurrentThread() {
-        return CurrentThreadGetter ? CurrentThreadGetter() : *CurrentThread;
-    }
-
-private:
-    PythonVersion Version;
-    PyObject_CallFunctionObjArgs* Call;
-    bool IsDebug;
-};
-
-DWORD _interpreterCount = 0;
-InterpreterInfo* _interpreterInfo[MAX_INTERPRETERS];
-
-void PatchIAT(PIMAGE_DOS_HEADER dosHeader, PVOID replacingFunc, LPSTR exportingDll, LPVOID newFunction) {
-    if (dosHeader->e_magic != IMAGE_DOS_SIGNATURE) {
-        return;
-    }
-
-    auto ntHeader = (IMAGE_NT_HEADERS*)(((BYTE*)dosHeader) + dosHeader->e_lfanew);
-    if (ntHeader->Signature != IMAGE_NT_SIGNATURE) {
-        return;
-    }
-
-    auto importAddr = ntHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress;
-    if (importAddr == 0) {
-        return;
-    }
-
-    auto import = (PIMAGE_IMPORT_DESCRIPTOR)(importAddr + ((BYTE*)dosHeader));
-
-    while (import->Name) {
-        char* name = (char*)(import->Name + ((BYTE*)dosHeader));
-        if (_stricmp(name, exportingDll) == 0) {
-            auto thunkData = (PIMAGE_THUNK_DATA)((import->FirstThunk) + ((BYTE*)dosHeader));
-
-            while (thunkData->u1.Function) {
-                PVOID funcAddr = (char*)(thunkData->u1.Function);
-
-                if (funcAddr == replacingFunc) {
-                    DWORD flOldProtect;
-                    if (VirtualProtect(&thunkData->u1, sizeof(SIZE_T), PAGE_READWRITE, &flOldProtect)) {
-                        thunkData->u1.Function = (SIZE_T)newFunction;
-                        VirtualProtect(&thunkData->u1, sizeof(SIZE_T), flOldProtect, &flOldProtect);
-                    }
-                }
-                thunkData++;
-            }
-        }
-
-        import++;
-    }
-}
-
-typedef BOOL WINAPI EnumProcessModulesFunc(
-    __in   HANDLE hProcess,
-    __out  HMODULE *lphModule,
-    __in   DWORD cb,
-    __out  LPDWORD lpcbNeeded
-    );
-
-typedef __kernel_entry NTSTATUS NTAPI
-    NtQueryInformationProcessFunc(
-    IN HANDLE ProcessHandle,
-    IN PROCESSINFOCLASS ProcessInformationClass,
-    OUT PVOID ProcessInformation,
-    IN ULONG ProcessInformationLength,
-    OUT PULONG ReturnLength OPTIONAL
-    );
-
-
-// A helper version of EnumProcessModules.  On Win7 uses the real EnumProcessModules which
-// lives in kernel32, and so is safe to use in DLLMain.  Pre-Win7 we use NtQueryInformationProcess
-// (http://msdn.microsoft.com/en-us/library/windows/desktop/ms684280(v=vs.85).aspx) and walk the 
-// LDR_DATA_TABLE_ENTRY data structures http://msdn.microsoft.com/en-us/library/windows/desktop/aa813708(v=vs.85).aspx
-// which have changed in Windows 7, and may change more in the future, so we can't use them there.
-__success(return) BOOL EnumProcessModulesHelper(
-    __in   HANDLE hProcess,
-    __out  HMODULE *lphModule,
-    __in   DWORD cb,
-    _Always_(__out) LPDWORD lpcbNeeded
-    ) {
-        if (lpcbNeeded == nullptr) {
-            return FALSE;
-        }
-        *lpcbNeeded = 0;
-
-        auto kernel32 = GetModuleHandle(L"kernel32.dll");
-        if (kernel32 == nullptr) {
-            return FALSE;
-        }
-
-        auto enumProc = (EnumProcessModulesFunc*)GetProcAddress(kernel32, "K32EnumProcessModules");
-        if (enumProc == nullptr) {
-            // Fallback to pre-Win7 method
-            PROCESS_BASIC_INFORMATION basicInfo;
-            auto ntdll = GetModuleHandle(L"ntdll.dll");
-            if (ntdll == nullptr) {
-                return FALSE;
-            }
-
-            // http://msdn.microsoft.com/en-us/library/windows/desktop/ms684280(v=vs.85).aspx
-            NtQueryInformationProcessFunc* queryInfo = (NtQueryInformationProcessFunc*)GetProcAddress(ntdll, "NtQueryInformationProcess");
-            if (queryInfo == nullptr) {
-                return FALSE;
-            }
-
-            auto result = queryInfo(
-                GetCurrentProcess(),
-                ProcessBasicInformation,
-                &basicInfo,
-                sizeof(PROCESS_BASIC_INFORMATION),
-                nullptr
-                );
-
-            if (FAILED(result)) {
-                return FALSE;
-            }
-
-            // http://msdn.microsoft.com/en-us/library/windows/desktop/aa813708(v=vs.85).aspx
-            PEB* peb = basicInfo.PebBaseAddress;
-            auto start = (LDR_DATA_TABLE_ENTRY*)(peb->Ldr->InMemoryOrderModuleList.Flink);
-
-            auto cur = start;
-            *lpcbNeeded = 0;
-
-            do {
-                if ((*lpcbNeeded + sizeof(SIZE_T)) <= cb) {
-                    PVOID *curLink = (PVOID*)cur;
-                    curLink -= 2;
-                    LDR_DATA_TABLE_ENTRY* curTable = (LDR_DATA_TABLE_ENTRY*)curLink;
-                    if (curTable->DllBase == nullptr) {
-                        break;
-                    }
-                    lphModule[(*lpcbNeeded) / sizeof(SIZE_T)] = (HMODULE)curTable->DllBase;
-                }
-
-                (*lpcbNeeded) += sizeof(SIZE_T);
-                cur = (LDR_DATA_TABLE_ENTRY*)((LIST_ENTRY*)cur)->Flink;
-            } while (cur != start && cur != 0);
-
-            return *lpcbNeeded <= cb;
-        }
-
-        return enumProc(hProcess, lphModule, cb, lpcbNeeded);
-}
-
-// This function will work with Win7 and later versions of the OS and is safe to call under
-// the loader lock (all APIs used are in kernel32).
-BOOL PatchFunction(LPSTR exportingDll, PVOID replacingFunc, LPVOID newFunction) {
-    HANDLE hProcess = GetCurrentProcess();
-    DWORD modSize = sizeof(HMODULE) * 1024;
-    HMODULE* hMods = (HMODULE*)_malloca(modSize);
-    DWORD modsNeeded = 0;
-    if (hMods == nullptr) {
-        modsNeeded = 0;
-        return FALSE;
-    }
-
-    while (!EnumProcessModulesHelper(hProcess, hMods, modSize, &modsNeeded)) {
-        // try again w/ more space...
-        _freea(hMods);
-        hMods = (HMODULE*)_malloca(modsNeeded);
-        if (hMods == nullptr) {
-            modsNeeded = 0;
-            break;
-        }
-        modSize = modsNeeded;
-    }
-
-    for (DWORD tmp = 0; tmp < modsNeeded / sizeof(HMODULE); tmp++) {
-        PIMAGE_DOS_HEADER dosHeader = (PIMAGE_DOS_HEADER)hMods[tmp];
-
-        PatchIAT(dosHeader, replacingFunc, exportingDll, newFunction);
-    }
-
-    return TRUE;
-}
 
 std::wstring GetCurrentModuleFilename() {
     HMODULE hModule = nullptr;
@@ -357,6 +107,16 @@ int AttachCallback(void *initThreads) {
     // This leaves us in the proper state when we return back to the runtime whether the GIL was created or not before
     // we were called.
     ((PyEval_Lock*)initThreads)();
+    SetEvent(g_initedEvent);
+    return 0;
+}
+
+int ImportThreading(void *pyImportMod) {
+    // initialize us for threading, this will acquire the GIL if not already created, and is a nop if the GIL is created.
+    // This leaves us in the proper state when we return back to the runtime whether the GIL was created or not before
+    // we were called.
+    std::cout << "ImportThreading" << std::endl << std::flush;
+    ((PyImport_ImportModule*)pyImportMod)("threading");
     SetEvent(g_initedEvent);
     return 0;
 }
@@ -617,6 +377,7 @@ extern "C"
      **/
 	int DoAttach(HMODULE module, bool isDebug, const char *command, bool showDebugInfo )
 	{
+	   showDebugInfo = true;
         auto isInit = (Py_IsInitialized*)GetProcAddress(module, "Py_IsInitialized");
 
         if (isInit == nullptr) {
@@ -710,20 +471,29 @@ extern "C"
             return 4;
         }
 
-        bool threadSafeAddPendingCall = false;
-
         // check that we're a supported version
         if (version == PythonVersion_Unknown) {
             if (showDebugInfo) {
                 std::cout << "Python version unknown! " << std::endl << std::flush;
             }
             return 5;
-        } else if (version >= PythonVersion_27 && version != PythonVersion_30) {
-            threadSafeAddPendingCall = true;
+        } else if (version == PythonVersion_25 || version == PythonVersion_26 ||
+                   version == PythonVersion_30 || version == PythonVersion_31 || version == PythonVersion_32) {
+            if (showDebugInfo) {
+                std::cout << "Python version unsupported! " << std::endl << std::flush;
+            }
+            return 5;
         }
 
 
-        if (!threadsInited()) {
+        std::cout << "threadsInited(): " << threadsInited() << std::endl << std::flush;
+        if (threadsInited()) {
+            // Note that since Python 3.7, threads are *always* initialized!
+            if (showDebugInfo) {
+                std::cout << "Threads already initialized! " << std::endl << std::flush;
+            }
+
+        } else {
             int saveIntervalCheck;
             unsigned long saveLongIntervalCheck;
             if (intervalCheck != nullptr) {
@@ -745,51 +515,55 @@ extern "C"
             // Multiple thread support has not been initialized in the interpreter.   We need multi threading support
             // to block any actively running threads and setup the debugger attach state.
             //
-            // We need to initialize multiple threading support but we need to do so safely.  One option is to call
+            // We need to initialize multiple threading support but we need to do so safely, so we call
             // Py_AddPendingCall and have our callback then initialize multi threading.  This is completely safe on 2.7
             // and up.  Unfortunately that doesn't work if we're not actively running code on the main thread (blocked on a lock
-            // or reading input).  It's also not thread safe pre-2.7 so we need to make sure it's safe to call on down-level
-            // interpreters.
+            // or reading input).
             //
             // Another option is to make sure no code is running - if there is no active thread then we can safely call
             // PyEval_InitThreads and we're in business.  But to know this is safe we need to first suspend all the other
-            // threads in the process and then inspect if any code is running.
+            // threads in the process and then inspect if any code is running (note that this is still not ideal because
+            // this thread will be the thread head for Python, but still better than not attach at all).
             //
             // Finally if code is running after we've suspended the threads then we can go ahead and do Py_AddPendingCall
             // on down-level interpreters as long as we're sure no one else is making a call to Py_AddPendingCall at the same
             // time.
             //
-            // Therefore our strategy becomes: Make the Py_AddPendingCall on interpreters where it's thread safe.  Then suspend
-            // all threads - if a threads IP is in Py_AddPendingCall resume and try again.  Once we've got all of the threads
+            // Therefore our strategy becomes: Make the Py_AddPendingCall on interpreters and wait for it. If it doesn't 
+            // call after a timeout, suspend all threads - if a threads is in Py_AddPendingCall resume and try again.  Once we've got all of the threads
             // stopped and not in Py_AddPendingCall (which calls no functions its self, you can see this and it's size in the
             // debugger) then see if we have a current thread.   If not go ahead and initialize multiple threading (it's now safe,
-            // no Python code is running).  Otherwise add the pending call and repeat.  If at any point during this process
-            // threading becomes initialized (due to our pending call or the Python code creating a new thread)  then we're done
-            // and we just resume all of the presently suspended threads.
-
-            ThreadMap suspendedThreads;
+            // no Python code is running). 
+            //
+            // If at any point during this process threading becomes initialized (due to our pending call 
+            // or the Python code creating a new thread)  then we're done and we just resume all of the presently suspended threads.
 
             g_initedEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
             HandleHolder holder(g_initedEvent);
 
-            bool addedPendingCall = false;
-            if (addPendingCall != nullptr && threadSafeAddPendingCall) {
-                // we're on a thread safe Python version, go ahead and pend our call to initialize threading.
-                addPendingCall(&AttachCallback, initThreads);
-                addedPendingCall = true;
-            }
+            // we're on a thread safe Python version, go ahead and pend our call to initialize threading.
+            addPendingCall(&AttachCallback, initThreads);
+            
+            ::WaitForSingleObject(g_initedEvent, 4000);
+            
+            // If threads weren't initialized in our pending call, instead of giving a timeout, try
+            // to initialize it in this thread.
+            for(int attempts = 0; !threadsInited() && attempts < 20; attempts++) {
+                if(attempts > 0){
+                    // If we haven't been able to do it in the first time, wait a bit before retrying.
+                    Sleep(10);
+                }
 
- #define TICKS_DIFF(prev, cur) ((cur) >= (prev)) ? ((cur)-(prev)) : ((0xFFFFFFFF-(prev))+(cur))
-             const DWORD ticksPerSecond = 1000;
-
-            DWORD startTickCount = GetTickCount();
-            do {
+                ThreadMap suspendedThreads;
+                std::cout << "SuspendThreads(suspendedThreads, addPendingCall, threadsInited);" << std::endl << std::flush;
                 SuspendThreads(suspendedThreads, addPendingCall, threadsInited);
-
-                 if (!threadsInited()) {
+                
+                if(!threadsInited()){ // Check again with threads suspended.
+                    std::cout << "ENTERED if (!threadsInited()) {" << std::endl << std::flush;
                     auto curPyThread = getPythonThread ? getPythonThread() : *curPythonThread;
                     
                     if (curPyThread == nullptr) {
+                        std::cout << "ENTERED if (curPyThread == nullptr) {" << std::endl << std::flush;
                          // no threads are currently running, it is safe to initialize multi threading.
                          PyGILState_STATE gilState;
                          if (version >= PythonVersion_34) {
@@ -797,14 +571,14 @@ extern "C"
                              // we need to create our thread state manually
                              // before we can call PyGILState_Ensure() before we
                              // can call PyEval_InitThreads().
-
+    
                              // Don't require this function unless we need it.
                              auto threadNew = (PyThreadState_NewFunc*)GetProcAddress(module, "PyThreadState_New");
                              if (threadNew != nullptr) {
                                  threadNew(head);
                              }
                          }
-
+    
                          if (version >= PythonVersion_32) {
                              // in 3.2 due to the new GIL and later we can't call Py_InitThreads
                              // without a thread being initialized.
@@ -818,64 +592,42 @@ extern "C"
                         else {
                             gilState = PyGILState_LOCKED; // prevent compiler warning
                          }
-
-                         initThreads();
-
+    
+                        std::cout << "Called initThreads()" << std::endl << std::flush;
+                        // Initialize threads in our secondary thread (this is NOT ideal because
+                        // this thread will be the thread head), but is still better than not being
+                        // able to attach if the main thread is not actually running any code.
+                        initThreads();
+    
                          if (version >= PythonVersion_32) {
                              // we will release the GIL here
                             gilRelease(gilState);
                          } else {
                              releaseLock();
                          }
-                    } else if (!addedPendingCall) {
-                        // someone holds the GIL but no one is actively adding any pending calls.  We can pend our call
-                        // and initialize threads.
-                        addPendingCall(&AttachCallback, initThreads);
-                        addedPendingCall = true;
                     }
-                }
+                } 
                 ResumeThreads(suspendedThreads);
-            } while (!threadsInited() &&
-                (TICKS_DIFF(startTickCount, GetTickCount())) < (ticksPerSecond * 20) &&
-                !addedPendingCall);
-
-            if (!threadsInited()) {
-                if (addedPendingCall) {
-                    // we've added our call to initialize multi-threading, we can now wait
-                    // until Python code actually starts running.
-                    if (showDebugInfo) {
-                        std::cout << "Waiting for threads to be initialized! " << std::endl << std::flush;
-                    }
-                    
-                    ::WaitForSingleObject(g_initedEvent, INFINITE);
-                } else {
-                    if (showDebugInfo) {
-                        std::cout << "Connect timeout! " << std::endl << std::flush;
-                    }
-                    return 6;
-                }
-            } else {
-                if (showDebugInfo) {
-                    std::cout << "Threads initialized! " << std::endl << std::flush;
-                }
             }
 
-             if (intervalCheck != nullptr) {
-                 *intervalCheck = saveIntervalCheck;
-             } else if (setSwitchInterval != nullptr) {
-                 setSwitchInterval(saveLongIntervalCheck);
-             }
-        } else {
-            if (showDebugInfo) {
-                std::cout << "Threads already initialized! " << std::endl << std::flush;
+
+            if (intervalCheck != nullptr) {
+                *intervalCheck = saveIntervalCheck;
+            } else if (setSwitchInterval != nullptr) {
+                setSwitchInterval(saveLongIntervalCheck);
             }
+            
         }
 
         if (g_heap != nullptr) {
             HeapDestroy(g_heap);
             g_heap = nullptr;
         }
-
+        
+        if (!threadsInited()) {
+            std::cout << "Unable to initialize threads in the given timeout! " << std::endl << std::flush;
+            return 8;
+        }
 
         GilHolder gilLock(gilEnsure, gilRelease);   // acquire and hold the GIL until done...
         
@@ -883,74 +635,6 @@ extern "C"
         return 0;
 
     }
-
-
-
-    /**
-     * This function is meant to be called to execute some arbitrary python code to be
-     * run. It'll initialize threads as needed and then run the code with pyRun_SimpleString.  
-     *
-     * @param command: the python code to be run
-     * @param attachInfo: pointer to an int specifying whether we should show debug info (1) or not (0).
-     **/
-    DECLDIR int AttachAndRunPythonCode(const char *command, int *attachInfo )
-    {
-        
-        int SHOW_DEBUG_INFO = 1;
-        
-        bool showDebugInfo = (*attachInfo & SHOW_DEBUG_INFO) != 0;
-        
-        if (showDebugInfo) {
-            std::cout << "AttachAndRunPythonCode started (showing debug info). " << std::endl << std::flush;
-        }
-        
-        HANDLE hProcess = GetCurrentProcess();
-        DWORD modSize = sizeof(HMODULE) * 1024;
-        HMODULE* hMods = (HMODULE*)_malloca(modSize);
-        if (hMods == nullptr) {
-            return -2;
-        }
-
-        DWORD modsNeeded;
-        while (!EnumProcessModules(hProcess, hMods, modSize, &modsNeeded)) {
-            // try again w/ more space...
-            _freea(hMods);
-            hMods = (HMODULE*)_malloca(modsNeeded);
-            if (hMods == nullptr) {
-                return -3;
-            }
-            modSize = modsNeeded;
-        }
-        int attached = -10;
-        for (size_t i = 0; i < modsNeeded / sizeof(HMODULE); i++) {
-             bool isDebug;
-             if (IsPythonModule(hMods[i], isDebug)) {
-                 int temp = DoAttach(hMods[i], isDebug, command, showDebugInfo);
-                 if (temp == 0) {
-                    if (showDebugInfo) {
-                        std::cout << "Attach finished successfully." << std::endl << std::flush;
-                    }
-                    return 0;
-                 } else {
-                     if (temp > attached) {
-                         attached = temp;
-                     }
-                 }
-             }
-         }
-
-        if (showDebugInfo) {
-            std::cout << "Error when injecting code in target process. Error code (on windows): " << attached << std::endl << std::flush;
-        }
-        return attached;
-    }
-    
-        
-
-
-
-
-
 
 
 
@@ -1022,6 +706,40 @@ extern "C"
         SetEvent(initializeThreadingInfo->event);
         return 0;
     }
+
+
+
+    /**
+     * This function is meant to be called to execute some arbitrary python code to be
+     * run. It'll initialize threads as needed and then run the code with pyRun_SimpleString.  
+     *
+     * @param command: the python code to be run
+     * @param attachInfo: pointer to an int specifying whether we should show debug info (1) or not (0).
+     **/
+    DECLDIR int AttachAndRunPythonCode(const char *command, int *attachInfo )
+    {
+        
+        int SHOW_DEBUG_INFO = 1;
+        
+        bool showDebugInfo = (*attachInfo & SHOW_DEBUG_INFO) != 0;
+        
+        if (showDebugInfo) {
+            std::cout << "AttachAndRunPythonCode started (showing debug info). " << std::endl << std::flush;
+        }
+        
+        ModuleInfo moduleInfo = GetPythonModule();
+        if (moduleInfo.errorGettingModule != 0) {
+            return moduleInfo.errorGettingModule;
+        }
+        HMODULE module = moduleInfo.module;
+        int attached = DoAttach(module, moduleInfo.isDebug, command, showDebugInfo);
+        
+        if (attached != 0 && showDebugInfo) {
+            std::cout << "Error when injecting code in target process. Error code (on windows): " << attached << std::endl << std::flush;
+        }
+        return attached;
+    }
+    
 
     
     DECLDIR int ImportThreadingOnMain() {
