@@ -2435,22 +2435,44 @@ def test_subprocess_quoted_args(case_setup_multiprocessing):
         writer.finished_ok = True
 
 
+def _attach_to_writer_pid(writer):
+    import pydevd
+    assert writer.process is not None
+
+    def attach():
+        attach_pydevd_file = os.path.join(os.path.dirname(pydevd.__file__), 'pydevd_attach_to_process', 'attach_pydevd.py')
+        subprocess.call([sys.executable, attach_pydevd_file, '--pid', str(writer.process.pid), '--port', str(writer.port)])
+
+    threading.Thread(target=attach).start()
+
+    wait_for_condition(lambda: writer.finished_initialization)
+
+
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 def test_attach_to_pid(case_setup_remote):
-    import pydevd
     with case_setup_remote.test_file('_debugger_case_attach_to_pid_simple.py', wait_for_port=False) as writer:
-
-        assert writer.process is not None
-
-        def attach():
-            attach_pydevd_file = os.path.join(os.path.dirname(pydevd.__file__), 'pydevd_attach_to_process', 'attach_pydevd.py')
-            subprocess.call([sys.executable, attach_pydevd_file, '--pid', str(writer.process.pid), '--port', str(writer.port)])
-
-        threading.Thread(target=attach).start()
-
-        wait_for_condition(lambda: writer.finished_initialization)
+        _attach_to_writer_pid(writer)
 
         bp_line = writer.get_line_index_with_content('break here')
+        writer.write_add_breakpoint(bp_line)
+        writer.write_make_initial_run()
+
+        hit = writer.wait_for_breakpoint_hit(line=bp_line)
+
+        writer.write_change_variable(hit.thread_id, hit.frame_id, 'wait', 'False')
+        writer.wait_for_var('<xml><var name="" type="bool"')
+
+        writer.write_run_thread(hit.thread_id)
+
+        writer.finished_ok = True
+
+
+@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+def test_attach_to_pid_halted(case_setup_remote):
+    with case_setup_remote.test_file('_debugger_case_attach_to_pid_multiple_threads.py', wait_for_port=False) as writer:
+        _attach_to_writer_pid(writer)
+
+        bp_line = writer.get_line_index_with_content('break thread here')
         writer.write_add_breakpoint(bp_line)
         writer.write_make_initial_run()
 

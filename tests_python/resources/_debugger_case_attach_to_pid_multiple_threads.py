@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
         with lock:
             initialized[0] = True
-            while wait:  # break 2 here
+            while wait:  # break thread here
                 time.sleep(1 / 100.)
 
     _thread.start_new_thread(new_thread_function, ())
@@ -28,7 +28,11 @@ if __name__ == '__main__':
     with lock:  # It'll be here until the secondary thread finishes (i.e.: releases the lock).
         pass
 
-    import threading  # Only import threading at the end!
-    assert isinstance(threading.current_thread(), threading._MainThread)
+    import threading  # Note: only import after the attach.
+    if hasattr(threading, 'main_thread'):
+        assert threading.current_thread().ident == threading.main_thread().ident
+    else:
+        # Python 2 does not have main_thread, but we can still get the reference.
+        assert threading.current_thread().ident == threading._shutdown.im_self.ident
 
-    print('TEST SUCEEDED')  # break 1 here
+    print('TEST SUCEEDED')
