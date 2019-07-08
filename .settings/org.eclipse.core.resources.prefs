@@ -9,6 +9,7 @@ encoding//pydev_ipython/inputhookqt5.py=utf-8
 encoding//pydev_ipython/inputhookwx.py=utf-8
 encoding//pydevd_attach_to_process/winappdbg/__init__.py=utf-8
 encoding//pydevd_attach_to_process/winappdbg/interactive.py=utf-8
+encoding//pydevd_attach_to_process/winappdbg/module.py=utf-8
 encoding//pydevd_attach_to_process/winappdbg/plugins/do_symfix.py=utf-8
 encoding//pydevd_attach_to_process/winappdbg/sql.py=utf-8
 encoding//pydevd_attach_to_process/winappdbg/win32/__init__.py=utf-8

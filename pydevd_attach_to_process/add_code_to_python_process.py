@@ -248,7 +248,7 @@ class GenShellCodeHelper(object):
 
 
 def resolve_label(process, label):
-    for i in range(3):
+    for i in range(10):
         try:
             address = process.resolve_label(label)
             assert address
@@ -258,7 +258,7 @@ def resolve_label(process, label):
                 process.scan_modules()
             except:
                 pass
-            if i == 2:
+            if i == 9:
                 raise
             time.sleep(2)
 

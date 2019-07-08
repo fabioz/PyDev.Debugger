@@ -41,7 +41,7 @@
 
 // Access to std::cout and std::endl
 #include <iostream>
-
+#include <mutex>
 // DECLDIR will perform an export for us
 #define DLL_EXPORT
 
@@ -104,53 +104,30 @@ std::wstring GetCurrentModuleFilename() {
 struct InitializeThreadingInfo {
     PyImport_ImportModule* pyImportMod;
     PyEval_Lock* initThreads;
-    HANDLE event;
+    
+    std::mutex mutex;
+    HANDLE initedEvent;  // Note: only access with mutex locked (and check if not already nullptr).
+    bool completed; // Note: only access with mutex locked
 };
 
-HANDLE g_initedEvent;
+
 int AttachCallback(void *voidInitializeThreadingInfo) {
     // initialize us for threading, this will acquire the GIL if not already created, and is a nop if the GIL is created.
     // This leaves us in the proper state when we return back to the runtime whether the GIL was created or not before
     // we were called.
     InitializeThreadingInfo* initializeThreadingInfo = (InitializeThreadingInfo*)voidInitializeThreadingInfo;
-    initializeThreadingInfo->initThreads();
-    std::cout << "AttachCallback: initThreads" << std::endl << std::flush;
+    initializeThreadingInfo->initThreads(); // Note: calling multiple times is ok.
     initializeThreadingInfo->pyImportMod("threading");
-    std::cout << "AttachCallback: imported threading" << std::endl << std::flush;
-    SetEvent(g_initedEvent);
+    
+    initializeThreadingInfo->mutex.lock();
+    if(initializeThreadingInfo->initedEvent != nullptr) {
+        SetEvent(initializeThreadingInfo->initedEvent);
+    }
+    initializeThreadingInfo->completed = true;
+    initializeThreadingInfo->mutex.unlock();
     return 0;
 }
 
-
-char* ReadCodeFromFile(wchar_t* filePath) {
-    std::ifstream filestr;
-    filestr.open(filePath, std::ios::binary);
-    if (filestr.fail()) {
-        return nullptr;
-    }
-
-    // get length of file:
-    filestr.seekg(0, std::ios::end);
-    auto length = filestr.tellg();
-    filestr.seekg(0, std::ios::beg);
-
-    int len = (int)length;
-    char* buffer = new char[len + 1];
-    filestr.read(buffer, len);
-    buffer[len] = 0;
-
-    // remove carriage returns, copy zero byte
-    for (int read = 0, write = 0; read <= len; read++) {
-        if (buffer[read] == '\r') {
-            continue;
-        } else if (write != read) {
-            buffer[write] = buffer[read];
-        }
-        write++;
-    }
-
-    return buffer;
-}
 
 // create a custom heap for our unordered map.  This is necessary because if we suspend a thread while in a heap function
 // then we could deadlock here.  We need to be VERY careful about what we do while the threads are suspended.
@@ -283,58 +260,6 @@ void SuspendThreads(ThreadMap &suspendedThreads, Py_AddPendingCall* addPendingCa
 }
 
 
-// Ensures handles are closed when they go out of scope
-class HandleHolder {
-    HANDLE _handle;
-public:
-    HandleHolder(HANDLE handle) : _handle(handle) {
-    }
-
-    ~HandleHolder() {
-        CloseHandle(_handle);
-    }
-};
-
-
-
-
-bool LoadAndEvaluateCode(
-    wchar_t* filePath, const char* fileName, bool isDebug, PyObject* globalsDict,
-    Py_CompileString* pyCompileString, PyDict_SetItemString* dictSetItem,
-    PyEval_EvalCode* pyEvalCode, PyString_FromString* strFromString, PyEval_GetBuiltins* getBuiltins,
-    PyErr_Print pyErrPrint
- ) {
-    auto debuggerCode = ReadCodeFromFile(filePath);
-    if (debuggerCode == nullptr) {
-        return false;
-    }
-
-    auto code = PyObjectHolder(isDebug, pyCompileString(debuggerCode, fileName, 257 /*Py_file_input*/));
-    delete[] debuggerCode;
-
-    if (*code == nullptr) {
-        return false;
-    }
-
-    dictSetItem(globalsDict, "__builtins__", getBuiltins());
-    auto size = WideCharToMultiByte(CP_UTF8, 0, filePath, (DWORD)wcslen(filePath), nullptr, 0, nullptr, nullptr);
-    char* filenameBuffer = new char[size + 1];
-    if (WideCharToMultiByte(CP_UTF8, 0, filePath, (DWORD)wcslen(filePath), filenameBuffer, size, nullptr, nullptr) != 0) {
-        filenameBuffer[size] = 0;
-        dictSetItem(globalsDict, "__file__", strFromString(filenameBuffer));
-    }
-
-    auto evalResult = PyObjectHolder(isDebug, pyEvalCode(code.ToPython(), globalsDict, globalsDict));
-#if !NDEBUG
-    if (*evalResult == nullptr) {
-        pyErrPrint();
-    }
-#else
-    UNREFERENCED_PARAMETER(pyErrPrint);
-#endif
-
-    return true;
-}
 
 // Checks to see if the specified module is likely a Python interpreter.
 bool IsPythonModule(HMODULE module, bool &isDebug) {
@@ -378,7 +303,6 @@ extern "C"
      **/
 	int DoAttach(HMODULE module, bool isDebug, const char *command, bool showDebugInfo )
 	{
-	   showDebugInfo = true;
         auto isInit = (Py_IsInitialized*)GetProcAddress(module, "Py_IsInitialized");
 
         if (isInit == nullptr) {
@@ -397,71 +321,33 @@ extern "C"
         auto version = GetPythonVersion(module);
 
         // found initialized Python runtime, gather and check the APIs we need for a successful attach...
-        auto addPendingCall = (Py_AddPendingCall*)GetProcAddress(module, "Py_AddPendingCall");
-        auto interpHead = (PyInterpreterState_Head*)GetProcAddress(module, "PyInterpreterState_Head");
-        auto gilEnsure = (PyGILState_Ensure*)GetProcAddress(module, "PyGILState_Ensure");
-        auto gilRelease = (PyGILState_Release*)GetProcAddress(module, "PyGILState_Release");
-        auto threadHead = (PyInterpreterState_ThreadHead*)GetProcAddress(module, "PyInterpreterState_ThreadHead");
-        auto initThreads = (PyEval_Lock*)GetProcAddress(module, "PyEval_InitThreads");
-        auto releaseLock = (PyEval_Lock*)GetProcAddress(module, "PyEval_ReleaseLock");
-        auto threadsInited = (PyEval_ThreadsInitialized*)GetProcAddress(module, "PyEval_ThreadsInitialized");
-        auto threadNext = (PyThreadState_Next*)GetProcAddress(module, "PyThreadState_Next");
-        auto threadSwap = (PyThreadState_Swap*)GetProcAddress(module, "PyThreadState_Swap");
-        auto pyCompileString = (Py_CompileString*)GetProcAddress(module, "Py_CompileString");
-        auto pyEvalCode = (PyEval_EvalCode*)GetProcAddress(module, "PyEval_EvalCode");
-        auto getDictItem = (PyDict_GetItemString*)GetProcAddress(module, "PyDict_GetItemString");
-        auto call = (PyObject_CallFunctionObjArgs*)GetProcAddress(module, "PyObject_CallFunctionObjArgs");
-        auto getBuiltins = (PyEval_GetBuiltins*)GetProcAddress(module, "PyEval_GetBuiltins");
-        auto dictSetItem = (PyDict_SetItemString*)GetProcAddress(module, "PyDict_SetItemString");
-        PyInt_FromLong* intFromLong;
-        PyString_FromString* strFromString;
-        if (version >= PythonVersion_30) {
-            intFromLong = (PyInt_FromLong*)GetProcAddress(module, "PyLong_FromLong");
-            if (version >= PythonVersion_33) {
-                strFromString = (PyString_FromString*)GetProcAddress(module, "PyUnicode_FromString");
-            } else {
-                strFromString = (PyString_FromString*)GetProcAddress(module, "PyUnicodeUCS2_FromString");
-            }
-        } else {
-            intFromLong = (PyInt_FromLong*)GetProcAddress(module, "PyInt_FromLong");
-            strFromString = (PyString_FromString*)GetProcAddress(module, "PyString_FromString");
-        }
-        auto errOccurred = (PyErr_Occurred*)GetProcAddress(module, "PyErr_Occurred");
-        auto pyErrFetch = (PyErr_Fetch*)GetProcAddress(module, "PyErr_Fetch");
-        auto pyErrRestore = (PyErr_Restore*)GetProcAddress(module, "PyErr_Restore");
-        auto pyImportMod = (PyImport_ImportModule*) GetProcAddress(module, "PyImport_ImportModule");
-        auto pyGetAttr = (PyObject_GetAttrString*)GetProcAddress(module, "PyObject_GetAttrString");
-        auto pySetAttr = (PyObject_SetAttrString*)GetProcAddress(module, "PyObject_SetAttrString");
-        auto pyNone = (PyObject*)GetProcAddress(module, "_Py_NoneStruct");
-
-        auto getThreadTls = (PyThread_get_key_value*)GetProcAddress(module, "PyThread_get_key_value");
-        auto setThreadTls = (PyThread_set_key_value*)GetProcAddress(module, "PyThread_set_key_value");
-        auto delThreadTls = (PyThread_delete_key_value*)GetProcAddress(module, "PyThread_delete_key_value");
-        auto pyRun_SimpleString = (PyRun_SimpleString*)GetProcAddress(module, "PyRun_SimpleString");
+        DEFINE_PROC(addPendingCall, Py_AddPendingCall*, "Py_AddPendingCall", -100);
+        DEFINE_PROC(interpHead, PyInterpreterState_Head*, "PyInterpreterState_Head", -110);
+        DEFINE_PROC(gilEnsure, PyGILState_Ensure*, "PyGILState_Ensure", -120);
+        DEFINE_PROC(gilRelease, PyGILState_Release*, "PyGILState_Release", -130);
+        DEFINE_PROC(threadHead, PyInterpreterState_ThreadHead*, "PyInterpreterState_ThreadHead", -140);
+        DEFINE_PROC(initThreads, PyEval_Lock*, "PyEval_InitThreads", -150);
+        DEFINE_PROC(releaseLock, PyEval_Lock*, "PyEval_ReleaseLock", -160);
+        DEFINE_PROC(threadsInited, PyEval_ThreadsInitialized*, "PyEval_ThreadsInitialized", -170);
+        DEFINE_PROC(threadNext, PyThreadState_Next*, "PyThreadState_Next", -180);
+        DEFINE_PROC(pyImportMod, PyImport_ImportModule*, "PyImport_ImportModule", -190);
+        DEFINE_PROC(pyNone, PyObject*, "_Py_NoneStruct", -2000);
+        DEFINE_PROC(pyRun_SimpleString, PyRun_SimpleString*, "PyRun_SimpleString", -210);
 
         // Either _PyThreadState_Current or _PyThreadState_UncheckedGet are required
-        auto curPythonThread = (PyThreadState**)(void*)GetProcAddress(module, "_PyThreadState_Current");
-        auto getPythonThread = (_PyThreadState_UncheckedGet*)GetProcAddress(module, "_PyThreadState_UncheckedGet");
+        DEFINE_PROC_NO_CHECK(curPythonThread, PyThreadState**, "_PyThreadState_Current", -220);  // optional
+        DEFINE_PROC_NO_CHECK(getPythonThread, _PyThreadState_UncheckedGet*, "_PyThreadState_UncheckedGet", -230);  // optional
+    
+        if (curPythonThread == nullptr && getPythonThread == nullptr) {
+            // we're missing some APIs, we cannot attach.
+            PRINT("Error, missing Python threading API!!");
+            return -240;
+        }
 
         // Either _Py_CheckInterval or _PyEval_[GS]etSwitchInterval are useful, but not required
-        auto intervalCheck = (int*)GetProcAddress(module, "_Py_CheckInterval");
-        auto getSwitchInterval = (_PyEval_GetSwitchInterval*)GetProcAddress(module, "_PyEval_GetSwitchInterval");
-        auto setSwitchInterval = (_PyEval_SetSwitchInterval*)GetProcAddress(module, "_PyEval_SetSwitchInterval");
-
-        if (addPendingCall == nullptr || interpHead == nullptr || gilEnsure == nullptr || gilRelease == nullptr || threadHead == nullptr ||
-            initThreads == nullptr || releaseLock == nullptr || threadsInited == nullptr || threadNext == nullptr || threadSwap == nullptr ||
-            pyCompileString == nullptr || pyEvalCode == nullptr || getDictItem == nullptr || call == nullptr ||
-            getBuiltins == nullptr || dictSetItem == nullptr || intFromLong == nullptr || pyErrRestore == nullptr || pyErrFetch == nullptr ||
-            errOccurred == nullptr || pyImportMod == nullptr || pyGetAttr == nullptr || pyNone == nullptr || pySetAttr == nullptr || 
-            getThreadTls == nullptr || setThreadTls == nullptr || delThreadTls == nullptr || 
-            pyRun_SimpleString == nullptr ||
-            (curPythonThread == nullptr && getPythonThread == nullptr)) {
-                // we're missing some APIs, we cannot attach.
-                if (showDebugInfo) {
-                    std::cout << "Error, missing Python API!! " << std::endl << std::flush;
-                }
-                return 3;
-        }
+        DEFINE_PROC_NO_CHECK(intervalCheck, int*, "_Py_CheckInterval", -250);  // optional
+        DEFINE_PROC_NO_CHECK(getSwitchInterval, _PyEval_GetSwitchInterval*, "_PyEval_GetSwitchInterval", -260);  // optional
+        DEFINE_PROC_NO_CHECK(setSwitchInterval, _PyEval_SetSwitchInterval*, "_PyEval_SetSwitchInterval", -270);  // optional
 
         auto head = interpHead();
         if (head == nullptr) {
@@ -487,11 +373,56 @@ extern "C"
         }
 
 
-        std::cout << "threadsInited(): " << threadsInited() << std::endl << std::flush;
+        // We always try to initialize threading and import the threading module in the main thread in the code
+        // below...
+        //
+        // We need to initialize multiple threading support but we need to do so safely, so we call
+        // Py_AddPendingCall and have our callback then initialize multi threading.  This is completely safe on 2.7
+        // and up. Unfortunately that doesn't work if we're not actively running code on the main thread (blocked on a lock
+        // or reading input).
+        //
+        // Another option is to make sure no code is running - if there is no active thread then we can safely call
+        // PyEval_InitThreads and we're in business.  But to know this is safe we need to first suspend all the other
+        // threads in the process and then inspect if any code is running (note that this is still not ideal because
+        // this thread will be the thread head for Python, but still better than not attach at all).
+        //
+        // Finally if code is running after we've suspended the threads then we can go ahead and do Py_AddPendingCall
+        // on down-level interpreters as long as we're sure no one else is making a call to Py_AddPendingCall at the same
+        // time.
+        //
+        // Therefore our strategy becomes: Make the Py_AddPendingCall on interpreters and wait for it. If it doesn't 
+        // call after a timeout, suspend all threads - if a threads is in Py_AddPendingCall resume and try again.  Once we've got all of the threads
+        // stopped and not in Py_AddPendingCall (which calls no functions its self, you can see this and it's size in the
+        // debugger) then see if we have a current thread. If not go ahead and initialize multiple threading (it's now safe,
+        // no Python code is running). 
+
+        InitializeThreadingInfo *initializeThreadingInfo = new InitializeThreadingInfo();
+        initializeThreadingInfo->pyImportMod = pyImportMod;
+        initializeThreadingInfo->initThreads = initThreads;
+        initializeThreadingInfo->initedEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+
+        // Add the call to initialize threading.
+        addPendingCall(&AttachCallback, initializeThreadingInfo);
+        
+        ::WaitForSingleObject(initializeThreadingInfo->initedEvent, 5000);
+        
+        // Whether this completed or not, release the event handle as we won't use it anymore.
+        initializeThreadingInfo->mutex.lock();
+        CloseHandle(initializeThreadingInfo->initedEvent);
+        bool completed = initializeThreadingInfo->completed;
+        initializeThreadingInfo->initedEvent = nullptr;
+        initializeThreadingInfo->mutex.unlock();
+        
+        if(completed) {
+            // Note that this structure will leak if addPendingCall did not complete in the timeout
+            // (we can't release now because it's possible that it'll still be called).
+            delete initializeThreadingInfo;
+        }
+
         if (threadsInited()) {
             // Note that since Python 3.7, threads are *always* initialized!
             if (showDebugInfo) {
-                std::cout << "Threads already initialized! " << std::endl << std::flush;
+                std::cout << "Threads initialized! " << std::endl << std::flush;
             }
 
         } else {
@@ -512,46 +443,6 @@ extern "C"
                 saveLongIntervalCheck = 0; // prevent compiler warning
             }
 
-            // Multiple thread support has not been initialized in the interpreter.   We need multi threading support
-            // to block any actively running threads and setup the debugger attach state.
-            //
-            // We need to initialize multiple threading support but we need to do so safely, so we call
-            // Py_AddPendingCall and have our callback then initialize multi threading.  This is completely safe on 2.7
-            // and up.  Unfortunately that doesn't work if we're not actively running code on the main thread (blocked on a lock
-            // or reading input).
-            //
-            // Another option is to make sure no code is running - if there is no active thread then we can safely call
-            // PyEval_InitThreads and we're in business.  But to know this is safe we need to first suspend all the other
-            // threads in the process and then inspect if any code is running (note that this is still not ideal because
-            // this thread will be the thread head for Python, but still better than not attach at all).
-            //
-            // Finally if code is running after we've suspended the threads then we can go ahead and do Py_AddPendingCall
-            // on down-level interpreters as long as we're sure no one else is making a call to Py_AddPendingCall at the same
-            // time.
-            //
-            // Therefore our strategy becomes: Make the Py_AddPendingCall on interpreters and wait for it. If it doesn't 
-            // call after a timeout, suspend all threads - if a threads is in Py_AddPendingCall resume and try again.  Once we've got all of the threads
-            // stopped and not in Py_AddPendingCall (which calls no functions its self, you can see this and it's size in the
-            // debugger) then see if we have a current thread.   If not go ahead and initialize multiple threading (it's now safe,
-            // no Python code is running). 
-            //
-            // If at any point during this process threading becomes initialized (due to our pending call 
-            // or the Python code creating a new thread)  then we're done and we just resume all of the presently suspended threads.
-
-            g_initedEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-            HandleHolder holder(g_initedEvent);
-            
-            // Note that this will leak if the addPendingCall is not completed (when it completes
-            // it suicides itself).
-            InitializeThreadingInfo *initializeThreadingInfo = new InitializeThreadingInfo();
-            initializeThreadingInfo->pyImportMod = pyImportMod;
-            initializeThreadingInfo->initThreads = initThreads;
-
-            // we're on a thread safe Python version, go ahead and pend our call to initialize threading.
-            addPendingCall(&AttachCallback, initializeThreadingInfo);
-            
-            ::WaitForSingleObject(g_initedEvent, 5000);
-            
             // If threads weren't initialized in our pending call, instead of giving a timeout, try
             // to initialize it in this thread.
             for(int attempts = 0; !threadsInited() && attempts < 20; attempts++) {
