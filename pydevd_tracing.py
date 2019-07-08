@@ -142,7 +142,15 @@ def load_python_helper_lib():
         return None
 
     try:
-        return ctypes.cdll.LoadLibrary(filename)
+        # Load as pydll so that we don't release the gil.
+        lib = ctypes.pydll.LoadLibrary(filename)
+        lib.list_all_thread_ids.restype = ctypes.c_voidp
+
+        # A helper to cast in the library so that we don't have to import ctypes to do a cast
+        # in the caller code.
+        lib.cast_to_pyobject.argtypes = (ctypes.c_voidp,)
+        lib.cast_to_pyobject.restype = ctypes.py_object
+        return lib
     except:
         pydev_log.exception('Error loading: %s', filename)
         return None
@@ -167,16 +175,27 @@ def set_trace_to_threads(tracing_func, target_threads=None):
 
         set_trace_func = TracingFunctionHolder._original_tracing or sys.settrace
 
-        if target_threads is None:
-            target_threads = list(threading.enumerate())
+        if target_threads is not None:
+            thread_idents = set(t.ident for t in target_threads)
+        else:
+            python_visible_threads = threading.enumerate()
 
-        for t in target_threads:
-            if t and not getattr(t, 'pydev_do_not_trace', None):
-                show_debug_info = 0
-                result = lib.AttachDebuggerTracing(ctypes.c_int(show_debug_info), ctypes.py_object(set_trace_func), ctypes.py_object(tracing_func), ctypes.c_uint(t.ident))
-                if result != 0:
-                    pydev_log.info('Unable to set tracing for existing threads. Result: %s', result)
-                    ret = result
+            thread_idents = lib.list_all_thread_ids()
+            if thread_idents:
+                thread_idents = set(lib.cast_to_pyobject(thread_idents))
+            else:
+                # I.e.: nullptr
+                thread_idents = set(t.ident for t in python_visible_threads)
+
+            ignore_threads = set(t.ident for t in python_visible_threads if getattr(t, 'pydev_do_not_trace', False))
+            thread_idents = thread_idents.difference(ignore_threads)
+
+        for thread_ident in thread_idents:
+            show_debug_info = 0
+            result = lib.AttachDebuggerTracing(ctypes.c_int(show_debug_info), ctypes.py_object(set_trace_func), ctypes.py_object(tracing_func), ctypes.c_uint(thread_ident))
+            if result != 0:
+                pydev_log.info('Unable to set tracing for existing threads. Result: %s', result)
+                ret = result
     finally:
         set_interval(prev_value)
 

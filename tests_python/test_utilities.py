@@ -155,6 +155,45 @@ def test_pydevd_log():
         assert 'raise RuntimeError()' in stream.getvalue()
 
 
+@pytest.mark.skipif(not IS_CPYTHON, reason='Functionality to list other threads requires CPython.')
+def test_list_all_threads():
+    import pydevd_tracing
+    from tests_python.debugger_unittest import wait_for_condition
+    try:
+        import thread
+    except ImportError:
+        import _thread as thread
+
+    proceed = threading.Event()
+    thread_ids = []
+
+    def method():
+        thread_ids.append(thread.get_ident())
+        proceed.wait()
+
+    for _ in range(2):
+        thread.start_new_thread(method, ())
+
+    python_helper_lib = pydevd_tracing.load_python_helper_lib()
+    assert python_helper_lib is not None
+
+    wait_for_condition(lambda: len(thread_ids) == 2)
+
+    all_thread_ids = python_helper_lib.list_all_thread_ids()
+    if all_thread_ids:
+        all_thread_ids = python_helper_lib.cast_to_pyobject(all_thread_ids)
+    else:
+        # I.e.: nullptr
+        all_thread_ids = None
+
+    # Check that ref count is correct (may not be ok if we're debugging this function).
+    # Can't do the same for ints inside the list.
+    assert sys.getrefcount(all_thread_ids) == 2
+    assert set(thread_ids).issubset(all_thread_ids)
+
+    proceed.set()
+
+
 @pytest.mark.skipif(not IS_CPYTHON, reason='Functionality to trace other threads requires CPython.')
 def test_tracing_other_threads():
     import pydevd_tracing

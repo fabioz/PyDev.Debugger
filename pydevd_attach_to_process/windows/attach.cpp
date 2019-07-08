@@ -67,9 +67,6 @@
 
 typedef void (PyEval_Lock)(); // Acquire/Release lock
 typedef void (PyThreadState_API)(PyThreadState *); // Acquire/Release lock
-typedef PyObject* (PyDict_New)();
-typedef PyObject* (PyModule_New)(const char *name);
-typedef PyObject* (PyModule_GetDict)(PyObject *module);
 typedef PyObject* (Py_CompileString)(const char *str, const char *filename, int start);
 typedef PyObject* (PyEval_EvalCode)(PyObject *co, PyObject *globals, PyObject *locals);
 typedef PyObject* (PyDict_GetItemString)(PyObject *p, const char *key);
@@ -88,6 +85,9 @@ typedef PyGILState_STATE PyGILState_EnsureFunc(void);
 typedef void PyGILState_ReleaseFunc(PyGILState_STATE);
 typedef PyThreadState *PyThreadState_NewFunc(PyInterpreterState *interp);
 
+typedef PyObject *PyList_New(Py_ssize_t len);
+typedef int PyList_Append(PyObject *list, PyObject *item);
+
 
 
 std::wstring GetCurrentModuleFilename() {
@@ -101,25 +101,26 @@ std::wstring GetCurrentModuleFilename() {
 }
 
 
+struct InitializeThreadingInfo {
+    PyImport_ImportModule* pyImportMod;
+    PyEval_Lock* initThreads;
+    HANDLE event;
+};
+
 HANDLE g_initedEvent;
-int AttachCallback(void *initThreads) {
+int AttachCallback(void *voidInitializeThreadingInfo) {
     // initialize us for threading, this will acquire the GIL if not already created, and is a nop if the GIL is created.
     // This leaves us in the proper state when we return back to the runtime whether the GIL was created or not before
     // we were called.
-    ((PyEval_Lock*)initThreads)();
+    InitializeThreadingInfo* initializeThreadingInfo = (InitializeThreadingInfo*)voidInitializeThreadingInfo;
+    initializeThreadingInfo->initThreads();
+    std::cout << "AttachCallback: initThreads" << std::endl << std::flush;
+    initializeThreadingInfo->pyImportMod("threading");
+    std::cout << "AttachCallback: imported threading" << std::endl << std::flush;
     SetEvent(g_initedEvent);
     return 0;
 }
 
-int ImportThreading(void *pyImportMod) {
-    // initialize us for threading, this will acquire the GIL if not already created, and is a nop if the GIL is created.
-    // This leaves us in the proper state when we return back to the runtime whether the GIL was created or not before
-    // we were called.
-    std::cout << "ImportThreading" << std::endl << std::flush;
-    ((PyImport_ImportModule*)pyImportMod)("threading");
-    SetEvent(g_initedEvent);
-    return 0;
-}
 
 char* ReadCodeFromFile(wchar_t* filePath) {
     std::ifstream filestr;
@@ -511,7 +512,6 @@ extern "C"
                 saveLongIntervalCheck = 0; // prevent compiler warning
             }
 
-            //
             // Multiple thread support has not been initialized in the interpreter.   We need multi threading support
             // to block any actively running threads and setup the debugger attach state.
             //
@@ -540,11 +540,17 @@ extern "C"
 
             g_initedEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
             HandleHolder holder(g_initedEvent);
+            
+            // Note that this will leak if the addPendingCall is not completed (when it completes
+            // it suicides itself).
+            InitializeThreadingInfo *initializeThreadingInfo = new InitializeThreadingInfo();
+            initializeThreadingInfo->pyImportMod = pyImportMod;
+            initializeThreadingInfo->initThreads = initThreads;
 
             // we're on a thread safe Python version, go ahead and pend our call to initialize threading.
-            addPendingCall(&AttachCallback, initThreads);
+            addPendingCall(&AttachCallback, initializeThreadingInfo);
             
-            ::WaitForSingleObject(g_initedEvent, 4000);
+            ::WaitForSingleObject(g_initedEvent, 5000);
             
             // If threads weren't initialized in our pending call, instead of giving a timeout, try
             // to initialize it in this thread.
@@ -689,25 +695,6 @@ extern "C"
         return moduleInfo;
     }
     
-    struct InitializeThreadingInfo {
-        Py_AddPendingCall* addPendingCall;
-        PyImport_ImportModule* pyImportMod;
-        HANDLE event;
-    };
-    
-    int InitializeThreading(void *pInitializeThreadingInfo) {
-        // initialize us for threading, this will acquire the GIL if not already created, and is a nop if the GIL is created.
-        // This leaves us in the proper state when we return back to the runtime whether the GIL was created or not before
-        // we were called.
-        std::cout << "Initializing threading on main thread (with addPendingCall). " << std::endl << std::flush;
-        InitializeThreadingInfo* initializeThreadingInfo = ((InitializeThreadingInfo*)pInitializeThreadingInfo);
-//         initializeThreadingInfo->a
-//         ((InitializeThreadingInfo*)initThreads)();
-        SetEvent(initializeThreadingInfo->event);
-        return 0;
-    }
-
-
 
     /**
      * This function is meant to be called to execute some arbitrary python code to be
@@ -741,32 +728,6 @@ extern "C"
     }
     
 
-    
-    DECLDIR int ImportThreadingOnMain() {
-        ModuleInfo moduleInfo = GetPythonModule();
-        if (moduleInfo.errorGettingModule != 0) {
-            return moduleInfo.errorGettingModule;
-        }
-        HMODULE module = moduleInfo.module;
-        
-        auto addPendingCall = (Py_AddPendingCall*)GetProcAddress(module, "Py_AddPendingCall");
-        auto pyImportMod = (PyImport_ImportModule*) GetProcAddress(module, "PyImport_ImportModule");
-        auto event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-        
-        HandleHolder holder(event);
-        
-        InitializeThreadingInfo initializeThreadingInfo;
-        initializeThreadingInfo.addPendingCall = addPendingCall;
-        initializeThreadingInfo.pyImportMod = pyImportMod;
-        initializeThreadingInfo.event = event;
-        
-        addPendingCall(&InitializeThreading, &initializeThreadingInfo);
-        
-        ::WaitForSingleObject(initializeThreadingInfo.event, INFINITE);
-
-        return 0;
-    }
-
 
     /**
      * A negative value means there was some error getting it.
@@ -797,6 +758,66 @@ extern "C"
         return GetPythonThreadId(version, curThread);
     }
     
+    
+    /*
+     * Returns nullptr or a PyObject* list with the thread ids. 
+     */
+    DECLDIR void* list_all_thread_ids() {
+        ModuleInfo moduleInfo = GetPythonModule();
+        if (moduleInfo.errorGettingModule != 0) {
+            PRINT("Error getting python module");
+            
+            // We can't even use something as Py_BuildValue("") here, so, the caller must explicitly check for null or PyObject*.
+            // (thus, we return a void*).
+            return nullptr; 
+        }
+        HMODULE module = moduleInfo.module;
+        auto version = GetPythonVersion(module);
+        
+        DEFINE_PROC(gilEnsure, PyGILState_Ensure*, "PyGILState_Ensure", nullptr);
+        DEFINE_PROC(gilRelease, PyGILState_Release*, "PyGILState_Release", nullptr);
+        DEFINE_PROC(pylistNew, PyList_New*, "PyList_New", nullptr);
+        DEFINE_PROC(pylistAppend, PyList_Append*, "PyList_Append", nullptr);
+        DEFINE_PROC(interpHead, PyInterpreterState_Head*, "PyInterpreterState_Head", nullptr);
+        DEFINE_PROC(threadHead, PyInterpreterState_ThreadHead*, "PyInterpreterState_ThreadHead", nullptr);
+        DEFINE_PROC(threadNext, PyThreadState_Next*, "PyThreadState_Next", nullptr);
+        
+        PyInt_FromLong* intFromLong;
+        
+        if (version >= PythonVersion_30) {
+            DEFINE_PROC(intFromLongPy3, PyInt_FromLong*, "PyLong_FromLong", nullptr);
+            intFromLong = intFromLongPy3;
+        } else {
+            DEFINE_PROC(intFromLongPy2, PyInt_FromLong*, "PyInt_FromLong", nullptr);
+            intFromLong = intFromLongPy2;
+        }
+        
+        auto head = interpHead();
+        if (head == nullptr) {
+            // this interpreter is loaded but not initialized.
+            PRINT("Interpreter not initialized!");
+            return nullptr;
+        }
+
+        GilHolder gilLock(gilEnsure, gilRelease);   // acquire and hold the GIL until done...
+
+        PyObject* lst = pylistNew(0);
+        
+        auto curThread = threadHead(head);
+        if (curThread == nullptr) {
+            PRINT("Thread head is NULL.")
+            return nullptr;
+        }
+        
+        for (auto curThread = threadHead(head); curThread != nullptr; curThread = threadNext(curThread)) {
+            DWORD pythonThreadId = GetPythonThreadId(version, curThread);
+            PyObject *asPyInt = intFromLong(pythonThreadId);
+            pylistAppend(lst, asPyInt);
+            DecRef(asPyInt, moduleInfo.isDebug); // Only the list is holding the reference now.
+        }
+
+        return lst;
+    }
     
     DECLDIR int PrintDebugInfo() {
         PRINT("Getting debug info...");

@@ -49,7 +49,7 @@ def load_python_helper_lib():
         return None
 
     try:
-        return ctypes.cdll.LoadLibrary(filename)
+        return ctypes.pydll.LoadLibrary(filename)
     except:
         return None
 
@@ -60,16 +60,15 @@ def attach(port, host, protocol=''):
         lib = load_python_helper_lib()
         lib.PrintDebugInfo()
 
-#         if 'threading' not in sys.modules:
-#             if lib is not None:
-#                 lib.ImportThreadingOnMain()
+        if 'threading' not in sys.modules:
+            print('Threading not in sys.modules!')
 
         import threading
-        print(threading.current_thread().ident)
+        print('current thread id', threading.current_thread().ident)
         try:
-            print(threading._shutdown.im_self.ident)  # @UndefinedVariable
+            print('main thread id x - ', threading._shutdown.im_self.ident)  # @UndefinedVariable
         except:
-            print(threading.main_thread().ident)  # @UndefinedVariable
+            print('main thread id y', threading.main_thread().ident)  # @UndefinedVariable
         print('lib.GetMainThreadId()', lib.GetMainThreadId())
 
         if protocol:

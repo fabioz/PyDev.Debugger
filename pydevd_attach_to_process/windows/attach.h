@@ -21,18 +21,31 @@
 #define DECLDIR __declspec(dllimport)
 #endif
 
+
 extern "C"
 {
     DECLDIR int AttachAndRunPythonCode(const char *command, int *result );
     
     DECLDIR int GetMainThreadId();
     
-    DECLDIR int ImportThreadingOnMain();
-    
     /*
      * Helper to print debug information from the current process
      */
     DECLDIR int PrintDebugInfo();
+    
+    /*
+     * Helper to cast to a pyobject in the library. Actual work
+     * is done by declaring the below in the python side.
+     * 
+     * lib.cast_to_pyobject.argtypes = (ctypes.c_voidp,)
+     * lib.cast_to_pyobject.restype = ctypes.py_object
+     */
+    DECLDIR void* cast_to_pyobject(void* obj) { return obj; };
+    
+    /*
+     * Returns nullptr or a PyObject* list with the thread ids. 
+     */
+    DECLDIR void* list_all_thread_ids();
     
     
     /*

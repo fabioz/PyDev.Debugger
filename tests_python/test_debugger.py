@@ -2438,7 +2438,7 @@ def test_subprocess_quoted_args(case_setup_multiprocessing):
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 def test_attach_to_pid(case_setup_remote):
     import pydevd
-    with case_setup_remote.test_file('_debugger_case_attach_to_pid.py', wait_for_port=False) as writer:
+    with case_setup_remote.test_file('_debugger_case_attach_to_pid_simple.py', wait_for_port=False) as writer:
 
         assert writer.process is not None
 
