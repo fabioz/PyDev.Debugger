@@ -417,6 +417,13 @@ extern "C"
             // Note that this structure will leak if addPendingCall did not complete in the timeout
             // (we can't release now because it's possible that it'll still be called).
             delete initializeThreadingInfo;
+            if (showDebugInfo) {
+                std::cout << "addPendingCall to initialize threads/import threading completed. " << std::endl << std::flush;
+            }
+        } else {
+            if (showDebugInfo) {
+                std::cout << "addPendingCall to initialize threads/import threading did NOT complete. " << std::endl << std::flush;
+            }
         }
 
         if (threadsInited()) {

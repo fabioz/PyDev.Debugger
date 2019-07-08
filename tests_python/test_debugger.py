@@ -2449,8 +2449,9 @@ def _attach_to_writer_pid(writer):
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
-def test_attach_to_pid(case_setup_remote):
+def test_attach_to_pid_no_threads(case_setup_remote):
     with case_setup_remote.test_file('_debugger_case_attach_to_pid_simple.py', wait_for_port=False) as writer:
+        time.sleep(.5)  # Give it some time to initialize
         _attach_to_writer_pid(writer)
 
         bp_line = writer.get_line_index_with_content('break here')
@@ -2470,6 +2471,7 @@ def test_attach_to_pid(case_setup_remote):
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 def test_attach_to_pid_halted(case_setup_remote):
     with case_setup_remote.test_file('_debugger_case_attach_to_pid_multiple_threads.py', wait_for_port=False) as writer:
+        time.sleep(.5)  # Give it some time to initialize
         _attach_to_writer_pid(writer)
 
         bp_line = writer.get_line_index_with_content('break thread here')
