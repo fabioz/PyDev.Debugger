@@ -55,56 +55,143 @@ def load_python_helper_lib():
     try:
         # Load as pydll so that we don't release the gil.
         lib = ctypes.pydll.LoadLibrary(filename)
-        lib.list_all_thread_ids.restype = ctypes.c_voidp
-
-        # A helper to cast in the library so that we don't have to import ctypes to do a cast
-        # in the caller code.
-        lib.cast_to_pyobject.argtypes = (ctypes.c_voidp,)
-        lib.cast_to_pyobject.restype = ctypes.py_object
         return lib
     except:
         return None
 
 
+def get_main_thread_instance(threading):
+    if hasattr(threading, 'main_thread'):
+        return threading.main_thread()
+    else:
+        # On Python 2 we don't really have an API to get the main thread,
+        # so, we just get it from the 'shutdown' bound method.
+        return threading._shutdown.im_self
+
+
+def get_main_thread_id(unlikely_thread_id=None):
+    '''
+    :param unlikely_thread_id:
+        Pass to mark some thread id as not likely the main thread.
+
+    :return tuple(thread_id, critical_warning)
+    '''
+    import sys
+    import os
+
+    current_frames = sys._current_frames()
+    possible_thread_ids = []
+    for thread_ident, frame in current_frames.items():
+        while frame.f_back is not None:
+            frame = frame.f_back
+
+        basename = os.path.basename(frame.f_code.co_filename)
+        if basename.endswith(('.pyc', '.pyo')):
+            basename = basename[:-1]
+
+        if (frame.f_code.co_name, basename) in [
+                ('_run_module_as_main', 'runpy.py'),
+                ('run_module_as_main', 'runpy.py'),
+                ('run_module', 'runpy.py'),
+                ('run_path', 'runpy.py'),
+            ]:
+            # This is the case for python -m <module name> (this is an ideal match, so,
+            # let's return it).
+            return thread_ident, ''
+
+        if frame.f_code.co_name == '<module>':
+            if frame.f_globals.get('__name__') == '__main__':
+                return thread_ident, ''  # Launch a module as __main__.
+
+            # Usually the main thread will be started in the <module>, whereas others would
+            # be started in another place (but when Python is embedded, this may not be
+            # correct, so, just add to the available possibilities as we'll have to choose
+            # one if there are multiple).
+            possible_thread_ids.append(thread_ident)
+
+    if len(possible_thread_ids) > 0:
+        if len(possible_thread_ids) == 1:
+            return possible_thread_ids[0], ''  # Ideal: only one match
+
+        if unlikely_thread_id in possible_thread_ids:
+            possible_thread_ids.remove(unlikely_thread_id)
+
+        if len(possible_thread_ids) == 1:
+            return possible_thread_ids[0], ''  # Ideal: only one match
+
+        elif len(possible_thread_ids) > 1:
+            # Bad: we can't really be certain of anything at this point.
+            return possible_thread_ids[0], \
+                'Multiple thread ids found (%s). Choosing main thread id randomly (%s).' % (
+                    possible_thread_ids, possible_thread_ids[0])
+
+    # If we got here we couldn't discover the main thread id.
+    return None, 'Unable to discover main thread id.'
+
+
+def fix_main_thread_id():
+    # This means that we weren't able to import threading in the main thread (which most
+    # likely means that the main thread is paused or in some very long operation).
+    # In this case we'll import threading here and hotfix what may be wrong in the threading
+    # module (if we're on Windows where we create a thread to do the attach and on Linux
+    # we are not certain on which thread we're executing this code).
+    #
+    # The code below is a workaround for https://bugs.python.org/issue37416
+    import sys
+    import threading
+
+    try:
+        with threading._active_limbo_lock:
+            main_thread_instance = get_main_thread_instance(threading)
+
+            if sys.platform == 'win32':
+                # On windows this code would be called in a secondary thread, so,
+                # the current thread is unlikely to be the main thread.
+                if hasattr(threading, '_get_ident'):
+                    unlikely_thread_id = threading._get_ident()  # py2
+                else:
+                    unlikely_thread_id = threading.get_ident()  # py3
+            else:
+                unlikely_thread_id = None
+
+            main_thread_id, critical_warning = get_main_thread_id(unlikely_thread_id)
+
+            if main_thread_id is not None:
+                main_thread_attr = '_ident'
+                if not hasattr(main_thread_instance, main_thread_attr):
+                    main_thread_attr = '_Thread__ident'
+                    assert hasattr(main_thread_instance, main_thread_attr)
+
+                if main_thread_id != getattr(main_thread_instance, main_thread_attr):
+                    main_thread_instance._tstate_lock = threading._allocate_lock()
+                    main_thread_instance._tstate_lock.acquire()
+                    threading._active.pop(getattr(main_thread_instance, main_thread_attr), None)
+                    setattr(main_thread_instance, main_thread_attr, main_thread_id)
+                    threading._active[getattr(main_thread_instance, main_thread_attr)] = main_thread_instance
+
+        # Note: only import from pydevd after the patching is done (we want to do the minimum
+        # possible when doing that patching).
+        from _pydev_bundle import pydev_log  # @Reimport
+        pydev_log.warn('The threading module was not imported by user code in the main thread. The debugger will attempt to work around https://bugs.python.org/issue37416.')
+
+        if critical_warning:
+            pydev_log.critical('Issue found when debugger was trying to work around https://bugs.python.org/issue37416:\n%s', critical_warning)
+    except:
+        from _pydev_bundle import pydev_log
+        pydev_log.exception('Error patching main thread id.')
+
+
 def attach(port, host, protocol=''):
     try:
         import sys
-        lib = load_python_helper_lib()
+        fix_main_thread = 'threading' not in sys.modules
 
-        if 'threading' not in sys.modules:
-            # This means that we weren't able to import threading in the main thread (which most
-            # likely means that the main thread is paused or in some very long operation).
-            # In this case we'll import threading here and hotfix what may be wrong in the threading
-            # module (if we're on Windows where we create a thread to do the attach).
-            print('Threading NOT found in sys.modules.')
-            import threading
-
-            with threading._active_limbo_lock:
-
-                if hasattr(threading, 'main_thread'):
-                    main_thread_instance = threading.main_thread()
-                else:
-                    main_thread_instance = threading._shutdown.im_self
-
-                secondary_thread_ident = threading.get_ident()
-                thread_idents = lib.list_all_thread_ids()
-                if thread_idents:
-                    for thread_ident in lib.cast_to_pyobject(thread_idents):
-                        if thread_ident != secondary_thread_ident:
-                            del threading._active[main_thread_instance._ident]
-                            main_thread_instance._ident = thread_ident
-                            threading._active[main_thread_instance._ident] = main_thread_instance
+        if fix_main_thread:
+            fix_main_thread_id()
 
         else:
-            print('Threading found in sys.modules.')
-
-        import threading
-        print('current thread id', threading.current_thread().ident)
-        try:
-            print('main thread id x - ', threading._shutdown.im_self.ident)  # @UndefinedVariable
-        except:
-            print('main thread id y', threading.main_thread().ident)  # @UndefinedVariable
-        print('lib.GetMainThreadId()', lib.GetMainThreadId())
+            from _pydev_bundle import pydev_log  # @Reimport
+            pydev_log.debug('The threading module is already imported by user code.')
 
         if protocol:
             from _pydevd_bundle import pydevd_defaults

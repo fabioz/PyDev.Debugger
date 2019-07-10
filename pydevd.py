@@ -721,28 +721,46 @@ class PyDB(object):
     def set_tracing_for_untraced_contexts(self, ignore_current_thread=False):
         # Enable the tracing for existing threads (because there may be frames being executed that
         # are currently untraced).
-        ignore_thread = None
-        if ignore_current_thread:
-            ignore_thread = threading.current_thread()
 
-        threads = threadingEnumerate()
-        try:
-            for t in threads:
-                if getattr(t, 'is_pydev_daemon_thread', False) or t is ignore_thread or getattr(t, 'pydev_do_not_trace', False):
-                    continue
+        if IS_CPYTHON:
+            tid_to_frame = sys._current_frames()
 
-                additional_info = set_additional_thread_info(t)
-                frame = additional_info.get_topmost_frame(t)
-                try:
-                    if frame is not None:
-                        self.set_trace_for_frame_and_parents(frame)
-                finally:
-                    frame = None
-        finally:
-            frame = None
-            t = None
-            threads = None
-            additional_info = None
+            ignore_thread_ids = set()
+            if ignore_current_thread:
+                ignore_thread_ids.add(threading.current_thread().ident)
+
+            ignore_thread_ids.update(
+                t.ident for t in threadingEnumerate()
+                if getattr(t, 'is_pydev_daemon_thread', False) or getattr(t, 'pydev_do_not_trace', False)
+            )
+
+            for thread_id, frame in tid_to_frame.items():
+                if thread_id not in ignore_thread_ids:
+                    self.set_trace_for_frame_and_parents(frame)
+
+        else:
+            ignore_thread = None
+            if ignore_current_thread:
+                ignore_thread = threading.current_thread()
+
+            try:
+                threads = threadingEnumerate()
+                for t in threads:
+                    if getattr(t, 'is_pydev_daemon_thread', False) or t is ignore_thread or getattr(t, 'pydev_do_not_trace', False):
+                        continue
+
+                    additional_info = set_additional_thread_info(t)
+                    frame = additional_info.get_topmost_frame(t)
+                    try:
+                        if frame is not None:
+                            self.set_trace_for_frame_and_parents(frame)
+                    finally:
+                        frame = None
+            finally:
+                frame = None
+                t = None
+                threads = None
+                additional_info = None
 
     @property
     def multi_threads_single_notification(self):
@@ -1658,12 +1676,15 @@ class PyDB(object):
             file_type = self.get_file_type(abs_path_real_path_and_base)
 
             if file_type is None:
+                print('set tracing of', frame.f_code.co_filename, frame.f_code.co_name, 'frame id', id(frame))
                 if disable:
                     if frame.f_trace is not None and frame.f_trace is not NO_FTRACE:
                         frame.f_trace = NO_FTRACE
 
                 elif frame.f_trace is not self.trace_dispatch:
                     frame.f_trace = self.trace_dispatch
+            else:
+                print('SKIP tracing of', frame.f_code.co_filename, frame.f_code.co_name, 'frame id', id(frame))
 
             frame = frame.f_back
 
@@ -2156,13 +2177,6 @@ def _locked_settrace(
         while not debugger.ready_to_run:
             time.sleep(0.1)  # busy wait until we receive run command
 
-        # Set the tracing only
-        debugger.set_trace_for_frame_and_parents(get_frame().f_back)
-
-        with CustomFramesContainer.custom_frames_lock:  # @UndefinedVariable
-            for _frameId, custom_frame in dict_iter_items(CustomFramesContainer.custom_frames):
-                debugger.set_trace_for_frame_and_parents(custom_frame.frame)
-
         debugger.start_auxiliary_daemon_threads()
 
         if trace_only_current_thread:
@@ -2175,6 +2189,13 @@ def _locked_settrace(
 
             # As this is the first connection, also set tracing for any untraced threads
             debugger.set_tracing_for_untraced_contexts(ignore_current_thread=True)
+
+        # Set the tracing only
+        debugger.set_trace_for_frame_and_parents(get_frame().f_back)
+
+        with CustomFramesContainer.custom_frames_lock:  # @UndefinedVariable
+            for _frameId, custom_frame in dict_iter_items(CustomFramesContainer.custom_frames):
+                debugger.set_trace_for_frame_and_parents(custom_frame.frame)
 
         # Stop the tracing as the last thing before the actual shutdown for a clean exit.
         atexit.register(stoptrace)

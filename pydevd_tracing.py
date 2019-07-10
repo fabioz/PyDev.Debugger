@@ -1,6 +1,6 @@
 
 from _pydevd_bundle.pydevd_constants import get_frame, IS_CPYTHON, IS_64BIT_PROCESS, IS_WINDOWS, \
-    IS_LINUX, IS_MAC
+    IS_LINUX, IS_MAC, IS_PY2
 from _pydev_imps._pydev_saved_modules import thread, threading
 from _pydev_bundle import pydev_log
 from os.path import os
@@ -144,21 +144,15 @@ def load_python_helper_lib():
     try:
         # Load as pydll so that we don't release the gil.
         lib = ctypes.pydll.LoadLibrary(filename)
-        lib.list_all_thread_ids.restype = ctypes.c_voidp
-
-        # A helper to cast in the library so that we don't have to import ctypes to do a cast
-        # in the caller code.
-        lib.cast_to_pyobject.argtypes = (ctypes.c_voidp,)
-        lib.cast_to_pyobject.restype = ctypes.py_object
         return lib
     except:
         pydev_log.exception('Error loading: %s', filename)
         return None
 
 
-def set_trace_to_threads(tracing_func, target_threads=None):
+def set_trace_to_threads(tracing_func):
     lib = load_python_helper_lib()
-    if lib is None:
+    if lib is None:  # This is the case if it's not CPython.
         return -1
 
     if hasattr(sys, 'getswitchinterval'):
@@ -175,25 +169,43 @@ def set_trace_to_threads(tracing_func, target_threads=None):
 
         set_trace_func = TracingFunctionHolder._original_tracing or sys.settrace
 
-        if target_threads is not None:
-            thread_idents = set(t.ident for t in target_threads)
-        else:
-            python_visible_threads = threading.enumerate()
-
-            thread_idents = lib.list_all_thread_ids()
-            if thread_idents:
-                thread_idents = set(lib.cast_to_pyobject(thread_idents))
-            else:
-                # I.e.: nullptr
-                thread_idents = set(t.ident for t in python_visible_threads)
-
-            ignore_threads = set(t.ident for t in python_visible_threads if getattr(t, 'pydev_do_not_trace', False))
-            thread_idents = thread_idents.difference(ignore_threads)
+        # Note: use sys._current_frames() keys to get the thread ids because it'll return
+        # thread ids created in C/C++ where there's user code running, unlike the APIs
+        # from the threading module which see only threads created through it (unless
+        # a call for threading.current_thread() was previously done in that thread,
+        # in which case a dummy thread would've been created for it).
+        thread_idents = set(sys._current_frames().keys())
+        thread_idents = thread_idents.difference(
+            # Ignore pydevd threads.
+            set(t.ident for t in threading.enumerate() if getattr(t, 'pydev_do_not_trace', False))
+        )
 
         for thread_ident in thread_idents:
             show_debug_info = 0
             result = lib.AttachDebuggerTracing(ctypes.c_int(show_debug_info), ctypes.py_object(set_trace_func), ctypes.py_object(tracing_func), ctypes.c_uint(thread_ident))
-            if result != 0:
+            if result == 0:
+                # If that thread is not available in the threading module we also need to create a
+                # dummy thread for it (otherwise it'll be invisible to the debugger).
+                if thread_ident not in threading._active:
+
+                    class _DummyThread(threading._DummyThread):
+
+                        def _set_ident(self):
+                            # Note: Hack to set the thread ident that we want.
+                            if IS_PY2:
+                                self._Thread__ident = thread_ident
+                            else:
+                                self._ident = thread_ident
+
+                    pydev_log.info('Created dummy thread for thread id: %s', thread_ident)
+                    t = _DummyThread()
+                    # Reset to the base class (don't expose our own version of the class).
+                    t.__class__ = threading._DummyThread
+                    if t.ident != thread_ident:
+                        # Let's double check (who knows if that'll be in the future...)
+                        pydev_log.critical('DEBUGGER ERROR: creation of _DummyThread with proper ident did not succeed.')
+
+            else:
                 pydev_log.info('Unable to set tracing for existing threads. Result: %s', result)
                 ret = result
     finally:
