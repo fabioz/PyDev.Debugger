@@ -163,8 +163,16 @@ def fix_main_thread_id():
                     assert hasattr(main_thread_instance, main_thread_attr)
 
                 if main_thread_id != getattr(main_thread_instance, main_thread_attr):
+                    # Note that we also have to reset the '_tstack_lock' for a regular lock.
+                    # This is needed to avoid an error on shutdown because this lock is bound
+                    # to the thread state and will be released when the secondary thread
+                    # that initialized the lock is finished -- making an assert appear on
+                    # process shutdown.
                     main_thread_instance._tstate_lock = threading._allocate_lock()
                     main_thread_instance._tstate_lock.acquire()
+
+                    # Actually patch the thread ident as well as the threading._active dict
+                    # (we should have the _active_limbo_lock to do that).
                     threading._active.pop(getattr(main_thread_instance, main_thread_attr), None)
                     setattr(main_thread_instance, main_thread_attr, main_thread_id)
                     threading._active[getattr(main_thread_instance, main_thread_attr)] = main_thread_instance

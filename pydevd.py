@@ -723,6 +723,8 @@ class PyDB(object):
         # are currently untraced).
 
         if IS_CPYTHON:
+            # Note: use sys._current_frames instead of threading.enumerate() because this way
+            # we also see C/C++ threads, not only the ones visible to the threading module.
             tid_to_frame = sys._current_frames()
 
             ignore_thread_ids = set()

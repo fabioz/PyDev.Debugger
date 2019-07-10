@@ -202,8 +202,8 @@ def set_trace_to_threads(tracing_func):
                     # Reset to the base class (don't expose our own version of the class).
                     t.__class__ = threading._DummyThread
                     if t.ident != thread_ident:
-                        # Let's double check (who knows if that'll be in the future...)
-                        pydev_log.critical('DEBUGGER ERROR: creation of _DummyThread with proper ident did not succeed.')
+                        # Check if it actually worked.
+                        pydev_log.critical('pydevd: creation of _DummyThread with fixed thread ident did not succeed.')
 
             else:
                 pydev_log.info('Unable to set tracing for existing threads. Result: %s', result)
