@@ -17,7 +17,7 @@ def wait_for_condition(condition, msg=None, timeout=5, sleep=.05):
                 else:
                     error_msg += str(msg)
 
-            raise TimeoutError(error_msg)
+            raise AssertionError('Timeout: %s' % (error_msg,))
         time.sleep(sleep)
 
 

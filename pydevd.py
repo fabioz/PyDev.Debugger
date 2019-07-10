@@ -1678,7 +1678,7 @@ class PyDB(object):
             file_type = self.get_file_type(abs_path_real_path_and_base)
 
             if file_type is None:
-                print('set tracing of', frame.f_code.co_filename, frame.f_code.co_name, 'frame id', id(frame))
+                pydev_log.debug('Set tracing of frame: %s - %s', frame.f_code.co_filename, frame.f_code.co_name)
                 if disable:
                     if frame.f_trace is not None and frame.f_trace is not NO_FTRACE:
                         frame.f_trace = NO_FTRACE
@@ -1686,7 +1686,7 @@ class PyDB(object):
                 elif frame.f_trace is not self.trace_dispatch:
                     frame.f_trace = self.trace_dispatch
             else:
-                print('SKIP tracing of', frame.f_code.co_filename, frame.f_code.co_name, 'frame id', id(frame))
+                pydev_log.debug('SKIP set tracing of frame: %s - %s', frame.f_code.co_filename, frame.f_code.co_name)
 
             frame = frame.f_back
 

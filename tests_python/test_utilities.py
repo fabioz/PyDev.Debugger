@@ -205,15 +205,28 @@ def _build_launch_env():
 
     environ = os.environ.copy()
     cwd = os.path.abspath(os.path.dirname(__file__))
+    assert os.path.isdir(cwd)
+
     resources_dir = os.path.join(os.path.dirname(pydevd.__file__), 'tests_python', 'resources')
-    assert os.path.exists(resources_dir)
+    assert os.path.isdir(resources_dir)
+
     attach_to_process_dir = os.path.join(os.path.dirname(pydevd.__file__), 'pydevd_attach_to_process')
-    assert os.path.exists(attach_to_process_dir)
-    environ['PYTHONPATH'] = cwd + os.pathsep + resources_dir + os.pathsep + attach_to_process_dir + os.pathsep + environ.get('PYTHONPATH', '')
+    assert os.path.isdir(attach_to_process_dir)
+
+    pydevd_dir = os.path.dirname(pydevd.__file__)
+    assert os.path.isdir(pydevd_dir)
+
+    environ['PYTHONPATH'] = (
+            cwd + os.pathsep +
+            resources_dir + os.pathsep +
+            attach_to_process_dir + os.pathsep +
+            pydevd_dir + os.pathsep +
+            environ.get('PYTHONPATH', '')
+    )
     return cwd, environ
 
 
-def _check_in_separate_process(method_name, module_name='test_utilities', use_runfile=False):
+def _check_in_separate_process(method_name, module_name='test_utilities'):
     import subprocess
     cwd, environ = _build_launch_env()
 
