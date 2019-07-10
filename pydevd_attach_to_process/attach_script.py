@@ -101,7 +101,8 @@ def get_main_thread_id(unlikely_thread_id=None):
 
         if frame.f_code.co_name == '<module>':
             if frame.f_globals.get('__name__') == '__main__':
-                return thread_ident, ''  # Launch a module as __main__.
+                possible_thread_ids.insert(0, thread_ident)  # Add with higher priority
+                continue
 
             # Usually the main thread will be started in the <module>, whereas others would
             # be started in another place (but when Python is embedded, this may not be
@@ -113,7 +114,7 @@ def get_main_thread_id(unlikely_thread_id=None):
         if len(possible_thread_ids) == 1:
             return possible_thread_ids[0], ''  # Ideal: only one match
 
-        if unlikely_thread_id in possible_thread_ids:
+        while unlikely_thread_id in possible_thread_ids:
             possible_thread_ids.remove(unlikely_thread_id)
 
         if len(possible_thread_ids) == 1:
@@ -157,25 +158,25 @@ def fix_main_thread_id():
             main_thread_id, critical_warning = get_main_thread_id(unlikely_thread_id)
 
             if main_thread_id is not None:
-                main_thread_attr = '_ident'
-                if not hasattr(main_thread_instance, main_thread_attr):
-                    main_thread_attr = '_Thread__ident'
-                    assert hasattr(main_thread_instance, main_thread_attr)
+                main_thread_id_attr = '_ident'
+                if not hasattr(main_thread_instance, main_thread_id_attr):
+                    main_thread_id_attr = '_Thread__ident'
+                    assert hasattr(main_thread_instance, main_thread_id_attr)
 
-                if main_thread_id != getattr(main_thread_instance, main_thread_attr):
+                if main_thread_id != getattr(main_thread_instance, main_thread_id_attr):
                     # Note that we also have to reset the '_tstack_lock' for a regular lock.
                     # This is needed to avoid an error on shutdown because this lock is bound
                     # to the thread state and will be released when the secondary thread
-                    # that initialized the lock is finished -- making an assert appear on
+                    # that initialized the lock is finished -- making an assert fail during
                     # process shutdown.
                     main_thread_instance._tstate_lock = threading._allocate_lock()
                     main_thread_instance._tstate_lock.acquire()
 
                     # Actually patch the thread ident as well as the threading._active dict
                     # (we should have the _active_limbo_lock to do that).
-                    threading._active.pop(getattr(main_thread_instance, main_thread_attr), None)
-                    setattr(main_thread_instance, main_thread_attr, main_thread_id)
-                    threading._active[getattr(main_thread_instance, main_thread_attr)] = main_thread_instance
+                    threading._active.pop(getattr(main_thread_instance, main_thread_id_attr), None)
+                    setattr(main_thread_instance, main_thread_id_attr, main_thread_id)
+                    threading._active[getattr(main_thread_instance, main_thread_id_attr)] = main_thread_instance
 
         # Note: only import from pydevd after the patching is done (we want to do the minimum
         # possible when doing that patching).

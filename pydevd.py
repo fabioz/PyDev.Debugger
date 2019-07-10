@@ -718,7 +718,7 @@ class PyDB(object):
             # we have to reset the tracing for the existing functions to be re-evaluated.
             self.set_tracing_for_untraced_contexts()
 
-    def set_tracing_for_untraced_contexts(self, ignore_current_thread=False):
+    def set_tracing_for_untraced_contexts(self):
         # Enable the tracing for existing threads (because there may be frames being executed that
         # are currently untraced).
 
@@ -727,11 +727,7 @@ class PyDB(object):
             # we also see C/C++ threads, not only the ones visible to the threading module.
             tid_to_frame = sys._current_frames()
 
-            ignore_thread_ids = set()
-            if ignore_current_thread:
-                ignore_thread_ids.add(threading.current_thread().ident)
-
-            ignore_thread_ids.update(
+            ignore_thread_ids = set(
                 t.ident for t in threadingEnumerate()
                 if getattr(t, 'is_pydev_daemon_thread', False) or getattr(t, 'pydev_do_not_trace', False)
             )
@@ -741,14 +737,10 @@ class PyDB(object):
                     self.set_trace_for_frame_and_parents(frame)
 
         else:
-            ignore_thread = None
-            if ignore_current_thread:
-                ignore_thread = threading.current_thread()
-
             try:
                 threads = threadingEnumerate()
                 for t in threads:
-                    if getattr(t, 'is_pydev_daemon_thread', False) or t is ignore_thread or getattr(t, 'pydev_do_not_trace', False):
+                    if getattr(t, 'is_pydev_daemon_thread', False) or getattr(t, 'pydev_do_not_trace', False):
                         continue
 
                     additional_info = set_additional_thread_info(t)
@@ -1678,12 +1670,13 @@ class PyDB(object):
             file_type = self.get_file_type(abs_path_real_path_and_base)
 
             if file_type is None:
-                pydev_log.debug('Set tracing of frame: %s - %s', frame.f_code.co_filename, frame.f_code.co_name)
                 if disable:
+                    pydev_log.debug('Disable tracing of frame: %s - %s', frame.f_code.co_filename, frame.f_code.co_name)
                     if frame.f_trace is not None and frame.f_trace is not NO_FTRACE:
                         frame.f_trace = NO_FTRACE
 
                 elif frame.f_trace is not self.trace_dispatch:
+                    pydev_log.debug('Set tracing of frame: %s - %s', frame.f_code.co_filename, frame.f_code.co_name)
                     frame.f_trace = self.trace_dispatch
             else:
                 pydev_log.debug('SKIP set tracing of frame: %s - %s', frame.f_code.co_filename, frame.f_code.co_name)
@@ -2190,7 +2183,7 @@ def _locked_settrace(
             debugger.enable_tracing(debugger.trace_dispatch, apply_to_all_threads=True)
 
             # As this is the first connection, also set tracing for any untraced threads
-            debugger.set_tracing_for_untraced_contexts(ignore_current_thread=True)
+            debugger.set_tracing_for_untraced_contexts()
 
         # Set the tracing only
         debugger.set_trace_for_frame_and_parents(get_frame().f_back)
