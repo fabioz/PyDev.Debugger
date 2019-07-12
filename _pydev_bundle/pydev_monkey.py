@@ -6,6 +6,7 @@ import traceback
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_JYTHON, get_current_thread_id
 from _pydev_bundle import pydev_log
+import functools
 
 try:
     xrange
@@ -318,10 +319,15 @@ def patch_arg_str_win(arg_str):
 
 def monkey_patch_module(module, funcname, create_func):
     if hasattr(module, funcname):
-        original_name = 'original_' + funcname
-        if not hasattr(module, original_name):
-            setattr(module, original_name, getattr(module, funcname))
-            setattr(module, funcname, create_func(original_name))
+        patched_flag_name = '__pydevd_patched__%s' % (funcname,)
+        if not getattr(module, patched_flag_name, False):
+            setattr(module, patched_flag_name, True)
+
+            original = getattr(module, funcname)
+
+            new_func = create_func(original)
+            new_func = functools.wraps(original)(new_func)
+            setattr(module, funcname, new_func)
 
 
 def monkey_patch_os(funcname, create_func):
@@ -336,19 +342,17 @@ def warn_multiproc():
     #
 
 
-def create_warn_multiproc(original_name):
+def create_warn_multiproc(original_func):
 
     def new_warn_multiproc(*args):
-        import os
-
         warn_multiproc()
 
-        return getattr(os, original_name)(*args)
+        return original_func(*args)
 
     return new_warn_multiproc
 
 
-def create_execl(original_name):
+def create_execl(original_func):
 
     def new_execl(path, *args):
         """
@@ -357,152 +361,134 @@ def create_execl(original_name):
         os.execlp(file, arg0, arg1, ...)
         os.execlpe(file, arg0, arg1, ..., env)
         """
-        import os
         args = patch_args(args)
         send_process_created_message()
-        return getattr(os, original_name)(path, *args)
+        return original_func(path, *args)
 
     return new_execl
 
 
-def create_execv(original_name):
+def create_execv(original_func):
 
     def new_execv(path, args):
         """
         os.execv(path, args)
         os.execvp(file, args)
         """
-        import os
         send_process_created_message()
-        return getattr(os, original_name)(path, patch_args(args))
+        return original_func(path, patch_args(args))
 
     return new_execv
 
 
-def create_execve(original_name):
+def create_execve(original_func):
     """
     os.execve(path, args, env)
     os.execvpe(file, args, env)
     """
 
     def new_execve(path, args, env):
-        import os
         send_process_created_message()
-        return getattr(os, original_name)(path, patch_args(args), env)
+        return original_func(path, patch_args(args), env)
 
     return new_execve
 
 
-def create_spawnl(original_name):
+def create_spawnl(original_func):
 
     def new_spawnl(mode, path, *args):
         """
         os.spawnl(mode, path, arg0, arg1, ...)
         os.spawnlp(mode, file, arg0, arg1, ...)
         """
-        import os
         args = patch_args(args)
         send_process_created_message()
-        return getattr(os, original_name)(mode, path, *args)
+        return original_func(mode, path, *args)
 
     return new_spawnl
 
 
-def create_spawnv(original_name):
+def create_spawnv(original_func):
 
     def new_spawnv(mode, path, args):
         """
         os.spawnv(mode, path, args)
         os.spawnvp(mode, file, args)
         """
-        import os
         send_process_created_message()
-        return getattr(os, original_name)(mode, path, patch_args(args))
+        return original_func(mode, path, patch_args(args))
 
     return new_spawnv
 
 
-def create_spawnve(original_name):
+def create_spawnve(original_func):
     """
     os.spawnve(mode, path, args, env)
     os.spawnvpe(mode, file, args, env)
     """
 
     def new_spawnve(mode, path, args, env):
-        import os
         send_process_created_message()
-        return getattr(os, original_name)(mode, path, patch_args(args), env)
+        return original_func(mode, path, patch_args(args), env)
 
     return new_spawnve
 
 
-def create_fork_exec(original_name):
+def create_fork_exec(original_func):
     """
     _posixsubprocess.fork_exec(args, executable_list, close_fds, ... (13 more))
     """
 
-    def new_fork_exec(args, *other_args):
-        import _posixsubprocess  # @UnresolvedImport
+    def new_fork_exec(args, *other_args, **kwargs):
         args = patch_args(args)
         send_process_created_message()
-        return getattr(_posixsubprocess, original_name)(args, *other_args)
+        return original_func(args, *other_args, **kwargs)
 
     return new_fork_exec
 
 
-def create_warn_fork_exec(original_name):
+def create_warn_fork_exec(original_func):
     """
     _posixsubprocess.fork_exec(args, executable_list, close_fds, ... (13 more))
     """
 
-    def new_warn_fork_exec(*args):
+    def new_warn_fork_exec(*args, **kwargs):
         try:
-            import _posixsubprocess
             warn_multiproc()
-            return getattr(_posixsubprocess, original_name)(*args)
+            return original_func(*args, **kwargs)
         except:
             pass
 
     return new_warn_fork_exec
 
 
-def create_CreateProcess(original_name):
+def create_CreateProcess(original_func):
     """
     CreateProcess(*args, **kwargs)
     """
 
-    def new_CreateProcess(app_name, cmd_line, *args):
-        try:
-            import _subprocess
-        except ImportError:
-            import _winapi as _subprocess
+    def new_CreateProcess(app_name, cmd_line, *args, **kwargs):
         send_process_created_message()
-        return getattr(_subprocess, original_name)(app_name, patch_arg_str_win(cmd_line), *args)
+        return original_func(app_name, patch_arg_str_win(cmd_line), *args, **kwargs)
 
     return new_CreateProcess
 
 
-def create_CreateProcessWarnMultiproc(original_name):
+def create_CreateProcessWarnMultiproc(original_func):
     """
     CreateProcess(*args, **kwargs)
     """
 
-    def new_CreateProcess(*args):
-        try:
-            import _subprocess
-        except ImportError:
-            import _winapi as _subprocess
+    def new_CreateProcess(*args, **kwargs):
         warn_multiproc()
-        return getattr(_subprocess, original_name)(*args)
+        return original_func(*args, **kwargs)
 
     return new_CreateProcess
 
 
-def create_fork(original_name):
+def create_fork(original_func):
 
     def new_fork():
-        import os
-
         # A simple fork will result in a new python process
         is_new_python_process = True
         frame = sys._getframe()
@@ -522,7 +508,7 @@ def create_fork(original_name):
             frame = frame.f_back
         frame = None  # Just make sure we don't hold on to it.
 
-        child_process = getattr(os, original_name)()  # fork
+        child_process = original_func()  # fork
         if not child_process:
             if is_new_python_process:
                 _on_forked_process()
