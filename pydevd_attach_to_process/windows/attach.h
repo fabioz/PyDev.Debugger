@@ -52,6 +52,8 @@ extern "C"
         unsigned int threadId,
         void* pPyNone  // Actually PyObject*, but we don't want to include it here.
     );
+    
+    DECLDIR int PatchPyGILState_Ensure(bool showDebugInfo);
 }
 
 #endif

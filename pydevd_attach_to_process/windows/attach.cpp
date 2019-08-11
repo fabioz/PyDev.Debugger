@@ -48,12 +48,17 @@
 #include "attach.h"
 #include "stdafx.h"
 
+extern "C" {
+    #include <funchook.h>
+}
+
 #include "../common/python.h"
 #include "../common/ref_utils.hpp"
 #include "../common/py_utils.hpp"
 #include "../common/py_settrace.hpp"
 
 
+#pragma comment(lib, "funchook.lib")
 #pragma comment(lib, "kernel32.lib")
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "advapi32.lib")
@@ -708,4 +713,10 @@ extern "C"
         return attached;
     }
 
+
+    DECLDIR int PatchPyGILState_Ensure(bool showDebugInfo) {
+        funchook_create();
+        return 0;
+    } 
 }
+
