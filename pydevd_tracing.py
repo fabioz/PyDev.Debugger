@@ -115,13 +115,13 @@ def load_python_helper_lib():
         suffix = 'x86'
 
     if IS_WINDOWS:
-        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'win_%s' % (suffix,), 'attach_%s.dll' % (suffix,))
+        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'dlls', 'win_%s' % (suffix,), 'attach_%s.dll' % (suffix,))
 
     elif IS_LINUX:
-        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'linux_%s' % (suffix,), 'attach_%s.so' % (suffix,))
+        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'dlls', 'linux_%s' % (suffix,), 'attach_%s.so' % (suffix,))
 
     elif IS_MAC:
-        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'mac_%s' % (suffix,), 'attach_%s.dylib' % (suffix,))
+        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'dlls', 'mac_%s' % (suffix,), 'attach_%s.dylib' % (suffix,))
 
     else:
         pydev_log.info('Unable to set trace to all threads in platform: %s', sys.platform)

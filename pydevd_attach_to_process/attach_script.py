@@ -28,13 +28,13 @@ def load_python_helper_lib():
         suffix = 'x86'
 
     if IS_WINDOWS:
-        filename = os.path.join(os.path.dirname(__file__), 'win_%s' % (suffix,), 'attach_%s.dll' % (suffix,))
+        filename = os.path.join(os.path.dirname(__file__), 'dlls', 'win_%s' % (suffix,), 'attach_%s.dll' % (suffix,))
 
     elif IS_LINUX:
-        filename = os.path.join(os.path.dirname(__file__), 'linux_%s' % (suffix,), 'attach_%s.so' % (suffix,))
+        filename = os.path.join(os.path.dirname(__file__), 'dlls', 'linux_%s' % (suffix,), 'attach_%s.so' % (suffix,))
 
     elif IS_MAC:
-        filename = os.path.join(os.path.dirname(__file__), 'mac_%s' % (suffix,), 'attach_%s.dylib' % (suffix,))
+        filename = os.path.join(os.path.dirname(__file__), 'dlls', 'mac_%s' % (suffix,), 'attach_%s.dylib' % (suffix,))
 
     else:
         return None

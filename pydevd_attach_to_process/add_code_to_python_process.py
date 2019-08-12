@@ -297,7 +297,7 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, sh
         suffix = 'amd64'
     else:
         suffix = 'x86'
-    target_dll = os.path.join(filedir, 'win_%s' % (suffix,), 'attach_%s.dll' % (suffix,))
+    target_dll = os.path.join(filedir, 'dlls', 'win_%s' % (suffix,), 'attach_%s.dll' % (suffix,))
     if not os.path.exists(target_dll):
         raise RuntimeError('Could not find dll file to inject: %s' % target_dll)
     print('Injecting dll')
@@ -445,7 +445,7 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
 
     print('Attaching with arch: %s' % (arch,))
 
-    target_dll = os.path.join(filedir, 'linux_%s' % (suffix,), 'attach_%s.so' % (suffix,))
+    target_dll = os.path.join(filedir, 'dlls', 'linux_%s' % (suffix,), 'attach_%s.so' % (suffix,))
     target_dll = os.path.abspath(os.path.normpath(target_dll))
     if not os.path.exists(target_dll):
         raise RuntimeError('Could not find dll file to inject: %s' % target_dll)
@@ -523,7 +523,7 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
 
     print('Attaching with arch: %s' % (arch,))
 
-    target_dll = os.path.join(filedir, 'mac_%s' % (suffix,), 'attach_%s' % (suffix,))
+    target_dll = os.path.join(filedir, 'dlls', 'mac_%s' % (suffix,), 'attach_%s' % (suffix,))
     target_dll = os.path.normpath(target_dll)
     if not os.path.exists(target_dll):
         raise RuntimeError('Could not find dll file to inject: %s' % target_dll)
