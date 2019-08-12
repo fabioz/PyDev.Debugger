@@ -185,7 +185,7 @@ def _check_tracing_other_threads():
 
     threads = []
     threads.append(threading.Thread(target=method))
-    threads[-1].set_daemon(True)
+    threads[-1].daemon = True
     threads[-1].start()
     _thread.start_new_thread(dummy_thread_method, ())
 
