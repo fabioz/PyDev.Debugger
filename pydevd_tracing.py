@@ -109,29 +109,19 @@ def load_python_helper_lib():
     if not IS_CPYTHON or ctypes is None or sys.version_info[:2] > (3, 7):
         return None
 
-    if IS_WINDOWS:
-        if IS_64BIT_PROCESS:
-            suffix = 'amd64'
-        else:
-            suffix = 'x86'
+    if IS_64BIT_PROCESS:
+        suffix = 'amd64'
+    else:
+        suffix = 'x86'
 
-        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'attach_%s.dll' % (suffix,))
+    if IS_WINDOWS:
+        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'win_%s' % (suffix,), 'attach_%s.dll' % (suffix,))
 
     elif IS_LINUX:
-        if IS_64BIT_PROCESS:
-            suffix = 'amd64'
-        else:
-            suffix = 'x86'
-
-        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'attach_linux_%s.so' % (suffix,))
+        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'linux_%s' % (suffix,), 'attach_%s.so' % (suffix,))
 
     elif IS_MAC:
-        if IS_64BIT_PROCESS:
-            suffix = 'x86_64.dylib'
-        else:
-            suffix = 'x86.dylib'
-
-        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'attach_%s' % (suffix,))
+        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'mac_%s' % (suffix,), 'attach_%s.dylib' % (suffix,))
 
     else:
         pydev_log.info('Unable to set trace to all threads in platform: %s', sys.platform)

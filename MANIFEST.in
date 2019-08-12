@@ -1,4 +1,10 @@
 include *.rst *.txt *.md LICENSE .travis.yml appveyor.yml *.pyx
 recursive-include pydevd_attach_to_process *.py *.dll *.so *.dylib *.txt *.c *.h *.bat Makefile *.sh *.pyx
+recursive-include linux_amd64 *.py *.dll *.so *.dylib *.txt *.c *.h *.bat Makefile *.sh *.pyx
+recursive-include linux_x86 *.py *.dll *.so *.dylib *.txt *.c *.h *.bat Makefile *.sh *.pyx
+recursive-include mac_amd64 *.py *.dll *.so *.dylib *.txt *.c *.h *.bat Makefile *.sh *.pyx
+recursive-include mac_x86 *.py *.dll *.so *.dylib *.txt *.c *.h *.bat Makefile *.sh *.pyx
+recursive-include win_amd64 *.py *.dll *.so *.dylib *.txt *.c *.h *.bat Makefile *.sh *.pyx
+recursive-include win_x86 *.py *.dll *.so *.dylib *.txt *.c *.h *.bat Makefile *.sh *.pyx
 recursive-include _pydevd_bundle *.pyx
 recursive-include build_tools *.py
