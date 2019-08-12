@@ -1516,7 +1516,16 @@ class PyDB(object):
         """Sends a message that a new process has been created.
         """
         cmd = self.cmd_factory.make_process_created_message()
-        self.writer.add_command(cmd)
+        for _i in range(10):
+            # Writer may be initialized in a thread.
+            writer = self.writer
+            if writer is not None:
+                writer.add_command(cmd)
+                break
+            else:
+                time.sleep(.1)
+        else:
+            pydev_log.warn('send_process_created_message: writer not initialized.')
 
     def set_next_statement(self, frame, event, func_name, next_line):
         stop = False
