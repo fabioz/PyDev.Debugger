@@ -16,6 +16,7 @@ encoding//pydevd_attach_to_process/winappdbg/module.py=utf-8
 encoding//pydevd_attach_to_process/winappdbg/plugins/do_symfix.py=utf-8
 encoding//pydevd_attach_to_process/winappdbg/process.py=utf-8
 encoding//pydevd_attach_to_process/winappdbg/sql.py=utf-8
+encoding//pydevd_attach_to_process/winappdbg/thread.py=utf-8
 encoding//pydevd_attach_to_process/winappdbg/win32/__init__.py=utf-8
 encoding//pydevd_attach_to_process/winappdbg/win32/dbghelp.py=utf-8
 encoding//pydevd_attach_to_process/winappdbg/win32/kernel32.py=utf-8

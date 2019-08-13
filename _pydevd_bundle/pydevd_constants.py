@@ -160,7 +160,7 @@ BUILTINS_MODULE_NAME = '__builtin__' if IS_PY2 else 'builtins'
 SHOW_DEBUG_INFO_ENV = os.getenv('PYCHARM_DEBUG') == 'True' or os.getenv('PYDEV_DEBUG') == 'True' or os.getenv('PYDEVD_DEBUG') == 'True'
 PYDEVD_DEBUG_FILE = os.getenv('PYDEVD_DEBUG_FILE')
 
-if SHOW_DEBUG_INFO_ENV:
+if SHOW_DEBUG_INFO_ENV or True:
     # show debug info before the debugger start
     DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = True
     DebugInfoHolder.DEBUG_TRACE_LEVEL = 3

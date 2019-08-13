@@ -715,7 +715,15 @@ extern "C"
 
 
     DECLDIR int PatchPyGILState_Ensure(bool showDebugInfo) {
-        funchook_create();
+        funchook_t *funchook = funchook_create();
+        
+        PyGILState_STATE (*PyGILState_EnsureFunc)();
+//         send_func = send;
+//         rv = funchook_prepare(funchook, (void**)&send_func, send_hook);
+//         if (rv != 0) {
+//            /* error */
+//            ...
+//         }
         return 0;
     } 
 }

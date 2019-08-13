@@ -115,16 +115,26 @@ def load_python_helper_lib():
         suffix = 'x86'
 
     if IS_WINDOWS:
-        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'dlls', 'win_%s' % (suffix,), 'attach_%s.dll' % (suffix,))
+        directory = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'dlls', 'win_%s' % (suffix,))
+        extension = '.dll'
 
     elif IS_LINUX:
-        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'dlls', 'linux_%s' % (suffix,), 'attach_%s.so' % (suffix,))
+        directory = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'dlls', 'linux_%s' % (suffix,))
+        extension = '.so'
 
     elif IS_MAC:
-        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'dlls', 'mac_%s' % (suffix,), 'attach_%s.dylib' % (suffix,))
+        directory = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'dlls', 'mac_%s' % (suffix,))
+        extension = '.dylib'
 
     else:
         pydev_log.info('Unable to set trace to all threads in platform: %s', sys.platform)
+        return None
+
+    funchook_filename_dependency = os.path.join(directory, 'funchook%s' % (extension,))
+    filename = os.path.join(directory, 'attach_%s%s' % (suffix, extension))
+
+    if not os.path.exists(funchook_filename_dependency):
+        pydev_log.critical('Expected: %s to exist.', funchook_filename_dependency)
         return None
 
     if not os.path.exists(filename):
@@ -132,6 +142,9 @@ def load_python_helper_lib():
         return None
 
     try:
+        # We need to load the funchook dependency first.
+        ctypes.cdll.LoadLibrary(funchook_filename_dependency)
+
         # Load as pydll so that we don't release the gil.
         lib = ctypes.pydll.LoadLibrary(filename)
         return lib

@@ -280,3 +280,10 @@ def test_find_main_thread_id():
         env=environ,
         cwd=cwd
     )
+
+
+def test_funchook():
+    import pydevd_tracing
+    lib = pydevd_tracing.load_python_helper_lib()
+    assert lib is not None
+    lib.PatchPyGILState_Ensure(True)
