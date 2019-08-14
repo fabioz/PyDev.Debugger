@@ -54,6 +54,7 @@ extern "C"
     );
     
     DECLDIR int PatchPyGILState_Ensure(bool showDebugInfo);
+    DECLDIR int PatchPyGILState_Ensure2(bool showDebugInfo);
 }
 
 #endif

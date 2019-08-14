@@ -283,7 +283,27 @@ def test_find_main_thread_id():
 
 
 def test_funchook():
+    import sys
+    print(sys.version)
+    print(sys.executable)
     import pydevd_tracing
     lib = pydevd_tracing.load_python_helper_lib()
     assert lib is not None
-    lib.PatchPyGILState_Ensure(True)
+    import threading
+    import time
+
+    def target():
+        i = 0
+        while True:
+            i += 1
+            time.sleep(.1)
+            if i % 5 == 0:
+                print(threading.current_thread())
+
+    t = threading.Thread(target=target)
+    t.start()
+
+#     assert lib.PatchPyGILState_Ensure(True) == 0
+    assert lib.PatchPyGILState_Ensure2(True) == 0
+    target()
+

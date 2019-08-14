@@ -49,6 +49,7 @@
 #include "stdafx.h"
 
 extern "C" {
+    #include <MinHook.h>
     #include <funchook.h>
 }
 
@@ -58,6 +59,7 @@ extern "C" {
 #include "../common/py_settrace.hpp"
 
 
+#pragma comment(lib, "libMinHook-x64-v140-md.lib")
 #pragma comment(lib, "funchook.lib")
 #pragma comment(lib, "kernel32.lib")
 #pragma comment(lib, "user32.lib")
@@ -713,17 +715,91 @@ extern "C"
         return attached;
     }
 
+    PyGILState_STATE PyGILState_EnsureHook() 
+    {
+        std::cout << "New hook." << std::endl << std::flush;
+        return PyGILState_LOCKED;
+    }
+    
+    PyGILState_EnsureFunc *pPyGILState_Ensure = NULL;
+    PyGILState_STATE Detour_PyGILState_Ensure()
+    {
+        std::cout << "New hook." << std::endl << std::flush;
+        PyGILState_STATE state = pPyGILState_Ensure();
+        return state;
+    }
 
-    DECLDIR int PatchPyGILState_Ensure(bool showDebugInfo) {
-        funchook_t *funchook = funchook_create();
+    DECLDIR int PatchPyGILState_Ensure2(bool showDebugInfo) {
+        ModuleInfo moduleInfo = GetPythonModule();
+        if (moduleInfo.errorGettingModule != 0) {
+            return moduleInfo.errorGettingModule;
+        }
+        HMODULE module = moduleInfo.module;
+        if (showDebugInfo) {
+            std::cout << "Setting sys trace for existing threads." << std::endl << std::flush;
+        }
+
         
-        PyGILState_STATE (*PyGILState_EnsureFunc)();
-//         send_func = send;
-//         rv = funchook_prepare(funchook, (void**)&send_func, send_hook);
-//         if (rv != 0) {
-//            /* error */
-//            ...
-//         }
+        DEFINE_PROC(gilEnsure, PyGILState_Ensure*, "PyGILState_Ensure", 0);
+        MH_STATUS status = MH_Initialize();
+        
+        if (status != MH_OK) {
+            if (showDebugInfo) {
+                std::cout << "Error initializing minhook." << std::endl << std::flush;
+            }
+            return status;
+        }
+    
+        status = MH_CreateHookApi(L"python37.dll", "PyGILState_Ensure", reinterpret_cast<void*>(&Detour_PyGILState_Ensure), reinterpret_cast<LPVOID*>(&pPyGILState_Ensure));
+        if (status != MH_OK) {
+            if (showDebugInfo) {
+                std::cout << "Error creating hook API." << std::endl << std::flush;
+            }
+            return status;
+        }
+        
+        if (showDebugInfo) {
+            std::cout << "minhook applied ok." << std::endl << std::flush;
+        }
+    
+        return MH_EnableHook(MH_ALL_HOOKS);
+    }
+    
+    DECLDIR int PatchPyGILState_Ensure(bool showDebugInfo) {
+        ModuleInfo moduleInfo = GetPythonModule();
+        if (moduleInfo.errorGettingModule != 0) {
+            return moduleInfo.errorGettingModule;
+        }
+        HMODULE module = moduleInfo.module;
+        if (showDebugInfo) {
+            std::cout << "Setting sys trace for existing threads." << std::endl << std::flush;
+        }
+
+        
+        DEFINE_PROC(gilEnsure, PyGILState_Ensure*, "PyGILState_Ensure", 0);
+        
+        funchook_t *funchook = funchook_create();
+        int rv;
+        rv = funchook_prepare(funchook, (void**)&gilEnsure, PyGILState_EnsureHook);
+        
+        if (rv != 0) {
+            if (showDebugInfo) {
+                std::cout << "Error on funchook." << std::endl << std::flush;
+            }
+            return rv;
+        }
+        
+        rv = funchook_install(funchook, 0);
+        if (rv != 0) {
+            if (showDebugInfo) {
+                std::cout << "Error 2 on funchook." << std::endl << std::flush;
+            }
+            return rv;
+        }
+        if (showDebugInfo) {
+            std::cout << "funchook applied ok." << std::endl << std::flush;
+        }
+        
         return 0;
     } 
 }

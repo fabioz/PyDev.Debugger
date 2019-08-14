@@ -4,13 +4,13 @@ CC=cl.exe
 # Specify linker
 LINK=link.exe
 
-CC_FLAGS=/EHsc -I"$(FUNCHOOK_INCLUDEPATH)" -DUNICODE -D_UNICODE /EHsc /Zi /O1 /W3
+CC_FLAGS=/EHsc -I"$(FUNCHOOK_INCLUDEPATH)" -I"X:\minhook\include" -DUNICODE -D_UNICODE /EHsc /Zi /O1 /W3 /GL /MD
 
 TARGET_NAME=attach_$(TARGET_PLATFORM)
 
 # Link the object files into a binary
 all : attach.o
-    $(LINK) /DLL /DEBUG /OPT:REF /OPT:ICF /LIBPATH:"$(FUNCHOOK_LIBPATH)" /out:$(TARGET_NAME).dll attach.o
+    $(LINK) /DLL /DEBUG /LTCG /OPT:REF /OPT:ICF /LIBPATH:"$(FUNCHOOK_LIBPATH)" /LIBPATH:"X:\pythreadhook\packages\minhook.1.3.3\lib\native\lib" /out:$(TARGET_NAME).dll attach.o
 
 # Compile the source files into object files
 attach.o : attach.cpp
