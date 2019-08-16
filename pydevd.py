@@ -70,7 +70,7 @@ from _pydevd_bundle.pydevd_suspended_frames import SuspendedFramesManager
 from socket import SHUT_RDWR
 from _pydevd_bundle.pydevd_api import PyDevdAPI
 
-__version_info__ = (1, 7, 0)
+__version_info__ = (1, 7, 1)
 __version_info_str__ = []
 for v in __version_info__:
     __version_info_str__.append(str(v))
