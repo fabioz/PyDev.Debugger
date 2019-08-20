@@ -165,6 +165,33 @@ class _PyDevJsonCommandProcessor(object):
             if cmd is not None and send_response:
                 py_db.writer.add_command(cmd)
 
+    def on_initialize_request(self, py_db, request):
+        body = {
+            'supportsCompletionsRequest': True,
+            'supportsConditionalBreakpoints': True,
+            'supportsConfigurationDoneRequest': True,
+            'supportsDebuggerProperties': True, 
+            'supportsDelayedStackTraceLoading': True,
+            'supportsEvaluateForHovers': True,
+            'supportsExceptionInfoRequest': True,
+            'supportsExceptionOptions': True,
+            'supportsHitConditionalBreakpoints': True,
+            'supportsLogPoints': True,
+            'supportsModulesRequest': True,
+            'supportsSetExpression': True,
+            'supportsSetVariable': True,
+            'supportsValueFormattingOptions': True,
+            'supportTerminateDebuggee': True,
+            'supportsGotoTargetsRequest': True,
+            'exceptionBreakpointFilters': [
+                {'filter': 'raised', 'label': 'Raised Exceptions', 'default': False},
+                {'filter': 'uncaught', 'label': 'Uncaught Exceptions', 'default': True},
+            ],
+        }
+        self.api.notify_initialize(py_db)
+        response = pydevd_base_schema.build_response(request, kwargs={'body': body})
+        return NetCommand(CMD_RETURN, 0, response, is_json=True)
+
     def on_configurationdone_request(self, py_db, request):
         '''
         :param ConfigurationDoneRequest request:

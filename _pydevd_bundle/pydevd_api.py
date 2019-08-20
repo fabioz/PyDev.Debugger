@@ -62,6 +62,9 @@ class PyDevdAPI(object):
     def run(self, py_db):
         py_db.ready_to_run = True
 
+    def notify_initialize(self, py_db):
+        py_db.on_initialize()
+
     def notify_configuration_done(self, py_db):
         py_db.on_configuration_done()
 
@@ -159,6 +162,7 @@ class PyDevdAPI(object):
         self.remove_all_breakpoints(py_db, filename='*')
         self.remove_all_exception_breakpoints(py_db)
         self.notify_disconnect(py_db)
+
         if resume_threads:
             self.request_resume_thread(thread_id='*')
 
@@ -755,7 +759,10 @@ class PyDevdAPI(object):
                 reset_caches = True
 
         def custom_dont_trace_external_files(abs_path):
-            return abs_path.startswith(start_patterns) or abs_path.endswith(end_patterns)
+            for p in start_patterns:
+                if p in abs_path:
+                    return True
+            return abs_path.endswith(end_patterns)
 
         custom_dont_trace_external_files.start_patterns = start_patterns
         custom_dont_trace_external_files.end_patterns = end_patterns

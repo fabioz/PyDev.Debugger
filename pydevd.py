@@ -491,6 +491,9 @@ class PyDB(object):
 
         self._local_thread_trace_func = threading.local()
 
+        self._server_socket_ready_event = threading.Event()
+        self._server_socket_name = None
+
         # Bind many locals to the debugger because upon teardown those names may become None
         # in the namespace (and thus can't be relied upon unless the reference was previously
         # saved).
@@ -537,11 +540,20 @@ class PyDB(object):
             # Set as the global instance only after it's initialized.
             set_global_debugger(self)
 
+    def on_initialize(self):
+        '''
+        Note: only called when using the DAP (Debug Adapter Protocol).
+        '''
+        self._on_configuration_done_event.clear()
+
     def on_configuration_done(self):
         '''
         Note: only called when using the DAP (Debug Adapter Protocol).
         '''
         self._on_configuration_done_event.set()
+
+    def is_attached(self):
+        return self._on_configuration_done_event.is_set()
 
     def on_disconnect(self):
         '''
@@ -559,8 +571,8 @@ class PyDB(object):
         else:
             return system_exit_exc in self._ignore_system_exit_codes
 
-    def block_until_configuration_done(self):
-        self._on_configuration_done_event.wait()
+    def block_until_configuration_done(self, timeout=None):
+        self._on_configuration_done_event.wait(timeout)
 
     def add_fake_frame(self, thread_id, frame_id, frame):
         self.suspended_frames_manager.add_fake_frame(thread_id, frame_id, frame)
@@ -1073,8 +1085,15 @@ class PyDB(object):
         if self._waiting_for_connection_thread is not None:
             raise AssertionError('There is already another thread waiting for a connection.')
 
+        self._server_socket_ready_event.clear()
         self._waiting_for_connection_thread = self._WaitForConnectionThread(self)
         self._waiting_for_connection_thread.start()
+
+    def set_server_socket_ready(self):
+        self._server_socket_ready_event.set()
+
+    def wait_for_server_socket_ready(self):
+        self._server_socket_ready_event.wait()
 
     class _WaitForConnectionThread(PyDBDaemonThread):
 
@@ -1088,6 +1107,8 @@ class PyDB(object):
             port = SetupHolder.setup['port']
 
             self._server_socket = create_server_socket(host=host, port=port)
+            self.py_db._server_socket_name = self._server_socket.getsockname()
+            self.py_db.set_server_socket_ready()
 
             while not self.killReceived:
                 try:
@@ -1891,7 +1912,6 @@ class PyDB(object):
             sys.path.insert(0, os.path.split(rPath(file))[0])
 
         if set_trace:
-
             while not self.ready_to_run:
                 time.sleep(0.1)  # busy wait until we receive run command
 
@@ -2089,7 +2109,11 @@ def init_stderr_redirect(on_write=None):
         sys.stderr = pydevd_io.IORedirector(original, sys._pydevd_err_buffer_, wrap_buffer)  # @UndefinedVariable
 
 
-def _enable_attach(address):
+def _enable_attach(
+    address,
+    dont_trace_start_patterns=(),
+    dont_trace_end_paterns=(),
+    ):
     '''
     Starts accepting connections at the given host/port. The debugger will not be initialized nor
     configured, it'll only start accepting connections (and will have the tracing setup in this
@@ -2106,21 +2130,46 @@ def _enable_attach(address):
     if _debugger_setup:
         if port != SetupHolder.setup['port']:
             raise AssertionError('Unable to listen in port: %s (already listening in port: %s)' % (port, SetupHolder.setup['port']))
-    settrace(host=host, port=port, suspend=False, wait_for_ready_to_run=False, block_until_connected=False)
+    settrace(
+        host=host,
+        port=port,
+        suspend=False,
+        wait_for_ready_to_run=False,
+        block_until_connected=False,
+        dont_trace_start_patterns=dont_trace_start_patterns,
+        dont_trace_end_paterns=dont_trace_end_paterns,
+    )
+    py_db = get_global_debugger()
+    py_db.wait_for_server_socket_ready()
+    return py_db._server_socket_name
 
 
-def _wait_for_attach():
+def _wait_for_attach(cancel=None):
     '''
     Meant to be called after _enable_attach() -- the current thread will only unblock after a
-    connection is in place and the the DAP (Debug Adapter Protocol) sends the ConfigurationDone
+    connection is in place and the DAP (Debug Adapter Protocol) sends the ConfigurationDone
     request.
     '''
     py_db = get_global_debugger()
     if py_db is None:
         raise AssertionError('Debugger still not created. Please use _enable_attach() before using _wait_for_attach().')
 
-    py_db.block_until_configuration_done()
+    if cancel is None:
+        py_db.block_until_configuration_done()
+    else:
+        while not cancel.is_set():
+            if py_db.block_until_configuration_done(0.1):
+                cancel.set() # Set cancel to prevent reuse
+                return
 
+
+def _is_attached():
+    '''
+    Can be called any time to check if the connection was established and the DAP (Debug Adapter Protocol) has sent
+    the ConfigurationDone request.
+    '''
+    py_db = get_global_debugger()
+    return (py_db is not None) and py_db.is_attached()
 
 #=======================================================================================================================
 # settrace
@@ -2137,6 +2186,8 @@ def settrace(
     stop_at_frame=None,
     block_until_connected=True,
     wait_for_ready_to_run=True,
+    dont_trace_start_patterns=(),
+    dont_trace_end_paterns=(),
     ):
     '''Sets the tracing function with the pydev debug function and initializes needed facilities.
 
@@ -2170,6 +2221,12 @@ def settrace(
         Note that if wait_for_ready_to_run == False, there are no guarantees that the debugger is synchronized
         with what's configured in the client (IDE), the only guarantee is that when leaving this function
         the debugger will be already connected.
+
+    @param dont_trace_start_patterns: if set, then any path that starts with one fo the patterns in the collection
+        will not be traced
+
+    @param dont_trace_end_paterns:  if set, then any path that ends with one fo the patterns in the collection
+        will not be traced
     '''
     with _set_trace_lock:
         _locked_settrace(
@@ -2183,6 +2240,8 @@ def settrace(
             stop_at_frame,
             block_until_connected,
             wait_for_ready_to_run,
+            dont_trace_start_patterns,
+            dont_trace_end_paterns
         )
 
 
@@ -2200,6 +2259,8 @@ def _locked_settrace(
     stop_at_frame,
     block_until_connected,
     wait_for_ready_to_run,
+    dont_trace_start_patterns,
+    dont_trace_end_paterns,
     ):
     if patch_multiprocessing:
         try:
@@ -2238,6 +2299,9 @@ def _locked_settrace(
             # Create a dummy writer and wait for the real connection.
             debugger.writer = WriterThread(NULL, terminate_on_socket_close=False)
             debugger.create_wait_for_connection_thread()
+
+        if dont_trace_start_patterns or dont_trace_end_paterns:
+            PyDevdAPI().set_dont_trace_start_end_patterns(debugger, dont_trace_start_patterns, dont_trace_end_paterns)
 
         # Mark connected only if it actually succeeded.
         _debugger_setup = True
