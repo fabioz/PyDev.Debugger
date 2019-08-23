@@ -3362,6 +3362,26 @@ def test_step_over_my_code_global_setting_and_explicit_include(case_setup):
         writer.finished_ok = True
 
 
+def test_access_token(case_setup):
+
+    def update_command_line_args(self, args):
+        args.insert(2, '--access-token')
+        args.insert(3, 'bar123')
+        return args
+
+    with case_setup.test_file('_debugger_case_print.py', update_command_line_args=update_command_line_args) as writer:
+        writer.write_add_breakpoint(1, 'None')
+        writer.write_make_initial_run()
+
+        hit = writer.wait_for_breakpoint_hit()
+        thread_id = hit.thread_id
+        frame_id = hit.frame_id
+
+        writer.write_run_thread(thread_id)
+
+        writer.finished_ok = True
+
+
 def test_namedtuple(case_setup):
     '''
     Check that we don't step into <string> in the namedtuple constructor.

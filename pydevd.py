@@ -36,7 +36,7 @@ from _pydevd_bundle.pydevd_comm_constants import (CMD_THREAD_SUSPEND, CMD_STEP_I
 from _pydevd_bundle.pydevd_constants import (IS_JYTH_LESS25, get_thread_id, get_current_thread_id,
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame,
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, IS_PY34_OR_GREATER, IS_PY2, NULL,
-    NO_FTRACE, IS_IRONPYTHON, JSON_PROTOCOL, IS_CPYTHON)
+    NO_FTRACE, IS_IRONPYTHON, JSON_PROTOCOL, IS_CPYTHON, HTTP_JSON_PROTOCOL)
 from _pydevd_bundle.pydevd_defaults import PydevdCustomization
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE, LIB_FILE
@@ -369,6 +369,36 @@ class ThreadsSuspendedSingleNotification(AbstractSingleNotificationBehavior):
             yield
 
 
+class _Authentication(object):
+
+    __slots__ = ['access_token', '_authenticated', '_wrong_attempts']
+
+    def __init__(self):
+        # A token to be send in the command line or through the settrace api -- when such token
+        # is given, the first message sent to the IDE must pass the same token to authenticate.
+        # Note that if a disconnect is sent, the same message must be resent to authenticate.
+        self.access_token = None
+
+        self._authenticated = None
+
+        self._wrong_attempts = 0
+
+    def is_authenticated(self):
+        if self._authenticated is None:
+            return self.access_token is None
+        return self._authenticated
+
+    def authenticate(self, access_token):
+        if self._wrong_attempts >= 10:  # A user can fail to authenticate at most 10 times.
+            return
+
+        self._authenticated = access_token == self.access_token
+        if not self._authenticated:
+            self._wrong_attempts += 1
+        else:
+            self._wrong_attempts = 0
+
+
 class PyDB(object):
     """ Main debugging class
     Lots of stuff going on here:
@@ -386,6 +416,8 @@ class PyDB(object):
     def __init__(self, set_as_global=True):
         if set_as_global:
             pydevd_tracing.replace_sys_set_trace_func()
+
+        self.authentication = _Authentication()
 
         self.reader = None
         self.writer = None
@@ -2159,7 +2191,7 @@ def _wait_for_attach(cancel=None):
     else:
         while not cancel.is_set():
             if py_db.block_until_configuration_done(0.1):
-                cancel.set() # Set cancel to prevent reuse
+                cancel.set()  # Set cancel to prevent reuse
                 return
 
 
@@ -2170,6 +2202,7 @@ def _is_attached():
     '''
     py_db = get_global_debugger()
     return (py_db is not None) and py_db.is_attached()
+
 
 #=======================================================================================================================
 # settrace
@@ -2188,6 +2221,7 @@ def settrace(
     wait_for_ready_to_run=True,
     dont_trace_start_patterns=(),
     dont_trace_end_paterns=(),
+    access_token=None,
     ):
     '''Sets the tracing function with the pydev debug function and initializes needed facilities.
 
@@ -2241,7 +2275,8 @@ def settrace(
             block_until_connected,
             wait_for_ready_to_run,
             dont_trace_start_patterns,
-            dont_trace_end_paterns
+            dont_trace_end_paterns,
+            access_token,
         )
 
 
@@ -2261,6 +2296,7 @@ def _locked_settrace(
     wait_for_ready_to_run,
     dont_trace_start_patterns,
     dont_trace_end_paterns,
+    access_token,
     ):
     if patch_multiprocessing:
         try:
@@ -2674,6 +2710,14 @@ def main():
 
     if setup['json-dap']:
         PyDevdAPI().set_protocol(debugger, 0, JSON_PROTOCOL)
+
+    elif setup['json-dap-http']:
+        PyDevdAPI().set_protocol(debugger, 0, HTTP_JSON_PROTOCOL)
+
+    access_token = setup['access-token']
+    print('received access token:', access_token)
+    if access_token:
+        debugger.authentication.access_token = access_token
 
     if fix_app_engine_debug:
         sys.stderr.write("pydev debugger: google app engine integration enabled\n")

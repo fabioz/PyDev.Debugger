@@ -11,8 +11,8 @@ from _pydevd_bundle.pydevd_breakpoints import get_exception_class
 from _pydevd_bundle.pydevd_comm import (pydevd_find_thread_by_id,
     InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, InternalRunCustomOperation,
     internal_get_next_statement_targets)
-from _pydevd_bundle.pydevd_constants import IS_PY3K, NEXT_VALUE_SEPARATOR, IS_WINDOWS
-from _pydevd_bundle.pydevd_comm_constants import ID_TO_MEANING, CMD_EXEC_EXPRESSION
+from _pydevd_bundle.pydevd_constants import IS_PY3K, NEXT_VALUE_SEPARATOR, IS_WINDOWS, IS_PY2
+from _pydevd_bundle.pydevd_comm_constants import ID_TO_MEANING, CMD_EXEC_EXPRESSION, CMD_VERSION
 from _pydevd_bundle.pydevd_api import PyDevdAPI
 from _pydev_bundle.pydev_imports import StringIO
 
@@ -29,6 +29,23 @@ class _PyDevCommandProcessor(object):
         @param seq: the sequence of the command
         @param text: the text received in the command
         '''
+
+        if cmd_id == CMD_VERSION:
+            # The access token is the last thing in CMD_VERSION.
+            access_token = None
+            if text:
+                parts = text.split(u'\t')
+                received_token = parts[-1]  # The last argument to cmd_version is the access token.
+                if received_token.startswith('access_token:'):
+                    access_token = received_token[len('access_token:'):]
+                    text = u'\t'.join(parts[:-1])
+
+            py_db.authentication.authenticate(access_token)
+            if not py_db.authentication.is_authenticated():
+                return None
+
+            cmd = py_db.cmd_factory.make_error_message(seq, 'Client not authenticated.')
+
         meaning = ID_TO_MEANING[str(cmd_id)]
 
         # print('Handling %s (%s)' % (meaning, text))
@@ -42,28 +59,25 @@ class _PyDevCommandProcessor(object):
             py_db.writer.add_command(cmd)
             return
 
-        py_db._main_lock.acquire()
-        try:
-            cmd = on_command(py_db, cmd_id, seq, text)
-            if cmd is not None:
-                py_db.writer.add_command(cmd)
-        except:
-            if traceback is not None and sys is not None and pydev_log_exception is not None:
-                pydev_log_exception()
-
-                stream = StringIO()
-                traceback.print_exc(file=stream)
-                cmd = py_db.cmd_factory.make_error_message(
-                    seq,
-                    "Unexpected exception in process_net_command.\nInitial params: %s. Exception: %s" % (
-                        ((cmd_id, seq, text), stream.getvalue())
-                    )
-                )
+        with py_db._main_lock:
+            try:
+                cmd = on_command(py_db, cmd_id, seq, text)
                 if cmd is not None:
                     py_db.writer.add_command(cmd)
+            except:
+                if traceback is not None and sys is not None and pydev_log_exception is not None:
+                    pydev_log_exception()
 
-        finally:
-            py_db._main_lock.release()
+                    stream = StringIO()
+                    traceback.print_exc(file=stream)
+                    cmd = py_db.cmd_factory.make_error_message(
+                        seq,
+                        "Unexpected exception in process_net_command.\nInitial params: %s. Exception: %s" % (
+                            ((cmd_id, seq, text), stream.getvalue())
+                        )
+                    )
+                    if cmd is not None:
+                        py_db.writer.add_command(cmd)
 
     def cmd_run(self, py_db, cmd_id, seq, text):
         return self.api.run(py_db)
@@ -97,6 +111,9 @@ class _PyDevCommandProcessor(object):
         return self.api.request_suspend_thread(py_db, text.strip())
 
     def cmd_version(self, py_db, cmd_id, seq, text):
+        if IS_PY2 and isinstance(text, unicode):
+            text = text.encode('utf-8')
+
         # Default based on server process (although ideally the IDE should
         # provide it).
         if IS_WINDOWS:

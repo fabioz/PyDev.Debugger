@@ -14,7 +14,7 @@ from _pydevd_bundle._debug_adapter.pydevd_schema import (
     GotoTargetsResponseBody, ModulesResponseBody, ProcessEventBody,
 	ProcessEvent, Scope, ScopesResponseBody, SetExpressionResponseBody,
 	SetVariableResponseBody, SourceBreakpoint, SourceResponseBody,
-	VariablesResponseBody, SetBreakpointsResponseBody)
+	VariablesResponseBody, SetBreakpointsResponseBody, Response)
 from _pydevd_bundle.pydevd_api import PyDevdAPI
 from _pydevd_bundle.pydevd_breakpoints import get_exception_class
 from _pydevd_bundle.pydevd_comm_constants import (
@@ -27,6 +27,7 @@ from _pydevd_bundle.pydevd_net_command import NetCommand
 from _pydevd_bundle.pydevd_utils import convert_dap_log_message_to_expression
 from _pydevd_bundle.pydevd_constants import (PY_IMPL_NAME, DebugInfoHolder, PY_VERSION_STR,
     PY_IMPL_VERSION_STR, IS_64BIT_PROCESS)
+import time
 
 
 def _convert_rules_to_exclude_filters(rules, filename_to_server, on_error):
@@ -161,6 +162,20 @@ class _PyDevJsonCommandProcessor(object):
                 print('Handled in pydevd: %s (in _PyDevJsonCommandProcessor).\n' % (method_name,))
 
         with py_db._main_lock:
+            if not py_db.authentication.is_authenticated() and request.__class__.__name__ == 'InitializeRequest':
+                initialize_request = request  # : :type initialize_request: InitializeRequest
+                pydevd_specific_info = initialize_request.arguments.kwargs.get('pydevd', {})
+                if pydevd_specific_info.__class__ == dict:
+                    access_token = pydevd_specific_info.get('accessToken')
+                    py_db.authentication.authenticate(access_token)
+
+            if not py_db.authentication.is_authenticated():
+                response = Response(
+                    request.seq, success=False, command=request.command, message='Client not authenticated.', body={})
+                cmd = NetCommand(CMD_RETURN, 0, response, is_json=True)
+                py_db.writer.add_command(cmd)
+                return
+
             cmd = on_request(py_db, request)
             if cmd is not None and send_response:
                 py_db.writer.add_command(cmd)
@@ -170,7 +185,7 @@ class _PyDevJsonCommandProcessor(object):
             'supportsCompletionsRequest': True,
             'supportsConditionalBreakpoints': True,
             'supportsConfigurationDoneRequest': True,
-            'supportsDebuggerProperties': True, 
+            'supportsDebuggerProperties': True,
             'supportsDelayedStackTraceLoading': True,
             'supportsEvaluateForHovers': True,
             'supportsExceptionInfoRequest': True,
