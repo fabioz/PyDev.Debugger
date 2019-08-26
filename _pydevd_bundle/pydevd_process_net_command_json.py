@@ -161,12 +161,12 @@ class _PyDevJsonCommandProcessor(object):
                 print('Handled in pydevd: %s (in _PyDevJsonCommandProcessor).\n' % (method_name,))
 
         with py_db._main_lock:
-            if request.__class__ == InitializeRequest and not py_db.authentication.is_authenticated():
+            if request.__class__ == InitializeRequest:
                 initialize_request = request  # : :type initialize_request: InitializeRequest
                 pydevd_specific_info = initialize_request.arguments.kwargs.get('pydevd', {})
                 if pydevd_specific_info.__class__ == dict:
                     access_token = pydevd_specific_info.get('accessToken')
-                    py_db.authentication.authenticate(access_token)
+                    py_db.authentication.login(access_token)
 
             if not py_db.authentication.is_authenticated():
                 response = Response(

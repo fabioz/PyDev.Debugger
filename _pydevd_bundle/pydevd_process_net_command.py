@@ -40,7 +40,7 @@ class _PyDevCommandProcessor(object):
                     access_token = received_token[len('access_token:'):]
                     text = u'\t'.join(parts[:-1])
 
-            py_db.authentication.authenticate(access_token)
+            py_db.authentication.login(access_token)
 
         if not py_db.authentication.is_authenticated():
             cmd = py_db.cmd_factory.make_error_message(seq, 'Client not authenticated.')

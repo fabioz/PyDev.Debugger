@@ -388,16 +388,12 @@ class _Authentication(object):
 
         self._wrong_attempts = 0
 
-    def logout(self):
-        self._authenticated = None
-        self._wrong_attempts = 0
-
     def is_authenticated(self):
         if self._authenticated is None:
             return self.access_token is None
         return self._authenticated
 
-    def authenticate(self, access_token):
+    def login(self, access_token):
         if self._wrong_attempts >= 10:  # A user can fail to authenticate at most 10 times.
             return
 
@@ -406,6 +402,10 @@ class _Authentication(object):
             self._wrong_attempts += 1
         else:
             self._wrong_attempts = 0
+
+    def logout(self):
+        self._authenticated = None
+        self._wrong_attempts = 0
 
 
 class PyDB(object):
