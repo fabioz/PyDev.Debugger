@@ -388,6 +388,10 @@ class _Authentication(object):
 
         self._wrong_attempts = 0
 
+    def logout(self):
+        self._authenticated = None
+        self._wrong_attempts = 0
+
     def is_authenticated(self):
         if self._authenticated is None:
             return self.access_token is None
@@ -596,6 +600,7 @@ class PyDB(object):
         '''
         Note: only called when using the DAP (Debug Adapter Protocol).
         '''
+        self.authentication.logout()
         self._on_configuration_done_event.clear()
 
     def set_ignore_system_exit_codes(self, ignore_system_exit_codes):

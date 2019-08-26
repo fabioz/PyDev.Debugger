@@ -402,7 +402,7 @@ class JsonFacade(object):
         assert response.success == success
         return response
 
-    def write_initialize(self, access_token, success):
+    def write_initialize(self, access_token, success=True):
         arguments = InitializeRequestArguments(
             adapterID='pydevd_test_case',
             pydevd=dict(
@@ -2762,7 +2762,7 @@ def test_access_token(case_setup):
         args.insert(5, 'foo321')
         return args
 
-    with case_setup.test_file('_debugger_case_print.py', update_command_line_args=update_command_line_args) as writer:
+    with case_setup.test_file('_debugger_case_pause_continue.py', update_command_line_args=update_command_line_args) as writer:
         json_facade = JsonFacade(writer, send_json_startup_messages=False)
 
         response = json_facade.write_set_debugger_property(multi_threads_single_notification=True, success=False)
@@ -2783,12 +2783,11 @@ def test_access_token(case_setup):
         json_facade.write_set_debugger_property(multi_threads_single_notification=True)
         json_facade.write_launch()
 
-        break_line = writer.get_line_index_with_content('Break here')
+        break_line = writer.get_line_index_with_content('Pause here and change loop to False')
         json_facade.write_set_breakpoints(break_line)
         json_facade.write_make_initial_run()
 
         json_facade.wait_for_json_message(ThreadEvent, lambda event: event.body.reason == 'started')
-
         json_facade.wait_for_thread_stopped(line=break_line)
 
         # : :type response: ThreadsResponse
@@ -2796,8 +2795,18 @@ def test_access_token(case_setup):
         assert len(response.body.threads) == 1
         assert next(iter(response.body.threads))['name'] == 'MainThread'
 
-        # Removes breakpoints and proceeds running.
-        json_facade.write_disconnect(wait_for_response=False)
+        json_facade.write_disconnect()
+
+        response = json_facade.write_initialize(access_token='wrong', success=False)
+        assert response.message == "Client not authenticated."
+
+        response = json_facade.write_initialize(access_token='bar123')
+        assert initialize_response_body.kwargs['pydevd']['clientAccessToken'] == 'foo321'
+
+        json_facade.write_set_breakpoints(break_line)
+        json_hit = json_facade.wait_for_thread_stopped(line=break_line)
+        json_facade.write_set_variable(json_hit.frame_id, 'loop', 'False')
+        json_facade.write_continue(wait_for_response=False)
 
         writer.finished_ok = True
 
