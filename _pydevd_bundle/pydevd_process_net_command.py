@@ -12,9 +12,10 @@ from _pydevd_bundle.pydevd_comm import (pydevd_find_thread_by_id,
     InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, InternalRunCustomOperation,
     internal_get_next_statement_targets)
 from _pydevd_bundle.pydevd_constants import IS_PY3K, NEXT_VALUE_SEPARATOR, IS_WINDOWS, IS_PY2
-from _pydevd_bundle.pydevd_comm_constants import ID_TO_MEANING, CMD_EXEC_EXPRESSION, CMD_VERSION
+from _pydevd_bundle.pydevd_comm_constants import ID_TO_MEANING, CMD_EXEC_EXPRESSION, CMD_AUTHENTICATE
 from _pydevd_bundle.pydevd_api import PyDevdAPI
 from _pydev_bundle.pydev_imports import StringIO
+from _pydevd_bundle.pydevd_net_command import NetCommand
 
 
 class _PyDevCommandProcessor(object):
@@ -30,19 +31,9 @@ class _PyDevCommandProcessor(object):
         @param text: the text received in the command
         '''
 
-        if cmd_id == CMD_VERSION:
-            # The access token is the last thing in CMD_VERSION.
-            access_token = None
-            if text:
-                parts = text.split(u'\t')
-                received_token = parts[-1]  # The last argument to cmd_version is the access token.
-                if received_token.startswith('access_token:'):
-                    access_token = received_token[len('access_token:'):]
-                    text = u'\t'.join(parts[:-1])
-
-            py_db.authentication.login(access_token)
-
-        if not py_db.authentication.is_authenticated():
+        # We can only proceed if the client is already authenticated or if it's the
+        # command to authenticate.
+        if cmd_id != CMD_AUTHENTICATE and not py_db.authentication.is_authenticated():
             cmd = py_db.cmd_factory.make_error_message(seq, 'Client not authenticated.')
             py_db.writer.add_command(cmd)
             return
@@ -79,6 +70,14 @@ class _PyDevCommandProcessor(object):
                     )
                     if cmd is not None:
                         py_db.writer.add_command(cmd)
+
+    def cmd_authenticate(self, py_db, cmd_id, seq, text):
+        access_token = text
+        py_db.authentication.login(access_token)
+        if py_db.authentication.is_authenticated():
+            return NetCommand(cmd_id, seq, py_db.authentication.client_access_token)
+
+        return py_db.cmd_factory.make_error_message(seq, 'Client not authenticated.')
 
     def cmd_run(self, py_db, cmd_id, seq, text):
         return self.api.run(py_db)

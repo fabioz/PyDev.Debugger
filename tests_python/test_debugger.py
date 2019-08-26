@@ -3367,6 +3367,8 @@ def test_access_token(case_setup):
     def update_command_line_args(self, args):
         args.insert(2, '--access-token')
         args.insert(3, 'bar123')
+        args.insert(2, '--client-access-token')
+        args.insert(3, 'foo234')
         return args
 
     with case_setup.test_file('_debugger_case_print.py', update_command_line_args=update_command_line_args) as writer:
@@ -3374,7 +3376,9 @@ def test_access_token(case_setup):
 
         writer.wait_for_message(lambda msg:'Client not authenticated.' in msg, expect_xml=False)
 
-        writer.write_version(access_token='bar123')
+        writer.write_authenticate(access_token='bar123', client_access_token='foo234')
+
+        writer.write_version()
 
         writer.write_make_initial_run()
 

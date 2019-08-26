@@ -85,6 +85,8 @@ CMD_REDIRECT_OUTPUT = 200
 CMD_GET_NEXT_STATEMENT_TARGETS = 201
 CMD_SET_PROJECT_ROOTS = 202
 
+CMD_AUTHENTICATE = 205
+
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_SET_PROTOCOL = 503
@@ -987,11 +989,15 @@ class AbstractWriterThread(threading.Thread):
     def write_set_protocol(self, protocol):
         self.write("%s\t%s\t%s" % (CMD_SET_PROTOCOL, self.next_seq(), protocol))
 
-    def write_version(self, access_token=None):
+    def write_authenticate(self, access_token, client_access_token):
+        msg = "%s\t%s\t%s" % (CMD_AUTHENTICATE, self.next_seq(), access_token)
+        self.write(msg)
+
+        self.wait_for_message(lambda msg:client_access_token in msg, expect_xml=False)
+
+    def write_version(self):
         from _pydevd_bundle.pydevd_constants import IS_WINDOWS
         msg = "%s\t%s\t1.0\t%s\tID" % (CMD_VERSION, self.next_seq(), 'WINDOWS' if IS_WINDOWS else 'UNIX')
-        if access_token is not None:
-            msg += '\taccess_token:%s' % (access_token,)
         self.write(msg)
 
     def get_main_filename(self):
