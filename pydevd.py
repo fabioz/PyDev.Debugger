@@ -371,13 +371,18 @@ class ThreadsSuspendedSingleNotification(AbstractSingleNotificationBehavior):
 
 class _Authentication(object):
 
-    __slots__ = ['access_token', '_authenticated', '_wrong_attempts']
+    __slots__ = ['access_token', 'client_access_token', '_authenticated', '_wrong_attempts']
 
     def __init__(self):
         # A token to be send in the command line or through the settrace api -- when such token
         # is given, the first message sent to the IDE must pass the same token to authenticate.
         # Note that if a disconnect is sent, the same message must be resent to authenticate.
         self.access_token = None
+
+        # This token is the one that the ide requires to accept a connection from pydevd
+        # (it's stored here and just passed back when required, it's not used internally
+        # for anything else).
+        self.client_access_token = None
 
         self._authenticated = None
 
@@ -2715,9 +2720,12 @@ def main():
         PyDevdAPI().set_protocol(debugger, 0, HTTP_JSON_PROTOCOL)
 
     access_token = setup['access-token']
-    print('received access token:', access_token)
     if access_token:
         debugger.authentication.access_token = access_token
+
+    client_access_token = setup['client-access-token']
+    if client_access_token:
+        debugger.authentication.client_access_token = client_access_token
 
     if fix_app_engine_debug:
         sys.stderr.write("pydev debugger: google app engine integration enabled\n")

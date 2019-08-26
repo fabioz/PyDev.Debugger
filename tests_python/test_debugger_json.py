@@ -2758,6 +2758,8 @@ def test_access_token(case_setup):
         args.insert(1, '--json-dap-http')
         args.insert(2, '--access-token')
         args.insert(3, 'bar123')
+        args.insert(4, '--client-access-token')
+        args.insert(5, 'foo321')
         return args
 
     with case_setup.test_file('_debugger_case_print.py', update_command_line_args=update_command_line_args) as writer:
@@ -2773,6 +2775,10 @@ def test_access_token(case_setup):
         assert response.message == "Client not authenticated."
 
         response = json_facade.write_initialize(access_token='bar123', success=True)
+        # : :type response:InitializeResponse
+        initialize_response_body = response.body
+        # : :type initialize_response_body:Capabilities
+        assert initialize_response_body.kwargs['pydevd']['clientAccessToken'] == 'foo321'
 
         json_facade.write_set_debugger_property(multi_threads_single_notification=True)
         json_facade.write_launch()

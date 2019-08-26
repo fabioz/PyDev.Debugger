@@ -203,6 +203,10 @@ class _PyDevJsonCommandProcessor(object):
                 {'filter': 'uncaught', 'label': 'Uncaught Exceptions', 'default': True},
             ],
         }
+
+        client_access_token = py_db.authentication.client_access_token
+        if client_access_token:
+            body['pydevd'] = {'clientAccessToken': client_access_token}
         self.api.notify_initialize(py_db)
         response = pydevd_base_schema.build_response(request, kwargs={'body': body})
         return NetCommand(CMD_RETURN, 0, response, is_json=True)
