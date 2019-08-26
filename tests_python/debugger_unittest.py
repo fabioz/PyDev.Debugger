@@ -987,9 +987,12 @@ class AbstractWriterThread(threading.Thread):
     def write_set_protocol(self, protocol):
         self.write("%s\t%s\t%s" % (CMD_SET_PROTOCOL, self.next_seq(), protocol))
 
-    def write_version(self):
+    def write_version(self, access_token=None):
         from _pydevd_bundle.pydevd_constants import IS_WINDOWS
-        self.write("%s\t%s\t1.0\t%s\tID" % (CMD_VERSION, self.next_seq(), 'WINDOWS' if IS_WINDOWS else 'UNIX'))
+        msg = "%s\t%s\t1.0\t%s\tID" % (CMD_VERSION, self.next_seq(), 'WINDOWS' if IS_WINDOWS else 'UNIX')
+        if access_token is not None:
+            msg += '\taccess_token:%s' % (access_token,)
+        self.write(msg)
 
     def get_main_filename(self):
         return self.TEST_FILE
@@ -1198,6 +1201,7 @@ class AbstractWriterThread(threading.Thread):
             if accept_message(last):
                 if expect_xml:
                     # Extract xml and return untangled.
+                    xml = ''
                     try:
                         xml = last[last.index('<xml>'):]
                         if isinstance(xml, bytes):

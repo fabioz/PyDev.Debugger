@@ -41,10 +41,11 @@ class _PyDevCommandProcessor(object):
                     text = u'\t'.join(parts[:-1])
 
             py_db.authentication.authenticate(access_token)
-            if not py_db.authentication.is_authenticated():
-                return None
 
+        if not py_db.authentication.is_authenticated():
             cmd = py_db.cmd_factory.make_error_message(seq, 'Client not authenticated.')
+            py_db.writer.add_command(cmd)
+            return
 
         meaning = ID_TO_MEANING[str(cmd_id)]
 

@@ -3370,14 +3370,13 @@ def test_access_token(case_setup):
         return args
 
     with case_setup.test_file('_debugger_case_print.py', update_command_line_args=update_command_line_args) as writer:
-        writer.write_add_breakpoint(1, 'None')
+        writer.write_add_breakpoint(1, 'None')  # I.e.: should not work (not authenticated).
+
+        writer.wait_for_message(lambda msg:'Client not authenticated.' in msg, expect_xml=False)
+
+        writer.write_version(access_token='bar123')
+
         writer.write_make_initial_run()
-
-        hit = writer.wait_for_breakpoint_hit()
-        thread_id = hit.thread_id
-        frame_id = hit.frame_id
-
-        writer.write_run_thread(thread_id)
 
         writer.finished_ok = True
 
