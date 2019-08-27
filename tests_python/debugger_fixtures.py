@@ -329,7 +329,7 @@ def case_setup_remote():
                     ret.append('--access-token')
                     ret.append(access_token)
                 if ide_access_token is not None:
-                    ret.append('--client-access-token')
+                    ret.append('--ide-access-token')
                     ret.append(ide_access_token)
                 return ret
 

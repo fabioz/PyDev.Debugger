@@ -3388,7 +3388,7 @@ def test_access_token(case_setup):
     def update_command_line_args(self, args):
         args.insert(2, '--access-token')
         args.insert(3, 'bar123')
-        args.insert(2, '--client-access-token')
+        args.insert(2, '--ide-access-token')
         args.insert(3, 'foo234')
         return args
 

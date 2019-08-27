@@ -2357,7 +2357,7 @@ def _locked_settrace(
             SetupHolder.setup['access-token'] = access_token
         if ide_access_token is not None:
             debugger.authentication.ide_access_token = ide_access_token
-            SetupHolder.setup['client-access-token'] = ide_access_token
+            SetupHolder.setup['ide-access-token'] = ide_access_token
 
         if block_until_connected:
             debugger.connect(host, port)  # Note: connect can raise error.
@@ -2548,7 +2548,7 @@ def settrace_forked():
     if setup is None:
         setup = {}
     access_token = setup.get('access-token')
-    ide_access_token = setup.get('client-access-token')
+    ide_access_token = setup.get('ide-access-token')
 
     from _pydevd_frame_eval.pydevd_frame_eval_main import clear_thread_local_info
     host, port = dispatch()
@@ -2761,7 +2761,7 @@ def main():
     if access_token:
         debugger.authentication.access_token = access_token
 
-    ide_access_token = setup['client-access-token']
+    ide_access_token = setup['ide-access-token']
     if ide_access_token:
         debugger.authentication.ide_access_token = ide_access_token
 

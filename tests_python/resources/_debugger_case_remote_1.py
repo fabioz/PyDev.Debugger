@@ -12,7 +12,7 @@ if __name__ == '__main__':
         if args[0] == '--access-token':
             access_token = args[1]
             args = args[2:]
-        elif args[0] == '--client-access-token':
+        elif args[0] == '--ide-access-token':
             ide_access_token = args[1]
             args = args[2:]
         else:
