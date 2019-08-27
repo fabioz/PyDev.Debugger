@@ -2624,7 +2624,7 @@ def test_py_37_breakpoint_remote_no_import(case_setup_remote):
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
-@pytest.mark.parametrize('authenticate', [True])
+@pytest.mark.parametrize('authenticate', [True, False])
 def test_remote_debugger_multi_proc(case_setup_remote, authenticate):
 
     access_token = None
