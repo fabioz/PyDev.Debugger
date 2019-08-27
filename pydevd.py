@@ -2539,6 +2539,13 @@ def settrace_forked():
     threading.current_thread().additional_info = None
     PyDBDaemonThread.created_pydb_daemon_threads = {}
 
+    # Make sure that we keep the same access tokens for subprocesses started through fork.
+    setup = SetupHolder.setup
+    if setup is None:
+        setup = {}
+    access_token = setup.get('access-token')
+    client_access_token = setup.get('client-access-token')
+
     from _pydevd_frame_eval.pydevd_frame_eval_main import clear_thread_local_info
     host, port = dispatch()
 
@@ -2561,6 +2568,8 @@ def settrace_forked():
                 trace_only_current_thread=False,
                 overwrite_prev_trace=True,
                 patch_multiprocessing=True,
+                access_token=access_token,
+                client_access_token=client_access_token,
         )
 
 
