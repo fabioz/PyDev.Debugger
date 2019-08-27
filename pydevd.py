@@ -2232,6 +2232,7 @@ def settrace(
     dont_trace_start_patterns=(),
     dont_trace_end_paterns=(),
     access_token=None,
+    client_access_token=None,
     ):
     '''Sets the tracing function with the pydev debug function and initializes needed facilities.
 
@@ -2269,8 +2270,14 @@ def settrace(
     @param dont_trace_start_patterns: if set, then any path that starts with one fo the patterns in the collection
         will not be traced
 
-    @param dont_trace_end_paterns:  if set, then any path that ends with one fo the patterns in the collection
+    @param dont_trace_end_paterns: if set, then any path that ends with one fo the patterns in the collection
         will not be traced
+
+    @param access_token: token to be sent from the client (i.e.: IDE) to the debugger when a connection
+        is established (verified by the debugger).
+
+    @param client_access_token: token to be sent from the debugger to the client (i.e.: IDE) when
+        a connection is established (verified by the client).
     '''
     with _set_trace_lock:
         _locked_settrace(
@@ -2287,6 +2294,7 @@ def settrace(
             dont_trace_start_patterns,
             dont_trace_end_paterns,
             access_token,
+            client_access_token,
         )
 
 
@@ -2307,6 +2315,7 @@ def _locked_settrace(
     dont_trace_start_patterns,
     dont_trace_end_paterns,
     access_token,
+    client_access_token,
     ):
     if patch_multiprocessing:
         try:
@@ -2339,6 +2348,13 @@ def _locked_settrace(
         debugger = get_global_debugger()
         if debugger is None:
             debugger = PyDB()
+        if access_token is not None:
+            debugger.authentication.access_token = access_token
+            SetupHolder.setup['access-token'] = access_token
+        if client_access_token is not None:
+            debugger.authentication.client_access_token = client_access_token
+            SetupHolder.setup['client-access-token'] = client_access_token
+
         if block_until_connected:
             debugger.connect(host, port)  # Note: connect can raise error.
         else:
@@ -2396,6 +2412,10 @@ def _locked_settrace(
     else:
         # ok, we're already in debug mode, with all set, so, let's just set the break
         debugger = get_global_debugger()
+        if access_token is not None:
+            debugger.authentication.access_token = access_token
+        if client_access_token is not None:
+            debugger.authentication.client_access_token = client_access_token
 
         debugger.set_trace_for_frame_and_parents(get_frame().f_back)
 

@@ -315,6 +315,8 @@ def case_setup_remote():
                 self,
                 filename,
                 wait_for_port=True,
+                access_token=None,
+                client_access_token=None,
                 **kwargs
             ):
 
@@ -322,6 +324,13 @@ def case_setup_remote():
                 ret = debugger_unittest.AbstractWriterThread.update_command_line_args(writer, args)
                 wait_for_condition(lambda: hasattr(writer, 'port'))
                 ret.append(str(writer.port))
+
+                if access_token is not None:
+                    ret.append('--access-token')
+                    ret.append(access_token)
+                if client_access_token is not None:
+                    ret.append('--client-access-token')
+                    ret.append(client_access_token)
                 return ret
 
             WriterThread.TEST_FILE = debugger_unittest._get_debugger_test_file(filename)
