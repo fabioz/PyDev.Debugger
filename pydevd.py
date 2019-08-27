@@ -614,7 +614,7 @@ class PyDB(object):
             return system_exit_exc in self._ignore_system_exit_codes
 
     def block_until_configuration_done(self, timeout=None):
-        self._on_configuration_done_event.wait(timeout)
+        return self._on_configuration_done_event.wait(timeout)
 
     def add_fake_frame(self, thread_id, frame_id, frame):
         self.suspended_frames_manager.add_fake_frame(thread_id, frame_id, frame)
@@ -2155,6 +2155,7 @@ def _enable_attach(
     address,
     dont_trace_start_patterns=(),
     dont_trace_end_paterns=(),
+    patch_multiprocessing=False,
     access_token=None,
     ide_access_token=None,
     ):
@@ -2182,6 +2183,7 @@ def _enable_attach(
         block_until_connected=False,
         dont_trace_start_patterns=dont_trace_start_patterns,
         dont_trace_end_paterns=dont_trace_end_paterns,
+        patch_multiprocessing=patch_multiprocessing,
         access_token=access_token,
         ide_access_token=ide_access_token,
     )
