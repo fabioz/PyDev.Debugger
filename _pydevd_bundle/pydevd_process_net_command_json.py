@@ -165,7 +165,7 @@ class _PyDevJsonCommandProcessor(object):
                 initialize_request = request  # : :type initialize_request: InitializeRequest
                 pydevd_specific_info = initialize_request.arguments.kwargs.get('pydevd', {})
                 if pydevd_specific_info.__class__ == dict:
-                    access_token = pydevd_specific_info.get('pydevdAccessToken')
+                    access_token = pydevd_specific_info.get('debugServerAccessToken')
                     py_db.authentication.login(access_token)
 
             if not py_db.authentication.is_authenticated():

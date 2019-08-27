@@ -2155,6 +2155,8 @@ def _enable_attach(
     address,
     dont_trace_start_patterns=(),
     dont_trace_end_paterns=(),
+    access_token=None,
+    ide_access_token=None,
     ):
     '''
     Starts accepting connections at the given host/port. The debugger will not be initialized nor
@@ -2180,6 +2182,8 @@ def _enable_attach(
         block_until_connected=False,
         dont_trace_start_patterns=dont_trace_start_patterns,
         dont_trace_end_paterns=dont_trace_end_paterns,
+        access_token=access_token,
+        ide_access_token=ide_access_token,
     )
     py_db = get_global_debugger()
     py_db.wait_for_server_socket_ready()
@@ -2236,47 +2240,47 @@ def settrace(
     ):
     '''Sets the tracing function with the pydev debug function and initializes needed facilities.
 
-    @param host: the user may specify another host, if the debug server is not in the same machine (default is the local
+    :param host: the user may specify another host, if the debug server is not in the same machine (default is the local
         host)
 
-    @param stdoutToServer: when this is true, the stdout is passed to the debug server
+    :param stdoutToServer: when this is true, the stdout is passed to the debug server
 
-    @param stderrToServer: when this is true, the stderr is passed to the debug server
+    :param stderrToServer: when this is true, the stderr is passed to the debug server
         so that they are printed in its console and not in this process console.
 
-    @param port: specifies which port to use for communicating with the server (note that the server must be started
+    :param port: specifies which port to use for communicating with the server (note that the server must be started
         in the same port). @note: currently it's hard-coded at 5678 in the client
 
-    @param suspend: whether a breakpoint should be emulated as soon as this function is called.
+    :param suspend: whether a breakpoint should be emulated as soon as this function is called.
 
-    @param trace_only_current_thread: determines if only the current thread will be traced or all current and future
+    :param trace_only_current_thread: determines if only the current thread will be traced or all current and future
         threads will also have the tracing enabled.
 
-    @param overwrite_prev_trace: deprecated
+    :param overwrite_prev_trace: deprecated
 
-    @param patch_multiprocessing: if True we'll patch the functions which create new processes so that launched
+    :param patch_multiprocessing: if True we'll patch the functions which create new processes so that launched
         processes are debugged.
 
-    @param stop_at_frame: if passed it'll stop at the given frame, otherwise it'll stop in the function which
+    :param stop_at_frame: if passed it'll stop at the given frame, otherwise it'll stop in the function which
         called this method.
 
-    @param wait_for_ready_to_run: if True settrace will block until the ready_to_run flag is set to True,
+    :param wait_for_ready_to_run: if True settrace will block until the ready_to_run flag is set to True,
         otherwise, it'll set ready_to_run to True and this function won't block.
 
         Note that if wait_for_ready_to_run == False, there are no guarantees that the debugger is synchronized
         with what's configured in the client (IDE), the only guarantee is that when leaving this function
         the debugger will be already connected.
 
-    @param dont_trace_start_patterns: if set, then any path that starts with one fo the patterns in the collection
+    :param dont_trace_start_patterns: if set, then any path that starts with one fo the patterns in the collection
         will not be traced
 
-    @param dont_trace_end_paterns: if set, then any path that ends with one fo the patterns in the collection
+    :param dont_trace_end_paterns: if set, then any path that ends with one fo the patterns in the collection
         will not be traced
 
-    @param access_token: token to be sent from the client (i.e.: IDE) to the debugger when a connection
+    :param access_token: token to be sent from the client (i.e.: IDE) to the debugger when a connection
         is established (verified by the debugger).
 
-    @param ide_access_token: token to be sent from the debugger to the client (i.e.: IDE) when
+    :param ide_access_token: token to be sent from the debugger to the client (i.e.: IDE) when
         a connection is established (verified by the client).
     '''
     with _set_trace_lock:

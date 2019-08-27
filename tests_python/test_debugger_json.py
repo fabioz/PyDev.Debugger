@@ -406,7 +406,7 @@ class JsonFacade(object):
         arguments = InitializeRequestArguments(
             adapterID='pydevd_test_case',
             pydevd=dict(
-                pydevdAccessToken=access_token,
+                debugServerAccessToken=access_token,
             )
         )
         response = self.wait_for_response(self.write_request(InitializeRequest(arguments)))
