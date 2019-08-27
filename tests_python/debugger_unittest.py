@@ -997,8 +997,7 @@ class AbstractWriterThread(threading.Thread):
 
     def write_version(self):
         from _pydevd_bundle.pydevd_constants import IS_WINDOWS
-        msg = "%s\t%s\t1.0\t%s\tID" % (CMD_VERSION, self.next_seq(), 'WINDOWS' if IS_WINDOWS else 'UNIX')
-        self.write(msg)
+        self.write("%s\t%s\t1.0\t%s\tID" % (CMD_VERSION, self.next_seq(), 'WINDOWS' if IS_WINDOWS else 'UNIX'))
 
     def get_main_filename(self):
         return self.TEST_FILE
