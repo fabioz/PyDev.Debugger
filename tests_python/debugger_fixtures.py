@@ -316,7 +316,7 @@ def case_setup_remote():
                 filename,
                 wait_for_port=True,
                 access_token=None,
-                client_access_token=None,
+                ide_access_token=None,
                 **kwargs
             ):
 
@@ -328,9 +328,9 @@ def case_setup_remote():
                 if access_token is not None:
                     ret.append('--access-token')
                     ret.append(access_token)
-                if client_access_token is not None:
+                if ide_access_token is not None:
                     ret.append('--client-access-token')
-                    ret.append(client_access_token)
+                    ret.append(ide_access_token)
                 return ret
 
             WriterThread.TEST_FILE = debugger_unittest._get_debugger_test_file(filename)

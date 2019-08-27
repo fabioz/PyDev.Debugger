@@ -406,7 +406,7 @@ class JsonFacade(object):
         arguments = InitializeRequestArguments(
             adapterID='pydevd_test_case',
             pydevd=dict(
-                accessToken=access_token,
+                pydevdAccessToken=access_token,
             )
         )
         response = self.wait_for_response(self.write_request(InitializeRequest(arguments)))
@@ -2778,7 +2778,7 @@ def test_access_token(case_setup):
         # : :type response:InitializeResponse
         initialize_response_body = response.body
         # : :type initialize_response_body:Capabilities
-        assert initialize_response_body.kwargs['pydevd']['clientAccessToken'] == 'foo321'
+        assert initialize_response_body.kwargs['pydevd']['ideAccessToken'] == 'foo321'
 
         json_facade.write_set_debugger_property(multi_threads_single_notification=True)
         json_facade.write_launch()
@@ -2801,7 +2801,7 @@ def test_access_token(case_setup):
         assert response.message == "Client not authenticated."
 
         response = json_facade.write_initialize(access_token='bar123')
-        assert initialize_response_body.kwargs['pydevd']['clientAccessToken'] == 'foo321'
+        assert initialize_response_body.kwargs['pydevd']['ideAccessToken'] == 'foo321'
 
         json_facade.write_set_breakpoints(break_line)
         json_hit = json_facade.wait_for_thread_stopped(line=break_line)

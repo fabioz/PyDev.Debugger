@@ -165,7 +165,7 @@ class _PyDevJsonCommandProcessor(object):
                 initialize_request = request  # : :type initialize_request: InitializeRequest
                 pydevd_specific_info = initialize_request.arguments.kwargs.get('pydevd', {})
                 if pydevd_specific_info.__class__ == dict:
-                    access_token = pydevd_specific_info.get('accessToken')
+                    access_token = pydevd_specific_info.get('pydevdAccessToken')
                     py_db.authentication.login(access_token)
 
             if not py_db.authentication.is_authenticated():
@@ -203,9 +203,9 @@ class _PyDevJsonCommandProcessor(object):
             ],
         }
 
-        client_access_token = py_db.authentication.client_access_token
-        if client_access_token:
-            body['pydevd'] = {'clientAccessToken': client_access_token}
+        ide_access_token = py_db.authentication.ide_access_token
+        if ide_access_token:
+            body['pydevd'] = {'ideAccessToken': ide_access_token}
         self.api.notify_initialize(py_db)
         response = pydevd_base_schema.build_response(request, kwargs={'body': body})
         return NetCommand(CMD_RETURN, 0, response, is_json=True)
