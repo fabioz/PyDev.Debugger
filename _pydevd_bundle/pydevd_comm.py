@@ -168,8 +168,9 @@ class PyDBDaemonThread(threading.Thread):
             raise NotImplementedError('Should be reimplemented by: %s' % self.__class__)
 
     def do_kill_pydev_thread(self):
-        pydev_log.debug('%s received kill signal', self.getName())
-        self._kill_received = True
+        if not self._kill_received:
+            pydev_log.debug('%s received kill signal', self.getName())
+            self._kill_received = True
 
     def _stop_trace(self):
         if self.pydev_do_not_trace:
@@ -444,8 +445,10 @@ class WriterThread(PyDBDaemonThread):
 
     @overrides(PyDBDaemonThread.do_kill_pydev_thread)
     def do_kill_pydev_thread(self):
-        # Add command before setting the kill flag (otherwise the command may not be added).
-        self.add_command(NULL_EXIT_COMMAND)
+        if not self._kill_received:
+            # Add command before setting the kill flag (otherwise the command may not be added).
+            exit_cmd = self.py_db.cmd_factory.make_exit_command(self.py_db)
+            self.add_command(exit_cmd)
 
         PyDBDaemonThread.do_kill_pydev_thread(self)
 

@@ -13,7 +13,7 @@ from _pydevd_bundle._debug_adapter import pydevd_schema, pydevd_base_schema
 from _pydevd_bundle._debug_adapter.pydevd_base_schema import from_json
 from _pydevd_bundle._debug_adapter.pydevd_schema import (ThreadEvent, ModuleEvent, OutputEvent,
     ExceptionOptions, Response, StoppedEvent, ContinuedEvent, ProcessEvent, InitializeRequest,
-    InitializeRequestArguments, TerminateArguments, TerminateRequest)
+    InitializeRequestArguments, TerminateArguments, TerminateRequest, TerminatedEvent)
 from _pydevd_bundle.pydevd_comm_constants import file_system_encoding
 from _pydevd_bundle.pydevd_constants import (int_types, IS_64BIT_PROCESS,
     PY_VERSION_STR, PY_IMPL_VERSION_STR, PY_IMPL_NAME)
@@ -113,6 +113,9 @@ class JsonFacade(object):
 
     def write_list_threads(self):
         return self.wait_for_response(self.write_request(pydevd_schema.ThreadsRequest()))
+
+    def wait_for_terminated(self):
+        return self.wait_for_json_message(TerminatedEvent)
 
     def wait_for_thread_stopped(self, reason='breakpoint', line=None, file=None, name=None):
         '''
@@ -3118,6 +3121,7 @@ def test_terminate(case_setup, scenario, check_subprocesses):
                     proc = psutil.Process(pid)
                     proc.kill()
 
+        json_facade.wait_for_terminated()
         writer.finished_ok = True
 
 
@@ -3176,6 +3180,7 @@ def test_access_token(case_setup):
         json_hit = json_facade.wait_for_thread_stopped(line=break_line)
         json_facade.write_set_variable(json_hit.frame_id, 'loop', 'False')
         json_facade.write_continue()
+        json_facade.wait_for_terminated()
 
         writer.finished_ok = True
 

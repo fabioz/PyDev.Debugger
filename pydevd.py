@@ -2668,6 +2668,15 @@ class DispatchReader(ReaderThread):
     def handle_except(self):
         ReaderThread.handle_except(self)
 
+    @overrides(PyDBDaemonThread.do_kill_pydev_thread)
+    def do_kill_pydev_thread(self):
+        ReaderThread.do_kill_pydev_thread(self)
+        if not self._kill_received:
+            try:
+                self.sock.close()
+            except:
+                pass
+
     def process_command(self, cmd_id, seq, text):
         if cmd_id == 99:
             self.dispatcher.port = int(text)

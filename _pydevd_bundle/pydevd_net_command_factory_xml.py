@@ -443,3 +443,6 @@ class NetCommandFactory(object):
 
     def make_skipped_step_in_because_of_filters(self, py_db, frame):
         return NULL_NET_COMMAND  # Not a part of the xml protocol
+
+    def make_exit_command(self, py_db):
+        return NULL_EXIT_COMMAND
