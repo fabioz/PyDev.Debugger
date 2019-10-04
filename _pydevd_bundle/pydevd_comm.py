@@ -199,7 +199,7 @@ class ReaderThread(PyDBDaemonThread):
     def __init__(self, sock, py_db, PyDevJsonCommandProcessor, process_net_command, terminate_on_socket_close=True):
         assert sock is not None
         PyDBDaemonThread.__init__(self, py_db)
-        self._terminate_on_socket_close = terminate_on_socket_close
+        self.__terminate_on_socket_close = terminate_on_socket_close
 
         self.sock = sock
         self._buffer = b''
@@ -359,7 +359,7 @@ class ReaderThread(PyDBDaemonThread):
             pydev_log.debug('ReaderThread: exit')
 
     def _terminate_on_socket_close(self):
-        if self._terminate_on_socket_close:
+        if self.__terminate_on_socket_close:
             self.py_db.dispose_and_kill_all_pydevd_threads()
 
     def process_command(self, cmd_id, seq, text):
@@ -372,7 +372,7 @@ class WriterThread(PyDBDaemonThread):
     def __init__(self, sock, py_db, terminate_on_socket_close=True):
         PyDBDaemonThread.__init__(self, py_db)
         self.sock = sock
-        self._terminate_on_socket_close = terminate_on_socket_close
+        self.__terminate_on_socket_close = terminate_on_socket_close
         self.setName("pydevd.Writer")
         self._cmd_queue = _queue.Queue()
         if pydevd_vm_type.get_vm_type() == 'python':
@@ -433,7 +433,7 @@ class WriterThread(PyDBDaemonThread):
                     break  # interpreter shutdown
                 time.sleep(self.timeout)
         except Exception:
-            if self._terminate_on_socket_close:
+            if self.__terminate_on_socket_close:
                 self.py_db.dispose_and_kill_all_pydevd_threads()
                 if DebugInfoHolder.DEBUG_TRACE_LEVEL > 0:
                     pydev_log_exception()
