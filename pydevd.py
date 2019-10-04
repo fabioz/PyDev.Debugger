@@ -2670,8 +2670,12 @@ class DispatchReader(ReaderThread):
 
     @overrides(PyDBDaemonThread.do_kill_pydev_thread)
     def do_kill_pydev_thread(self):
-        ReaderThread.do_kill_pydev_thread(self)
         if not self._kill_received:
+            ReaderThread.do_kill_pydev_thread(self)
+            try:
+                self.sock.shutdown(SHUT_RDWR)
+            except:
+                pass
             try:
                 self.sock.close()
             except:
