@@ -62,6 +62,14 @@ def _is_managed_arg(arg):
 
 def _on_forked_process(setup_tracing=True):
     import pydevd
+    from _pydevd_bundle import pydevd_constants
+
+    pydevd_constants.DebugInfoHolder.DEBUG_STREAM = sys.stderr
+    if pydevd_constants.PYDEVD_DEBUG_FILE:
+        pydevd_constants.PYDEVD_DEBUG_FILE += str(os.getpid())
+        pydevd_constants.DebugInfoHolder.DEBUG_STREAM = open(pydevd_constants.PYDEVD_DEBUG_FILE, 'w')
+
+    pydev_log.debug('pydevd on forked process. %s', os.getpid())
     pydevd.threadingCurrentThread().__pydevd_main_thread = True
     pydevd.settrace_forked(setup_tracing=setup_tracing)
 
