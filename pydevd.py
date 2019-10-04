@@ -218,19 +218,19 @@ class CheckAliveThread(PyDBDaemonThread):
 
             return not py_db.has_user_threads_alive() and writer_empty
 
-        while not self._kill_received:
-            self._wait_event.wait(0.3)
+        try:
+            while not self._kill_received:
+                self._wait_event.wait(0.3)
+                if can_exit():
+                    break
+
+                py_db.check_output_redirect()
+
             if can_exit():
-                break
-
-            py_db.check_output_redirect()
-
-        if can_exit():
-            try:
                 pydev_log.debug("No threads alive, finishing debug session")
                 py_db.dispose_and_kill_all_pydevd_threads(wait=True)
-            except:
-                pydev_log.exception()
+        except:
+            pydev_log.exception()
 
     def join(self, timeout=None):
         # If someone tries to join this thread, mark it to be killed.
@@ -497,7 +497,7 @@ class PyDB(object):
 
         self.pydb_disposed = False
         self._wait_for_threads_to_finish_called = False
-        self._wait_for_threads_to_finish_called_lock = False
+        self._wait_for_threads_to_finish_called_lock = thread.allocate_lock()
         self._wait_for_threads_to_finish_called_event = threading.Event()
 
         self.terminate_requested = False

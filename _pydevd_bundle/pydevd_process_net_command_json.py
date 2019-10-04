@@ -257,8 +257,8 @@ class PyDevJsonCommandProcessor(object):
         :param TerminateRequest request:
         '''
         self._request_terminate_process(py_db)
-        configuration_done_response = pydevd_base_schema.build_response(request)
-        return NetCommand(CMD_RETURN, 0, configuration_done_response, is_json=True)
+        response = pydevd_base_schema.build_response(request)
+        return NetCommand(CMD_RETURN, 0, response, is_json=True)
 
     def _request_terminate_process(self, py_db):
         self.api.request_terminate_process(py_db)
