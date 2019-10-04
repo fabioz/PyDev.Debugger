@@ -168,6 +168,7 @@ class PyDBDaemonThread(threading.Thread):
             raise NotImplementedError('Should be reimplemented by: %s' % self.__class__)
 
     def do_kill_pydev_thread(self):
+        pydev_log.debug('%s received kill signal', self.getName())
         self._kill_received = True
 
     def _stop_trace(self):
@@ -277,18 +278,18 @@ class ReaderThread(PyDBDaemonThread):
         try:
             content_len = -1
 
-            while not self._kill_received:
+            while True:
+                # i.e.: even if we received a kill, we should only exit the ReaderThread when the
+                # client itself closes the connection (although on kill received we stop actually
+                # processing anything read).
                 try:
                     line = self._read_line()
+                    if self._kill_received:
+                        continue
 
                     if len(line) == 0:
-                        try:
-                            # We read nothing from the server, this means the communication
-                            # should be properly finished now.
-                            self.sock.close()
-                        except:
-                            pass
-                        self.handle_except()
+                        pydev_log.debug('ReaderThread: empty contents received (len(line) == 0).')
+                        self._terminate_on_socket_close()
                         return  # Finished communication.
 
                     if line.startswith(b'Content-Length:'):
@@ -299,10 +300,14 @@ class ReaderThread(PyDBDaemonThread):
                         # If we previously received a content length, read until a '\r\n'.
                         if line == b'\r\n':
                             json_contents = self._read(content_len)
+                            if self._kill_received:
+                                continue
+
                             content_len = -1
 
                             if len(json_contents) == 0:
-                                self.handle_except()
+                                pydev_log.debug('ReaderThread: empty contents received (len(json_contents) == 0).')
+                                self._terminate_on_socket_close()
                                 return  # Finished communication.
 
                             # We just received a json message, let's process it.
@@ -322,7 +327,7 @@ class ReaderThread(PyDBDaemonThread):
                 except:
                     if not self._kill_received:
                         pydev_log_exception()
-                        self.handle_except()
+                        self._terminate_on_socket_close()
                     return  # Finished communication.
 
                 # Note: the java backend is always expected to pass utf-8 encoded strings. We now work with unicode
@@ -348,9 +353,11 @@ class ReaderThread(PyDBDaemonThread):
                 if sys is not None and pydev_log_exception is not None:  # Could happen at interpreter shutdown
                     pydev_log_exception()
 
-            self.handle_except()
+            self._terminate_on_socket_close()
+        finally:
+            pydev_log.debug('ReaderThread: exit')
 
-    def handle_except(self):
+    def _terminate_on_socket_close(self):
         if self._terminate_on_socket_close:
             self.py_db.dispose_and_kill_all_pydevd_threads()
 
@@ -388,6 +395,7 @@ class WriterThread(PyDBDaemonThread):
                         cmd = self._cmd_queue.get(True, 0.1)
                     except _queue.Empty:
                         if self._kill_received:
+                            pydev_log.debug('WriterThread: kill_received (sock.shutdown(SHUT_WR))')
                             try:
                                 self.sock.shutdown(SHUT_WR)
                             except:
@@ -418,6 +426,7 @@ class WriterThread(PyDBDaemonThread):
                 cmd.send(self.sock)
 
                 if cmd.id == CMD_EXIT:
+                    pydev_log.debug('WriterThread: CMD_EXIT received')
                     break
                 if time is None:
                     break  # interpreter shutdown
@@ -427,6 +436,8 @@ class WriterThread(PyDBDaemonThread):
                 self.py_db.dispose_and_kill_all_pydevd_threads()
                 if DebugInfoHolder.DEBUG_TRACE_LEVEL > 0:
                     pydev_log_exception()
+        finally:
+            pydev_log.debug('WriterThread: exit')
 
     def empty(self):
         return self._cmd_queue.empty()

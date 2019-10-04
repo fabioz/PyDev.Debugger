@@ -50,7 +50,7 @@ class NetCommandFactory(object):
     def make_error_message(self, seq, text):
         cmd = NetCommand(CMD_ERROR, seq, text)
         if DebugInfoHolder.DEBUG_TRACE_LEVEL > 2:
-            sys.stderr.write("Error: %s" % (text,))
+            pydev_log.error("Error: %s" % (text,))
         return cmd
 
     def make_protocol_set_message(self, seq):

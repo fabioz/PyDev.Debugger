@@ -209,17 +209,27 @@ class CheckAliveThread(PyDBDaemonThread):
     def _on_run(self):
         while not self._kill_received:
             self._wait_event.wait(0.3)
-            if not self.py_db.has_threads_alive() and self.py_db.writer.empty():
+
+            py_db = self.py_db
+            with py_db._main_lock:
+                writer = py_db.writer
+                writer_empty = True
+                if writer is not None:
+                    # Note: it's important to get the lock besides checking that it's empty (this
+                    # means that we're not in the middle of some command processing).
+                    writer_empty = py_db.writer.empty()
+
+            if not py_db.has_user_threads_alive() and writer_empty:
                 try:
                     pydev_log.debug("No threads alive, finishing debug session")
-                    self.py_db.dispose_and_kill_all_pydevd_threads(wait=True)
+                    py_db.dispose_and_kill_all_pydevd_threads(wait=True)
                 except:
                     pydev_log.exception()
 
                 self._kill_received = True
                 return
 
-            self.py_db.check_output_redirect()
+            py_db.check_output_redirect()
 
     def join(self, timeout=None):
         # If someone tries to join this thread, mark it to be killed.
@@ -485,6 +495,7 @@ class PyDB(object):
             CustomFramesContainer._py_db_command_thread_event = self._py_db_command_thread_event
 
         self.pydb_disposed = False
+        self.terminate_requested = False
         self._disposed_lock = thread.allocate_lock()
         self.signature_factory = None
         self.SetTrace = pydevd_tracing.SetTrace
@@ -1104,7 +1115,7 @@ class PyDB(object):
     def get_require_module_for_filters(self):
         return self._files_filtering.require_module
 
-    def has_threads_alive(self):
+    def has_user_threads_alive(self):
         for t in pydevd_utils.get_non_pydevd_threads():
             if isinstance(t, PyDBDaemonThread):
                 pydev_log.error_once(
@@ -1374,6 +1385,7 @@ class PyDB(object):
     def process_internal_commands(self):
         '''This function processes internal commands
         '''
+        dispose = False
         with self._main_lock:
             self.check_output_redirect()
 
@@ -1414,7 +1426,7 @@ class PyDB(object):
 
             # Without self._lock_running_thread_ids
             if len(program_threads_alive) == 0:
-                self.dispose_and_kill_all_pydevd_threads()
+                dispose = True
             else:
                 # Actually process the commands now (make sure we don't have a lock for _lock_running_thread_ids
                 # acquired at this point as it could lead to a deadlock if some command evaluated tried to
@@ -1452,6 +1464,9 @@ class PyDB(object):
                         # this is how we exit
                         for int_cmd in cmds_to_add_back:
                             queue.put(int_cmd)
+        if dispose:
+            # Note: must be called without the main lock to avoid deadlocks.
+            self.dispose_and_kill_all_pydevd_threads()
 
     def consolidate_breakpoints(self, file, id_to_breakpoint, breakpoints):
         break_dict = {}
@@ -1644,17 +1659,15 @@ class PyDB(object):
         return stop, old_line, response_msg
 
     def cancel_async_evaluation(self, thread_id, frame_id):
-        self._main_lock.acquire()
-        try:
-            all_threads = threadingEnumerate()
-            for t in all_threads:
-                if getattr(t, 'is_pydev_daemon_thread', False) and hasattr(t, 'cancel_event') and t.thread_id == thread_id and \
-                        t.frame_id == frame_id:
-                    t.cancel_event.set()
-        except:
-            pydev_log.exception()
-        finally:
-            self._main_lock.release()
+        with self._main_lock:
+            try:
+                all_threads = threadingEnumerate()
+                for t in all_threads:
+                    if getattr(t, 'is_pydev_daemon_thread', False) and hasattr(t, 'cancel_event') and t.thread_id == thread_id and \
+                            t.frame_id == frame_id:
+                        t.cancel_event.set()
+            except:
+                pydev_log.exception()
 
     def find_frame(self, thread_id, frame_id):
         """ returns a frame on the thread that has a given frame_id """
@@ -1738,7 +1751,8 @@ class PyDB(object):
 
         while True:
             with self._main_lock:  # Use lock to check if suspended state changed
-                if info.pydev_state != STATE_SUSPEND or self.pydb_disposed:
+                if info.pydev_state != STATE_SUSPEND or (self.pydb_disposed and not self.terminate_requested):
+                    # Note: we can't exit here if terminate was requested while a breakpoint was hit.
                     break
 
             if in_main_thread and self.mpl_in_use:
@@ -1892,7 +1906,7 @@ class PyDB(object):
         self._create_pydb_command_thread()
         self._create_check_output_thread()
 
-    def dispose_and_kill_all_pydevd_threads(self, wait=False, timeout=0.5):
+    def dispose_and_kill_all_pydevd_threads(self, wait=False, timeout=.5):
         '''
         When this method is called we finish the debug session, terminate threads
         and if this was registered as the global instance, unregister it -- afterwards
@@ -1903,33 +1917,79 @@ class PyDB(object):
             If True we'll wait for the threads to be actually finished before proceeding
             (based on the available timeout).
         '''
-        with self._disposed_lock:
-            if self.pydb_disposed:
-                return
-
-            self.pydb_disposed = True
-
-        pydb_daemon_threads = dict_keys(self.created_pydb_daemon_threads)
-        for t in pydb_daemon_threads:
-            if hasattr(t, 'do_kill_pydev_thread'):
-                t.do_kill_pydev_thread()
-
-        if wait:
-            pydev_log.debug("Waiting for pydb daemon threads to finish")
-            started_at = time.time()
-            check_alive_thread = self.check_alive_thread
-            # Note: we wait for all except the check_alive_thread (which is not really a daemon
-            # thread and it can call this method itself).
-            while time.time() < started_at + timeout:
-                if len(pydb_daemon_threads) == 1 and pydb_daemon_threads.get(check_alive_thread, None):
+        try:
+            back_frame = sys._getframe().f_back
+            pydev_log.debug(
+                'PyDB.dispose_and_kill_all_pydevd_threads (called from: File "%s", line %s, in %s)',
+                back_frame.f_code.co_filename, back_frame.f_lineno, back_frame.f_code.co_name
+            )
+            back_frame = None
+            with self._disposed_lock:
+                # Note that we keep the disposed lock locked through the entire call because
+                # if there's a second call, that second call should not return until
+                # the first one finishes.
+                if self.pydb_disposed:
+                    pydev_log.debug("PyDB.dispose_and_kill_all_pydevd_threads (already disposed)")
                     return
-                time.sleep(1 / 30.)
-            pydev_log.debug("The following pydb threads may not have finished correctly: %s",
-                            ', '.join([t.getName() for t in pydb_daemon_threads if t is not check_alive_thread]))
+                else:
+                    pydev_log.debug("PyDB.dispose_and_kill_all_pydevd_threads (first call)")
 
-        py_db = get_global_debugger()
-        if py_db is self:
-            set_global_debugger(None)
+                self.pydb_disposed = True
+
+                # Wait until a time when there are no commands being processed to kill the threads.
+                started_at = time.time()
+                while time.time() < started_at + timeout:
+                    with self._main_lock:
+                        writer = self.writer
+                        if writer is None:
+                            break
+                        elif writer.empty():
+                            break
+                else:
+                    pydev_log.debug("PyDB.dispose_and_kill_all_pydevd_threads timed out waiting for writer to be empty.")
+
+                pydb_daemon_threads = set(dict_keys(self.created_pydb_daemon_threads))
+                for t in pydb_daemon_threads:
+                    if hasattr(t, 'do_kill_pydev_thread'):
+                        pydev_log.debug("PyDB.dispose_and_kill_all_pydevd_threads killing thread: %s", t)
+                        t.do_kill_pydev_thread()
+
+                if wait:
+
+                    def get_pydb_daemon_threads_to_wait():
+                        pydb_daemon_threads = set(dict_keys(self.created_pydb_daemon_threads))
+                        pydb_daemon_threads.discard(self.check_alive_thread)
+                        pydb_daemon_threads.discard(threading.current_thread())
+                        return pydb_daemon_threads
+
+                    pydev_log.debug("PyDB.dispose_and_kill_all_pydevd_threads waiting for pydb daemon threads to finish")
+                    started_at = time.time()
+                    # Note: we wait for all except the check_alive_thread (which is not really a daemon
+                    # thread and it can call this method itself).
+                    while time.time() < started_at + timeout:
+                        if len(get_pydb_daemon_threads_to_wait()) == 0:
+                            break
+                        time.sleep(1 / 10.)
+                    else:
+                        thread_names = [t.getName() for t in get_pydb_daemon_threads_to_wait()]
+                        if thread_names:
+                            pydev_log.debug("The following pydb threads may not have finished correctly: %s",
+                                            ', '.join(thread_names))
+                else:
+                    pydev_log.debug("PyDB.dispose_and_kill_all_pydevd_threads: no wait")
+
+                py_db = get_global_debugger()
+                if py_db is self:
+                    set_global_debugger(None)
+        except:
+            pydev_log.debug("PyDB.dispose_and_kill_all_pydevd_threads: exception")
+            try:
+                if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 3:
+                    pydev_log.exception()
+            except:
+                pass
+        finally:
+            pydev_log.debug("PyDB.dispose_and_kill_all_pydevd_threads: finished")
 
     def prepare_to_run(self):
         ''' Shared code to prepare debugging by installing traces and registering threads '''
@@ -2538,6 +2598,7 @@ def _locked_settrace(
 
 
 def stoptrace():
+    pydev_log.debug("pydevd.stoptrace()")
     pydevd_tracing.restore_sys_set_trace_func()
     sys.settrace(None)
     try:
