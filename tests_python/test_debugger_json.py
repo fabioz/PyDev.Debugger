@@ -3059,6 +3059,7 @@ def test_terminate(case_setup, scenario, check_subprocesses):
             json_facade.write_disconnect(terminate_debugee=True)
         else:
             raise AssertionError('Unexpected: %s' % (scenario,))
+        json_facade.wait_for_terminated()
 
         if check_subprocesses in ('kill_subprocesses', 'dont_kill_subprocesses', 'kill_subprocesses_ignore_pid'):
 
@@ -3121,7 +3122,6 @@ def test_terminate(case_setup, scenario, check_subprocesses):
                     proc = psutil.Process(pid)
                     proc.kill()
 
-        json_facade.wait_for_terminated()
         writer.finished_ok = True
 
 

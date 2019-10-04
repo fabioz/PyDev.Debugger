@@ -3,11 +3,14 @@ import subprocess
 import sys
 import os
 
+env = os.environ.copy()
+env.pop('PYDEVD_DEBUG_FILE', None)
+
 if __name__ == '__main__':
     if 'launch-subprocesses' in sys.argv:
         n = int(sys.argv[-1])
         if n != 0:
-            subprocess.Popen([sys.executable, __file__, 'launch-subprocesses', str(n - 1)])
+            subprocess.Popen([sys.executable, __file__, 'launch-subprocesses', str(n - 1)], env=env)
         if hasattr(os, 'getppid'):
             print('%screated %s (child of %s)' % ('\t' * (4 - n), os.getpid(), os.getppid()))
         else:
@@ -24,8 +27,8 @@ if __name__ == '__main__':
         #      - p2
         #        - p1
         #          - p0
-        p0 = subprocess.Popen([sys.executable, __file__, 'launch-subprocesses', '3'])
-        p1 = subprocess.Popen([sys.executable, __file__, 'launch-subprocesses', '3'])
+        p0 = subprocess.Popen([sys.executable, __file__, 'launch-subprocesses', '3'], env=env)
+        p1 = subprocess.Popen([sys.executable, __file__, 'launch-subprocesses', '3'], env=env)
 
         if 'check-subprocesses-ignore-pid' in sys.argv:
             import pydevd
