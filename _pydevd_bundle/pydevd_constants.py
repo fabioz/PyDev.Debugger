@@ -223,6 +223,25 @@ class ForkSafeLock(object):
     A lock which is fork-safe (when a fork is done, pydevd_constants.after_fork
     should be called to reset the locks in the new process to avoid deadlocks
     from a lock which was locked during the fork).
+
+    Note:
+        Unlike `threading.Lock` this class is not completely atomic, so, doing:
+
+        lock = ForkSafeLock()
+        with lock:
+            ...
+
+        is different than using `threading.Lock` directly because the tracing may
+        find an additional function call on `__enter__` and an `__exit__`, so, it's
+        not recommended to use this in all places, only where the forking may be important
+        (so, for instance, the locks on PyDB should not be changed to this lock because
+        of that -- and those should all be collected in the new process because PyDB itself
+        should be completely cleared anyways).
+
+        It's possible to overcome this limitation by using `ForkSafeLock.acquire` and
+        `ForkSafeLock.release` instead of the context manager (as acquire/release are
+        bound to the original implementation, whereas __enter__/__exit__ is not due to Python
+        limitations).
     '''
 
     def __init__(self, rlock=False):

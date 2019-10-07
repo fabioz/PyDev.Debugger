@@ -84,10 +84,16 @@ def SetTrace(tracing_func):
         sys.settrace(tracing_func)
         return
 
-    with TracingFunctionHolder._lock:
+    try:
+        # Note: don't use context-manager here (must use acquire()/release()
+        # due to having an additional trace call on `ForkSafeLock`
+        # -- see: ForkSafeLock for more details).
+        TracingFunctionHolder._lock.acquire()
         TracingFunctionHolder._warn = False
         _internal_set_trace(tracing_func)
         TracingFunctionHolder._warn = True
+    finally:
+        TracingFunctionHolder._lock.release()
 
 
 def replace_sys_set_trace_func():

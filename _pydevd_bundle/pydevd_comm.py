@@ -80,6 +80,7 @@ from _pydev_bundle._pydev_completer import extract_token_and_qualifier
 from _pydevd_bundle._debug_adapter.pydevd_schema import VariablesResponseBody, \
     SetVariableResponseBody
 from _pydevd_bundle._debug_adapter import pydevd_base_schema, pydevd_schema
+from _pydevd_bundle.pydevd_net_command import NetCommand
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
 from _pydevd_bundle.pydevd_constants import ForkSafeLock
 try:
