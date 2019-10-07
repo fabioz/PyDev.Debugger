@@ -115,7 +115,7 @@ except:
 # CMD_XXX constants imported for backward compatibility
 from _pydevd_bundle.pydevd_comm_constants import *  # @UnusedWildImport
 
-if IS_WINDOWS:
+if IS_WINDOWS and not IS_JYTHON:
     from socket import SO_EXCLUSIVEADDRUSE
 
 if IS_JYTHON:
@@ -456,7 +456,7 @@ class WriterThread(PyDBDaemonThread):
 def create_server_socket(host, port):
     try:
         server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
-        if IS_WINDOWS:
+        if IS_WINDOWS and not IS_JYTHON:
             server.setsockopt(SOL_SOCKET, SO_EXCLUSIVEADDRUSE, 1)
         else:
             server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
