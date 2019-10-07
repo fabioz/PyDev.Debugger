@@ -1,6 +1,6 @@
 
 from _pydevd_bundle.pydevd_constants import get_frame, IS_CPYTHON, IS_64BIT_PROCESS, IS_WINDOWS, \
-    IS_LINUX, IS_MAC, IS_PY2, IS_PY37_OR_GREATER, DebugInfoHolder
+    IS_LINUX, IS_MAC, IS_PY2, IS_PY37_OR_GREATER, DebugInfoHolder, ForkSafeLock
 from _pydev_imps._pydev_saved_modules import thread, threading
 from _pydev_bundle import pydev_log, pydev_monkey
 from os.path import os
@@ -28,7 +28,7 @@ class TracingFunctionHolder:
     '''
     _original_tracing = None
     _warn = True
-    _lock = thread.allocate_lock()
+    _lock = ForkSafeLock()
     _traceback_limit = 1
     _warnings_shown = {}
 
@@ -84,13 +84,10 @@ def SetTrace(tracing_func):
         sys.settrace(tracing_func)
         return
 
-    try:
-        TracingFunctionHolder._lock.acquire()
+    with TracingFunctionHolder._lock:
         TracingFunctionHolder._warn = False
         _internal_set_trace(tracing_func)
         TracingFunctionHolder._warn = True
-    finally:
-        TracingFunctionHolder._lock.release()
 
 
 def replace_sys_set_trace_func():

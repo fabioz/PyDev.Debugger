@@ -39,7 +39,8 @@ from _pydevd_bundle.pydevd_comm_constants import (CMD_THREAD_SUSPEND, CMD_STEP_I
 from _pydevd_bundle.pydevd_constants import (IS_JYTH_LESS25, get_thread_id, get_current_thread_id,
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame,
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, IS_PY34_OR_GREATER, IS_PY2, NULL,
-    NO_FTRACE, IS_IRONPYTHON, JSON_PROTOCOL, IS_CPYTHON, HTTP_JSON_PROTOCOL, USE_CUSTOM_SYS_CURRENT_FRAMES_MAP, call_only_once)
+    NO_FTRACE, IS_IRONPYTHON, JSON_PROTOCOL, IS_CPYTHON, HTTP_JSON_PROTOCOL, USE_CUSTOM_SYS_CURRENT_FRAMES_MAP, call_only_once,
+    ForkSafeLock)
 from _pydevd_bundle.pydevd_defaults import PydevdCustomization
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE, LIB_FILE
@@ -283,7 +284,7 @@ class AbstractSingleNotificationBehavior(object):
         self._last_suspend_notification_time = -1
         self._last_resume_notification_time = -1
         self._suspend_time_request = self._next_request_time()
-        self._lock = thread.allocate_lock()
+        self._lock = ForkSafeLock()
         self._suspended_thread_ids = set()
         self._pause_requested = False
 
@@ -351,7 +352,7 @@ class ThreadsSuspendedSingleNotification(AbstractSingleNotificationBehavior):
         AbstractSingleNotificationBehavior.__init__(self, py_db)
         # If True, pydevd will send a single notification when all threads are suspended/resumed.
         self.multi_threads_single_notification = False
-        self._callbacks_lock = threading.Lock()
+        self._callbacks_lock = ForkSafeLock()
         self._callbacks = []
 
     def add_on_resumed_callback(self, callback):
@@ -489,19 +490,19 @@ class PyDB(object):
         self.break_on_caught_exceptions = {}
 
         self.ready_to_run = False
-        self._main_lock = thread.allocate_lock()
-        self._lock_running_thread_ids = thread.allocate_lock()
+        self._main_lock = ForkSafeLock()
+        self._lock_running_thread_ids = ForkSafeLock()
         self._py_db_command_thread_event = threading.Event()
         if set_as_global:
             CustomFramesContainer._py_db_command_thread_event = self._py_db_command_thread_event
 
         self.pydb_disposed = False
         self._wait_for_threads_to_finish_called = False
-        self._wait_for_threads_to_finish_called_lock = thread.allocate_lock()
+        self._wait_for_threads_to_finish_called_lock = ForkSafeLock()
         self._wait_for_threads_to_finish_called_event = threading.Event()
 
         self.terminate_requested = False
-        self._disposed_lock = thread.allocate_lock()
+        self._disposed_lock = ForkSafeLock()
         self.signature_factory = None
         self.SetTrace = pydevd_tracing.SetTrace
         self.skip_on_exceptions_thrown_in_same_context = False
@@ -2484,7 +2485,7 @@ def settrace(
         )
 
 
-_set_trace_lock = thread.allocate_lock()
+_set_trace_lock = ForkSafeLock()
 
 
 def _locked_settrace(

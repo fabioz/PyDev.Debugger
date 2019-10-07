@@ -1,8 +1,7 @@
-from _pydevd_bundle.pydevd_constants import dict_iter_values, IS_PY24
+from _pydevd_bundle.pydevd_constants import dict_iter_values, IS_PY24, ForkSafeLock
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_import_class
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
-from _pydev_imps._pydev_saved_modules import threading
 
 
 class ExceptionBreakpoint(object):
@@ -54,7 +53,7 @@ class LineBreakpoint(object):
         self.suspend_policy = suspend_policy
         self.hit_condition = hit_condition
         self._hit_count = 0
-        self._hit_condition_lock = threading.Lock()
+        self._hit_condition_lock = ForkSafeLock()
         self.is_logpoint = is_logpoint
 
     @property

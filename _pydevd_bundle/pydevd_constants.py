@@ -3,6 +3,7 @@ This module holds the constants used for specifying the states of the debugger.
 '''
 from __future__ import nested_scopes
 import platform
+import weakref
 
 STATE_RUN = 1
 STATE_SUSPEND = 2
@@ -212,8 +213,52 @@ def protect_libraries_from_patching():
 if USE_LIB_COPY:
     protect_libraries_from_patching()
 
-from _pydev_imps._pydev_saved_modules import thread
-_thread_id_lock = thread.allocate_lock()
+from _pydev_imps._pydev_saved_modules import thread, threading
+
+_fork_safe_locks = []
+
+
+class ForkSafeLock(object):
+    '''
+    A lock which is fork-safe (when a fork is done, pydevd_constants.after_fork
+    should be called to reset the locks in the new process to avoid deadlocks
+    from a lock which was locked during the fork).
+    '''
+
+    def __init__(self, rlock=False):
+        self._rlock = rlock
+        self._init()
+        _fork_safe_locks.append(weakref.ref(self))
+
+    def __enter__(self):
+        return self._lock.__enter__()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return self._lock.__exit__(exc_type, exc_val, exc_tb)
+
+    def _init(self):
+        if self._rlock:
+            self._lock = threading.RLock()
+        else:
+            self._lock = thread.allocate_lock()
+
+        self.acquire = self._lock.acquire
+        self.release = self._lock.release
+
+
+def after_fork():
+    '''
+    Must be called after a fork operation (will reset the ForkSafeLock).
+    '''
+    for i, lock in enumerate(_fork_safe_locks[:]):
+        lock = lock()
+        if lock is None:
+            del _fork_safe_locks[i]
+        else:
+            lock._init()
+
+
+_thread_id_lock = ForkSafeLock()
 thread_get_ident = thread.get_ident
 
 if IS_PY3K:

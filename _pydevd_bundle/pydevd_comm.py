@@ -69,9 +69,8 @@ import os
 
 from _pydev_bundle.pydev_imports import _queue
 from _pydev_imps._pydev_saved_modules import time
-from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
-from socket import AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, IPPROTO_TCP
+from socket import AF_INET, SOCK_STREAM, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, IPPROTO_TCP
 from _pydevd_bundle.pydevd_constants import (DebugInfoHolder, get_thread_id, IS_WINDOWS, IS_JYTHON,
     IS_PY2, IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC,
     get_global_debugger, GetGlobalDebugger, set_global_debugger)  # Keep for backward compatibility @UnusedImport
@@ -81,8 +80,8 @@ from _pydev_bundle._pydev_completer import extract_token_and_qualifier
 from _pydevd_bundle._debug_adapter.pydevd_schema import VariablesResponseBody, \
     SetVariableResponseBody
 from _pydevd_bundle._debug_adapter import pydevd_base_schema, pydevd_schema
-from _pydevd_bundle.pydevd_net_command import NetCommand, NULL_EXIT_COMMAND
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
+from _pydevd_bundle.pydevd_constants import ForkSafeLock
 try:
     from urllib import quote_plus, unquote_plus
 except:
@@ -560,19 +559,17 @@ class InternalThreadCommandForAnyThread(InternalThreadCommand):
         InternalThreadCommand.__init__(self, thread_id, method, *args, **kwargs)
 
         self.executed = False
-        self.lock = thread.allocate_lock()
+        self.lock = ForkSafeLock()
 
     def can_be_executed_by(self, thread_id):
         return True  # Can be executed by any thread.
 
     def do_it(self, dbg):
-        self.lock.acquire()
-        try:
+        with self.lock:
             if self.executed:
                 return
             self.executed = True
-        finally:
-            self.lock.release()
+
         InternalThreadCommand.do_it(self, dbg)
 
 
