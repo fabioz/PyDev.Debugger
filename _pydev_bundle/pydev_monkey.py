@@ -3,7 +3,8 @@ import os
 import re
 import sys
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_JYTHON, get_current_thread_id
+from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_JYTHON, get_current_thread_id,\
+    NULL
 from _pydev_bundle import pydev_log
 from contextlib import contextmanager
 from _pydevd_bundle import pydevd_constants
@@ -62,9 +63,25 @@ def _is_managed_arg(arg):
 
 def _on_forked_process(setup_tracing=True):
     pydevd_constants.after_fork()
+    sys.stderr.write('  *** Multiprocess _on_forked_process\n')
     import pydevd
+    sys.stderr.write('  *** Multiprocess _on_forked_process: imported pydevd\n')
+    pydevd_constants.DebugInfoHolder.DEBUG_STREAM = NULL
+    sys.stderr.write('  *** Multiprocess _on_forked_process: cleared DEBUG_STREAM\n')
+    
+#     if pydevd_constants.PYDEVD_DEBUG_FILE:
+#         debug_file = pydevd_constants.PYDEVD_DEBUG_FILE
+#         path, ext = os.path.splitext(debug_file)
+#         debug_file = path + '.' + str(os.getpid()) + ext
+#         pydevd_constants.PYDEVD_DEBUG_FILE = debug_file
+#         pydevd_constants.DebugInfoHolder.DEBUG_STREAM = open(debug_file, 'w')
+        
+    pydev_log.debug('pydevd on forked process. %s', os.getpid())
+        
     pydevd.threadingCurrentThread().__pydevd_main_thread = True
+    sys.stderr.write('  *** Multiprocess _on_forked_process: settrace_forked\n')
     pydevd.settrace_forked(setup_tracing=setup_tracing)
+    sys.stderr.write('  *** Multiprocess _on_forked_process: finished settrace_forked\n')
 
 
 def _on_set_trace_for_new_thread(global_debugger):

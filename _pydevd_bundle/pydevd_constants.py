@@ -247,7 +247,6 @@ class ForkSafeLock(object):
     def __init__(self, rlock=False):
         self._rlock = rlock
         self._init()
-        _fork_safe_locks.append(weakref.ref(self))
 
     def __enter__(self):
         return self._lock.__enter__()
@@ -263,17 +262,19 @@ class ForkSafeLock(object):
 
         self.acquire = self._lock.acquire
         self.release = self._lock.release
+        _fork_safe_locks.append(weakref.ref(self))
 
 
 def after_fork():
     '''
     Must be called after a fork operation (will reset the ForkSafeLock).
     '''
-    for i, lock in enumerate(_fork_safe_locks[:]):
+    global _fork_safe_locks
+    locks =_fork_safe_locks[:]
+    _fork_safe_locks = []
+    for lock in locks:
         lock = lock()
-        if lock is None:
-            del _fork_safe_locks[i]
-        else:
+        if lock is not None:
             lock._init()
 
 

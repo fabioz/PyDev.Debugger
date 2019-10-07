@@ -2422,7 +2422,8 @@ def test_multiprocessing_simple(case_setup_multiprocessing, file_to_check):
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
-def test_multiprocessing_with_stopped_breakpoints(case_setup_multiprocessing):
+@pytest.mark.parametrize('count', range(100))
+def test_multiprocessing_with_stopped_breakpoints(case_setup_multiprocessing, count):
     import threading
     from tests_python.debugger_unittest import AbstractWriterThread
     with case_setup_multiprocessing.test_file('_debugger_case_multiprocessing_stopped_threads.py') as writer:

@@ -621,6 +621,7 @@ class AbstractWriterThread(threading.Thread):
             'warning: Debugger speedups',
             'pydev debugger: New process is launching',
             'pydev debugger: To debug that process',
+            '*** Multiprocess',
             )):
             return True
 

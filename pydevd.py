@@ -2504,6 +2504,7 @@ def _locked_settrace(
     access_token,
     ide_access_token,
     ):
+    sys.stderr.write('  *** Multiprocess _on_forked_process: entered settrace\n')
     if patch_multiprocessing:
         try:
             from _pydev_bundle import pydev_monkey
@@ -2515,13 +2516,16 @@ def _locked_settrace(
     if host is None:
         from _pydev_bundle import pydev_localhost
         host = pydev_localhost.get_localhost()
+    sys.stderr.write('  *** Multiprocess _on_forked_process: gotten localhost\n')
 
     global bufferStdOutToServer
     global bufferStdErrToServer
 
     py_db = get_global_debugger()
+    sys.stderr.write('  *** Multiprocess _on_forked_process: gotten pydb: %s\n' % (py_db,))
     if py_db is None:
         py_db = PyDB()
+        sys.stderr.write('  *** Multiprocess _on_forked_process: created pydb: %s\n' % (py_db,))
         pydevd_vm_type.setup_type()
 
         if SetupHolder.setup is None:
@@ -2540,8 +2544,10 @@ def _locked_settrace(
             py_db.authentication.ide_access_token = ide_access_token
             SetupHolder.setup['ide-access-token'] = ide_access_token
 
+        sys.stderr.write('  *** Multiprocess _on_forked_process: block until connected?\n')
         if block_until_connected:
             py_db.connect(host, port)  # Note: connect can raise error.
+            sys.stderr.write('  *** Multiprocess _on_forked_process: block until connected... connected\n')
         else:
             # Create a dummy writer and wait for the real connection.
             py_db.writer = WriterThread(NULL, py_db, terminate_on_socket_close=False)
@@ -2733,12 +2739,14 @@ def settrace_forked(setup_tracing=True):
     '''
     When creating a fork from a process in the debugger, we need to reset the whole debugger environment!
     '''
+    sys.stderr.write('  *** Multiprocess _on_forked_process: import GlobalDebuggerHolder\n')
     from _pydevd_bundle.pydevd_constants import GlobalDebuggerHolder
     py_db = GlobalDebuggerHolder.global_dbg
     if py_db is not None:
         py_db.created_pydb_daemon_threads = {}  # Just making sure we won't touch those (paused) threads.
         py_db = None
 
+    sys.stderr.write('  *** Multiprocess _on_forked_process: cleared GlobalDebuggerHolder\n')
     GlobalDebuggerHolder.global_dbg = None
     threading.current_thread().additional_info = None
 
@@ -2749,11 +2757,14 @@ def settrace_forked(setup_tracing=True):
     access_token = setup.get('access-token')
     ide_access_token = setup.get('ide-access-token')
 
+    sys.stderr.write('  *** Multiprocess _on_forked_process: if setup_tracing\n')
     if setup_tracing:
+        sys.stderr.write('  *** Multiprocess _on_forked_process: doing dispatch\n')
         from _pydevd_frame_eval.pydevd_frame_eval_main import clear_thread_local_info
         host, port = dispatch()
 
     import pydevd_tracing
+    sys.stderr.write('  *** Multiprocess _on_forked_process: restore sys settrace\n')
     pydevd_tracing.restore_sys_set_trace_func()
 
     if setup_tracing:
@@ -2763,6 +2774,7 @@ def settrace_forked(setup_tracing=True):
             if clear_thread_local_info is not None:
                 clear_thread_local_info()
 
+            sys.stderr.write('  *** Multiprocess _on_forked_process: do settrace\n')
             settrace(
                     host,
                     port=port,
