@@ -1,4 +1,4 @@
-from _pydevd_bundle.pydevd_constants import DebugInfoHolder, SHOW_COMPILE_CYTHON_COMMAND_LINE
+from _pydevd_bundle.pydevd_constants import DebugInfoHolder, SHOW_COMPILE_CYTHON_COMMAND_LINE, NULL
 from _pydev_imps._pydev_saved_modules import threading
 from contextlib import contextmanager
 import traceback
@@ -21,10 +21,13 @@ def initialize_debug_stream(force=False):
         return
     _LoggingGlobals._debug_stream_initialized = True
 
-    _LoggingGlobals._debug_stream = sys.stderr
+    # Note: we cannot initialize with sys.stderr because when forking we may end up logging things in 'os' calls.
+    _LoggingGlobals._debug_stream = NULL  
     _LoggingGlobals._debug_stream_filename = None
 
-    if DebugInfoHolder.PYDEVD_DEBUG_FILE:
+    if not DebugInfoHolder.PYDEVD_DEBUG_FILE:
+        _LoggingGlobals._debug_stream = sys.stderr
+    else:
         # Add pid to the filename.
         try:
             dirname = os.path.dirname(DebugInfoHolder.PYDEVD_DEBUG_FILE)
@@ -39,6 +42,7 @@ def initialize_debug_stream(force=False):
             _LoggingGlobals._debug_stream = open(debug_file, 'w')
             _LoggingGlobals._debug_stream_filename = debug_file
         except:
+            _LoggingGlobals._debug_stream = sys.stderr
             # Don't fail when trying to setup logging, just show the exception.
             traceback.print_exc()
 
