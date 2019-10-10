@@ -176,8 +176,8 @@ def test_pydevd_logging_files(tmpdir):
 
     stream = io.StringIO()
     with log_context(0, stream=stream):
-        d1 = tmpdir.join('d1')
-        d2 = tmpdir.join('d2')
+        d1 = str(tmpdir.join('d1'))
+        d2 = str(tmpdir.join('d2'))
 
         for d in (d1, d2):
             DebugInfoHolder.PYDEVD_DEBUG_FILE = os.path.join(d, 'file.txt')
