@@ -4,7 +4,6 @@ This module holds the constants used for specifying the states of the debugger.
 from __future__ import nested_scopes
 import platform
 import weakref
-import traceback
 
 STATE_RUN = 1
 STATE_SUSPEND = 2
