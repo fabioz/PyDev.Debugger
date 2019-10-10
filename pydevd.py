@@ -2335,7 +2335,7 @@ def init_stderr_redirect(on_write=None):
 def _enable_attach(
     address,
     dont_trace_start_patterns=(),
-    dont_trace_end_paterns=(),
+    dont_trace_end_patterns=(),
     patch_multiprocessing=False,
     access_token=None,
     ide_access_token=None,
@@ -2363,11 +2363,12 @@ def _enable_attach(
         wait_for_ready_to_run=False,
         block_until_connected=False,
         dont_trace_start_patterns=dont_trace_start_patterns,
-        dont_trace_end_paterns=dont_trace_end_paterns,
+        dont_trace_end_patterns=dont_trace_end_patterns,
         patch_multiprocessing=patch_multiprocessing,
         access_token=access_token,
         ide_access_token=ide_access_token,
     )
+
     py_db = get_global_debugger()
     py_db.wait_for_server_socket_ready()
     return py_db._server_socket_name
@@ -2417,7 +2418,7 @@ def settrace(
     block_until_connected=True,
     wait_for_ready_to_run=True,
     dont_trace_start_patterns=(),
-    dont_trace_end_paterns=(),
+    dont_trace_end_patterns=(),
     access_token=None,
     ide_access_token=None,
     ):
@@ -2457,7 +2458,7 @@ def settrace(
     :param dont_trace_start_patterns: if set, then any path that starts with one fo the patterns in the collection
         will not be traced
 
-    :param dont_trace_end_paterns: if set, then any path that ends with one fo the patterns in the collection
+    :param dont_trace_end_patterns: if set, then any path that ends with one fo the patterns in the collection
         will not be traced
 
     :param access_token: token to be sent from the client (i.e.: IDE) to the debugger when a connection
@@ -2479,7 +2480,7 @@ def settrace(
             block_until_connected,
             wait_for_ready_to_run,
             dont_trace_start_patterns,
-            dont_trace_end_paterns,
+            dont_trace_end_patterns,
             access_token,
             ide_access_token,
         )
@@ -2500,7 +2501,7 @@ def _locked_settrace(
     block_until_connected,
     wait_for_ready_to_run,
     dont_trace_start_patterns,
-    dont_trace_end_paterns,
+    dont_trace_end_patterns,
     access_token,
     ide_access_token,
     ):
@@ -2547,8 +2548,8 @@ def _locked_settrace(
             py_db.writer = WriterThread(NULL, py_db, terminate_on_socket_close=False)
             py_db.create_wait_for_connection_thread()
 
-        if dont_trace_start_patterns or dont_trace_end_paterns:
-            PyDevdAPI().set_dont_trace_start_end_patterns(py_db, dont_trace_start_patterns, dont_trace_end_paterns)
+        if dont_trace_start_patterns or dont_trace_end_patterns:
+            PyDevdAPI().set_dont_trace_start_end_patterns(py_db, dont_trace_start_patterns, dont_trace_end_patterns)
 
         bufferStdOutToServer = stdoutToServer
         bufferStdErrToServer = stderrToServer
