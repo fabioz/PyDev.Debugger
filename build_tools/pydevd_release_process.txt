@@ -111,12 +111,12 @@ conda deactivate
 
 cd /D x:\pydev\plugins\org.python.pydev.core\pysrc
 set PYTHONPATH=x:\pydev\plugins\org.python.pydev.core\pysrc
-C:\bin\Miniconda3\envs\py37_64\python build_tools\build.py
+C:\bin\Python38-32\python build_tools\build.py
 
 ${ptvsd_folder}
 cd /D X:\ptvsd_workspace\ptvsd\src\ptvsd\_vendored\pydevd
 set PYTHONPATH=X:\ptvsd_workspace\ptvsd\src\ptvsd\_vendored\pydevd
-C:\bin\Miniconda3\envs\py36_64\python build_tools\build.py
+C:\bin\Python38-32\python build_tools\build.py
 
 
 cd ~/Desktop/Pydev/plugins/org.python.pydev.core/pysrc
