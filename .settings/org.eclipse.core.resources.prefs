@@ -1,6 +1,3 @@
-=\=\=\=\=\=\=
-<<<<<<<=HEAD
->>>>>>>=Add source mapping to support ipython cells. ptvsd\:1503
 eclipse.preferences.version=1
 encoding//.settings/org.python.pydev.yaml=UTF-8
 encoding//_pydevd_bundle/_debug_adapter/pydevd_schema.py=utf-8
@@ -10,15 +7,11 @@ encoding//pydev_ipython/inputhookpyglet.py=utf-8
 encoding//pydev_ipython/inputhookqt4.py=utf-8
 encoding//pydev_ipython/inputhookqt5.py=utf-8
 encoding//pydev_ipython/inputhookwx.py=utf-8
-encoding//pydevd_attach_to_process/winappdbg/__init__.py=utf-8
-encoding//pydevd_attach_to_process/winappdbg/interactive.py=utf-8
-encoding//pydevd_attach_to_process/winappdbg/module.py=utf-8
-encoding//pydevd_attach_to_process/winappdbg/plugins/do_symfix.py=utf-8
 encoding//pydevd_attach_to_process/winappdbg/process.py=utf-8
-encoding//pydevd_attach_to_process/winappdbg/sql.py=utf-8
 encoding//pydevd_attach_to_process/winappdbg/win32/__init__.py=utf-8
-encoding//pydevd_attach_to_process/winappdbg/win32/dbghelp.py=utf-8
+encoding//pydevd_attach_to_process/winappdbg/win32/defines.py=utf-8
 encoding//pydevd_attach_to_process/winappdbg/win32/kernel32.py=utf-8
+encoding//pydevd_attach_to_process/winappdbg/win32/version.py=utf-8
 encoding//tests_python/debugger_fixtures.py=utf-8
 encoding//tests_python/resources/_debugger_case_redirect.py=utf-8
 encoding//tests_python/resources/_pydev_coverage_cyrillic_encoding_py2.py=iso-8859-5
