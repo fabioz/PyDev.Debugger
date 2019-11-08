@@ -1,4 +1,4 @@
-#We must redefine it in Py3k if it's not already there
+# We must redefine it in Py3k if it's not already there
 def execfile(file, glob=None, loc=None):
     if glob is None:
         import sys
@@ -21,5 +21,5 @@ def execfile(file, glob=None, loc=None):
     finally:
         stream.close()
 
-    #execute the script (note: it's important to compile first to have the filename set in debug mode)
+    # execute the script (note: it's important to compile first to have the filename set in debug mode)
     exec(compile(contents+"\n", file, 'exec'), glob, loc)
