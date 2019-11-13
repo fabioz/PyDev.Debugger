@@ -622,8 +622,8 @@ def patch_new_process_functions():
     monkey_patch_os('execlpe', create_execl)
     monkey_patch_os('execv', create_execv)
     monkey_patch_os('execve', create_execve)
-    monkey_patch_os('execvp', create_execv)
-    monkey_patch_os('execvpe', create_execve)
+    # monkey_patch_os('execvp', create_execv) - calls execv internally
+    # monkey_patch_os('execvpe', create_execve) - calls execve internally
 
     # os.spawnl(mode, path, ...)
     # os.spawnle(mode, path, ..., env)
@@ -667,8 +667,8 @@ def patch_new_process_functions_with_warning():
     monkey_patch_os('execlpe', create_warn_multiproc)
     monkey_patch_os('execv', create_warn_multiproc)
     monkey_patch_os('execve', create_warn_multiproc)
-    monkey_patch_os('execvp', create_warn_multiproc)
-    monkey_patch_os('execvpe', create_warn_multiproc)
+    # monkey_patch_os('execvp', create_warn_multiproc) - calls execv internally
+    # monkey_patch_os('execvpe', create_warn_multiproc) -  - calls execve internally
     monkey_patch_os('spawnl', create_warn_multiproc)
     monkey_patch_os('spawnle', create_warn_multiproc)
     monkey_patch_os('spawnlp', create_warn_multiproc)
