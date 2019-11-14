@@ -92,9 +92,15 @@ def _is_managed_arg(arg):
 
 
 def _on_forked_process(setup_tracing=True):
+    '''
+    :param setup_tracing:
+    :param setup_debugger_on_fork:
+    '''
     pydevd_constants.after_fork()
-    pydev_log.initialize_debug_stream(force=True)
-    pydev_log.debug('pydevd on forked process: %s', os.getpid())
+    pydev_log.initialize_debug_stream(reinitialize=True)
+
+    if setup_tracing:
+        pydev_log.debug('pydevd on forked process: %s', os.getpid())
 
     import pydevd
     pydevd.threadingCurrentThread().__pydevd_main_thread = True
@@ -592,7 +598,11 @@ def create_fork(original_name):
         child_process = getattr(os, original_name)()  # fork
         if not child_process:
             if is_new_python_process:
-                _on_forked_process(setup_tracing=apply_arg_patch)
+                back_frame = sys._getframe().f_back
+                is_subprocess_fork = (
+                    'subprocess.py' in back_frame.f_code.co_filename and
+                    '_execute_child' == back_frame.f_code.co_name)
+                _on_forked_process(setup_tracing=apply_arg_patch and not is_subprocess_fork)
         else:
             if is_new_python_process:
                 send_process_created_message()
