@@ -85,7 +85,7 @@ before_install:
   - if [[ ("$PYDEVD_PYTHON_VERSION" != "3.8") && ("$PYDEVD_TEST_VM" == "CPYTHON" || "$PYDEVD_TEST_VM" == "PYPY") ]]; then wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh; fi
   - if [[ ("$PYDEVD_PYTHON_VERSION" != "3.8") && ("$PYDEVD_TEST_VM" == "CPYTHON" || "$PYDEVD_TEST_VM" == "PYPY") ]]; then chmod +x miniconda.sh; fi
   - if [[ ("$PYDEVD_PYTHON_VERSION" != "3.8") && ("$PYDEVD_TEST_VM" == "CPYTHON" || "$PYDEVD_TEST_VM" == "PYPY") ]]; then ./miniconda.sh -b; fi
-  - if [[ ("$PYDEVD_PYTHON_VERSION" != "3.8") && ("$PYDEVD_TEST_VM" == "CPYTHON" || "$PYDEVD_TEST_VM" == "PYPY") ]]; then export PATH=/home/travis/miniconda2/bin:$PATH; fi
+  - if [[ ("$PYDEVD_PYTHON_VERSION" != "3.8") && ("$PYDEVD_TEST_VM" == "CPYTHON" || "$PYDEVD_TEST_VM" == "PYPY") ]]; then export PATH=/Users/travis/miniconda3/bin:$PATH; fi
   - if [[ ("$PYDEVD_PYTHON_VERSION" != "3.8") && ("$PYDEVD_TEST_VM" == "CPYTHON" || "$PYDEVD_TEST_VM" == "PYPY") ]]; then conda update --yes conda; fi
   # Jython setup
   - if [ "$PYDEVD_TEST_VM" == "JYTHON" ]; then wget $JYTHON_URL -O jython_installer.jar; java -jar jython_installer.jar -s -d $HOME/jython; export PATH=$HOME/jython:$HOME/jython/bin:$PATH; fi
