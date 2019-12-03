@@ -94,7 +94,7 @@ before_install:
   - "export DISPLAY=:99.0"
 # Install packages
 install:
-  - sudo sysctl kernel.yama.ptrace_scope=0
+  # - sudo sysctl kernel.yama.ptrace_scope=0
   # Both
   - export PYTHONPATH=.
   # CPython setup (Note that for CPython 3.8 we'll use the system-installed version for now).
