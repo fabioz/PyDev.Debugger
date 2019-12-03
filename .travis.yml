@@ -66,6 +66,7 @@ matrix:
 #         - PYDEVD_TEST_VM=CPYTHON
        
     - os: osx
+      language: generic
       env:
         - PYDEVD_PYTHON_VERSION=3.6
         - PYDEVD_USE_CYTHON=YES
