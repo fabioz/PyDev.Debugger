@@ -82,7 +82,7 @@ matrix:
 
 before_install:
   # CPython / Pypy setup
-  - if [[ ("$PYDEVD_PYTHON_VERSION" != "3.8") && ("$PYDEVD_TEST_VM" == "CPYTHON" || "$PYDEVD_TEST_VM" == "PYPY") ]]; then wget http://repo.continuum.io/miniconda/Miniconda-latest-MacOSX-x86_64.sh -O miniconda.sh; fi
+  - if [[ ("$PYDEVD_PYTHON_VERSION" != "3.8") && ("$PYDEVD_TEST_VM" == "CPYTHON" || "$PYDEVD_TEST_VM" == "PYPY") ]]; then wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh; fi
   - if [[ ("$PYDEVD_PYTHON_VERSION" != "3.8") && ("$PYDEVD_TEST_VM" == "CPYTHON" || "$PYDEVD_TEST_VM" == "PYPY") ]]; then chmod +x miniconda.sh; fi
   - if [[ ("$PYDEVD_PYTHON_VERSION" != "3.8") && ("$PYDEVD_TEST_VM" == "CPYTHON" || "$PYDEVD_TEST_VM" == "PYPY") ]]; then ./miniconda.sh -b; fi
   - if [[ ("$PYDEVD_PYTHON_VERSION" != "3.8") && ("$PYDEVD_TEST_VM" == "CPYTHON" || "$PYDEVD_TEST_VM" == "PYPY") ]]; then export PATH=/home/travis/miniconda2/bin:$PATH; fi
