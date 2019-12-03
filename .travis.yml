@@ -17,55 +17,56 @@ matrix:
     # Note: some envs commented out to have a faster test suite.
     
     # Jython
-    - python: 2.7
-      env:
-        - PYDEVD_USE_CYTHON=NO
-        - PYDEVD_TEST_VM=JYTHON
-        - JYTHON_URL=http://search.maven.org/remotecontent?filepath=org/python/jython-installer/2.7.1/jython-installer-2.7.1.jar
-        
-    # PyPy
-    - python: 2.7
-      env:
-        - PYDEVD_PYTHON_VERSION=3.6
-        - PYDEVD_USE_CYTHON=NO
-        - PYDEVD_TEST_VM=PYPY
-    
-    # Python 2.6
-    - python: 2.7
-      env:
-        - PYDEVD_PYTHON_VERSION=2.6
-        - PYDEVD_USE_CYTHON=NO
-        - PYDEVD_TEST_VM=CPYTHON
-      
-    # Python 2.7
-    - python: 2.7
-      env:
-        - PYDEVD_PYTHON_VERSION=2.7
-        - PYDEVD_USE_CYTHON=YES
-        - PYDEVD_TEST_VM=CPYTHON
-      
-    # Python 3.5 (no longer tested by default).
-    # - python: 2.7
-    #   env:
-    #     - PYDEVD_PYTHON_VERSION=3.5
-    #     - PYDEVD_USE_CYTHON=YES
-    #     - PYDEVD_TEST_VM=CPYTHON
-      
-    # Python 3.6
-    - python: 2.7
-      env:
-        - PYDEVD_PYTHON_VERSION=3.6
-        - PYDEVD_USE_CYTHON=NO
-        - PYDEVD_TEST_VM=CPYTHON
-      
-    # Python 3.7
-    - python: 2.7
-      env:
-        - PYDEVD_PYTHON_VERSION=3.7
-        - PYDEVD_USE_CYTHON=YES
-        - PYDEVD_TEST_VM=CPYTHON
+#     - python: 2.7
+#       env:
+#         - PYDEVD_USE_CYTHON=NO
+#         - PYDEVD_TEST_VM=JYTHON
+#         - JYTHON_URL=http://search.maven.org/remotecontent?filepath=org/python/jython-installer/2.7.1/jython-installer-2.7.1.jar
+#         
+#     # PyPy
+#     - python: 2.7
+#       env:
+#         - PYDEVD_PYTHON_VERSION=3.6
+#         - PYDEVD_USE_CYTHON=NO
+#         - PYDEVD_TEST_VM=PYPY
+#     
+#     # Python 2.6
+#     - python: 2.7
+#       env:
+#         - PYDEVD_PYTHON_VERSION=2.6
+#         - PYDEVD_USE_CYTHON=NO
+#         - PYDEVD_TEST_VM=CPYTHON
+#       
+#     # Python 2.7
+#     - python: 2.7
+#       env:
+#         - PYDEVD_PYTHON_VERSION=2.7
+#         - PYDEVD_USE_CYTHON=YES
+#         - PYDEVD_TEST_VM=CPYTHON
+#       
+#     # Python 3.5 (no longer tested by default).
+#     # - python: 2.7
+#     #   env:
+#     #     - PYDEVD_PYTHON_VERSION=3.5
+#     #     - PYDEVD_USE_CYTHON=YES
+#     #     - PYDEVD_TEST_VM=CPYTHON
+#       
+#     # Python 3.6
+#     - python: 2.7
+#       env:
+#         - PYDEVD_PYTHON_VERSION=3.6
+#         - PYDEVD_USE_CYTHON=NO
+#         - PYDEVD_TEST_VM=CPYTHON
+#       
+#     # Python 3.7
+#     - python: 2.7
+#       env:
+#         - PYDEVD_PYTHON_VERSION=3.7
+#         - PYDEVD_USE_CYTHON=YES
+#         - PYDEVD_TEST_VM=CPYTHON
        
     - python: 3.8
+      os: osx
       env:
         - PYDEVD_PYTHON_VERSION=3.8
         - PYDEVD_USE_CYTHON=YES
