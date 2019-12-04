@@ -3729,6 +3729,40 @@ def test_asyncio_step_over_end_of_function(case_setup, target_filename):
     'target_filename',
     [
         '_debugger_case_asyncio.py',
+#         '_debugger_case_trio.py',
+    ]
+)
+@pytest.mark.skipif(not IS_CPYTHON or not IS_PY36_OR_GREATER, reason='Only CPython 3.6 onwards')
+def test_asyncio_step_in(case_setup, target_filename):
+    with case_setup.test_file(target_filename) as writer:
+        line = writer.get_line_index_with_content('break count 1')
+        writer.write_add_breakpoint(line)
+        writer.write_make_initial_run()
+
+        hit = writer.wait_for_breakpoint_hit()
+
+        writer.write_step_return(hit.thread_id)
+        hit = writer.wait_for_breakpoint_hit(
+            reason=REASON_STEP_RETURN,
+            file=target_filename,
+            line=writer.get_line_index_with_content('break main')
+        )
+
+        writer.write_step_in(hit.thread_id)
+        hit = writer.wait_for_breakpoint_hit(
+            reason=REASON_STEP_INTO,
+            file=target_filename,
+            line=writer.get_line_index_with_content('enter count')
+        )
+
+        writer.write_run_thread(hit.thread_id)
+        writer.finished_ok = True
+
+
+@pytest.mark.parametrize(
+    'target_filename',
+    [
+        '_debugger_case_asyncio.py',
         '_debugger_case_trio.py',
     ]
 )

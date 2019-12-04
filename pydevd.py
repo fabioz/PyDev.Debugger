@@ -1572,6 +1572,7 @@ class PyDB(object):
             # If the step command is not specified, set it to step into
             # to make sure it'll break as soon as possible.
             info.pydev_step_cmd = CMD_STEP_INTO
+            info.pydev_step_stop = None
 
         # Mark as suspend as the last thing.
         info.pydev_state = STATE_SUSPEND
@@ -1826,6 +1827,7 @@ class PyDB(object):
             self.set_trace_for_frame_and_parents(frame)
 
         elif info.pydev_step_cmd == CMD_RUN_TO_LINE or info.pydev_step_cmd == CMD_SET_NEXT_STATEMENT:
+            info.pydev_step_stop = None
             self.set_trace_for_frame_and_parents(frame)
             stop = False
             response_msg = ""
