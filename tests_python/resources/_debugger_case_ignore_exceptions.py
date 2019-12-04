@@ -14,7 +14,10 @@ if __name__ == '__main__':
 
     def gen2():
         yield 2
-        raise StopIteration()
+        if sys.version_info[:2] < (3, 7):
+            # On Python 3.7 onwards this will generate an unhandled exception, which
+            # is not what we want.
+            raise StopIteration()
 
     for i in gen2():
         pass
