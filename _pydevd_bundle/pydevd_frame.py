@@ -787,6 +787,7 @@ class PyDBFrame:
                     pydev_log.exception()
                     info.pydev_original_step_cmd = -1
                     info.pydev_step_cmd = -1
+                    info.pydev_step_stop = None
                 except:
                     return None if is_call else NO_FTRACE
 
