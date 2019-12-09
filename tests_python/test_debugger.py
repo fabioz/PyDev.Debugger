@@ -3718,8 +3718,7 @@ def test_asyncio_step_over_end_of_function(case_setup, target_filename):
         writer.write_step_over(hit.thread_id)
         hit = writer.wait_for_breakpoint_hit(
             reason=REASON_STEP_OVER,
-            file=target_filename,
-            line=writer.get_line_index_with_content('step main')
+            name=('sleep', 'wait_task_rescheduled'),
         )
         writer.write_run_thread(hit.thread_id)
         writer.finished_ok = True
@@ -3729,7 +3728,7 @@ def test_asyncio_step_over_end_of_function(case_setup, target_filename):
     'target_filename',
     [
         '_debugger_case_asyncio.py',
-#         '_debugger_case_trio.py',
+        '_debugger_case_trio.py',
     ]
 )
 @pytest.mark.skipif(not IS_CPYTHON or not IS_PY36_OR_GREATER, reason='Only CPython 3.6 onwards')
@@ -3751,8 +3750,7 @@ def test_asyncio_step_in(case_setup, target_filename):
         writer.write_step_in(hit.thread_id)
         hit = writer.wait_for_breakpoint_hit(
             reason=REASON_STEP_INTO,
-            file=target_filename,
-            line=writer.get_line_index_with_content('enter count')
+            name=('sleep', 'wait_task_rescheduled'),
         )
 
         writer.write_run_thread(hit.thread_id)
