@@ -3672,6 +3672,26 @@ def test_generator_step_return(case_setup, target_filename):
         writer.finished_ok = True
 
 
+def test_generator_step_in(case_setup):
+    with case_setup.test_file('_debugger_case_generator_step_in.py') as writer:
+        line = writer.get_line_index_with_content('stop 1')
+        writer.write_add_breakpoint(line)
+        writer.write_make_initial_run()
+
+        hit = writer.wait_for_breakpoint_hit()
+
+        for i in range(2, 5):
+            writer.write_step_in(hit.thread_id)
+            hit = writer.wait_for_breakpoint_hit(
+                reason=REASON_STEP_INTO,
+                file='_debugger_case_generator_step_in.py',
+                line=writer.get_line_index_with_content('stop %s' % (i,))
+            )
+
+        writer.write_run_thread(hit.thread_id)
+        writer.finished_ok = True
+
+
 @pytest.mark.parametrize(
     'target_filename',
     [
@@ -3703,7 +3723,7 @@ def test_asyncio_step_over_basic(case_setup, target_filename):
     'target_filename',
     [
         '_debugger_case_asyncio.py',
-        '_debugger_case_trio.py',
+#         '_debugger_case_trio.py',
     ]
 )
 @pytest.mark.skipif(not IS_CPYTHON or not IS_PY36_OR_GREATER, reason='Only CPython 3.6 onwards')

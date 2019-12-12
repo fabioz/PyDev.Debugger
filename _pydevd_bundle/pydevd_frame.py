@@ -445,10 +445,12 @@ class PyDBFrame:
                             if step_cmd in (CMD_STEP_OVER, CMD_STEP_OVER_MY_CODE, CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE):
                                 info.pydev_step_cmd = CMD_STEP_INTO_COROUTINE
                                 info.pydev_step_stop = frame.f_back
+                                frame.f_back.f_trace = main_debugger.trace_dispatch
 
                             elif step_cmd == CMD_STEP_INTO_COROUTINE:
                                 # We're exiting this one, so, mark the new coroutine context.
                                 info.pydev_step_stop = frame.f_back
+                                frame.f_back.f_trace = main_debugger.trace_dispatch
 
                 elif event == 'exception':
                     breakpoints_for_file = None

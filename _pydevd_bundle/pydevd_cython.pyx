@@ -594,10 +594,12 @@ cdef class PyDBFrame:
                             if step_cmd in (108, 159, 107, 144):
                                 info.pydev_step_cmd = 206
                                 info.pydev_step_stop = frame.f_back
+                                frame.f_back.f_trace = main_debugger.trace_dispatch
 
                             elif step_cmd == 206:
                                 # We're exiting this one, so, mark the new coroutine context.
                                 info.pydev_step_stop = frame.f_back
+                                frame.f_back.f_trace = main_debugger.trace_dispatch
 
                 elif event == 'exception':
                     breakpoints_for_file = None
