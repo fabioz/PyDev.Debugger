@@ -183,6 +183,7 @@ from _pydevd_bundle.pydevd_comm_constants import constant_to_str
 # 137 = 137
 # 111 = 111
 # 128 = 128
+# 206 = 206
 # 1 = 1
 # 2 = 2
 # ENDIF
@@ -539,13 +540,12 @@ cdef class PyDBFrame:
                 return None if event == 'call' else NO_FTRACE
 
             plugin_manager = main_debugger.plugin
-            is_coroutine_or_generator = frame.f_code.co_flags & 0xa0  # 0xa0 ==  CO_GENERATOR = 0x20 | CO_COROUTINE = 0x80
-            is_exception_event = event == 'exception'
             has_exception_breakpoints = main_debugger.break_on_caught_exceptions or main_debugger.has_plugin_exception_breaks
 
             stop_frame = info.pydev_step_stop
             step_cmd = info.pydev_step_cmd
-            if is_coroutine_or_generator:
+
+            if frame.f_code.co_flags & 0xa0:  # 0xa0 ==  CO_GENERATOR = 0x20 | CO_COROUTINE = 0x80
                 # Dealing with coroutines and generators:
                 # When in a coroutine we change the perceived event to the debugger because
                 # a call, StopIteration exception and return are usually just pausing/unpausing it.
@@ -553,11 +553,13 @@ cdef class PyDBFrame:
                     is_line = True
                     is_call = False
                     is_return = False
+                    is_exception_event = False
 
                 elif event == 'return':
                     is_line = False
                     is_call = False
                     is_return = True
+                    is_exception_event = False
 
                     returns_cache_key = (frame_cache_key, 'returns')
                     return_lines = frame_skips_cache.get(returns_cache_key)
@@ -589,10 +591,16 @@ cdef class PyDBFrame:
                         # in, but we may have to do it anyways to have a step in which doesn't end
                         # up in asyncio).
                         if stop_frame is frame:
-                            if step_cmd in (108, 159):
+                            if step_cmd in (108, 159, 107, 144):
+                                info.pydev_step_cmd = 206
                                 info.pydev_step_stop = frame.f_back
 
-                elif is_exception_event:
+                            elif step_cmd == 206:
+                                # We're exiting this one, so, mark the new coroutine context.
+                                info.pydev_step_stop = frame.f_back
+
+                elif event == 'exception':
+                    breakpoints_for_file = None
                     if has_exception_breakpoints:
                         should_stop, frame = self.should_stop_on_exception(frame, event, arg)
                         if should_stop:
@@ -605,7 +613,40 @@ cdef class PyDBFrame:
                     return self.trace_dispatch
 
             else:
-                if is_exception_event:
+                if event == 'line':
+                    is_line = True
+                    is_call = False
+                    is_return = False
+                    is_exception_event = False
+
+                elif event == 'return':
+                    is_line = False
+                    is_return = True
+                    is_call = False
+                    is_exception_event = False
+
+                    # If we are in single step mode and something causes us to exit the current frame, we need to make sure we break
+                    # eventually.  Force the step mode to step into and the step stop frame to None.
+                    # I.e.: F6 in the end of a function should stop in the next possible position (instead of forcing the user
+                    # to make a step in or step over at that location).
+                    # Note: this is especially troublesome when we're skipping code with the
+                    # @DontTrace comment.
+                    if stop_frame is frame and is_return and step_cmd in (108, 109, 159, 160):
+                        if step_cmd in (108, 109):
+                            info.pydev_step_cmd = 107
+                        else:
+                            info.pydev_step_cmd = 144
+                        info.pydev_step_stop = None
+
+                elif event == 'call':
+                    is_line = False
+                    is_call = True
+                    is_return = False
+                    is_exception_event = False
+
+                elif event == 'exception':
+                    is_exception_event = True
+                    breakpoints_for_file = None
                     if has_exception_breakpoints:
                         should_stop, frame = self.should_stop_on_exception(frame, event, arg)
                         if should_stop:
@@ -614,37 +655,12 @@ cdef class PyDBFrame:
                     is_line = False
                     is_return = False
                     is_call = False
+
                 else:
-                    if event == 'line':
-                        is_line = True
-                        is_call = False
-                        is_return = False
-                    else:
-                        is_line = False
-                        is_return = event == 'return'
-                        is_call = event == 'call'
+                    # Unexpected: just keep the same trace func (i.e.: event == 'c_XXX').
+                    return self.trace_dispatch
 
-                    if not is_line and not is_return and not is_call:
-                        # Unexpected: just keep the same trace func (i.e.: event == 'c_XXX').
-                        return self.trace_dispatch
-
-            if is_exception_event:
-                breakpoints_for_file = None
-            else:
-                # If we are in single step mode and something causes us to exit the current frame, we need to make sure we break
-                # eventually.  Force the step mode to step into and the step stop frame to None.
-                # I.e.: F6 in the end of a function should stop in the next possible position (instead of forcing the user
-                # to make a step in or step over at that location).
-                # Note: this is especially troublesome when we're skipping code with the
-                # @DontTrace comment.
-                if stop_frame is frame and is_return and step_cmd in (108, 109, 159, 160):
-                    if not is_coroutine_or_generator:  # i.e.: not a coroutine
-                        if step_cmd in (108, 109):
-                            info.pydev_step_cmd = 107
-                        else:
-                            info.pydev_step_cmd = 144
-                        info.pydev_step_stop = None
-
+            if not is_exception_event:
                 breakpoints_for_file = main_debugger.breakpoints.get(filename)
 
                 can_skip = False
@@ -660,7 +676,7 @@ cdef class PyDBFrame:
                                 main_debugger.has_plugin_line_breaks or main_debugger.has_plugin_exception_breaks):
                             can_skip = plugin_manager.can_skip(main_debugger, frame)
 
-                        if can_skip and main_debugger.show_return_values and info.pydev_step_cmd in (108, 159) and frame.f_back is info.pydev_step_stop:
+                        if can_skip and main_debugger.show_return_values and info.pydev_step_cmd in (108, 159) and frame.f_back is stop_frame:
                             # trace function for showing return values after step over
                             can_skip = False
 
@@ -771,7 +787,7 @@ cdef class PyDBFrame:
                         return self.trace_dispatch
 
                 if main_debugger.show_return_values:
-                    if is_return and info.pydev_step_cmd in (108, 159) and frame.f_back == info.pydev_step_stop:
+                    if is_return and info.pydev_step_cmd in (108, 159) and frame.f_back == stop_frame:
                         self.show_return_values(frame, arg)
 
                 elif main_debugger.remove_return_values_flag:
@@ -825,7 +841,7 @@ cdef class PyDBFrame:
                 if should_skip:
                     stop = False
 
-                elif step_cmd in (107, 144):
+                elif step_cmd in (107, 144, 206):
                     force_check_project_scope = step_cmd == 144
                     if is_line:
                         if force_check_project_scope or main_debugger.is_files_filter_enabled:
@@ -841,6 +857,16 @@ cdef class PyDBFrame:
                                 stop = not main_debugger.apply_files_filter(frame.f_back, frame.f_back.f_code.co_filename, force_check_project_scope)
                             else:
                                 stop = True
+
+                    if stop:
+                        if step_cmd == 206:
+                            f = frame
+                            while f is not None:
+                                if f is stop_frame:
+                                    break
+                                f = f.f_back
+                            else:
+                                stop = False
 
                     if plugin_manager is not None:
                         result = plugin_manager.cmd_step_into(main_debugger, frame, event, self._args, stop_info, stop)
@@ -937,6 +963,7 @@ cdef class PyDBFrame:
                     pydev_log.exception()
                     info.pydev_original_step_cmd = -1
                     info.pydev_step_cmd = -1
+                    info.pydev_step_stop = None
                 except:
                     return None if is_call else NO_FTRACE
 
