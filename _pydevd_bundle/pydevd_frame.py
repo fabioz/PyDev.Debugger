@@ -462,7 +462,6 @@ class PyDBFrame:
                                 if f is not None:
                                     info.pydev_step_cmd = CMD_STEP_INTO_COROUTINE
                                     info.pydev_step_stop = f
-                                    f.f_trace = main_debugger.trace_dispatch
                                 else:
                                     if step_cmd == CMD_STEP_OVER:
                                         info.pydev_step_cmd = CMD_STEP_INTO
@@ -477,7 +476,6 @@ class PyDBFrame:
                                 f = self._get_unfiltered_back_frame(main_debugger, frame)
                                 if f is not None:
                                     info.pydev_step_stop = f
-                                    f.f_trace = main_debugger.trace_dispatch
                                 else:
                                     info.pydev_step_cmd = CMD_STEP_INTO
                                     info.pydev_step_stop = None

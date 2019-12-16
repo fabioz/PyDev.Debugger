@@ -611,7 +611,6 @@ cdef class PyDBFrame:
                                 if f is not None:
                                     info.pydev_step_cmd = 206
                                     info.pydev_step_stop = f
-                                    f.f_trace = main_debugger.trace_dispatch
                                 else:
                                     if step_cmd == 108:
                                         info.pydev_step_cmd = 107
@@ -626,7 +625,6 @@ cdef class PyDBFrame:
                                 f = self._get_unfiltered_back_frame(main_debugger, frame)
                                 if f is not None:
                                     info.pydev_step_stop = f
-                                    f.f_trace = main_debugger.trace_dispatch
                                 else:
                                     info.pydev_step_cmd = 107
                                     info.pydev_step_stop = None
