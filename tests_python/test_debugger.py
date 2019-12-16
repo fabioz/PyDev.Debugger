@@ -3672,6 +3672,7 @@ def test_generator_step_return(case_setup, target_filename):
         writer.finished_ok = True
 
 
+@pytest.mark.skipif(not IS_PY36_OR_GREATER, reason='Only CPython 3.6 onwards')
 def test_stepin_not_my_code_coroutine(case_setup):
 
     def get_environ(writer):
