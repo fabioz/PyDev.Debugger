@@ -348,11 +348,15 @@ class PyDBFrame:
     def _get_unfiltered_back_frame(self, main_debugger, frame):
         f = frame.f_back
         while f is not None:
-            if main_debugger.is_files_filter_enabled:
+            if not main_debugger.is_files_filter_enabled:
+                return f
+
+            else:
                 if main_debugger.apply_files_filter(f, f.f_code.co_filename, False):
                     f = f.f_back
+
                 else:
-                    break
+                    return f
 
         return f
 
@@ -454,8 +458,11 @@ class PyDBFrame:
                         # up in asyncio).
                         if stop_frame is frame:
                             if step_cmd in (CMD_STEP_OVER, CMD_STEP_OVER_MY_CODE, CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE):
+                                print('here 1')
                                 f = self._get_unfiltered_back_frame(main_debugger, frame)
+                                print(f)
                                 if f is not None:
+                                    print('step into coroutine')
                                     info.pydev_step_cmd = CMD_STEP_INTO_COROUTINE
                                     info.pydev_step_stop = f
                                     f.f_trace = main_debugger.trace_dispatch
@@ -469,6 +476,7 @@ class PyDBFrame:
                                         info.pydev_step_stop = None
 
                             elif step_cmd == CMD_STEP_INTO_COROUTINE:
+                                print('here 2')
                                 # We're exiting this one, so, mark the new coroutine context.
                                 f = self._get_unfiltered_back_frame(main_debugger, frame)
                                 if f is not None:
