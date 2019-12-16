@@ -3705,10 +3705,13 @@ def test_generator_step_in(case_setup):
 
         for i in range(2, 5):
             writer.write_step_in(hit.thread_id)
+            kwargs = {}
+            if not IS_JYTHON:
+                kwargs['line'] = writer.get_line_index_with_content('stop %s' % (i,))
             hit = writer.wait_for_breakpoint_hit(
                 reason=REASON_STEP_INTO,
                 file='_debugger_case_generator_step_in.py',
-                line=writer.get_line_index_with_content('stop %s' % (i,))
+                **kwargs
             )
 
         writer.write_run_thread(hit.thread_id)
