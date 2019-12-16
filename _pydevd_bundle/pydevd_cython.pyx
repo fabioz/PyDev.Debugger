@@ -607,11 +607,8 @@ cdef class PyDBFrame:
                         # up in asyncio).
                         if stop_frame is frame:
                             if step_cmd in (108, 159, 107, 144):
-                                print('here 1')
                                 f = self._get_unfiltered_back_frame(main_debugger, frame)
-                                print(f)
                                 if f is not None:
-                                    print('step into coroutine')
                                     info.pydev_step_cmd = 206
                                     info.pydev_step_stop = f
                                     f.f_trace = main_debugger.trace_dispatch
@@ -625,7 +622,6 @@ cdef class PyDBFrame:
                                         info.pydev_step_stop = None
 
                             elif step_cmd == 206:
-                                print('here 2')
                                 # We're exiting this one, so, mark the new coroutine context.
                                 f = self._get_unfiltered_back_frame(main_debugger, frame)
                                 if f is not None:
@@ -705,7 +701,21 @@ cdef class PyDBFrame:
                     # we can skip if:
                     # - we have no stop marked
                     # - we should make a step return/step over and we're not in the current frame
-                    can_skip = step_cmd == -1 or (step_cmd in (108, 109, 159, 160) and stop_frame is not frame)
+                    # - we're stepping into a coroutine context and we're not in that context
+                    if step_cmd == -1:
+                        can_skip = True
+
+                    elif step_cmd in (108, 109, 159, 160) and stop_frame is not frame:
+                        can_skip = True
+
+                    elif step_cmd == 206:
+                        f = frame
+                        while f is not None:
+                            if f is stop_frame:
+                                break
+                            f = f.f_back
+                        else:
+                            can_skip = True
 
                     if can_skip:
                         if plugin_manager is not None and (
