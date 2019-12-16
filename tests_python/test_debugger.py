@@ -3672,6 +3672,28 @@ def test_generator_step_return(case_setup, target_filename):
         writer.finished_ok = True
 
 
+def test_stepin_not_my_code_coroutine(case_setup):
+
+    def get_environ(writer):
+        environ = {'PYDEVD_FILTERS': '{"**/not_my_coroutine.py": true}'}
+        env = os.environ.copy()
+        env.update(environ)
+        return env
+
+    with case_setup.test_file('my_code/my_code_coroutine.py', get_environ=get_environ) as writer:
+        writer.write_set_project_roots([debugger_unittest._get_debugger_test_file('my_code')])
+        writer.write_add_breakpoint(writer.get_line_index_with_content('break here'))
+        writer.write_make_initial_run()
+        hit = writer.wait_for_breakpoint_hit()
+
+        writer.write_step_in(hit.thread_id)
+        hit = writer.wait_for_breakpoint_hit(reason=REASON_STEP_INTO)
+        assert hit.name == 'main'
+
+        writer.write_run_thread(hit.thread_id)
+        writer.finished_ok = True
+
+
 def test_generator_step_in(case_setup):
     with case_setup.test_file('_debugger_case_generator_step_in.py') as writer:
         line = writer.get_line_index_with_content('stop 1')
@@ -3723,7 +3745,7 @@ def test_asyncio_step_over_basic(case_setup, target_filename):
     'target_filename',
     [
         '_debugger_case_asyncio.py',
-#         '_debugger_case_trio.py',
+        '_debugger_case_trio.py',
     ]
 )
 @pytest.mark.skipif(not IS_CPYTHON or not IS_PY36_OR_GREATER, reason='Only CPython 3.6 onwards')

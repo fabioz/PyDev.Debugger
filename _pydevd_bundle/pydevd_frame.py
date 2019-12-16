@@ -345,6 +345,17 @@ class PyDBFrame:
         finally:
             f_locals_back = None
 
+    def _get_unfiltered_back_frame(self, main_debugger, frame):
+        f = frame.f_back
+        while f is not None:
+            if main_debugger.is_files_filter_enabled:
+                if main_debugger.apply_files_filter(f, f.f_code.co_filename, False):
+                    f = f.f_back
+                else:
+                    break
+
+        return f
+
     # IFDEF CYTHON
     # cpdef trace_dispatch(self, frame, str event, arg):
     #     cdef str filename;
@@ -443,14 +454,29 @@ class PyDBFrame:
                         # up in asyncio).
                         if stop_frame is frame:
                             if step_cmd in (CMD_STEP_OVER, CMD_STEP_OVER_MY_CODE, CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE):
-                                info.pydev_step_cmd = CMD_STEP_INTO_COROUTINE
-                                info.pydev_step_stop = frame.f_back
-                                frame.f_back.f_trace = main_debugger.trace_dispatch
+                                f = self._get_unfiltered_back_frame(main_debugger, frame)
+                                if f is not None:
+                                    info.pydev_step_cmd = CMD_STEP_INTO_COROUTINE
+                                    info.pydev_step_stop = f
+                                    f.f_trace = main_debugger.trace_dispatch
+                                else:
+                                    if step_cmd == CMD_STEP_OVER:
+                                        info.pydev_step_cmd = CMD_STEP_INTO
+                                        info.pydev_step_stop = None
+
+                                    elif step_cmd == CMD_STEP_OVER_MY_CODE:
+                                        info.pydev_step_cmd = CMD_STEP_INTO_MY_CODE
+                                        info.pydev_step_stop = None
 
                             elif step_cmd == CMD_STEP_INTO_COROUTINE:
                                 # We're exiting this one, so, mark the new coroutine context.
-                                info.pydev_step_stop = frame.f_back
-                                frame.f_back.f_trace = main_debugger.trace_dispatch
+                                f = self._get_unfiltered_back_frame(main_debugger, frame)
+                                if f is not None:
+                                    info.pydev_step_stop = f
+                                    f.f_trace = main_debugger.trace_dispatch
+                                else:
+                                    info.pydev_step_cmd = CMD_STEP_INTO
+                                    info.pydev_step_stop = None
 
                 elif event == 'exception':
                     breakpoints_for_file = None
@@ -710,9 +736,12 @@ class PyDBFrame:
                                 stop = not main_debugger.apply_files_filter(frame.f_back, frame.f_back.f_code.co_filename, force_check_project_scope)
                             else:
                                 stop = True
+                    else:
+                        stop = False
 
                     if stop:
                         if step_cmd == CMD_STEP_INTO_COROUTINE:
+                            # i.e.: Check if we're stepping into the proper context.
                             f = frame
                             while f is not None:
                                 if f is stop_frame:
