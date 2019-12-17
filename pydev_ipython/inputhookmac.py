@@ -143,25 +143,29 @@ class Timer(Thread):
                 time.sleep(self.interval)
                 self.callback(self.stop)
 
+
 def inputhook_mac():
+    rh, wh = os.pipe()
 
-    import datetime
-    dt = datetime.datetime.utcnow()
-
-    _r, _w = os.pipe()
-    def cb(stop):
+    def inputhook_cb(stop):
         if stdin_ready():
-            os.write(_w, b'x')
+            os.write(wh, b'x')
             stop.set()
-    t = Timer(callback=cb)
-    t.start()
-    NSApp = _NSApp()
-    _stop_on_read(_r)
-    msg(NSApp, n('run'))
-    if not _triggered.is_set():
-        # app closed without firing callback,
-        # probably due to last window being closed.
-        # Run the loop manually in this case,
-        # since there may be events still to process (#9734)
-        CoreFoundation.CFRunLoopRun()
-    t.join()
+
+    try:
+        t = Timer(callback=inputhook_cb)
+        t.start()
+        NSApp = _NSApp()
+        _stop_on_read(rh)
+        msg(NSApp, n('run'))
+        if not _triggered.is_set():
+            # app closed without firing callback,
+            # probably due to last window being closed.
+            # Run the loop manually in this case,
+            # since there may be events still to process (#9734)
+            CoreFoundation.CFRunLoopRun()
+        t.join()
+    finally:
+        os.read(rh, 1)
+        os.close(rh)
+        os.close(wh)
