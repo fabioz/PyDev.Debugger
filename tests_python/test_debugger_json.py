@@ -1093,6 +1093,7 @@ def test_stack_and_variables_dict(case_setup):
         writer.finished_ok = True
 
 
+@pytest.mark.skipif(IS_PY26, reason='__dir__ not customizable on Python 2.6')
 def test_exception_on_dir(case_setup):
     with case_setup.test_file('_debugger_case_dir_exception.py') as writer:
         json_facade = JsonFacade(writer)
