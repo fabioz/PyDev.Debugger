@@ -130,42 +130,60 @@ def _stop_on_read(fd):
     CFRunLoopAddSource(loop, source, kCFRunLoopCommonModes)
     CFRelease(source)
 
+
 class Timer(Thread):
     def __init__(self, callback=None, interval=0.1):
         super().__init__()
         self.callback = callback
         self.interval = interval
-        self.stop = Event()
+        self._stopev = Event()
 
     def run(self, *args, **kwargs):
         if callable(self.callback):
-            while not self.stop.is_set():
+            while not self._stopev.is_set():
                 time.sleep(self.interval)
-                self.callback(self.stop)
+                self.callback(self._stopev)
+
+
+class FHSingleton(object):
+    """Implements a singleton resource manager for pipes. Avoids opening and
+    closing pipes during event loops.
+    """
+    _instance = None
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls.rh, cls.wh = os.pipe()
+        else:
+            # Clears the character written to trigger callback in the last
+            # loop.
+            os.read(cls.rh, 1)
+
+        return cls._instance
 
 
 def inputhook_mac():
-    rh, wh = os.pipe()
+    fh = FHSingleton()
 
+    # stop_cb is used to cleanly terminate loop when last figure window is
+    # closed.
+    stop_cb = Event()
     def inputhook_cb(stop):
-        if stdin_ready():
-            os.write(wh, b'x')
+        if stop_cb.is_set() or stdin_ready():
+            os.write(fh.wh, b'x')
             stop.set()
 
-    try:
-        t = Timer(callback=inputhook_cb)
-        t.start()
-        NSApp = _NSApp()
-        _stop_on_read(rh)
-        msg(NSApp, n('run'))
-        if not _triggered.is_set():
-            # app closed without firing callback,
-            # probably due to last window being closed.
-            # Run the loop manually in this case,
-            # since there may be events still to process (#9734)
-            CoreFoundation.CFRunLoopRun()
-        t.join()
-    finally:
-        os.read(rh, 1)
-        os.close(rh)
-        os.close(wh)
+
+    t = Timer(callback=inputhook_cb)
+    t.start()
+    NSApp = _NSApp()
+    _stop_on_read(fh.rh)
+    msg(NSApp, n('run'))
+    if not _triggered.is_set():
+        # app closed without firing callback,
+        # probably due to last window being closed.
+        # Run the loop manually in this case,
+        # since there may be events still to process (#9734)
+        CoreFoundation.CFRunLoopRun()
+        stop_cb.set()
+    t.join()
