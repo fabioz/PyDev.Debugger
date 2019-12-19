@@ -6,7 +6,7 @@ Calls NSApp / CoreFoundation APIs via ctypes.
 import os
 from pydev_ipython.inputhook import stdin_ready
 import time
-from threading import Thread, Event
+from _pydev_imps._pydev_saved_modules import threading as _threading_
 
 # obj-c boilerplate from appnope, used under BSD 2-clause
 
@@ -104,7 +104,7 @@ def _wake(NSApp):
     msg(NSApp, n('postEvent:atStart:'), void_p(event), True)
 
 
-_triggered = Event()
+_triggered = _threading_.Event()
 
 def _input_callback(fdref, flags, info):
     """Callback to fire when there's input to be read"""
@@ -131,12 +131,12 @@ def _stop_on_read(fd):
     CFRelease(source)
 
 
-class Timer(Thread):
+class Timer(_threading_.Thread):
     def __init__(self, callback=None, interval=0.1):
         super().__init__()
         self.callback = callback
         self.interval = interval
-        self._stopev = Event()
+        self._stopev = _threading_.Event()
 
     def run(self, *args, **kwargs):
         if callable(self.callback):
@@ -167,7 +167,7 @@ def inputhook_mac():
 
     # stop_cb is used to cleanly terminate loop when last figure window is
     # closed.
-    stop_cb = Event()
+    stop_cb = _threading_.Event()
     def inputhook_cb(stop):
         if stop_cb.is_set() or stdin_ready():
             os.write(fh.wh, b'x')
