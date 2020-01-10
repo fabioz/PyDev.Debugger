@@ -178,6 +178,11 @@ python setup.py sdist bdist_wheel
 conda deactivate
 dir dist
 
+activate py38_32
+python setup.py sdist bdist_wheel
+conda deactivate
+dir dist
+
 activate py27_64
 python setup.py sdist bdist_wheel
 conda deactivate
@@ -198,9 +203,14 @@ python setup.py sdist bdist_wheel
 conda deactivate
 dir dist
 
+activate py38_64
+python setup.py sdist bdist_wheel
+conda deactivate
+dir dist
+
 # Note: uploading with twine gives an error in the end, but apparently it works (check final result in pypi).
 twine upload dist/pydevd*
 
-git tag pydev_debugger_1_8_0 -a -m "PyDev.Debugger 1.8.0"
+git tag pydev_debugger_1_9_0 -a -m "PyDev.Debugger 1.9.0"
 git push --tags
 
