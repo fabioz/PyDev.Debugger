@@ -206,6 +206,39 @@ def custom_operation(dbg, thread_id, frame_id, scope, attrs, style, code_or_file
 
 
 def _expression_to_evaluate(expression):
+    keepends = True
+    lines = expression.splitlines(keepends)
+    # find first non-empty line
+    chars_to_strip = 0
+    for line in lines:
+        if line.strip():  # i.e.: check first non-empty line
+            for c in line:
+                if c.isspace():
+                    chars_to_strip += 1
+                else:
+                    break
+            break
+
+    if chars_to_strip:
+        # I.e.: check that the chars we'll remove are really only whitespaces.
+        proceed = True
+        new_lines = []
+        for line in lines:
+            if not proceed:
+                break
+            for c in line[:chars_to_strip]:
+                if not c.isspace():
+                    proceed = False
+                    break
+
+            new_lines.append(line[chars_to_strip:])
+
+        if proceed:
+            if isinstance(expression, bytes):
+                expression = b''.join(new_lines)
+            else:
+                expression = u''.join(new_lines)
+
     if IS_PY2 and isinstance(expression, unicode):
         # In Python 2 we need to compile with bytes and not unicode (otherwise it'd use
         # the default encoding which could be ascii).
