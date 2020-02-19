@@ -2,7 +2,8 @@
     resolution/conversion to XML.
 """
 import pickle
-from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, IS_PY2
+from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, IS_PY2, \
+    iter_chars
 
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
 from _pydev_bundle import pydev_log
@@ -212,7 +213,7 @@ def _expression_to_evaluate(expression):
     chars_to_strip = 0
     for line in lines:
         if line.strip():  # i.e.: check first non-empty line
-            for c in line:
+            for c in iter_chars(line):
                 if c.isspace():
                     chars_to_strip += 1
                 else:
@@ -226,7 +227,7 @@ def _expression_to_evaluate(expression):
         for line in lines:
             if not proceed:
                 break
-            for c in line[:chars_to_strip]:
+            for c in iter_chars(line[:chars_to_strip]):
                 if not c.isspace():
                     proceed = False
                     break
