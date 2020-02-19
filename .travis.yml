@@ -16,75 +16,84 @@ matrix:
 
     # Note: some envs commented out to have a faster test suite.
 
-    # Jython
-    - python: 2.7
-      env:
-        - PYDEVD_USE_CYTHON=NO
-        - PYDEVD_TEST_VM=JYTHON
+#     # Jython
+#     - python: 2.7
+#       env:
+#         - PYDEVD_USE_CYTHON=NO
+#         - PYDEVD_TEST_VM=JYTHON
+#
+#     # PyPy
+#     - python: 2.7
+#       env:
+#         - PYDEVD_PYTHON_VERSION=3.6
+#         - PYDEVD_USE_CYTHON=NO
+#         - PYDEVD_TEST_VM=PYPY
+#
+#     # Python 2.6
+#     - python: 2.7
+#       env:
+#         - PYDEVD_PYTHON_VERSION=2.6
+#         - PYDEVD_USE_CYTHON=NO
+#         - PYDEVD_TEST_VM=CPYTHON
+#
+#     # Python 2.7
+#     - python: 2.7
+#       env:
+#         - PYDEVD_PYTHON_VERSION=2.7
+#         - PYDEVD_USE_CYTHON=YES
+#         - PYDEVD_TEST_VM=CPYTHON
+#
+#     # Python 3.5 (no longer tested by default).
+#     # - python: 2.7
+#     #   env:
+#     #     - PYDEVD_PYTHON_VERSION=3.5
+#     #     - PYDEVD_USE_CYTHON=YES
+#     #     - PYDEVD_TEST_VM=CPYTHON
+#
+#     # Python 3.6
+#     - python: 2.7
+#       env:
+#         - PYDEVD_PYTHON_VERSION=3.6
+#         - PYDEVD_USE_CYTHON=NO
+#         - PYDEVD_TEST_VM=CPYTHON
+#
+#     # Python 3.7
+#     - python: 2.7
+#       env:
+#         - PYDEVD_PYTHON_VERSION=3.7
+#         - PYDEVD_USE_CYTHON=YES
+#         - PYDEVD_TEST_VM=CPYTHON
+#
+#     - python: 3.8
+#       env:
+#         - PYDEVD_PYTHON_VERSION=3.8
+#         - PYDEVD_USE_CYTHON=YES
+#         - PYDEVD_TEST_VM=CPYTHON
+#         - CHECK_CYTHON_GENERATED=YES
+#         - PYDEVD_USE_CONDA=NO
+#
+#     - python: 3.8
+#       env:
+#         - PYDEVD_PYTHON_VERSION=3.8
+#         - PYDEVD_USE_CYTHON=NO
+#         - PYDEVD_TEST_VM=CPYTHON
+#         - CHECK_CYTHON_GENERATED=YES
+#         - PYDEVD_USE_CONDA=NO
 
-    # PyPy
-    - python: 2.7
+    - python: 3.9-dev
       env:
-        - PYDEVD_PYTHON_VERSION=3.6
-        - PYDEVD_USE_CYTHON=NO
-        - PYDEVD_TEST_VM=PYPY
-
-    # Python 2.6
-    - python: 2.7
-      env:
-        - PYDEVD_PYTHON_VERSION=2.6
-        - PYDEVD_USE_CYTHON=NO
-        - PYDEVD_TEST_VM=CPYTHON
-
-    # Python 2.7
-    - python: 2.7
-      env:
-        - PYDEVD_PYTHON_VERSION=2.7
+        - PYDEVD_PYTHON_VERSION=3.9
         - PYDEVD_USE_CYTHON=YES
         - PYDEVD_TEST_VM=CPYTHON
+        - PYDEVD_USE_CONDA=NO
 
-    # Python 3.5 (no longer tested by default).
-    # - python: 2.7
-    #   env:
-    #     - PYDEVD_PYTHON_VERSION=3.5
-    #     - PYDEVD_USE_CYTHON=YES
-    #     - PYDEVD_TEST_VM=CPYTHON
-
-    # Python 3.6
-    - python: 2.7
-      env:
-        - PYDEVD_PYTHON_VERSION=3.6
-        - PYDEVD_USE_CYTHON=NO
-        - PYDEVD_TEST_VM=CPYTHON
-
-    # Python 3.7
-    - python: 2.7
-      env:
-        - PYDEVD_PYTHON_VERSION=3.7
-        - PYDEVD_USE_CYTHON=YES
-        - PYDEVD_TEST_VM=CPYTHON
-
-    - python: 3.8
-      env:
-        - PYDEVD_PYTHON_VERSION=3.8
-        - PYDEVD_USE_CYTHON=YES
-        - PYDEVD_TEST_VM=CPYTHON
-        - CHECK_CYTHON_GENERATED=YES
-
-    - python: 3.8
-      env:
-        - PYDEVD_PYTHON_VERSION=3.8
-        - PYDEVD_USE_CYTHON=NO
-        - PYDEVD_TEST_VM=CPYTHON
-        - CHECK_CYTHON_GENERATED=YES
-
-    - os: osx
-      language: generic
-      env:
-        - PYDEVD_PYTHON_VERSION=3.6
-        - PYDEVD_USE_CYTHON=YES
-        - PYDEVD_TEST_VM=CPYTHON
-        - CHECK_CYTHON_GENERATED=YES
+#     - os: osx
+#       language: generic
+#       env:
+#         - PYDEVD_PYTHON_VERSION=3.6
+#         - PYDEVD_USE_CYTHON=YES
+#         - PYDEVD_TEST_VM=CPYTHON
+#         - CHECK_CYTHON_GENERATED=YES
 
 before_install:
   # CPython / Pypy setup
@@ -96,9 +105,9 @@ install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo sysctl kernel.yama.ptrace_scope=0; fi
   # Both
   - export PYTHONPATH=.
-  # CPython setup (Note that for CPython 3.8 we'll use the system-installed version for now).
-  - if [[ ("$PYDEVD_TEST_VM" == "CPYTHON" && "$PYDEVD_PYTHON_VERSION" != "3.8") ]]; then conda create --yes -n build_env python=$PYDEVD_PYTHON_VERSION; fi
-  - if [[ ("$PYDEVD_TEST_VM" == "CPYTHON" && "$PYDEVD_PYTHON_VERSION" != "3.8") ]]; then source activate build_env; fi
+  # CPython setup
+  - if [[ ("$PYDEVD_TEST_VM" == "CPYTHON" && "$PYDEVD_USE_CONDA" != "NO") ]]; then conda create --yes -n build_env python=$PYDEVD_PYTHON_VERSION; fi
+  - if [[ ("$PYDEVD_TEST_VM" == "CPYTHON" && "$PYDEVD_USE_CONDA" != "NO") ]]; then source activate build_env; fi
   - if [[ ("$PYDEVD_TEST_VM" == "CPYTHON") ]]; then ./.travis/install_python_deps.sh; fi
   - if [[ ("$CHECK_CYTHON_GENERATED" == "YES") ]]; then python build_tools/build.py; fi
   # Check that we can compile just based on the .c files.
@@ -116,10 +125,7 @@ install:
 # On local machine with jython: c:\bin\jython2.7.0\bin\jython.exe -Dpython.path=.;jython_test_deps/ant.jar;jython_test_deps/junit.jar -m pytest
 # On remove machine with python: c:\bin\python27\python.exe -m pytest
 script:
-  # pytest-xdist not available for python == 2.6 and timing out without output with 2.7
-  - if [[ ("$PYDEVD_TEST_VM" == "CPYTHON") && ("$PYDEVD_PYTHON_VERSION" == "2.6" || "$PYDEVD_PYTHON_VERSION" == "2.7") ]]; then source activate build_env; python -m pytest; fi
-  - if [[ ("$PYDEVD_TEST_VM" == "CPYTHON") && ("$PYDEVD_PYTHON_VERSION" != "2.6" && "$PYDEVD_PYTHON_VERSION" != "2.7" && "$PYDEVD_PYTHON_VERSION" != "3.8") ]]; then source activate build_env; python -m pytest -n auto; fi
-  - if [[ ("$PYDEVD_TEST_VM" == "CPYTHON") && ("$PYDEVD_PYTHON_VERSION" == "3.8") ]]; then python -m pytest; fi
+  - if [[ ("$PYDEVD_TEST_VM" == "CPYTHON") ]]; then ./.travis/run_python_pytest.sh; fi
   - if [ "$PYDEVD_TEST_VM" == "PYPY" ]; then source activate build_env; pypy3 -m pytest -n auto; fi
   - if [ "$PYDEVD_TEST_VM" == "JYTHON" ]; then jython -Dpython.path=.:jython_test_deps/ant.jar:jython_test_deps/junit.jar -m pytest --tb=native; fi
 
