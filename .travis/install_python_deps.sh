@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ev
 
-if [[ ("$PYDEVD_PYTHON_VERSION" != "3.8" && "$PYDEVD_PYTHON_VERSION" != "2.6") ]]; then
+if [[ ("$PYDEVD_USE_CONDA" != "NO" && "$PYDEVD_PYTHON_VERSION" != "2.6") ]]; then
     source activate build_env
     conda install --yes numpy ipython pytest cython psutil
 fi
