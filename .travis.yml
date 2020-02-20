@@ -80,6 +80,7 @@ matrix:
 #         - CHECK_CYTHON_GENERATED=YES
 #         - PYDEVD_USE_CONDA=NO
 
+    # i.e.: https://www.python.org/download/pre-releases/
     - python: 3.9-dev
       env:
         - PYDEVD_PYTHON_VERSION=3.9
