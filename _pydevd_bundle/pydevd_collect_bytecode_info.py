@@ -230,3 +230,213 @@ def collect_try_except_info(co, use_func_first_line=False):
         del stack_in_setup[-1]
 
     return try_except_info_lst
+
+
+if sys.version_info[:2] >= (3, 9):
+
+    def collect_try_except_info(co, use_func_first_line=False):
+        # We no longer have 'END_FINALLY', so, we need to do things differently in Python 3.9
+        if not hasattr(co, 'co_lnotab'):
+            return []
+
+        if use_func_first_line:
+            firstlineno = co.co_firstlineno
+        else:
+            firstlineno = 0
+
+        try_except_info_lst = []
+
+        op_offset_to_line = dict(dis.findlinestarts(co))
+
+        offset_to_instruction_idx = {}
+
+        instructions = list(_iter_instructions(co))
+
+        line_to_instructions = {}
+
+        curr_line_index = firstlineno
+        for i, instruction in enumerate(instructions):
+            offset_to_instruction_idx[instruction.offset] = i
+
+            new_line_index = op_offset_to_line.get(instruction.offset)
+            if new_line_index is not None:
+                if new_line_index is not None:
+                    curr_line_index = new_line_index - firstlineno
+            line_to_instructions.setdefault(curr_line_index, []).append(instruction)
+
+        for i, instruction in enumerate(instructions):
+            curr_op_name = instruction.opname
+            if curr_op_name == 'SETUP_FINALLY':
+                exception_end_instruction_index = offset_to_instruction_idx[instruction.argval]
+
+                jump_instruction = instructions[exception_end_instruction_index - 1]
+                if jump_instruction.opname not in('JUMP_FORWARD', 'JUMP_ABSOLUTE'):
+                    continue
+
+
+                next_3 = [instruction.opname for instruction in instructions[exception_end_instruction_index:exception_end_instruction_index + 3]]
+                if next_3 == ['POP_TOP', 'POP_TOP', 'POP_TOP']:  # try..except without checking exception.
+
+                    if jump_instruction.opname == 'JUMP_ABSOLUTE':
+                        # On latest versions of Python 3 the interpreter has a go-backwards step,
+                        # used to show the initial line of a for/while, etc (which is this
+                        # JUMP_ABSOLUTE)... we're not really interested in it, but rather on where
+                        # it points to.
+                        except_end_instruction = instructions[offset_to_instruction_idx[jump_instruction.argval]]
+                        idx = offset_to_instruction_idx[except_end_instruction.argval]
+                        # Search for the POP_EXCEPT which should be at the end of the block.
+                        for pop_except_instruction in reversed(instructions[:idx]):
+                            if pop_except_instruction.opname == 'POP_EXCEPT':
+                                except_end_instruction = pop_except_instruction
+                                break
+                        else:
+                            continue  # i.e.: Continue outer loop
+
+                    else:
+                        except_end_instruction = instructions[offset_to_instruction_idx[jump_instruction.argval]]
+
+                elif next_3 and next_3[0] == 'DUP_TOP':  # try..except AssertionError.
+                    for jump_if_not_exc_instruction in instructions[exception_end_instruction_index + 1:]:
+                        if jump_if_not_exc_instruction.opname == 'JUMP_IF_NOT_EXC_MATCH':
+                            except_end_instruction = instructions[offset_to_instruction_idx[jump_if_not_exc_instruction.argval]]
+                            break
+                    else:
+                        continue  # i.e.: Continue outer loop
+
+                else:
+                    # i.e.: we're not interested in try..finally statements, only try..except.
+                    continue
+
+                try_except_info = TryExceptInfo(
+                    _get_line(op_offset_to_line, instruction.offset, firstlineno, search=True),
+                    is_finally=False
+                )
+                try_except_info.except_bytecode_offset = instruction.argval
+                try_except_info.except_line = _get_line(
+                    op_offset_to_line,
+                    try_except_info.except_bytecode_offset,
+                    firstlineno,
+                )
+
+                try_except_info.except_end_bytecode_offset = except_end_instruction.offset
+                try_except_info.except_end_line = _get_line(op_offset_to_line, except_end_instruction.offset, firstlineno, search=True)
+                try_except_info_lst.append(try_except_info)
+
+                for raise_instruction in instructions[i:offset_to_instruction_idx[try_except_info.except_end_bytecode_offset]]:
+                    if raise_instruction.opname == 'RAISE_VARARGS':
+                        if raise_instruction.argval == 0:
+                            try_except_info.raise_lines_in_except.append(
+                                _get_line(op_offset_to_line, raise_instruction.offset, firstlineno, search=True))
+
+        return try_except_info_lst
+
+
+class _Uncompyler(object):
+
+    def __init__(self, co, use_func_first_line):
+        self.co = co
+        self.use_func_first_line = use_func_first_line
+        self.instructions = list(_iter_instructions(co))
+
+    def _decorate_jump_target(self, instruction, instruction_repr):
+        if instruction.is_jump_target:
+            return '|%s|%s' % (instruction.offset, instruction_repr)
+
+        return instruction_repr
+
+    def _next_instruction_to_str(self, curr_line_lst):
+        dec = self._decorate_jump_target
+
+        instruction = self.instructions.pop(0)
+        if instruction.opname in ('LOAD_GLOBAL', 'LOAD_FAST', 'LOAD_CONST'):
+            if self.instructions:
+                next_instruction = self.instructions[0]
+                if next_instruction.opname == 'STORE_FAST':
+                    self.instructions.pop(0)
+                    return '%s = %s' % (dec(next_instruction, next_instruction.argrepr), dec(instruction, instruction.argrepr))
+
+                if next_instruction.opname == 'CALL_FUNCTION':
+                    if next_instruction.argval == 0:
+                        self.instructions.pop(0)
+                        return dec(instruction, '%s()' % (instruction.argrepr))
+
+                if next_instruction.opname == 'RETURN_VALUE':
+                    self.instructions.pop(0)
+                    return dec(instruction, 'return %s' % (instruction.argrepr))
+
+                if next_instruction.opname == 'RAISE_VARARGS' and next_instruction.argval == 1:
+                    self.instructions.pop(0)
+                    return dec(next_instruction, 'raise %s' % dec(instruction, instruction.argrepr))
+
+        if instruction.opname == 'RAISE_VARARGS':
+            if instruction.argval == 0:
+                return 'raise'
+
+        if instruction.opname == 'SETUP_FINALLY':
+            return dec(instruction, 'try(%s):' % (instruction.argrepr,))
+
+        if instruction.argrepr:
+            return dec(instruction, '%s(%s)' % (instruction.opname, instruction.argrepr,))
+
+        if instruction.argval:
+            return dec(instruction, '%s{%s}' % (instruction.opname, instruction.argval,))
+
+        return dec(instruction, instruction.opname)
+
+    def uncompyle(self):
+        co = self.co
+        if self.use_func_first_line:
+            firstlineno = co.co_firstlineno
+        else:
+            firstlineno = 0
+
+        # print('----')
+        # for instruction in self.instructions:
+        #     print(instruction)
+        # print('----\n\n')
+
+        op_offset_to_line = dict(dis.findlinestarts(co))
+        curr_line_index = 0
+
+        line_to_contents = {}
+
+        instructions = self.instructions
+        while instructions:
+            instruction = instructions[0]
+            new_line_index = op_offset_to_line.get(instruction.offset)
+            if new_line_index is not None:
+                if new_line_index is not None:
+                    curr_line_index = new_line_index - firstlineno
+
+            lst = line_to_contents.setdefault(curr_line_index, [])
+            lst.append(self._next_instruction_to_str(lst))
+
+        from io import StringIO
+        stream = StringIO()
+        last_line = 0
+        for line, contents in line_to_contents.items():
+            while last_line < line - 1:
+                stream.write(u'%s.\n' % (last_line + 1,))
+                last_line += 1
+
+            stream.write(u'%s. %s\n' % (line, ', '.join(contents)))
+            last_line = line
+
+        return stream.getvalue()
+
+
+def uncompyle(co, use_func_first_line=False):
+    '''
+    A simple uncompyle of bytecode.
+
+    It does not attempt to provide a full uncompyle to Python, rather, it provides a low-level
+    representation of the bytecode, respecting the lines (so, its target is making the bytecode
+    easier to grasp and not providing the original source code).
+
+    Note that it does show jump locations/targets and converts some common bytecode constructs to
+    Python code to make it a bit easier to understand.
+    '''
+    # Reference for bytecodes:
+    # https://docs.python.org/3/library/dis.html
+    return _Uncompyler(co, use_func_first_line).uncompyle()
+
