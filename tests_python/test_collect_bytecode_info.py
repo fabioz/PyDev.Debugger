@@ -367,6 +367,7 @@ def method():
             '[{return: 4}, {return: 6}]'
 
 
+@pytest.mark.skipif(IS_JYTHON, reason='Jython does not have bytecode support.')
 def test_uncompyle():
 
     def method4():
@@ -378,6 +379,7 @@ def test_uncompyle():
     assert uncompyle(method4.__code__, use_func_first_line=True).count('\n') == 4
 
 
+@pytest.mark.skipif(IS_JYTHON, reason='Jython does not have bytecode support.')
 def test_uncompyle2():
 
     def method():

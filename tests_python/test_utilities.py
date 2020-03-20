@@ -28,6 +28,7 @@ def test_expression_to_evaluate():
 
 def test_is_main_thread():
     from _pydevd_bundle.pydevd_utils import is_current_thread_main_thread
+    from _pydevd_bundle.pydevd_utils import dump_threads
     if not is_current_thread_main_thread():
         error_msg = 'Current thread does not seem to be a main thread. Details:\n'
         current_thread = threading.current_thread()
@@ -39,6 +40,14 @@ def test_is_main_thread():
             error_msg += 'Current main thread not instance of: %s (%s)' % (
                 threading._MainThread, current_thread.__class__.__mro__,)
 
+        try:
+            from StringIO import StringIO
+        except:
+            from io import StringIO
+
+        stream = StringIO()
+        dump_threads(stream=stream)
+        error_msg += '\n\n' + stream.getvalue()
         raise AssertionError(error_msg)
 
     class NonMainThread(threading.Thread):
