@@ -373,9 +373,27 @@ def test_uncompyle():
         return (1,
                 2,
                 3,
-                call())
+                call('tnh %s' % 1))
 
     assert uncompyle(method4.__code__, use_func_first_line=True).count('\n') == 4
+
+
+def test_uncompyle2():
+
+    def method():
+        print(10)
+
+        def method4(a, b):
+            return (1,
+                    2,
+                    3,
+                    call('somestr %s' % 1))
+
+        print(20)
+
+    s = uncompyle(method.__code__, use_func_first_line=True)
+    assert s.count('\n') == 9
+    assert 'somestr' in s  # i.e.: the contents of the inner code have been added too
 
 
 def _create_entry(instruction):

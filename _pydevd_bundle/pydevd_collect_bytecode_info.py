@@ -2,6 +2,7 @@ from opcode import HAVE_ARGUMENT, EXTENDED_ARG, hasconst, opname, hasname, hasjr
     hascompare, hasfree, cmp_op
 import dis
 import sys
+import inspect
 from collections import namedtuple
 from _pydevd_bundle.pydevd_constants import IS_PY38_OR_GREATER
 
@@ -75,7 +76,7 @@ def debug(s):
     pass
 
 
-_Instruction = namedtuple('_Instruction', 'opname, opcode, starts_line, argval, is_jump_target, offset')
+_Instruction = namedtuple('_Instruction', 'opname, opcode, starts_line, argval, is_jump_target, offset, argrepr')
 
 
 def _iter_as_bytecode_as_instructions_py2(co):
@@ -99,7 +100,7 @@ def _iter_as_bytecode_as_instructions_py2(co):
 
         i = i + 1
         if op < HAVE_ARGUMENT:
-            yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), None, is_jump_target, initial_bytecode_offset)
+            yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), None, is_jump_target, initial_bytecode_offset, '')
 
         else:
             oparg = ord(code[i]) + ord(code[i + 1]) * 256 + extended_arg
@@ -110,22 +111,22 @@ def _iter_as_bytecode_as_instructions_py2(co):
                 extended_arg = oparg * 65536
 
             if op in hasconst:
-                yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), co.co_consts[oparg], is_jump_target, initial_bytecode_offset)
+                yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), co.co_consts[oparg], is_jump_target, initial_bytecode_offset, repr(co.co_consts[oparg]))
             elif op in hasname:
-                yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), co.co_names[oparg], is_jump_target, initial_bytecode_offset)
+                yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), co.co_names[oparg], is_jump_target, initial_bytecode_offset, repr(co.co_names[oparg]))
             elif op in hasjrel:
                 argval = i + oparg
-                yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), argval, is_jump_target, initial_bytecode_offset)
+                yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), argval, is_jump_target, initial_bytecode_offset, "to " + repr(argval))
             elif op in haslocal:
-                yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), co.co_varnames[oparg], is_jump_target, initial_bytecode_offset)
+                yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), co.co_varnames[oparg], is_jump_target, initial_bytecode_offset, repr(co.co_varnames[oparg]))
             elif op in hascompare:
-                yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), cmp_op[oparg], is_jump_target, initial_bytecode_offset)
+                yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), cmp_op[oparg], is_jump_target, initial_bytecode_offset, cmp_op[oparg])
             elif op in hasfree:
                 if free is None:
                     free = co.co_cellvars + co.co_freevars
-                yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), free[oparg], is_jump_target, initial_bytecode_offset)
+                yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), free[oparg], is_jump_target, initial_bytecode_offset, repr(free[oparg]))
             else:
-                yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), oparg, is_jump_target, initial_bytecode_offset)
+                yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), oparg, is_jump_target, initial_bytecode_offset, repr(oparg))
 
 
 def _iter_instructions(co):
@@ -273,7 +274,6 @@ if sys.version_info[:2] >= (3, 9):
                 if jump_instruction.opname not in('JUMP_FORWARD', 'JUMP_ABSOLUTE'):
                     continue
 
-
                 next_3 = [instruction.opname for instruction in instructions[exception_end_instruction_index:exception_end_instruction_index + 3]]
                 if next_3 == ['POP_TOP', 'POP_TOP', 'POP_TOP']:  # try..except without checking exception.
 
@@ -333,9 +333,9 @@ if sys.version_info[:2] >= (3, 9):
 
 class _Uncompyler(object):
 
-    def __init__(self, co, use_func_first_line):
+    def __init__(self, co, firstlineno):
         self.co = co
-        self.use_func_first_line = use_func_first_line
+        self.firstlineno = firstlineno
         self.instructions = list(_iter_instructions(co))
 
     def _decorate_jump_target(self, instruction, instruction_repr):
@@ -344,7 +344,7 @@ class _Uncompyler(object):
 
         return instruction_repr
 
-    def _next_instruction_to_str(self, curr_line_lst):
+    def _next_instruction_to_str(self, line_to_contents):
         dec = self._decorate_jump_target
 
         instruction = self.instructions.pop(0)
@@ -368,6 +368,13 @@ class _Uncompyler(object):
                     self.instructions.pop(0)
                     return dec(next_instruction, 'raise %s' % dec(instruction, instruction.argrepr))
 
+        if instruction.opname == 'LOAD_CONST':
+            if inspect.iscode(instruction.argval):
+                code_line_to_contents = _Uncompyler(instruction.argval, self.firstlineno).build_line_to_contents()
+                for contents in code_line_to_contents.values():
+                    contents.insert(0, '    ')
+                line_to_contents.update(code_line_to_contents)
+
         if instruction.opname == 'RAISE_VARARGS':
             if instruction.argval == 0:
                 return 'raise'
@@ -383,12 +390,9 @@ class _Uncompyler(object):
 
         return dec(instruction, instruction.opname)
 
-    def uncompyle(self):
+    def build_line_to_contents(self):
         co = self.co
-        if self.use_func_first_line:
-            firstlineno = co.co_firstlineno
-        else:
-            firstlineno = 0
+        firstlineno = self.firstlineno
 
         # print('----')
         # for instruction in self.instructions:
@@ -409,8 +413,11 @@ class _Uncompyler(object):
                     curr_line_index = new_line_index - firstlineno
 
             lst = line_to_contents.setdefault(curr_line_index, [])
-            lst.append(self._next_instruction_to_str(lst))
+            lst.append(self._next_instruction_to_str(line_to_contents))
+        return line_to_contents
 
+    def uncompyle(self):
+        line_to_contents = self.build_line_to_contents()
         from io import StringIO
         stream = StringIO()
         last_line = 0
@@ -419,7 +426,11 @@ class _Uncompyler(object):
                 stream.write(u'%s.\n' % (last_line + 1,))
                 last_line += 1
 
-            stream.write(u'%s. %s\n' % (line, ', '.join(contents)))
+            if contents and not contents[0].strip():
+                # i.e.: don't put a comma after the indentation.
+                stream.write(u'%s. %s%s\n' % (line, contents[0], ', '.join(contents[1:])))
+            else:
+                stream.write(u'%s. %s\n' % (line, ', '.join(contents)))
             last_line = line
 
         return stream.getvalue()
@@ -438,5 +449,10 @@ def uncompyle(co, use_func_first_line=False):
     '''
     # Reference for bytecodes:
     # https://docs.python.org/3/library/dis.html
-    return _Uncompyler(co, use_func_first_line).uncompyle()
+    if use_func_first_line:
+        firstlineno = co.co_firstlineno
+    else:
+        firstlineno = 0
+
+    return _Uncompyler(co, firstlineno).uncompyle()
 
