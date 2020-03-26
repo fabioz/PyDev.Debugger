@@ -158,7 +158,7 @@ try:
     so try load pytest version first or fallback to default one
     """
     from _pytest._io import TerminalWriter
-except (ImportError, ModuleNotFoundError):
+except ImportError:
     from py.io import TerminalWriter
 
 
