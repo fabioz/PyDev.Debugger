@@ -1546,6 +1546,7 @@ def _clear_groups(variables):
     for v in variables:
         if v['name'] in DAPGrouper.SCOPES_SORTED:
             groups_found.add(v['name'])
+            assert not v['type']
             continue
 
         else:
