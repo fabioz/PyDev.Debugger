@@ -576,9 +576,9 @@ def get_source_reference_filename_from_linecache(source_reference):
     return _line_cache_source_reference_to_server_filename.get(source_reference)
 
 
-def create_source_reference_for_frame_id(frame_id):
+def create_source_reference_for_frame_id(frame_id, original_filename):
     source_reference = _next_source_reference()
-    pydev_log.debug('Created frame id source reference: %s for frame id: %s', source_reference, frame_id)
+    pydev_log.debug('Created frame id source reference: %s for frame id: %s (%s)', source_reference, frame_id, original_filename)
     _source_reference_to_frame_id[source_reference] = frame_id
     return source_reference
 
