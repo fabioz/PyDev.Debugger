@@ -353,7 +353,6 @@ def find_helper_script(filedir, script_name):
 
 
 def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
-    assert '\'' not in python_code, 'Having a single quote messes with our command.'
     filedir = os.path.dirname(__file__)
 
     # Valid arguments for arch are i386, i386:x86-64, i386:x64-32, i8086,
@@ -392,15 +391,15 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
     ]
 
     cmd.extend([
-        "-o 'process attach --pid %d'" % pid,
-        "-o 'command script import \"%s\"'" % (lldb_prepare_file,),
-        "-o 'load_lib_and_attach \"%s\" %s \"%s\" %s'" % (target_dll,
-            is_debug, python_code, show_debug_info),
+        "-o", 'process attach --pid %d' % pid,
+        "-o", 'command script import "%s"' % (lldb_prepare_file,),
+        "-o", 'load_lib_and_attach "%s" %s %s %s' % (target_dll,
+            is_debug, escape_for_gdb_and_lldb(python_code), show_debug_info),
     ])
 
     cmd.extend([
-        "-o 'process detach'",
-        "-o 'script import os; os._exit(1)'",
+        "-o", 'process detach',
+        "-o", 'script import os; os._exit(1)',
     ])
 
     # print ' '.join(cmd)
@@ -412,8 +411,7 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
     env.pop('PYTHONPATH', None)
     print('Running: %s' % (' '.join(cmd)))
     p = subprocess.Popen(
-        ' '.join(cmd),
-        shell=True,
+        cmd,
         env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
