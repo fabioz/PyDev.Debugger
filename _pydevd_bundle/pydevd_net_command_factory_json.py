@@ -20,10 +20,11 @@ from _pydevd_bundle.pydevd_net_command import NetCommand, NULL_NET_COMMAND
 from _pydevd_bundle.pydevd_net_command_factory_xml import NetCommandFactory
 from _pydevd_bundle.pydevd_utils import get_non_pydevd_threads
 import pydevd_file_utils
-from _pydevd_bundle.pydevd_comm import build_exception_info_response, pydevd_find_thread_by_id
+from _pydevd_bundle.pydevd_comm import build_exception_info_response
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydevd_bundle import pydevd_frame_utils
 import linecache
+from _pydevd_bundle.pydevd_thread_lifecycle import pydevd_find_thread_by_id
 
 
 class ModulesManager(object):

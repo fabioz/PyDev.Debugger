@@ -188,6 +188,18 @@ def is_true_in_env(env_key):
         return os.getenv(env_key, '').lower() in ENV_TRUE_LOWER_VALUES
 
 
+def as_float_in_env(env_key, default):
+    value = os.getenv(env_key)
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except Exception:
+        raise RuntimeError(
+            'Error: expected the env variable: %s to be set to an int value. Found: %s' % (
+                env_key, value))
+
+
 # If true in env, use gevent mode.
 SUPPORT_GEVENT = is_true_in_env('GEVENT_SUPPORT')
 
@@ -229,6 +241,30 @@ ASYNC_EVAL_TIMEOUT_SEC = 60
 NEXT_VALUE_SEPARATOR = "__pydev_val__"
 BUILTINS_MODULE_NAME = '__builtin__' if IS_PY2 else 'builtins'
 SHOW_DEBUG_INFO_ENV = is_true_in_env(('PYCHARM_DEBUG', 'PYDEV_DEBUG', 'PYDEVD_DEBUG'))
+
+# This timeout is used to track the time to send a message saying that the evaluation
+# is taking too long and possible mitigations.
+PYDEVD_WARN_EVALUATION_TIMEOUT = as_float_in_env('PYDEVD_WARN_EVALUATION_TIMEOUT', 2.)
+
+# This timeout is used only when the mode that all threads are stopped/resumed at once is used
+# (i.e.: multi_threads_single_notification)
+#
+# In this mode, if some evaluation doesn't finish until this timeout, we notify the user
+# and then resume all threads until the evaluation finishes.
+#
+# A negative value will disable the timeout and a value of 0 will automatically run all threads
+# (without any notification) when the evaluation is started and pause all threads when the
+# evaluation is finished. A positive value will run run all threads after the timeout
+# elapses.
+PYDEVD_UNBLOCK_THREADS_TIMEOUT = as_float_in_env('PYDEVD_UNBLOCK_THREADS_TIMEOUT', -1.)
+
+
+# Timeout to interrupt a thread (so, if some evaluation doesn't finish until this
+# timeout, the thread doing the evaluation is interrupted).
+# A value <= 0 means this is disabled.
+# See: _pydevd_bundle.pydevd_timeout.create_interrupt_this_thread_callback for details
+# on how the thread interruption works (there are some caveats related to it).
+PYDEVD_INTERRUPT_THREAD_TIMEOUT = as_float_in_env('PYDEVD_INTERRUPT_THREAD_TIMEOUT', 0.)
 
 if SHOW_DEBUG_INFO_ENV:
     # show debug info before the debugger start
