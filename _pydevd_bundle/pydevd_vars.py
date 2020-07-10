@@ -312,7 +312,6 @@ def _verify_timeouts(original_func):
 
             on_timeout_unblock_threads.called = False
 
-
             unblock_threads_timeout = pydevd_constants.PYDEVD_UNBLOCK_THREADS_TIMEOUT
             pydev_log.info('Doing evaluate with timeout: %s.', unblock_threads_timeout)
 
@@ -331,7 +330,7 @@ def _verify_timeouts(original_func):
                         return original_func(py_db, *args, **kwargs)
 
             finally:
-                if on_timeout_unblock_threads.called:
+                if on_timeout_unblock_threads is not None and on_timeout_unblock_threads.called:
                     mark_thread_suspended(curr_thread, CMD_SET_BREAK)
                     py_db.threads_suspended_single_notification.increment_suspend_time()
                     suspend_all_threads(py_db, except_thread=curr_thread)
