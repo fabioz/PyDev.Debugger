@@ -115,6 +115,49 @@ if IS_JYTHON:
 USE_CUSTOM_SYS_CURRENT_FRAMES = not hasattr(sys, '_current_frames') or IS_PYPY
 USE_CUSTOM_SYS_CURRENT_FRAMES_MAP = USE_CUSTOM_SYS_CURRENT_FRAMES and (IS_PYPY or IS_IRONPYTHON)
 
+if USE_CUSTOM_SYS_CURRENT_FRAMES:
+
+    # Some versions of Jython don't have it (but we can provide a replacement)
+    if IS_JYTHON:
+        from java.lang import NoSuchFieldException
+        from org.python.core import ThreadStateMapping
+        try:
+            cachedThreadState = ThreadStateMapping.getDeclaredField('globalThreadStates')  # Dev version
+        except NoSuchFieldException:
+            cachedThreadState = ThreadStateMapping.getDeclaredField('cachedThreadState')  # Release Jython 2.7.0
+        cachedThreadState.accessible = True
+        thread_states = cachedThreadState.get(ThreadStateMapping)
+
+        def _current_frames():
+            as_array = thread_states.entrySet().toArray()
+            ret = {}
+            for thread_to_state in as_array:
+                thread = thread_to_state.getKey()
+                if thread is None:
+                    continue
+                thread_state = thread_to_state.getValue()
+                if thread_state is None:
+                    continue
+
+                frame = thread_state.frame
+                if frame is None:
+                    continue
+
+                ret[thread.getId()] = frame
+            return ret
+
+    elif USE_CUSTOM_SYS_CURRENT_FRAMES_MAP:
+        constructed_tid_to_last_frame = {}
+
+        # IronPython doesn't have it. Let's use our workaround...
+        def _current_frames():
+            return constructed_tid_to_last_frame
+
+    else:
+        raise RuntimeError('Unable to proceed (sys._current_frames not available in this Python implementation).')
+else:
+    _current_frames = sys._current_frames
+
 IS_PYTHON_STACKLESS = "stackless" in sys.version.lower()
 CYTHON_SUPPORTED = False
 

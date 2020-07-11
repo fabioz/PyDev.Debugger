@@ -166,7 +166,7 @@ if USE_CUSTOM_SYS_CURRENT_FRAMES and IS_PYPY:
     # (instead of the actual real frames that need the tracing to be correct).
     _tid_to_frame_for_dump_threads = sys._current_frames
 else:
-    from _pydevd_bundle.pydevd_additional_thread_info_regular import _current_frames as _tid_to_frame_for_dump_threads
+    from _pydevd_bundle.pydevd_constants import _current_frames as _tid_to_frame_for_dump_threads
 
 
 def dump_threads(stream=None, show_pydevd_threads=True):

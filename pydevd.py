@@ -80,7 +80,7 @@ from _pydevd_bundle.pydevd_timeout import TimeoutTracker
 from _pydevd_bundle.pydevd_thread_lifecycle import suspend_all_threads, mark_thread_suspended
 
 if USE_CUSTOM_SYS_CURRENT_FRAMES_MAP:
-    from _pydevd_bundle.pydevd_additional_thread_info_regular import _tid_to_last_frame
+    from _pydevd_bundle.pydevd_constants import constructed_tid_to_last_frame
 
 __version_info__ = (1, 9, 1)
 __version_info_str__ = []
@@ -1780,7 +1780,7 @@ class PyDB(object):
             as the paused location on the top-level frame (exception info must be passed on 'arg').
         """
         if USE_CUSTOM_SYS_CURRENT_FRAMES_MAP:
-            _tid_to_last_frame[thread.ident] = sys._getframe()
+            constructed_tid_to_last_frame[thread.ident] = sys._getframe()
         self.process_internal_commands()
 
         thread_id = get_current_thread_id(thread)
