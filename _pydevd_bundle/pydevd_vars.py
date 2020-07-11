@@ -333,10 +333,10 @@ def _run_with_unblock_threads(original_func, py_db, curr_thread, frame, expressi
 
     try:
         if on_timeout_unblock_threads is None:
-            _run_with_interrupt_thread(original_func, py_db, curr_thread, frame, expression, is_exec)
+            return _run_with_interrupt_thread(original_func, py_db, curr_thread, frame, expression, is_exec)
         else:
             with timeout_tracker.call_on_timeout(unblock_threads_timeout, on_timeout_unblock_threads):
-                _run_with_interrupt_thread(original_func, py_db, curr_thread, frame, expression, is_exec)
+                return _run_with_interrupt_thread(original_func, py_db, curr_thread, frame, expression, is_exec)
 
     finally:
         if on_timeout_unblock_threads is not None and on_timeout_unblock_threads.called:
