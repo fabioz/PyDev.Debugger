@@ -161,49 +161,57 @@ def get_non_pydevd_threads():
     return [t for t in threads if t and not getattr(t, 'is_pydev_daemon_thread', False)]
 
 
-def dump_threads(stream=None):
+if USE_CUSTOM_SYS_CURRENT_FRAMES and IS_PYPY:
+    # On PyPy we can use its fake_frames to get the traceback
+    # (instead of the actual real frames that need the tracing to be correct).
+    _tid_to_frame_for_dump_threads = sys._current_frames
+else:
+    from _pydevd_bundle.pydevd_additional_thread_info_regular import _current_frames as _tid_to_frame_for_dump_threads
+
+
+def dump_threads(stream=None, show_pydevd_threads=True):
     '''
     Helper to dump thread info.
     '''
     if stream is None:
         stream = sys.stderr
-    thread_id_to_name = {}
+    thread_id_to_name_and_is_pydevd_thread = {}
     try:
         for t in threading.enumerate():
-            thread_id_to_name[t.ident] = '%s  (daemon: %s, pydevd thread: %s)' % (
-                t.name, t.daemon, getattr(t, 'is_pydev_daemon_thread', False))
+            is_pydevd_thread = getattr(t, 'is_pydev_daemon_thread', False)
+            thread_id_to_name_and_is_pydevd_thread[t.ident] = (
+                '%s  (daemon: %s, pydevd thread: %s)' % (t.name, t.daemon, is_pydevd_thread),
+                is_pydevd_thread
+            )
     except:
         pass
-
-    if USE_CUSTOM_SYS_CURRENT_FRAMES and IS_PYPY:
-        # On PyPy we can use its fake_frames to get the traceback
-        # (instead of the actual real frames that need the tracing to be correct).
-        _current_frames = sys._current_frames
-    else:
-        from _pydevd_bundle.pydevd_additional_thread_info_regular import _current_frames
 
     stream.write('===============================================================================\n')
     stream.write('Threads running\n')
     stream.write('================================= Thread Dump =================================\n')
     stream.flush()
 
-    for thread_id, stack in _current_frames().items():
+    for thread_id, frame in _tid_to_frame_for_dump_threads().items():
+        name, is_pydevd_thread = thread_id_to_name_and_is_pydevd_thread.get(thread_id, (thread_id, False))
+        if not show_pydevd_threads and is_pydevd_thread:
+            continue
+
         stream.write('\n-------------------------------------------------------------------------------\n')
-        stream.write(" Thread %s" % thread_id_to_name.get(thread_id, thread_id))
+        stream.write(" Thread %s" % (name,))
         stream.write('\n\n')
 
-        for i, (filename, lineno, name, line) in enumerate(traceback.extract_stack(stack)):
+        for i, (filename, lineno, name, line) in enumerate(traceback.extract_stack(frame)):
 
             stream.write(' File "%s", line %d, in %s\n' % (filename, lineno, name))
             if line:
                 stream.write("   %s\n" % (line.strip()))
 
-            if i == 0 and 'self' in stack.f_locals:
+            if i == 0 and 'self' in frame.f_locals:
                 stream.write('   self: ')
                 try:
-                    stream.write(str(stack.f_locals['self']))
+                    stream.write(str(frame.f_locals['self']))
                 except:
-                    stream.write('Unable to get str of: %s' % (type(stack.f_locals['self']),))
+                    stream.write('Unable to get str of: %s' % (type(frame.f_locals['self']),))
                 stream.write('\n')
         stream.flush()
 

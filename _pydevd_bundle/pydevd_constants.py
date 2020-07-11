@@ -196,7 +196,7 @@ def as_float_in_env(env_key, default):
         return float(value)
     except Exception:
         raise RuntimeError(
-            'Error: expected the env variable: %s to be set to an int value. Found: %s' % (
+            'Error: expected the env variable: %s to be set to a float value. Found: %s' % (
                 env_key, value))
 
 
@@ -246,6 +246,9 @@ SHOW_DEBUG_INFO_ENV = is_true_in_env(('PYCHARM_DEBUG', 'PYDEV_DEBUG', 'PYDEVD_DE
 # is taking too long and possible mitigations.
 PYDEVD_WARN_EVALUATION_TIMEOUT = as_float_in_env('PYDEVD_WARN_EVALUATION_TIMEOUT', 2.)
 
+# If True in env shows a thread dump when the evaluation times out.
+PYDEVD_THREAD_DUMP_ON_WARN_EVALUATION_TIMEOUT = is_true_in_env('PYDEVD_THREAD_DUMP_ON_WARN_EVALUATION_TIMEOUT')
+
 # This timeout is used only when the mode that all threads are stopped/resumed at once is used
 # (i.e.: multi_threads_single_notification)
 #
@@ -258,13 +261,12 @@ PYDEVD_WARN_EVALUATION_TIMEOUT = as_float_in_env('PYDEVD_WARN_EVALUATION_TIMEOUT
 # elapses.
 PYDEVD_UNBLOCK_THREADS_TIMEOUT = as_float_in_env('PYDEVD_UNBLOCK_THREADS_TIMEOUT', -1.)
 
-
 # Timeout to interrupt a thread (so, if some evaluation doesn't finish until this
 # timeout, the thread doing the evaluation is interrupted).
 # A value <= 0 means this is disabled.
 # See: _pydevd_bundle.pydevd_timeout.create_interrupt_this_thread_callback for details
 # on how the thread interruption works (there are some caveats related to it).
-PYDEVD_INTERRUPT_THREAD_TIMEOUT = as_float_in_env('PYDEVD_INTERRUPT_THREAD_TIMEOUT', 0.)
+PYDEVD_INTERRUPT_THREAD_TIMEOUT = as_float_in_env('PYDEVD_INTERRUPT_THREAD_TIMEOUT', -1)
 
 if SHOW_DEBUG_INFO_ENV:
     # show debug info before the debugger start
@@ -401,6 +403,10 @@ if IS_PY3K:
     def dict_items(d):
         return list(d.items())
 
+    def as_str(s):
+        assert isinstance(s, str)
+        return s
+
 else:
     dict_keys = None
     try:
@@ -438,6 +444,11 @@ else:
 
     def dict_items(d):
         return d.items()
+
+    def as_str(s):
+        if isinstance(s, unicode):
+            return s.encode('utf-8')
+        return s
 
 
 def sorted_dict_repr(d):

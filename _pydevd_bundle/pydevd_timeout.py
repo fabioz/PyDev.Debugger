@@ -221,6 +221,7 @@ def create_interrupt_this_thread_callback():
         main_thread = threading.current_thread()
 
         def raise_on_this_thread():
+            pydev_log.debug('Interrupt main thread.')
             pydevd_utils.interrupt_main_thread(main_thread)
 
     else:

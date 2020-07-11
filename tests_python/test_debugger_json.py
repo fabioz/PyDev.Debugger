@@ -211,7 +211,9 @@ class JsonFacade(object):
             assert set(lines_in_response) == set(expected_lines_in_response)
 
             for b in body.breakpoints:
-                assert b['verified'] == verified
+                if b['verified'] != verified:
+                    raise AssertionError('Expected verified breakpoint to be: %s. Found: %s.\nBreakpoint: %s' % (
+                        verified, b['verified'], b))
         return response
 
     def write_set_exception_breakpoints(self, filters=None, exception_options=None):
@@ -4448,6 +4450,43 @@ def test_debugger_case_deadlock_thread_eval(case_setup):
         json_facade.evaluate('processor.process("process in evaluate")', json_hit.frame_id)
 
         json_facade.write_continue()
+
+        writer.finished_ok = True
+
+
+@pytest.mark.skipif(IS_PY26, reason='Only Python 2.7 onwards.')
+def test_debugger_case_deadlock_notify_evaluate_timeout(case_setup, pyfile):
+
+    @pyfile
+    def case_slow_evaluate():
+
+        def slow_evaluate():
+            import time
+            time.sleep(2)
+
+        print('TEST SUCEEDED!')  # Break here
+
+    def get_environ(self):
+        env = os.environ.copy()
+        env['PYDEVD_WARN_EVALUATION_TIMEOUT'] = '0.5'
+        return env
+
+    with case_setup.test_file(case_slow_evaluate, get_environ=get_environ) as writer:
+        json_facade = JsonFacade(writer)
+        json_facade.write_launch(justMyCode=False)
+        json_facade.write_set_breakpoints(writer.get_line_index_with_content('Break here'))
+
+        json_facade.write_make_initial_run()
+        json_hit = json_facade.wait_for_thread_stopped()
+
+        # If threads aren't resumed, this will deadlock.
+        json_facade.evaluate('slow_evaluate()', json_hit.frame_id)
+
+        json_facade.write_continue()
+
+        messages = json_facade.mark_messages(
+            OutputEvent, lambda output_event: 'did not finish after' in output_event.body.output)
+        assert len(messages) == 1
 
         writer.finished_ok = True
 

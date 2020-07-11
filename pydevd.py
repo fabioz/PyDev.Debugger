@@ -66,7 +66,7 @@ from _pydevd_bundle.pydevd_comm import(InternalConsoleExec,
     set_global_debugger, WriterThread,
     start_client, start_server, InternalGetBreakpointException, InternalSendCurrExceptionTrace,
     InternalSendCurrExceptionTraceProceeded)
-from _pydevd_bundle.pydevd_daemon_thread import PyDBDaemonThread
+from _pydevd_bundle.pydevd_daemon_thread import PyDBDaemonThread, mark_as_pydevd_daemon_thread
 from _pydevd_bundle.pydevd_process_net_command_json import PyDevJsonCommandProcessor
 from _pydevd_bundle.pydevd_process_net_command import process_net_command
 from _pydevd_bundle.pydevd_net_command import NetCommand
@@ -2388,6 +2388,35 @@ def set_debug(setup):
 def enable_qt_support(qt_support_mode):
     from _pydev_bundle import pydev_monkey_qt
     pydev_monkey_qt.patch_qt(qt_support_mode)
+
+
+def start_dump_threads_thread(filename_template, timeout, recurrent):
+    '''
+    Helper to dump threads after a timeout.
+
+    :param filename_template:
+        A template filename, such as 'c:/temp/thread_dump_%s.txt', where the %s will
+        be replaced by the time for the dump.
+    :param timeout:
+        The timeout (in seconds) for the dump.
+    :param recurrent:
+        If True we'll keep on doing thread dumps.
+    '''
+
+    def _threads_on_timeout():
+        try:
+            while True:
+                time.sleep(timeout)
+                with open(filename_template % (time.time(),), 'w') as stream:
+                    dump_threads(stream)
+                if not recurrent:
+                    return
+        except Exception:
+            pydev_log.exception()
+
+    t = threading.Thread(target=_threads_on_timeout)
+    mark_as_pydevd_daemon_thread(t)
+    t.start()
 
 
 def dump_threads(stream=None):

@@ -52,7 +52,7 @@ class Processor(object):
         self._queue.put('finish')
 
 
-if __name__ == '__main__':
+def main():
     queue = Queue()
     echo_thread = EchoThread(queue)
     processor = Processor(queue)
@@ -62,4 +62,8 @@ if __name__ == '__main__':
     processor.process(2)  # Break here 1
     processor.process(3)
     processor.finish()
+
+
+if __name__ == '__main__':
+    main()
     print('TEST SUCEEDED!')

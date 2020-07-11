@@ -293,57 +293,84 @@ def eval_in_context(expression, globals, locals):
     return result
 
 
-def _verify_timeouts(original_func):
+def _run_with_interrupt_thread(original_func, py_db, curr_thread, frame, expression, is_exec):
+    on_interrupt_threads = None
+    timeout_tracker = py_db.timeout_tracker  # : :type timeout_tracker: TimeoutTracker
 
-    warn_evaluation_timeout = pydevd_constants.PYDEVD_WARN_EVALUATION_TIMEOUT
+    interrupt_thread_timeout = pydevd_constants.PYDEVD_INTERRUPT_THREAD_TIMEOUT
+
+    if interrupt_thread_timeout > 0:
+        on_interrupt_threads = pydevd_timeout.create_interrupt_this_thread_callback()
+        pydev_log.info('Doing evaluate with interrupt threads timeout: %s.', interrupt_thread_timeout)
+
+    if on_interrupt_threads is None:
+        return original_func(py_db, frame, expression, is_exec)
+    else:
+        with timeout_tracker.call_on_timeout(interrupt_thread_timeout, on_interrupt_threads):
+            return original_func(py_db, frame, expression, is_exec)
+
+
+def _run_with_unblock_threads(original_func, py_db, curr_thread, frame, expression, is_exec):
+    on_timeout_unblock_threads = None
+    timeout_tracker = py_db.timeout_tracker  # : :type timeout_tracker: TimeoutTracker
+
+    if py_db.multi_threads_single_notification:
+        unblock_threads_timeout = pydevd_constants.PYDEVD_UNBLOCK_THREADS_TIMEOUT
+    else:
+        unblock_threads_timeout = -1  # Don't use this if threads are managed individually.
+
+    if unblock_threads_timeout >= 0:
+        pydev_log.info('Doing evaluate with unblock threads timeout: %s.', unblock_threads_timeout)
+        tid = get_current_thread_id(curr_thread)
+
+        def on_timeout_unblock_threads():
+            on_timeout_unblock_threads.called = True
+            pydev_log.info('Resuming threads after evaluate timeout.')
+            resume_threads('*', except_thread=curr_thread)
+            py_db.threads_suspended_single_notification.on_thread_resume(tid)
+
+        on_timeout_unblock_threads.called = False
+
+    try:
+        if on_timeout_unblock_threads is None:
+            _run_with_interrupt_thread(original_func, py_db, curr_thread, frame, expression, is_exec)
+        else:
+            with timeout_tracker.call_on_timeout(unblock_threads_timeout, on_timeout_unblock_threads):
+                _run_with_interrupt_thread(original_func, py_db, curr_thread, frame, expression, is_exec)
+
+    finally:
+        if on_timeout_unblock_threads is not None and on_timeout_unblock_threads.called:
+            mark_thread_suspended(curr_thread, CMD_SET_BREAK)
+            py_db.threads_suspended_single_notification.increment_suspend_time()
+            suspend_all_threads(py_db, except_thread=curr_thread)
+            py_db.threads_suspended_single_notification.on_thread_suspend(tid, CMD_SET_BREAK)
+
+
+def _evaluate_with_timeouts(original_func):
+    '''
+    Provides a decorator that wraps the original evaluate to deal with slow evaluates.
+
+    If some evaluation is too slow, we may show a message, resume threads or interrupt them
+    as needed (based on the related configurations).
+    '''
 
     @functools.wraps(original_func)
-    def new_func(py_db, *args, **kwargs):
-        if py_db.multi_threads_single_notification:
-            curr_thread = threading.current_thread()
-            tid = get_current_thread_id(curr_thread)
-            timeout_tracker = py_db.timeout_tracker  # : :type timeout_tracker: TimeoutTracker
+    def new_func(py_db, frame, expression, is_exec):
+        warn_evaluation_timeout = pydevd_constants.PYDEVD_WARN_EVALUATION_TIMEOUT
+        curr_thread = threading.current_thread()
 
-            def on_timeout_unblock_threads():
-                on_timeout_unblock_threads.called = True
-                pydev_log.info('Resuming threads after evaluate timeout.')
-                resume_threads('*', except_thread=curr_thread)
-                py_db.threads_suspended_single_notification.on_thread_resume(tid)
+        def on_warn_evaluation_timeout():
+            py_db.writer.add_command(py_db.cmd_factory.make_evaluation_timeout_msg(
+                py_db, expression, curr_thread))
 
-            on_timeout_unblock_threads.called = False
-
-            unblock_threads_timeout = pydevd_constants.PYDEVD_UNBLOCK_THREADS_TIMEOUT
-            pydev_log.info('Doing evaluate with timeout: %s.', unblock_threads_timeout)
-
-            # TODO: We still don't interrupt threads after the interrupt thread timeout.
-            # interrupt_thread_timeout = pydevd_constants.PYDEVD_INTERRUPT_THREAD_TIMEOUT
-            # interrupt_thread_callback = pydevd_timeout.create_interrupt_this_thread_callback()
-
-            if unblock_threads_timeout < 0:
-                on_timeout_unblock_threads = None
-
-            try:
-                if on_timeout_unblock_threads is None:
-                    return original_func(py_db, *args, **kwargs)
-                else:
-                    with timeout_tracker.call_on_timeout(unblock_threads_timeout, on_timeout_unblock_threads):
-                        return original_func(py_db, *args, **kwargs)
-
-            finally:
-                if on_timeout_unblock_threads is not None and on_timeout_unblock_threads.called:
-                    mark_thread_suspended(curr_thread, CMD_SET_BREAK)
-                    py_db.threads_suspended_single_notification.increment_suspend_time()
-                    suspend_all_threads(py_db, except_thread=curr_thread)
-                    py_db.threads_suspended_single_notification.on_thread_suspend(tid, CMD_SET_BREAK)
-
-        else:
-            pydev_log.info('Doing evaluate without timeout tracking.')
-            return original_func(py_db, *args, **kwargs)
+        timeout_tracker = py_db.timeout_tracker  # : :type timeout_tracker: TimeoutTracker
+        with timeout_tracker.call_on_timeout(warn_evaluation_timeout, on_warn_evaluation_timeout):
+            return _run_with_unblock_threads(original_func, py_db, curr_thread, frame, expression, is_exec)
 
     return new_func
 
 
-@_verify_timeouts
+@_evaluate_with_timeouts
 def evaluate_expression(py_db, frame, expression, is_exec):
     '''
     There are some changes in this function depending on whether it's an exec or an eval.
