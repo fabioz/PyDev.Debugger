@@ -953,7 +953,7 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
         if try_exec:
             try:
                 pydevd_vars.evaluate_expression(py_db, frame, expression, is_exec=True)
-            except Exception as ex:
+            except (Exception, KeyboardInterrupt) as ex:
                 err = ''.join(traceback.format_exception_only(type(ex), ex))
                 # Currently there is an issue in VSC where returning success=false for an
                 # eval request, in repl context, VSC does not show the error response in
