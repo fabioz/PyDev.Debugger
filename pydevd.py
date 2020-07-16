@@ -2402,12 +2402,19 @@ def start_dump_threads_thread(filename_template, timeout, recurrent):
     :param recurrent:
         If True we'll keep on doing thread dumps.
     '''
+    assert filename_template.count('%s') == 1, \
+        'Expected one %%s to appear in: %s' % (filename_template,)
 
     def _threads_on_timeout():
         try:
             while True:
                 time.sleep(timeout)
-                with open(filename_template % (time.time(),), 'w') as stream:
+                filename = filename_template % (time.time(),)
+                try:
+                    os.makedirs(os.path.dirname(filename))
+                except Exception:
+                    pass
+                with open(filename, 'w') as stream:
                     dump_threads(stream)
                 if not recurrent:
                     return

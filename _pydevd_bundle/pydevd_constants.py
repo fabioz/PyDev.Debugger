@@ -287,7 +287,7 @@ SHOW_DEBUG_INFO_ENV = is_true_in_env(('PYCHARM_DEBUG', 'PYDEV_DEBUG', 'PYDEVD_DE
 
 # This timeout is used to track the time to send a message saying that the evaluation
 # is taking too long and possible mitigations.
-PYDEVD_WARN_EVALUATION_TIMEOUT = as_float_in_env('PYDEVD_WARN_EVALUATION_TIMEOUT', 2.)
+PYDEVD_WARN_EVALUATION_TIMEOUT = as_float_in_env('PYDEVD_WARN_EVALUATION_TIMEOUT', 3.)
 
 # If True in env shows a thread dump when the evaluation times out.
 PYDEVD_THREAD_DUMP_ON_WARN_EVALUATION_TIMEOUT = is_true_in_env('PYDEVD_THREAD_DUMP_ON_WARN_EVALUATION_TIMEOUT')
