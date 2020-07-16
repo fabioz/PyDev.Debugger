@@ -28,7 +28,7 @@ class EchoThread(threading.Thread):
                 break
 
             print('processed', obj.value)
-            obj.event.set()
+            obj.event.set()  # Break here 2
 
 
 class NotificationObject(object):
@@ -58,8 +58,8 @@ def main():
     processor = Processor(queue)
     echo_thread.start()
 
-    processor.process(1)
-    processor.process(2)  # Break here 1
+    processor.process(1)  # Break here 1
+    processor.process(2)
     processor.process(3)
     processor.finish()
 

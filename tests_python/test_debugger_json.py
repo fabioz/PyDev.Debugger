@@ -315,13 +315,16 @@ class JsonFacade(object):
             references.append(reference)
         return references
 
+    def wait_for_continued_event(self):
+        assert self.wait_for_json_message(ContinuedEvent).body.allThreadsContinued
+
     def write_continue(self, wait_for_response=True):
         continue_request = self.write_request(
             pydevd_schema.ContinueRequest(pydevd_schema.ContinueArguments('*')))
 
         if wait_for_response:
             # The continued event is received before the response.
-            assert self.wait_for_json_message(ContinuedEvent).body.allThreadsContinued
+            self.wait_for_continued_event()
 
             continue_response = self.wait_for_response(continue_request)
             assert continue_response.body.allThreadsContinued
@@ -456,13 +459,20 @@ class JsonFacade(object):
         assert response.success == success
         return response
 
-    def evaluate(self, expression, frameId=None, context=None, fmt=None, success=True):
+    def evaluate(self, expression, frameId=None, context=None, fmt=None, success=True, wait_for_response=True):
+        '''
+        :param wait_for_response:
+            If True returns the response, otherwise returns the request.
+        '''
         eval_request = self.write_request(
             pydevd_schema.EvaluateRequest(pydevd_schema.EvaluateArguments(
                 expression, frameId=frameId, context=context, format=fmt)))
-        eval_response = self.wait_for_response(eval_request)
-        assert eval_response.success == success
-        return eval_response
+        if wait_for_response:
+            eval_response = self.wait_for_response(eval_request)
+            assert eval_response.success == success
+            return eval_response
+        else:
+            return eval_request
 
     def write_terminate(self):
         # Note: this currently terminates promptly, so, no answer is given.
@@ -4455,6 +4465,82 @@ def test_debugger_case_deadlock_thread_eval(case_setup):
 
 
 @pytest.mark.skipif(IS_PY26, reason='Only Python 2.7 onwards.')
+def test_debugger_case_breakpoint_on_unblock_thread_eval(case_setup):
+
+    from _pydevd_bundle._debug_adapter.pydevd_schema import EvaluateResponse
+
+    def get_environ(self):
+        env = os.environ.copy()
+        env['PYDEVD_UNBLOCK_THREADS_TIMEOUT'] = '0.5'
+        return env
+
+    with case_setup.test_file('_debugger_case_deadlock_thread_eval.py', get_environ=get_environ) as writer:
+        json_facade = JsonFacade(writer)
+        json_facade.write_launch()
+        break1 = writer.get_line_index_with_content('Break here 1')
+        break2 = writer.get_line_index_with_content('Break here 2')
+        json_facade.write_set_breakpoints([break1, break2])
+
+        json_facade.write_make_initial_run()
+        json_hit = json_facade.wait_for_thread_stopped(line=break1)
+
+        # If threads aren't resumed, this will deadlock.
+        evaluate_request = json_facade.evaluate(
+            'processor.process("process in evaluate")', json_hit.frame_id, wait_for_response=False)
+
+        # We'll hit another breakpoint during that evaluation.
+        json_hit = json_facade.wait_for_thread_stopped(line=break2)
+        json_facade.write_set_breakpoints([])
+        json_facade.write_continue()
+
+        json_hit = json_facade.wait_for_thread_stopped(line=break1)
+        json_facade.write_continue()
+
+        # Check that we got the evaluate responses.
+        messages = json_facade.mark_messages(
+            EvaluateResponse, lambda evaluate_response: evaluate_response.request_seq == evaluate_request.seq)
+        assert len(messages) == 1
+
+        writer.finished_ok = True
+
+
+@pytest.mark.skipif(IS_PY26, reason='Only Python 2.7 onwards.')
+def test_debugger_case_unblock_manually(case_setup):
+
+    from _pydevd_bundle._debug_adapter.pydevd_schema import EvaluateResponse
+
+    def get_environ(self):
+        env = os.environ.copy()
+        env['PYDEVD_WARN_EVALUATION_TIMEOUT'] = '0.5'
+        return env
+
+    with case_setup.test_file('_debugger_case_deadlock_thread_eval.py', get_environ=get_environ) as writer:
+        json_facade = JsonFacade(writer)
+        json_facade.write_launch()
+        break1 = writer.get_line_index_with_content('Break here 1')
+        json_facade.write_set_breakpoints([break1])
+
+        json_facade.write_make_initial_run()
+        json_hit = json_facade.wait_for_thread_stopped(line=break1)
+
+        # If threads aren't resumed, this will deadlock.
+        evaluate_request = json_facade.evaluate(
+            'processor.process("process in evaluate")', json_hit.frame_id, wait_for_response=False)
+
+        json_facade.wait_for_json_message(
+            OutputEvent, lambda output_event: 'did not finish after' in output_event.body.output)
+
+        # User may manually resume it.
+        json_facade.write_continue()
+
+        # Check that we got the evaluate responses.
+        json_facade.wait_for_json_message(
+            EvaluateResponse, lambda evaluate_response: evaluate_response.request_seq == evaluate_request.seq)
+
+        writer.finished_ok = True
+
+
+@pytest.mark.skipif(IS_PY26, reason='Only Python 2.7 onwards.')
 def test_debugger_case_deadlock_notify_evaluate_timeout(case_setup, pyfile):
 
     @pyfile
@@ -4521,7 +4607,7 @@ def test_debugger_case_deadlock_interrupt_thread(case_setup, pyfile):
         json_hit = json_facade.wait_for_thread_stopped()
 
         # If threads aren't resumed, this will deadlock.
-        json_facade.evaluate('infinite_evaluate()', json_hit.frame_id)
+        json_facade.evaluate('infinite_evaluate()', json_hit.frame_id, wait_for_response=False)
 
         json_facade.write_continue()
 

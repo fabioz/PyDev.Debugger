@@ -410,8 +410,9 @@ This may mean a number of things:
     PYDEVD_WARN_EVALUATION_TIMEOUT environment variable to a bigger value.
 
 - The evaluation may need other threads running while it's running:
-    In this case, it's possible to set PYDEVD_UNBLOCK_THREADS_TIMEOUT so that if after a given
-    timeout an evaluation doesn't finish, other threads are unblocked.
+    In this case, it's possible to set the PYDEVD_UNBLOCK_THREADS_TIMEOUT
+    environment variable so that if after a given timeout an evaluation doesn't finish,
+    other threads are unblocked or you can manually resume all threads.
 
     Alternatively, it's also possible to skip breaking on a particular thread by setting a
     `pydev_do_not_trace = True` attribute in the related threading.Thread instance
