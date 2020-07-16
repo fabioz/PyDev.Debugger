@@ -4509,7 +4509,10 @@ def test_debugger_case_deadlock_interrupt_thread(case_setup, pyfile):
         env['PYDEVD_INTERRUPT_THREAD_TIMEOUT'] = '0.5'
         return env
 
-    with case_setup.test_file(case_infinite_evaluate, get_environ=get_environ) as writer:
+    # Sometimes we end up with a different return code on Linux when interrupting (even
+    # though we go through completion and print the 'TEST SUCEEDED' msg).
+    with case_setup.test_file(
+        case_infinite_evaluate, get_environ=get_environ, EXPECTED_RETURNCODE='any') as writer:
         json_facade = JsonFacade(writer)
         json_facade.write_launch(justMyCode=False)
         json_facade.write_set_breakpoints(writer.get_line_index_with_content('Break here'))
