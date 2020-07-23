@@ -956,28 +956,25 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
                 pydevd_vars.evaluate_expression(py_db, frame, expression, is_exec=True)
             except (Exception, KeyboardInterrupt):
                 try:
-                    exc, exc_type, tb = sys.exc_info()
+                    exc, exc_type, initial_tb = sys.exc_info()
+                    tb = initial_tb
 
-                    # Show the traceback up until before the first pydevd file.
+                    # Show the traceback without pydevd frames.
                     temp_tb = tb
-                    limit = 0
                     while temp_tb:
                         if py_db.get_file_type(temp_tb.tb_frame) == PYDEV_FILE:
-                            limit = 0
-                        else:
-                            limit -= 1  # Note that it's negative (as expected).
-                        temp_tb.tb_next
+                            tb = temp_tb.tb_next
                         temp_tb = temp_tb.tb_next
-                    temp_tb = None
-                    if limit == 0:
-                        limit = None
 
-                    err = ''.join(traceback.format_exception(exc, exc_type, tb, limit=limit))
+                    if tb is None:
+                        tb = initial_tb
+                    err = ''.join(traceback.format_exception(exc, exc_type, tb))
 
                     # Make sure we don't keep references to them.
                     exc = None
                     exc_type = None
                     tb = None
+                    temp_tb = None
                 except:
                     err = '<Internal error - unable to get traceback when evaluating expression>'
                     pydev_log.exception(err)
