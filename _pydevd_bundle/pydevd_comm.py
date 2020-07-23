@@ -85,6 +85,7 @@ from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
 from _pydevd_bundle.pydevd_constants import ForkSafeLock, NULL
 from _pydevd_bundle.pydevd_daemon_thread import PyDBDaemonThread
 from _pydevd_bundle.pydevd_thread_lifecycle import pydevd_find_thread_by_id, resume_threads
+from _pydevd_bundle.pydevd_dont_trace_files import PYDEV_FILE
 try:
     from urllib import quote_plus, unquote_plus  # @UnresolvedImport
 except:
@@ -953,8 +954,30 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
         if try_exec:
             try:
                 pydevd_vars.evaluate_expression(py_db, frame, expression, is_exec=True)
-            except (Exception, KeyboardInterrupt) as ex:
-                err = ''.join(traceback.format_exception_only(type(ex), ex))
+            except (Exception, KeyboardInterrupt):
+                exc, exc_type, tb = sys.exc_info()
+
+                # Show the traceback up until before the first pydevd file.
+                temp_tb = tb
+                limit = 0
+                while temp_tb:
+                    if py_db.get_file_type(temp_tb.tb_frame) == PYDEV_FILE:
+                        limit = 0
+                    else:
+                        limit -= 1  # Note that it's negative (as expected).
+                    temp_tb.tb_next
+                    temp_tb = temp_tb.tb_next
+                temp_tb = None
+                if limit == 0:
+                    limit = None
+
+                err = ''.join(traceback.format_exception(exc, exc_type, tb, limit=limit))
+
+                # Make sure we don't keep references to them.
+                exc = None
+                exc_type = None
+                tb = None
+
                 # Currently there is an issue in VSC where returning success=false for an
                 # eval request, in repl context, VSC does not show the error response in
                 # the debug console. So return the error message in result as well.
