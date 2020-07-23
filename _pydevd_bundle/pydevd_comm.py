@@ -975,6 +975,7 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
                     exc_type = None
                     tb = None
                     temp_tb = None
+                    initial_tb = None
                 except:
                     err = '<Internal error - unable to get traceback when evaluating expression>'
                     pydev_log.exception(err)
