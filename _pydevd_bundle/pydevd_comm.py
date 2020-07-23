@@ -955,28 +955,32 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
             try:
                 pydevd_vars.evaluate_expression(py_db, frame, expression, is_exec=True)
             except (Exception, KeyboardInterrupt):
-                exc, exc_type, tb = sys.exc_info()
+                try:
+                    exc, exc_type, tb = sys.exc_info()
 
-                # Show the traceback up until before the first pydevd file.
-                temp_tb = tb
-                limit = 0
-                while temp_tb:
-                    if py_db.get_file_type(temp_tb.tb_frame) == PYDEV_FILE:
-                        limit = 0
-                    else:
-                        limit -= 1  # Note that it's negative (as expected).
-                    temp_tb.tb_next
-                    temp_tb = temp_tb.tb_next
-                temp_tb = None
-                if limit == 0:
-                    limit = None
+                    # Show the traceback up until before the first pydevd file.
+                    temp_tb = tb
+                    limit = 0
+                    while temp_tb:
+                        if py_db.get_file_type(temp_tb.tb_frame) == PYDEV_FILE:
+                            limit = 0
+                        else:
+                            limit -= 1  # Note that it's negative (as expected).
+                        temp_tb.tb_next
+                        temp_tb = temp_tb.tb_next
+                    temp_tb = None
+                    if limit == 0:
+                        limit = None
 
-                err = ''.join(traceback.format_exception(exc, exc_type, tb, limit=limit))
+                    err = ''.join(traceback.format_exception(exc, exc_type, tb, limit=limit))
 
-                # Make sure we don't keep references to them.
-                exc = None
-                exc_type = None
-                tb = None
+                    # Make sure we don't keep references to them.
+                    exc = None
+                    exc_type = None
+                    tb = None
+                except:
+                    err = '<Internal error - unable to get traceback when evaluating expression>'
+                    pydev_log.exception(err)
 
                 # Currently there is an issue in VSC where returning success=false for an
                 # eval request, in repl context, VSC does not show the error response in
