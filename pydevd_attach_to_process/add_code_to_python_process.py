@@ -371,7 +371,7 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
     print('Attaching with arch: %s' % (arch,))
 
     target_dll = os.path.join(filedir, 'attach_%s' % suffix)
-    target_dll = os.path.normpath(target_dll)
+    target_dll = os.path.abspath(target_dll)
     if not os.path.exists(target_dll):
         raise RuntimeError('Could not find dll file to inject: %s' % target_dll)
 
