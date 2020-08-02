@@ -266,6 +266,15 @@ def _win_write_to_shared_named_memory(python_code, pid):
     finally:
         CloseHandle(filemap)
 
+def escape_for_gdb_and_lldb(s):
+    """Returns a version of given string suitable for use as gdb
+       and lldb function argument"""
+    if not s:
+        return '""'
+
+    # wrap string in double qoutes, and escape any inner double
+    # quotes
+    return '"' + s.replace('"', '\"') + '"'
 
 def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
     assert '\'' not in python_code, 'Having a single quote messes with our command.'
