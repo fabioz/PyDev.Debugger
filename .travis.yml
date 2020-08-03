@@ -94,6 +94,15 @@ matrix:
         - PYDEVD_USE_CYTHON=YES
         - PYDEVD_TEST_VM=CPYTHON
 
+  allow_failures:
+    - python: 3.9-dev
+      env:
+        - PYDEVD_PYTHON_VERSION=3.9
+        - PYDEVD_USE_CYTHON=NO
+        - PYDEVD_TEST_VM=CPYTHON
+        - PYDEVD_USE_CONDA=NO
+
+
 before_install:
   # CPython / Pypy setup
   - source ./.travis/env_install.sh
