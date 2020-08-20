@@ -4,7 +4,7 @@ import opcode as _opcode
 import sys
 from marshal import dumps as _dumps
 
-import _pydevd_frame_eval.vendored.bytecode as _bytecode
+from _pydevd_frame_eval.vendored import bytecode as _bytecode
 
 
 @enum.unique

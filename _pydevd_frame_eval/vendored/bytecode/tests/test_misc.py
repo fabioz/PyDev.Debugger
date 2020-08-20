@@ -9,7 +9,7 @@ import io
 import textwrap
 import unittest
 
-import _pydevd_frame_eval.vendored.bytecode as bytecode
+from _pydevd_frame_eval.vendored import bytecode
 from _pydevd_frame_eval.vendored.bytecode import Label, Instr, Bytecode, BasicBlock, ControlFlowGraph
 from _pydevd_frame_eval.vendored.bytecode.tests import disassemble, WORDCODE
 

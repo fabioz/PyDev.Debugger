@@ -1,5 +1,5 @@
 # alias to keep the 'bytecode' variable free
-import _pydevd_frame_eval.vendored.bytecode as _bytecode
+from _pydevd_frame_eval.vendored import bytecode as _bytecode
 from _pydevd_frame_eval.vendored.bytecode.concrete import ConcreteInstr
 from _pydevd_frame_eval.vendored.bytecode.instr import Label, SetLineno, Instr
 

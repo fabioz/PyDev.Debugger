@@ -2,20 +2,16 @@ def _fix_contents(filename, contents):
     import re
 
     contents = re.sub(
-        r"from bytecode", r'from _pydevd_frame_eval.vendored.bytecode', contents
+        r"from bytecode", r'from _pydevd_frame_eval.vendored.bytecode', contents, flags=re.MULTILINE
     )
 
     contents = re.sub(
-        r"import bytecode as", r'import _pydevd_frame_eval.vendored.bytecode as', contents
-    )
-
-    contents = re.sub(
-        r"import bytecode", r'import _pydevd_frame_eval.vendored.bytecode as bytecode', contents
+        r"import bytecode", r'from _pydevd_frame_eval.vendored import bytecode', contents, flags=re.MULTILINE
     )
 
     # This test will import the wrong setup (we're not interested in it).
     contents = re.sub(
-        r"def test_version\(self\):", r'def skip_test_version(self):', contents
+        r"def test_version\(self\):", r'def skip_test_version(self):', contents, flags=re.MULTILINE
     )
 
     if filename.startswith('test_'):
@@ -43,7 +39,7 @@ def main():
 
                 new_contents = _fix_contents(filename, contents)
                 if contents != new_contents:
-                    print('fixed ', filename)
+                    print('fixed ', os.path.join(root, filename))
                     with open(os.path.join(root, filename), 'w') as stream:
                         stream.write(new_contents)
 
