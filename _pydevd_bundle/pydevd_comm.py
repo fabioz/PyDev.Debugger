@@ -85,6 +85,7 @@ from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
 from _pydevd_bundle.pydevd_constants import ForkSafeLock, NULL
 from _pydevd_bundle.pydevd_daemon_thread import PyDBDaemonThread
 from _pydevd_bundle.pydevd_thread_lifecycle import pydevd_find_thread_by_id, resume_threads
+import dis
 try:
     from urllib import quote_plus, unquote_plus  # @UnresolvedImport
 except:
@@ -850,15 +851,8 @@ def internal_get_next_statement_targets(dbg, seq, thread_id, frame_id):
             code = frame.f_code
             xml = "<xml>"
             if hasattr(code, 'co_lnotab'):
-                lineno = code.co_firstlineno
-                lnotab = code.co_lnotab
-                for i in itertools.islice(lnotab, 1, len(lnotab), 2):
-                    if isinstance(i, int):
-                        lineno = lineno + i
-                    else:
-                        # in python 2 elements in co_lnotab are of type str
-                        lineno = lineno + ord(i)
-                    xml += "<line>%d</line>" % (lineno,)
+                for _, line in dis.findlinestarts(code):
+                    xml += "<line>%d</line>" % (line,)
             else:
                 xml += "<line>%d</line>" % (frame.f_lineno,)
             del frame

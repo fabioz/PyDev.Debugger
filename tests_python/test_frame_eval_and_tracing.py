@@ -256,4 +256,7 @@ def test_generator_code_cache(case_setup_force_frame_eval):
         hit = writer.wait_for_breakpoint_hit()
         writer.write_run_thread(hit.thread_id)
 
+        hit = writer.wait_for_breakpoint_hit()
+        writer.write_run_thread(hit.thread_id)
+
         writer.finished_ok = True
