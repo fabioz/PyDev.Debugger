@@ -13,7 +13,6 @@ def _fix_contents(filename, contents):
         r"import bytecode", r'import _pydevd_frame_eval.vendored.bytecode as bytecode', contents
     )
 
-
     # This test will import the wrong setup (we're not interested in it).
     contents = re.sub(
         r"def test_version\(self\):", r'def skip_test_version(self):', contents
@@ -27,7 +26,7 @@ from tests_python.debugger_unittest import IS_PY36_OR_GREATER, IS_CPYTHON
 from tests_python.debug_constants import TEST_CYTHON
 pytestmark = pytest.mark.skipif(not IS_PY36_OR_GREATER or not IS_CPYTHON or not TEST_CYTHON, reason='Requires CPython >= 3.6')
 '''
-        contents = pytest_mark + contents
+            contents = pytest_mark + contents
     return contents
 
 
@@ -44,6 +43,7 @@ def main():
 
                 new_contents = _fix_contents(filename, contents)
                 if contents != new_contents:
+                    print('fixed ', filename)
                     with open(os.path.join(root, filename), 'w') as stream:
                         stream.write(new_contents)
 
