@@ -16,32 +16,32 @@ matrix:
 
     # Note: some envs commented out to have a faster test suite.
 
-    # Jython
-    - python: 2.7
-      env:
-        - PYDEVD_USE_CYTHON=NO
-        - PYDEVD_TEST_VM=JYTHON
-
-    # PyPy
-    - python: 2.7
-      env:
-        - PYDEVD_PYTHON_VERSION=3.6
-        - PYDEVD_USE_CYTHON=NO
-        - PYDEVD_TEST_VM=PYPY
-
-    # Python 2.6
-    - python: 2.7
-      env:
-        - PYDEVD_PYTHON_VERSION=2.6
-        - PYDEVD_USE_CYTHON=NO
-        - PYDEVD_TEST_VM=CPYTHON
-
-    # Python 2.7
-    - python: 2.7
-      env:
-        - PYDEVD_PYTHON_VERSION=2.7
-        - PYDEVD_USE_CYTHON=YES
-        - PYDEVD_TEST_VM=CPYTHON
+#     # Jython
+#     - python: 2.7
+#       env:
+#         - PYDEVD_USE_CYTHON=NO
+#         - PYDEVD_TEST_VM=JYTHON
+#
+#     # PyPy
+#     - python: 2.7
+#       env:
+#         - PYDEVD_PYTHON_VERSION=3.6
+#         - PYDEVD_USE_CYTHON=NO
+#         - PYDEVD_TEST_VM=PYPY
+#
+#     # Python 2.6
+#     - python: 2.7
+#       env:
+#         - PYDEVD_PYTHON_VERSION=2.6
+#         - PYDEVD_USE_CYTHON=NO
+#         - PYDEVD_TEST_VM=CPYTHON
+#
+#     # Python 2.7
+#     - python: 2.7
+#       env:
+#         - PYDEVD_PYTHON_VERSION=2.7
+#         - PYDEVD_USE_CYTHON=YES
+#         - PYDEVD_TEST_VM=CPYTHON
 
     # Python 3.5 (no longer tested by default).
     # - python: 2.7
@@ -50,42 +50,42 @@ matrix:
     #     - PYDEVD_USE_CYTHON=YES
     #     - PYDEVD_TEST_VM=CPYTHON
 
-    # Python 3.6
-    - python: 2.7
-      env:
-        - PYDEVD_PYTHON_VERSION=3.6
-        - PYDEVD_USE_CYTHON=NO
-        - PYDEVD_TEST_VM=CPYTHON
-
-    # Python 3.8 debug
-    - python: 2.7
-      env:
-        - PYDEVD_PYTHON_VERSION=3.8
-        - PYDEVD_TEST_VM=CPYTHON_DEBUG
-        - PYDEVD_USE_CONDA=NO
-
-    - python: 3.8
-      env:
-        - PYDEVD_PYTHON_VERSION=3.8
-        - PYDEVD_USE_CYTHON=YES
-        - PYDEVD_TEST_VM=CPYTHON
-        - CHECK_CYTHON_GENERATED=YES
-        - PYDEVD_USE_CONDA=NO
-
-    - python: 3.8
-      env:
-        - PYDEVD_PYTHON_VERSION=3.8
-        - PYDEVD_USE_CYTHON=NO
-        - PYDEVD_TEST_VM=CPYTHON
-        - PYDEVD_USE_CONDA=NO
-
-    # i.e.: https://www.python.org/download/pre-releases/
-    - python: 3.9-dev
-      env:
-        - PYDEVD_PYTHON_VERSION=3.9
-        - PYDEVD_USE_CYTHON=NO
-        - PYDEVD_TEST_VM=CPYTHON
-        - PYDEVD_USE_CONDA=NO
+#     # Python 3.6
+#     - python: 2.7
+#       env:
+#         - PYDEVD_PYTHON_VERSION=3.6
+#         - PYDEVD_USE_CYTHON=NO
+#         - PYDEVD_TEST_VM=CPYTHON
+#
+#     # Python 3.8 debug
+#     - python: 2.7
+#       env:
+#         - PYDEVD_PYTHON_VERSION=3.8
+#         - PYDEVD_TEST_VM=CPYTHON_DEBUG
+#         - PYDEVD_USE_CONDA=NO
+#
+#     - python: 3.8
+#       env:
+#         - PYDEVD_PYTHON_VERSION=3.8
+#         - PYDEVD_USE_CYTHON=YES
+#         - PYDEVD_TEST_VM=CPYTHON
+#         - CHECK_CYTHON_GENERATED=YES
+#         - PYDEVD_USE_CONDA=NO
+#
+#     - python: 3.8
+#       env:
+#         - PYDEVD_PYTHON_VERSION=3.8
+#         - PYDEVD_USE_CYTHON=NO
+#         - PYDEVD_TEST_VM=CPYTHON
+#         - PYDEVD_USE_CONDA=NO
+#
+#     # i.e.: https://www.python.org/download/pre-releases/
+#     - python: 3.9-dev
+#       env:
+#         - PYDEVD_PYTHON_VERSION=3.9
+#         - PYDEVD_USE_CYTHON=NO
+#         - PYDEVD_TEST_VM=CPYTHON
+#         - PYDEVD_USE_CONDA=NO
 
     - os: osx
       language: generic
