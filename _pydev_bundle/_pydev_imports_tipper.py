@@ -207,10 +207,10 @@ def generate_imports_tip_for_module(obj_to_complete, dir_comps=None, getattr=get
             try:
                 if isinstance(obj_to_complete, dontGetattrOn):
                     raise Exception('Since python 3.9, e.g. "dict[str]" will return'
-                                    ' a dict that\'s only supposed to take strings. '
-                                    'Interestingly, e.g. "dict[\'val\]" is also valid '
+                                    " a dict that's only supposed to take strings. "
+                                    'Interestingly, e.g. dict["val"] is also valid '
                                     'and presumably represents a dict that only takes '
-                                    'keys that are \'val\'. This breaks our check for '
+                                    'keys that are "val". This breaks our check for '
                                     'class attributes.')
                 obj = getattr(obj_to_complete.__class__, d)
             except:
