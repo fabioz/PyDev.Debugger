@@ -122,8 +122,8 @@ def main():
                         files_or_dirs.append(file + ':' + test)
 
                 elif test_framework == PY_TEST_FRAMEWORK:
-                    file = _NormFile(file)
                     py_test_accept_filter[file] = tests
+                    py_test_accept_filter[_NormFile(file)] = tests
                     files_or_dirs.append(file)
 
                 else:
@@ -139,8 +139,8 @@ def main():
                             files_or_dirs.append(file + ':' + t)
 
                     elif test_framework == PY_TEST_FRAMEWORK:
-                        file = _NormFile(file)
                         py_test_accept_filter[file] = configuration.tests
+                        py_test_accept_filter[_NormFile(file)] = configuration.tests
                         files_or_dirs.append(file)
 
                     else:
