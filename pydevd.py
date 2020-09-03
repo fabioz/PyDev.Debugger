@@ -57,7 +57,8 @@ from _pydevd_bundle.pydevd_source_mapping import SourceMapping
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_concurrency_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER, get_abs_path_real_path_and_base_from_file
-from pydevd_file_utils import get_fullname, rPath, get_package_dir
+from pydevd_file_utils import get_fullname, get_package_dir
+from os.path import abspath as os_path_abspath
 import pydevd_tracing
 from _pydevd_bundle.pydevd_comm import (InternalThreadCommand, InternalThreadCommandForAnyThread,
     create_server_socket)
@@ -1022,7 +1023,7 @@ class PyDB(object):
             self.plugin = PluginManager(self)
         return self.plugin
 
-    def in_project_scope(self, frame, filename=None):
+    def in_project_scope(self, frame, absolute_normalized_filename=None):
         '''
         Note: in general this method should not be used (apply_files_filter should be used
         in most cases as it also handles the project scope check).
@@ -1030,22 +1031,22 @@ class PyDB(object):
         :param frame:
             The frame we want to check.
 
-        :param filename:
+        :param absolute_normalized_filename:
             Must be the result from get_abs_path_real_path_and_base_from_frame(frame)[0] (can
             be used to speed this function a bit if it's already available to the caller, but
             in general it's not needed).
         '''
         try:
-            if filename is None:
+            if absolute_normalized_filename is None:
                 try:
                     # Make fast path faster!
                     abs_real_path_and_basename = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
                 except:
                     abs_real_path_and_basename = get_abs_path_real_path_and_base_from_frame(frame)
 
-                filename = abs_real_path_and_basename[0]
+                absolute_normalized_filename = abs_real_path_and_basename[0]
 
-            cache_key = (frame.f_code.co_firstlineno, filename, frame.f_code)
+            cache_key = (frame.f_code.co_firstlineno, absolute_normalized_filename, frame.f_code)
 
             return self._in_project_scope_cache[cache_key]
         except KeyError:
@@ -1060,18 +1061,18 @@ class PyDB(object):
             if file_type == self.PYDEV_FILE:
                 cache[cache_key] = False
 
-            elif filename == '<string>':
+            elif absolute_normalized_filename == '<string>':
                 # Special handling for '<string>'
                 if file_type == self.LIB_FILE:
                     cache[cache_key] = False
                 else:
                     cache[cache_key] = True
 
-            elif self.source_mapping.has_mapping_entry(filename):
+            elif self.source_mapping.has_mapping_entry(absolute_normalized_filename):
                 cache[cache_key] = True
 
             else:
-                cache[cache_key] = self._files_filtering.in_project_roots(filename)
+                cache[cache_key] = self._files_filtering.in_project_roots(absolute_normalized_filename)
 
             return cache[cache_key]
 
@@ -2235,7 +2236,7 @@ class PyDB(object):
             # sys.path.insert(0, os.getcwd())
             # Changed: it's not the local directory, but the directory of the file launched
             # The file being run must be in the pythonpath (even if it was not before)
-            sys.path.insert(0, os.path.split(rPath(file))[0])
+            sys.path.insert(0, os.path.split(os_path_abspath(file))[0])
 
         if set_trace:
             self.wait_for_ready_to_run()
