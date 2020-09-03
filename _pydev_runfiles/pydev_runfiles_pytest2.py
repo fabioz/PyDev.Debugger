@@ -3,7 +3,7 @@ import pickle
 import zlib
 import base64
 import os
-from pydevd_file_utils import _NormFile
+from pydevd_file_utils import canonical_normalized_path
 import pytest
 import sys
 import time
@@ -32,7 +32,7 @@ def _load_filters():
                 # may need to filter with a resolved path too.
                 new_dct = {}
                 for filename, value in py_test_accept_filter.items():
-                    new_dct[_NormFile(str(Path(filename).resolve()))] = value
+                    new_dct[canonical_normalized_path(str(Path(filename).resolve()))] = value
 
                 py_test_accept_filter.update(new_dct)
 
@@ -110,7 +110,7 @@ def pytest_collection_modifyitems(session, config, items):
 
     new_items = []
     for item in items:
-        f = _NormFile(str(item.parent.fspath))
+        f = canonical_normalized_path(str(item.parent.fspath))
         name = item.name
 
         if f not in py_test_accept_filter:

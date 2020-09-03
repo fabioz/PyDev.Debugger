@@ -17,7 +17,7 @@ from _pydevd_bundle._debug_adapter.pydevd_schema import (ThreadEvent, ModuleEven
 from _pydevd_bundle.pydevd_comm_constants import file_system_encoding
 from _pydevd_bundle.pydevd_constants import (int_types, IS_64BIT_PROCESS,
     PY_VERSION_STR, PY_IMPL_VERSION_STR, PY_IMPL_NAME, IS_PY36_OR_GREATER, IS_PY39_OR_GREATER,
-    IS_PYPY, GENERATED_LEN_ATTR_NAME)
+    IS_PYPY, GENERATED_LEN_ATTR_NAME, IS_WINDOWS, IS_LINUX)
 from tests_python import debugger_unittest
 from tests_python.debug_constants import TEST_CHERRYPY, IS_PY2, TEST_DJANGO, TEST_FLASK, IS_PY26, \
     IS_PY27, IS_CPYTHON, TEST_GEVENT
@@ -4719,6 +4719,89 @@ def test_debugger_case_deadlock_interrupt_thread(case_setup, pyfile):
         json_facade.write_continue()
 
         writer.finished_ok = True
+
+
+@pytest.mark.parametrize('launch_through_link', [True, False])
+@pytest.mark.parametrize('breakpoints_through_link', [True, False])
+def test_debugger_case_symlink(case_setup, tmpdir, launch_through_link, breakpoints_through_link):
+    '''
+    Test that even if we resolve links internally, externally the contents will be
+    related to the version launched.
+    '''
+
+    from tests_python.debugger_unittest import _get_debugger_test_file
+    original_filename = _get_debugger_test_file('_debugger_case2.py')
+
+    target_link = str(tmpdir.join('resources_link'))
+    try:
+        os.symlink(os.path.dirname(original_filename), target_link, target_is_directory=True)
+    except (OSError, TypeError, AttributeError):
+        pytest.skip('Symlink support not available.')
+
+    try:
+        target_filename_in_link = os.path.join(target_link, '_debugger_case2.py')
+
+        with case_setup.test_file(target_filename_in_link if launch_through_link else original_filename) as writer:
+            json_facade = JsonFacade(writer)
+            json_facade.write_launch(justMyCode=False)
+
+            # Note that internally links are resolved to match the breakpoint, so,
+            # it doesn't matter if the breakpoint was added as viewed through the
+            # link or the real path.
+            json_facade.write_set_breakpoints(
+                writer.get_line_index_with_content("print('Start Call1')"),
+                filename=target_filename_in_link if breakpoints_through_link else original_filename
+            )
+
+            json_facade.write_make_initial_run()
+            json_hit = json_facade.wait_for_thread_stopped()
+            path = json_hit.stack_trace_response.body.stackFrames[0]['source']['path']
+
+            # Regardless of how it was hit, what's shown is what was launched.
+            assert path == target_filename_in_link if launch_through_link else original_filename
+
+            json_facade.write_continue()
+
+            writer.finished_ok = True
+    finally:
+        # We must remove the link, otherwise pytest can end up removing things under that
+        # directory when collecting temporary files.
+        os.unlink(target_link)
+
+# @pytest.mark.skipif(not IS_LINUX, reason='Linux only test.')
+# def test_debugger_case_sensitive(case_setup, tmpdir):
+#
+#     import subprocess
+#     path = os.path.abspath(str(tmpdir.join('Path1').join('PaTh2')))
+#     os.makedirs(path)
+#     target = os.path.join(path, 'myFile.py')
+#     with open(target, 'w') as stream:
+#         stream.write('''
+# print('current file', __file__) # Break here
+# print('TEST SUCEEDED')
+# ''')
+#     assert not os.path.exists(target.lower())
+#     assert os.path.exists(target)
+#
+#     def get_environ(self):
+#         env = os.environ.copy()
+#         # Force to normalize by doing filename.lower().
+#         env['PYDEVD_FILENAME_NORMALIZATION'] = 'lower'
+#         return env
+#
+#     # Sometimes we end up with a different return code on Linux when interrupting (even
+#     # though we go through completion and print the 'TEST SUCEEDED' msg).
+#     with case_setup.test_file(target, get_environ=get_environ) as writer:
+#         json_facade = JsonFacade(writer)
+#         json_facade.write_launch(justMyCode=False)
+#         json_facade.write_set_breakpoints(writer.get_line_index_with_content('Break here'))
+#
+#         json_facade.write_make_initial_run()
+#         json_hit = json_facade.wait_for_thread_stopped()
+#
+#         json_facade.write_continue()
+#
+#         writer.finished_ok = True
 
 
 if __name__ == '__main__':

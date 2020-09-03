@@ -57,7 +57,8 @@ from _pydevd_bundle.pydevd_source_mapping import SourceMapping
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_concurrency_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER, get_abs_path_real_path_and_base_from_file
-from pydevd_file_utils import get_fullname, rPath, get_package_dir
+from pydevd_file_utils import get_fullname, get_package_dir
+from os.path import abspath as os_path_abspath
 import pydevd_tracing
 from _pydevd_bundle.pydevd_comm import (InternalThreadCommand, InternalThreadCommandForAnyThread,
     create_server_socket)
@@ -2235,7 +2236,7 @@ class PyDB(object):
             # sys.path.insert(0, os.getcwd())
             # Changed: it's not the local directory, but the directory of the file launched
             # The file being run must be in the pythonpath (even if it was not before)
-            sys.path.insert(0, os.path.split(rPath(file))[0])
+            sys.path.insert(0, os.path.split(os_path_abspath(file))[0])
 
         if set_trace:
             self.wait_for_ready_to_run()

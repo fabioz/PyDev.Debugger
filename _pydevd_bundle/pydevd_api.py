@@ -299,7 +299,11 @@ class PyDevdAPI(object):
 
     def filename_to_server(self, filename):
         filename = self.filename_to_str(filename)
-        return pydevd_file_utils.norm_file_to_server(filename)
+        filename = pydevd_file_utils.map_file_to_server(filename)
+        return filename
+
+    def canonical_normalized_filename(self, filename):
+        return pydevd_file_utils.canonical_normalized_path(filename)
 
     class _DummyFrame(object):
         '''
@@ -386,6 +390,7 @@ class PyDevdAPI(object):
             expression, suspend_policy, hit_condition, is_logpoint)
 
         filename = self.filename_to_server(filename)  # Apply user path mapping.
+        filename = self.canonical_normalized_filename(filename)
         func_name = self.to_str(func_name)
 
         assert filename.__class__ == str  # i.e.: bytes on py2 and str on py3
@@ -566,6 +571,7 @@ class PyDevdAPI(object):
 
         file_to_id_to_breakpoint = None
         filename = self.filename_to_server(filename)
+        filename = self.canonical_normalized_filename(filename)
 
         if breakpoint_type == 'python-line':
             breakpoints = py_db.breakpoints
@@ -840,6 +846,7 @@ class PyDevdAPI(object):
             everything is ok.
         '''
         source_filename = self.filename_to_server(source_filename)
+        source_filename = self.canonical_normalized_filename(source_filename)
         for map_entry in mapping:
             map_entry.source_filename = source_filename
         error_msg = py_db.source_mapping.set_source_mapping(source_filename, mapping)

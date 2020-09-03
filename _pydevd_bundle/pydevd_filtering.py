@@ -205,6 +205,9 @@ class FilesFiltering(object):
         return sorted(set(roots))
 
     def _normpath(self, filename):
+        '''
+        :return: the absolute and normalized version of the path.
+        '''
         return pydevd_file_utils.get_abs_path_real_path_and_base_from_file(filename)[0]
 
     def _fix_roots(self, roots):

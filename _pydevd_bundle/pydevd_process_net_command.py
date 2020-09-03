@@ -573,6 +573,7 @@ class _PyDevCommandProcessor(object):
                 for line in text.split('||'):  # Can be bulk-created (one in each line)
                     filename, line_number = line.split('|')
                     filename = self.api.filename_to_server(filename)
+                    filename = self.api.canonical_normalized_filename(filename)
 
                     if os.path.exists(filename):
                         lines_ignored = py_db.filename_to_lines_where_exceptions_are_ignored.get(filename)

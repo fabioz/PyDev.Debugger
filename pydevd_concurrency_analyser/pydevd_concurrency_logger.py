@@ -52,7 +52,7 @@ def get_text_list_for_frame(frame):
 
             filename = pydevd_file_utils.get_abs_path_real_path_and_base_from_frame(curFrame)[1]
 
-            my_file, _applied_mapping = pydevd_file_utils.norm_file_to_client(filename)
+            my_file, _applied_mapping = pydevd_file_utils.map_file_to_client(filename)
 
             # print "file is ", my_file
             # my_file = inspect.getsourcefile(curFrame) or inspect.getfile(frame)
