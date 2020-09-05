@@ -305,6 +305,9 @@ class PyDevdAPI(object):
     def canonical_normalized_filename(self, filename):
         return pydevd_file_utils.canonical_normalized_path(filename)
 
+    def absolute_normalized_filename(self, filename):
+        return pydevd_file_utils.absolute_normalized_path(filename)
+
     class _DummyFrame(object):
         '''
         Dummy frame to be used with PyDB.apply_files_filter (as we don't really have the
@@ -837,6 +840,7 @@ class PyDevdAPI(object):
         '''
         :param str source_filename:
             The filename for the source mapping (bytes on py2 and str on py3).
+            This filename will be made absolute/normalized in this function.
 
         :param list(SourceMappingEntry) mapping:
             A list with the source mapping entries to be applied to the given filename.
@@ -846,10 +850,10 @@ class PyDevdAPI(object):
             everything is ok.
         '''
         source_filename = self.filename_to_server(source_filename)
-        source_filename = self.canonical_normalized_filename(source_filename)
+        absolute_normalized_source_filename = self.absolute_normalized_filename(source_filename)
         for map_entry in mapping:
-            map_entry.source_filename = source_filename
-        error_msg = py_db.source_mapping.set_source_mapping(source_filename, mapping)
+            map_entry.source_filename = absolute_normalized_source_filename
+        error_msg = py_db.source_mapping.set_source_mapping(absolute_normalized_source_filename, mapping)
         if error_msg:
             return error_msg
 

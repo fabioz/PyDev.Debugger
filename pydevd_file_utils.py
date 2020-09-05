@@ -362,7 +362,7 @@ def canonical_normalized_path(filename):
     return real_path
 
 
-def _absolute_normalized_path(filename):
+def absolute_normalized_path(filename):
     abs_path, _real_path = _abs_and_real_path_normalized(filename)
     return abs_path
 
@@ -551,7 +551,7 @@ def _original_file_to_client(filename, cache={}):
     try:
         return cache[filename]
     except KeyError:
-        translated = _path_to_expected_str(get_path_with_real_case(_absolute_normalized_path(filename)))
+        translated = _path_to_expected_str(get_path_with_real_case(absolute_normalized_path(filename)))
         cache[filename] = (translated, False)
     return cache[filename]
 
@@ -719,13 +719,13 @@ def setup_client_server_paths(paths):
             return cache[filename]
         except KeyError:
             # used to translate a path from the debug server to the client
-            translated = _absolute_normalized_path(filename)
+            translated = absolute_normalized_path(filename)
 
             # After getting the absolute path, let's get it with the path with
             # the real case and then obtain a new normalized copy, just in case
             # the path is different now.
             translated_proper_case = get_path_with_real_case(translated)
-            translated = _absolute_normalized_path(translated_proper_case)
+            translated = absolute_normalized_path(translated_proper_case)
 
             path_mapping_applied = False
 
@@ -734,7 +734,7 @@ def setup_client_server_paths(paths):
                     translated_proper_case = translated
                     if DEBUG_CLIENT_SERVER_TRANSLATION:
                         pydev_log.critical(
-                            'pydev debugger: _absolute_normalized_path changed path (from: %s to %s)',
+                            'pydev debugger: absolute_normalized_path changed path (from: %s to %s)',
                                 translated_proper_case, translated)
 
             for i, (eclipse_prefix, python_prefix) in enumerate(paths_from_eclipse_to_python):
