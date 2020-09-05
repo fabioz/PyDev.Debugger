@@ -343,7 +343,7 @@ class PyDevdAPI(object):
             self.translated_line = translated_line
 
     def add_breakpoint(
-            self, py_db, filename, breakpoint_type, breakpoint_id, line, condition, func_name,
+            self, py_db, original_filename, breakpoint_type, breakpoint_id, line, condition, func_name,
             expression, suspend_policy, hit_condition, is_logpoint, adjust_line=False):
         '''
         :param str filename:
@@ -384,25 +384,24 @@ class PyDevdAPI(object):
 
         :return _AddBreakpointResult:
         '''
-        assert filename.__class__ == str, 'Expected str, found: %s' % (filename.__class__,)  # i.e.: bytes on py2 and str on py3
+        assert original_filename.__class__ == str, 'Expected str, found: %s' % (original_filename.__class__,)  # i.e.: bytes on py2 and str on py3
 
-        original_filename = filename
+        original_filename = original_filename
+        pydev_log.debug('============================================')
         pydev_log.debug('Request for breakpoint in: %s line: %s', original_filename, line)
         # Parameters to reapply breakpoint.
-        api_add_breakpoint_params = (filename, breakpoint_type, breakpoint_id, line, condition, func_name,
+        api_add_breakpoint_params = (original_filename, breakpoint_type, breakpoint_id, line, condition, func_name,
             expression, suspend_policy, hit_condition, is_logpoint)
 
-        filename = self.filename_to_server(filename)  # Apply user path mapping.
-        filename = self.canonical_normalized_filename(filename)
+        translated_filename = self.filename_to_server(original_filename)  # Apply user path mapping.
         func_name = self.to_str(func_name)
 
-        assert filename.__class__ == str  # i.e.: bytes on py2 and str on py3
+        assert translated_filename.__class__ == str  # i.e.: bytes on py2 and str on py3
         assert func_name.__class__ == str  # i.e.: bytes on py2 and str on py3
 
         # Apply source mapping (i.e.: ipython).
-        new_filename, new_line, multi_mapping_applied = py_db.source_mapping.map_to_server(filename, line)
-
-        py_db.api_received_breakpoints[(original_filename, breakpoint_id)] = (new_filename, api_add_breakpoint_params)
+        new_filename, new_line, multi_mapping_applied = py_db.source_mapping.map_to_server(
+            self.absolute_normalized_filename(translated_filename), line)
 
         pydev_log.debug('Breakpoint (after path/source mapping) in: %s line: %s', new_filename, new_line)
 
@@ -411,15 +410,19 @@ class PyDevdAPI(object):
             # (we want the outside world to see the line in the original file and not in the ipython
             # cell, otherwise the editor wouldn't be correct as the returned line is the line to
             # which the breakpoint will be moved in the editor).
-            result = self._AddBreakpointResult(filename, line)
-            filename = new_filename
+            result = self._AddBreakpointResult(original_filename, line)
+
+            # If a multi-mapping was applied, consider it the canonical version (translated to ipython cell).
+            canonical_normalized_filename = new_filename
             line = new_line
 
         else:
-            if adjust_line and not filename.startswith('<'):
+            canonical_normalized_filename = self.canonical_normalized_filename(new_filename)
+
+            if adjust_line and not new_filename.startswith('<'):
                 # Validate breakpoints and adjust their positions.
                 try:
-                    lines = sorted(_get_code_lines(filename))
+                    lines = sorted(_get_code_lines(new_filename))
                 except Exception:
                     pass
                 else:
@@ -429,19 +432,21 @@ class PyDevdAPI(object):
                         if idx > 0:
                             line = lines[idx - 1]
 
-            result = self._AddBreakpointResult(filename, line)
+            result = self._AddBreakpointResult(original_filename, line)
 
-        if not filename.startswith('<'):
+        py_db.api_received_breakpoints[(original_filename, breakpoint_id)] = (canonical_normalized_filename, api_add_breakpoint_params)
+
+        if not new_filename.startswith('<'):
             # Note: if a mapping pointed to a file starting with '<', don't validate.
 
-            if not pydevd_file_utils.exists(filename):
+            if not pydevd_file_utils.exists(new_filename):
                 result.error_code = self.ADD_BREAKPOINT_FILE_NOT_FOUND
                 return result
 
             if (
                     py_db.is_files_filter_enabled and
                     not py_db.get_require_module_for_filters() and
-                    py_db.apply_files_filter(self._DummyFrame(filename), filename, False)
+                    py_db.apply_files_filter(self._DummyFrame(new_filename), new_filename, False)
                 ):
                 # Note that if `get_require_module_for_filters()` returns False, we don't do this check.
                 # This is because we don't have the module name given a file at this point (in
@@ -464,7 +469,9 @@ class PyDevdAPI(object):
             add_plugin_breakpoint_result = None
             plugin = py_db.get_plugin_lazy_init()
             if plugin is not None:
-                add_plugin_breakpoint_result = plugin.add_breakpoint('add_line_breakpoint', py_db, breakpoint_type, filename, line, condition, expression, func_name, hit_condition=hit_condition, is_logpoint=is_logpoint)
+                add_plugin_breakpoint_result = plugin.add_breakpoint(
+                    'add_line_breakpoint', py_db, breakpoint_type, canonical_normalized_filename, line, condition, expression, func_name, hit_condition=hit_condition, is_logpoint=is_logpoint)
+
             if add_plugin_breakpoint_result is not None:
                 supported_type = True
                 added_breakpoint, breakpoints = add_plugin_breakpoint_result
@@ -476,15 +483,15 @@ class PyDevdAPI(object):
             raise NameError(breakpoint_type)
 
         if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
-            pydev_log.debug('Added breakpoint:%s - line:%s - func_name:%s\n', filename, line, func_name)
+            pydev_log.debug('Added breakpoint:%s - line:%s - func_name:%s\n', canonical_normalized_filename, line, func_name)
 
-        if filename in file_to_id_to_breakpoint:
-            id_to_pybreakpoint = file_to_id_to_breakpoint[filename]
+        if canonical_normalized_filename in file_to_id_to_breakpoint:
+            id_to_pybreakpoint = file_to_id_to_breakpoint[canonical_normalized_filename]
         else:
-            id_to_pybreakpoint = file_to_id_to_breakpoint[filename] = {}
+            id_to_pybreakpoint = file_to_id_to_breakpoint[canonical_normalized_filename] = {}
 
         id_to_pybreakpoint[breakpoint_id] = added_breakpoint
-        py_db.consolidate_breakpoints(filename, id_to_pybreakpoint, breakpoints)
+        py_db.consolidate_breakpoints(canonical_normalized_filename, id_to_pybreakpoint, breakpoints)
         if py_db.plugin is not None:
             py_db.has_plugin_line_breaks = py_db.plugin.has_line_breaks()
 
@@ -496,6 +503,7 @@ class PyDevdAPI(object):
         Reapplies all the received breakpoints as they were received by the API (so, new
         translations are applied).
         '''
+        pydev_log.debug('Reapplying breakpoints.')
         items = dict_items(py_db.api_received_breakpoints)  # Create a copy with items to reapply.
         self.remove_all_breakpoints(py_db, '*')
         for _key, val in items:
@@ -535,11 +543,11 @@ class PyDevdAPI(object):
             items = dict_items(py_db.api_received_breakpoints)  # Create a copy to remove items.
             translated_filenames = []
             for key, val in items:
-                key_filename, _breakpoint_id = key
-                if key_filename == filename:
-                    new_filename, _api_add_breakpoint_params = val
+                original_filename, _breakpoint_id = key
+                if original_filename == filename:
+                    canonical_normalized_filename, _api_add_breakpoint_params = val
                     # Note: there can be actually 1:N mappings due to source mapping (i.e.: ipython).
-                    translated_filenames.append(new_filename)
+                    translated_filenames.append(canonical_normalized_filename)
                     del py_db.api_received_breakpoints[key]
 
             for filename in translated_filenames:
