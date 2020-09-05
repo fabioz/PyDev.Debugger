@@ -2988,7 +2988,7 @@ def test_source_mapping_errors(case_setup):
     'target',
     ['_debugger_case_source_mapping.py', '_debugger_case_source_mapping_and_reference.py']
 )
-@pytest.mark.parametrize('jmc', [False])
+@pytest.mark.parametrize('jmc', [True, False])
 def test_source_mapping_base(case_setup, target, jmc):
     from _pydevd_bundle._debug_adapter.pydevd_schema import Source
     from _pydevd_bundle._debug_adapter.pydevd_schema import PydevdSourceMap
