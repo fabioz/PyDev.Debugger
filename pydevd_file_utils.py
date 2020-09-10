@@ -358,22 +358,24 @@ def canonical_normalized_path(filename):
     may have symlinks resolved (and thus may not match what the user expects
     in the editor).
     '''
-    _abs_path, real_path = _abs_and_real_path_normalized(filename)
-    return real_path
+    return _abs_and_canonical_path(filename)[1]
 
 
 def absolute_normalized_path(filename):
-    abs_path, _real_path = _abs_and_real_path_normalized(filename)
-    return abs_path
+    return normcase(_abs_and_canonical_path(filename)[0])
+
+
+def absolute_path(filename):
+    return _abs_and_canonical_path(filename)[0]
 
 
 # Returns tuple of absolute path and real path for given filename
-def _abs_and_real_path_normalized(filename, NORM_PATHS_CONTAINER=NORM_PATHS_CONTAINER):
+def _abs_and_canonical_path(filename, NORM_PATHS_CONTAINER=NORM_PATHS_CONTAINER):
     try:
         return NORM_PATHS_CONTAINER[filename]
     except:
         if filename.__class__ != str:
-            raise AssertionError('Paths passed to _abs_and_real_path_normalized must be str. Found: %s (%s)' % (filename, type(filename)))
+            raise AssertionError('Paths passed to _abs_and_canonical_path must be str. Found: %s (%s)' % (filename, type(filename)))
         if os is None:  # Interpreter shutdown
             return filename, filename
 
@@ -389,8 +391,8 @@ def _abs_and_real_path_normalized(filename, NORM_PATHS_CONTAINER=NORM_PATHS_CONT
 
         isabs = os_path_isabs(filename)
 
-        abs_path = _apply_func_and_normalize_case(filename, os_path_abspath, isabs)
-        real_path = _apply_func_and_normalize_case(filename, os_path_real_path, isabs)
+        abs_path = _apply_func_and_normalize_case(filename, os_path_abspath, isabs, False)
+        real_path = _apply_func_and_normalize_case(filename, os_path_real_path, isabs, True)
 
         # cache it for fast access later
         NORM_PATHS_CONTAINER[filename] = abs_path, real_path
@@ -411,7 +413,7 @@ def _get_relative_filename_abs_path(filename, func, os_path_exists=os_path_exist
     return r
 
 
-def _apply_func_and_normalize_case(filename, func, isabs, os_path_exists=os_path_exists, join=join):
+def _apply_func_and_normalize_case(filename, func, isabs, normalize_case, os_path_exists=os_path_exists, join=join):
     if filename.startswith('<'):
         # Not really a file, rather a synthetic name like <string> or <ipython-...>;
         # shouldn't be normalized.
@@ -442,10 +444,14 @@ def _apply_func_and_normalize_case(filename, func, isabs, os_path_exists=os_path
         if inner_path.startswith('/') or inner_path.startswith('\\'):
             inner_path = inner_path[1:]
         if inner_path:
-            r = join(normcase(zip_path), inner_path)
+            if normalize_case:
+                r = join(normcase(zip_path), inner_path)
+            else:
+                r = join(zip_path, inner_path)
             return r
 
-    r = normcase(r)
+    if normalize_case:
+        r = normcase(r)
     return r
 
 
@@ -551,7 +557,7 @@ def _original_file_to_client(filename, cache={}):
     try:
         return cache[filename]
     except KeyError:
-        translated = _path_to_expected_str(get_path_with_real_case(absolute_normalized_path(filename)))
+        translated = _path_to_expected_str(get_path_with_real_case(absolute_path(filename)))
         cache[filename] = (translated, False)
     return cache[filename]
 
@@ -691,7 +697,7 @@ def setup_client_server_paths(paths):
             if found_translation:
                 # Note: we don't normalize it here, this must be done as a separate
                 # step by the caller.
-                # translated = canonical_normalized_path(translated)
+                translated = absolute_path(translated)
                 pass
             else:
                 if not os_path_exists(translated):
@@ -706,7 +712,7 @@ def setup_client_server_paths(paths):
 
                     # Note: we don't normalize it here, this must be done as a separate
                     # step by the caller.
-                    # translated = canonical_normalized_path(translated)
+                    translated = absolute_path(translated)
                     pass
 
             cache[filename] = translated
@@ -718,29 +724,22 @@ def setup_client_server_paths(paths):
         try:
             return cache[filename]
         except KeyError:
-            # used to translate a path from the debug server to the client
-            translated = absolute_normalized_path(filename)
-
-            # After getting the absolute path, let's get it with the path with
-            # the real case and then obtain a new normalized copy, just in case
-            # the path is different now.
-            translated_proper_case = get_path_with_real_case(translated)
-            translated = absolute_normalized_path(translated_proper_case)
+            abs_path = absolute_path(filename)
+            translated_proper_case = get_path_with_real_case(abs_path)
+            translated_normalized = normcase(abs_path)
 
             path_mapping_applied = False
 
-            if IS_WINDOWS:
-                if translated.lower() != translated_proper_case.lower():
-                    translated_proper_case = translated
-                    if DEBUG_CLIENT_SERVER_TRANSLATION:
-                        pydev_log.critical(
-                            'pydev debugger: absolute_normalized_path changed path (from: %s to %s)',
-                                translated_proper_case, translated)
+            if translated_normalized.lower() != translated_proper_case.lower():
+                if DEBUG_CLIENT_SERVER_TRANSLATION:
+                    pydev_log.critical(
+                        'pydev debugger: absolute_normalized_path changed path (from: %s to %s)',
+                            translated_proper_case, translated_normalized)
 
             for i, (eclipse_prefix, python_prefix) in enumerate(paths_from_eclipse_to_python):
-                if translated.startswith(python_prefix):
+                if translated_normalized.startswith(python_prefix):
                     if DEBUG_CLIENT_SERVER_TRANSLATION:
-                        pydev_log.critical('pydev debugger: replacing to client: %s', translated)
+                        pydev_log.critical('pydev debugger: replacing to client: %s', translated_normalized)
 
                     # Note: use the non-normalized version.
                     eclipse_prefix = initial_paths[i][0]
@@ -752,8 +751,8 @@ def setup_client_server_paths(paths):
             else:
                 if DEBUG_CLIENT_SERVER_TRANSLATION:
                     pydev_log.critical('pydev debugger: to client: unable to find matching prefix for: %s in %s',
-                        translated, [x[1] for x in paths_from_eclipse_to_python])
-                    translated = translated_proper_case
+                        translated_normalized, [x[1] for x in paths_from_eclipse_to_python])
+                translated = translated_proper_case
 
             if eclipse_sep != python_sep:
                 translated = translated.replace(python_sep, eclipse_sep)
@@ -794,7 +793,7 @@ def get_abs_path_real_path_and_base_from_file(
             # i.e.: it's possible that the user compiled code with an empty string (consider
             # it as <string> in this case).
             f = '<string>'
-        if _abs_and_real_path_normalized is None:  # Interpreter shutdown
+        if _abs_and_canonical_path is None:  # Interpreter shutdown
             i = max(f.rfind('/'), f.rfind('\\'))
             return (f, f, f[i + 1:])
 
@@ -804,7 +803,7 @@ def get_abs_path_real_path_and_base_from_file(
             elif f.endswith('$py.class'):
                 f = f[:-len('$py.class')] + '.py'
 
-        abs_path, real_path = _abs_and_real_path_normalized(f)
+        abs_path, real_path = _abs_and_canonical_path(f)
 
         try:
             base = basename(real_path)
@@ -865,3 +864,4 @@ def get_package_dir(mod_name):
         if os.path.isdir(mod_path):
             return mod_path
     return None
+

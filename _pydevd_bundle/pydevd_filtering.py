@@ -204,17 +204,11 @@ class FilesFiltering(object):
 
         return sorted(set(roots))
 
-    def _normpath(self, filename):
-        '''
-        :return: the absolute and normalized version of the path.
-        '''
-        return pydevd_file_utils.get_abs_path_real_path_and_base_from_file(filename)[0]
-
     def _fix_roots(self, roots):
         roots = _convert_to_str_and_clear_empty(roots)
         new_roots = []
         for root in roots:
-            new_roots.append(self._normpath(root))
+            new_roots.append(pydevd_file_utils.absolute_normalized_path(root))
         return new_roots
 
     def set_project_roots(self, project_roots):
@@ -251,7 +245,7 @@ class FilesFiltering(object):
 
         project_roots = self._get_project_roots()
 
-        filename = self._normpath(filename)
+        filename = pydevd_file_utils.absolute_normalized_path(filename)
 
         found_in_project = []
         for root in project_roots:
@@ -309,14 +303,14 @@ class FilesFiltering(object):
         # Enabled if we have any filters registered.
         return len(self._exclude_filters) > 0
 
-    def exclude_by_filter(self, filename, module_name):
+    def exclude_by_filter(self, absolute_filename, module_name):
         '''
         :return: True if it should be excluded, False if it should be included and None
             if no rule matched the given file.
         '''
         for exclude_filter in self._exclude_filters:  # : :type exclude_filter: ExcludeFilter
             if exclude_filter.is_path:
-                if glob_matches_path(filename, exclude_filter.name):
+                if glob_matches_path(absolute_filename, exclude_filter.name):
                     return exclude_filter.exclude
             else:
                 # Module filter.

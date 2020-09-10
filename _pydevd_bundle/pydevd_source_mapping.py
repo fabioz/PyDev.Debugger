@@ -1,5 +1,6 @@
 import bisect
 from _pydevd_bundle.pydevd_constants import dict_items, NULL
+import pydevd_file_utils
 
 
 class SourceMappingEntry(object):
@@ -13,7 +14,10 @@ class SourceMappingEntry(object):
         self.end_line = int(end_line)
         self.runtime_line = int(runtime_line)
         self.runtime_source = runtime_source  # Something as <ipython-cell-xxx>
-        self.source_filename = None  # Should be set after translated to server (absolute_normalized_source_filename).
+
+        # Should be set after translated to server (absolute_source_filename).
+        # This is what's sent to the client afterwards (so, its case should not be normalized).
+        self.source_filename = None
 
     def contains_line(self, i):
         return self.line <= i <= self.end_line
@@ -46,16 +50,15 @@ class _KeyifyList(object):
 class SourceMapping(object):
 
     def __init__(self, on_source_mapping_changed=NULL):
-        self._mappings_to_server = {}
-        self._mappings_to_client = {}
+        self._mappings_to_server = {}  # dict(normalized(file.py) to [SourceMappingEntry])
+        self._mappings_to_client = {}  # dict(<cell> to File.py)
         self._cache = {}
         self._on_source_mapping_changed = on_source_mapping_changed
 
-    def set_source_mapping(self, absolute_normalized_source_filename, mapping):
+    def set_source_mapping(self, absolute_filename, mapping):
         '''
-        :param str absolute_normalized_source_filename:
+        :param str absolute_filename:
             The filename for the source mapping (bytes on py2 and str on py3).
-            Note: the absolute_normalized_source_filename must be already normalized to the server.
 
         :param list(SourceMappingEntry) mapping:
             A list with the source mapping entries to be applied to the given filename.
@@ -72,61 +75,68 @@ class SourceMapping(object):
         # which lines are corresponding to that file).
         for map_entry in mapping:
             existing_source_filename = self._mappings_to_client.get(map_entry.runtime_source)
-            if existing_source_filename and existing_source_filename != absolute_normalized_source_filename:
+            if existing_source_filename and existing_source_filename != absolute_filename:
                 return 'Cannot apply mapping from %s to %s (it conflicts with mapping: %s to %s)' % (
-                    absolute_normalized_source_filename, map_entry.runtime_source, existing_source_filename, map_entry.runtime_source)
+                    absolute_filename, map_entry.runtime_source, existing_source_filename, map_entry.runtime_source)
 
         try:
-            current_mapping = self._mappings_to_server.get(absolute_normalized_source_filename, [])
+            absolute_normalized_filename = pydevd_file_utils.normcase(absolute_filename)
+            current_mapping = self._mappings_to_server.get(absolute_normalized_filename, [])
             for map_entry in current_mapping:
                 del self._mappings_to_client[map_entry.runtime_source]
 
-            self._mappings_to_server[absolute_normalized_source_filename] = sorted(mapping, key=lambda entry:entry.line)
+            self._mappings_to_server[absolute_normalized_filename] = sorted(mapping, key=lambda entry:entry.line)
 
             for map_entry in mapping:
-                self._mappings_to_client[map_entry.runtime_source] = absolute_normalized_source_filename
+                self._mappings_to_client[map_entry.runtime_source] = absolute_filename
         finally:
             self._cache.clear()
             self._on_source_mapping_changed()
         return ''
 
-    def map_to_client(self, absolute_normalized_filename, lineno):
-        key = (lineno, 'client', absolute_normalized_filename)
+    def map_to_client(self, runtime_source_filename, lineno):
+        key = (lineno, 'client', runtime_source_filename)
         try:
             return self._cache[key]
         except KeyError:
-            for canonical_source_filename, mapping in dict_items(self._mappings_to_server):
+            for _, mapping in dict_items(self._mappings_to_server):
                 for map_entry in mapping:
-                    if map_entry.runtime_source == absolute_normalized_filename:
-                        if map_entry.contains_runtime_line(lineno):
-                            self._cache[key] = (canonical_source_filename, map_entry.line + (lineno - map_entry.runtime_line), True)
+                    if map_entry.runtime_source == runtime_source_filename:  # <cell1>
+                        if map_entry.contains_runtime_line(lineno):  # matches line range
+                            self._cache[key] = (map_entry.source_filename, map_entry.line + (lineno - map_entry.runtime_line), True)
                             return self._cache[key]
 
-            self._cache[key] = (absolute_normalized_filename, lineno, False)
+            self._cache[key] = (runtime_source_filename, lineno, False)  # Mark that no translation happened in the cache.
             return self._cache[key]
 
-    def has_mapping_entry(self, absolute_normalized_filename):
+    def has_mapping_entry(self, runtime_source_filename):
+        '''
+        :param runtime_source_filename:
+            Something as <ipython-cell-xxx>
+        '''
         # Note that we're not interested in the line here, just on knowing if a given filename
         # (from the server) has a mapping for it.
-        key = ('has_entry', absolute_normalized_filename)
+        key = ('has_entry', runtime_source_filename)
         try:
             return self._cache[key]
         except KeyError:
-            for _canonical_source_filename, mapping in dict_items(self._mappings_to_server):
+            for _absolute_normalized_filename, mapping in dict_items(self._mappings_to_server):
                 for map_entry in mapping:
-                    if map_entry.runtime_source == absolute_normalized_filename:
+                    if map_entry.runtime_source == runtime_source_filename:
                         self._cache[key] = True
                         return self._cache[key]
 
             self._cache[key] = False
             return self._cache[key]
 
-    def map_to_server(self, absolute_normalized_filename, lineno):
+    def map_to_server(self, absolute_filename, lineno):
         '''
         Convert something as 'file1.py' at line 10 to '<ipython-cell-xxx>' at line 2.
 
         Note that the name should be already normalized at this point.
         '''
+        absolute_normalized_filename = pydevd_file_utils.normcase(absolute_filename)
+
         changed = False
         mappings = self._mappings_to_server.get(absolute_normalized_filename)
         if mappings:
@@ -149,8 +159,8 @@ class SourceMapping(object):
             if entry is not None:
                 lineno = entry.runtime_line + (lineno - entry.line)
 
-                absolute_normalized_filename = entry.runtime_source
+                absolute_filename = entry.runtime_source
                 changed = True
 
-        return absolute_normalized_filename, lineno, changed
+        return absolute_filename, lineno, changed
 

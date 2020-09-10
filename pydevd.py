@@ -17,6 +17,7 @@ import traceback
 import weakref
 import getpass as getpass_mod
 import functools
+import pydevd_file_utils
 
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
@@ -1023,7 +1024,7 @@ class PyDB(object):
             self.plugin = PluginManager(self)
         return self.plugin
 
-    def in_project_scope(self, frame, absolute_normalized_filename=None):
+    def in_project_scope(self, frame, absolute_filename=None):
         '''
         Note: in general this method should not be used (apply_files_filter should be used
         in most cases as it also handles the project scope check).
@@ -1031,22 +1032,22 @@ class PyDB(object):
         :param frame:
             The frame we want to check.
 
-        :param absolute_normalized_filename:
+        :param absolute_filename:
             Must be the result from get_abs_path_real_path_and_base_from_frame(frame)[0] (can
             be used to speed this function a bit if it's already available to the caller, but
             in general it's not needed).
         '''
         try:
-            if absolute_normalized_filename is None:
+            if absolute_filename is None:
                 try:
                     # Make fast path faster!
                     abs_real_path_and_basename = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
                 except:
                     abs_real_path_and_basename = get_abs_path_real_path_and_base_from_frame(frame)
 
-                absolute_normalized_filename = abs_real_path_and_basename[0]
+                absolute_filename = abs_real_path_and_basename[0]
 
-            cache_key = (frame.f_code.co_firstlineno, absolute_normalized_filename, frame.f_code)
+            cache_key = (frame.f_code.co_firstlineno, absolute_filename, frame.f_code)
 
             return self._in_project_scope_cache[cache_key]
         except KeyError:
@@ -1061,18 +1062,18 @@ class PyDB(object):
             if file_type == self.PYDEV_FILE:
                 cache[cache_key] = False
 
-            elif absolute_normalized_filename == '<string>':
+            elif absolute_filename == '<string>':
                 # Special handling for '<string>'
                 if file_type == self.LIB_FILE:
                     cache[cache_key] = False
                 else:
                     cache[cache_key] = True
 
-            elif self.source_mapping.has_mapping_entry(absolute_normalized_filename):
+            elif self.source_mapping.has_mapping_entry(absolute_filename):
                 cache[cache_key] = True
 
             else:
-                cache[cache_key] = self._files_filtering.in_project_roots(absolute_normalized_filename)
+                cache[cache_key] = self._files_filtering.in_project_roots(absolute_filename)
 
             return cache[cache_key]
 
@@ -1093,15 +1094,14 @@ class PyDB(object):
         self._clear_filters_caches()
         self._clear_skip_caches()
 
-    def _exclude_by_filter(self, frame, filename):
+    def _exclude_by_filter(self, frame, absolute_filename):
         '''
-        :param str filename:
-            The filename to filter.
-
         :return: True if it should be excluded, False if it should be included and None
             if no rule matched the given file.
+
+        :note: it'll be normalized as needed inside of this method.
         '''
-        cache_key = (filename, frame.f_code.co_name)
+        cache_key = (absolute_filename, frame.f_code.co_name)
         try:
             return self._exclude_by_filter_cache[cache_key]
         except KeyError:
@@ -1114,7 +1114,7 @@ class PyDB(object):
                 module_name = None
                 if self._files_filtering.require_module:
                     module_name = frame.f_globals.get('__name__', '')
-                cache[cache_key] = self._files_filtering.exclude_by_filter(filename, module_name)
+                cache[cache_key] = self._files_filtering.exclude_by_filter(absolute_filename, module_name)
 
             return cache[cache_key]
 
@@ -1187,7 +1187,9 @@ class PyDB(object):
         exclude_filters_enabled = self._exclude_filters_enabled
 
         if (ignore_libraries and not self.in_project_scope(trace.tb_frame)) \
-                or (exclude_filters_enabled and self._exclude_by_filter(trace.tb_frame, trace.tb_frame.f_code.co_filename)):
+                or (exclude_filters_enabled and self._exclude_by_filter(
+                    trace.tb_frame,
+                    pydevd_file_utils.absolute_path(trace.tb_frame.f_code.co_filename))):
             return True
 
         return False

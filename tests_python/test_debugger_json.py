@@ -2911,7 +2911,7 @@ def test_set_debugger_property(case_setup, dbg_property):
         json_facade.write_set_breakpoints(writer.get_line_index_with_content('Break here'))
 
         if dbg_property in ('dont_trace', 'change_pattern', 'dont_trace_after_start'):
-            json_facade.write_set_debugger_property([], ['dont_trace.py'])
+            json_facade.write_set_debugger_property([], ['dont_trace.py'] if not IS_WINDOWS else ['Dont_Trace.py'])
 
         if dbg_property == 'change_pattern':
             json_facade.write_set_debugger_property([], ['something_else.py'])
@@ -4768,40 +4768,41 @@ def test_debugger_case_symlink(case_setup, tmpdir, launch_through_link, breakpoi
         # directory when collecting temporary files.
         os.unlink(target_link)
 
-# @pytest.mark.skipif(not IS_LINUX, reason='Linux only test.')
-# def test_debugger_case_sensitive(case_setup, tmpdir):
-#
-#     import subprocess
-#     path = os.path.abspath(str(tmpdir.join('Path1').join('PaTh2')))
-#     os.makedirs(path)
-#     target = os.path.join(path, 'myFile.py')
-#     with open(target, 'w') as stream:
-#         stream.write('''
-# print('current file', __file__) # Break here
-# print('TEST SUCEEDED')
-# ''')
-#     assert not os.path.exists(target.lower())
-#     assert os.path.exists(target)
-#
-#     def get_environ(self):
-#         env = os.environ.copy()
-#         # Force to normalize by doing filename.lower().
-#         env['PYDEVD_FILENAME_NORMALIZATION'] = 'lower'
-#         return env
-#
-#     # Sometimes we end up with a different return code on Linux when interrupting (even
-#     # though we go through completion and print the 'TEST SUCEEDED' msg).
-#     with case_setup.test_file(target, get_environ=get_environ) as writer:
-#         json_facade = JsonFacade(writer)
-#         json_facade.write_launch(justMyCode=False)
-#         json_facade.write_set_breakpoints(writer.get_line_index_with_content('Break here'))
-#
-#         json_facade.write_make_initial_run()
-#         json_hit = json_facade.wait_for_thread_stopped()
-#
-#         json_facade.write_continue()
-#
-#         writer.finished_ok = True
+
+@pytest.mark.skipif(not IS_LINUX, reason='Linux only test.')
+def ___test_debugger_case_sensitive(case_setup, tmpdir):
+    path = os.path.abspath(str(tmpdir.join('Path1').join('PaTh2')))
+    os.makedirs(path)
+    target = os.path.join(path, 'myFile.py')
+    with open(target, 'w') as stream:
+        stream.write('''
+print('current file', __file__) # Break here
+print('TEST SUCEEDED')
+''')
+    assert not os.path.exists(target.lower())
+    assert os.path.exists(target)
+
+    def get_environ(self):
+        env = os.environ.copy()
+        # Force to normalize by doing filename.lower().
+        env['PYDEVD_FILENAME_NORMALIZATION'] = 'lower'
+        return env
+
+    # Sometimes we end up with a different return code on Linux when interrupting (even
+    # though we go through completion and print the 'TEST SUCEEDED' msg).
+    with case_setup.test_file(target, get_environ=get_environ) as writer:
+        json_facade = JsonFacade(writer)
+        json_facade.write_launch(justMyCode=False)
+        json_facade.write_set_breakpoints(writer.get_line_index_with_content('Break here'))
+
+        json_facade.write_make_initial_run()
+        json_hit = json_facade.wait_for_thread_stopped()
+        path = json_hit.stack_trace_response.body.stackFrames[0]['source']['path']
+        assert path == target
+
+        json_facade.write_continue()
+
+        writer.finished_ok = True
 
 
 if __name__ == '__main__':

@@ -142,10 +142,10 @@ def test_to_server_and_to_client(tmpdir):
                     (in_eclipse, in_python)
                 ]
                 pydevd_file_utils.setup_client_server_paths(PATHS_FROM_ECLIPSE_TO_PYTHON)
-                check(pydevd_file_utils.map_file_to_server('c:\\foo\\my'), 'c:\\bar\\my')
+#                 check(pydevd_file_utils.map_file_to_server('c:\\foo\\my'), 'c:\\bar\\my')
                 check(pydevd_file_utils.map_file_to_server('c:/foo/my'), 'c:\\bar\\my')
                 check(pydevd_file_utils.map_file_to_server('c:/foo/my/'), 'c:\\bar\\my')
-                check(pydevd_file_utils.map_file_to_server('c:\\foo\\áéíóú'.upper()), 'c:\\bar\\áéíóú')
+                check(pydevd_file_utils.map_file_to_server('c:\\foo\\áéíóú'.upper()), 'c:\\bar' + '\\áéíóú'.upper())
                 check(pydevd_file_utils.map_file_to_client('c:\\bar\\my'), ('c:\\foo\\my', True))
 
             # Client on unix and server on windows
@@ -208,8 +208,8 @@ def test_to_server_and_to_client(tmpdir):
             pydevd_file_utils.set_ide_os('WINDOWS')
             PATHS_FROM_ECLIPSE_TO_PYTHON = []
             pydevd_file_utils.setup_client_server_paths(PATHS_FROM_ECLIPSE_TO_PYTHON)
-            assert pydevd_file_utils.map_file_to_server(test_dir) == test_dir.lower()
-            assert pydevd_file_utils.map_file_to_client(test_dir)[0].endswith('\\Foo')
+            assert pydevd_file_utils.map_file_to_server(test_dir) == test_dir
+            assert pydevd_file_utils.map_file_to_client(test_dir.lower())[0].endswith('\\Foo')
         else:
             # Client on windows and server on unix
             pydevd_file_utils.set_ide_os('WINDOWS')
@@ -238,12 +238,12 @@ def test_to_server_and_to_client(tmpdir):
                 assert pydevd_file_utils.map_file_to_server('c:\\foo\\my') == '/báéíóúr/my'
                 assert pydevd_file_utils.map_file_to_server('C:\\foo\\my') == '/báéíóúr/my'
                 assert pydevd_file_utils.map_file_to_server('C:\\foo\\MY') == '/báéíóúr/MY'
-                assert pydevd_file_utils.map_file_to_server('C:\\foo\\MY\\') == '/báéíóúr/MY/'
+                assert pydevd_file_utils.map_file_to_server('C:\\foo\\MY\\') == '/báéíóúr/MY'
                 assert pydevd_file_utils.map_file_to_server('c:\\foo\\my\\file.py') == '/báéíóúr/my/file.py'
                 assert pydevd_file_utils.map_file_to_server('c:\\foo\\my\\other\\file.py') == '/báéíóúr/my/other/file.py'
                 assert pydevd_file_utils.map_file_to_server('c:/foo/my') == '/báéíóúr/my'
-                assert pydevd_file_utils.map_file_to_server('c:\\foo\\my\\') == '/báéíóúr/my/'
-                assert pydevd_file_utils.map_file_to_server('c:/foo/my/') == '/báéíóúr/my/'
+                assert pydevd_file_utils.map_file_to_server('c:\\foo\\my\\') == '/báéíóúr/my'
+                assert pydevd_file_utils.map_file_to_server('c:/foo/my/') == '/báéíóúr/my'
 
                 assert pydevd_file_utils.map_file_to_client('/báéíóúr/my') == ('c:\\foo\\my', True)
                 assert pydevd_file_utils.map_file_to_client('/báéíóúr/my/') == ('c:\\foo\\my', True)
@@ -253,7 +253,7 @@ def test_to_server_and_to_client(tmpdir):
                 assert pydevd_file_utils.map_file_to_client('/usr/bin') == ('\\usr\\bin', False)
                 assert pydevd_file_utils.map_file_to_client('/usr/bin/') == ('\\usr\\bin', False)
                 assert pydevd_file_utils.map_file_to_server('\\usr\\bin') == '/usr/bin'
-                assert pydevd_file_utils.map_file_to_server('\\usr\\bin\\') == '/usr/bin/'
+                assert pydevd_file_utils.map_file_to_server('\\usr\\bin\\') == '/usr/bin'
 
                 # When we have a client file and there'd be no translation, and making it absolute would
                 # do something as '$cwd/$file_received' (i.e.: $cwd/c:/another in the case below),
@@ -369,42 +369,56 @@ def test_zip_paths(tmpdir):
 def test_source_mapping():
 
     from _pydevd_bundle.pydevd_source_mapping import SourceMapping, SourceMappingEntry
-    source_mapping = SourceMapping()
+    from _pydevd_bundle import pydevd_api
+
+    class _DummyPyDB(object):
+        source_mapping = SourceMapping()
+        api_received_breakpoints = {}
+        file_to_id_to_line_breakpoint = {}
+        file_to_id_to_plugin_breakpoint = {}
+        breakpoints = {}
+
+    source_mapping = _DummyPyDB.source_mapping
+
     mapping = [
         SourceMappingEntry(line=3, end_line=6, runtime_line=5, runtime_source='<cell1>'),
         SourceMappingEntry(line=10, end_line=11, runtime_line=1, runtime_source='<cell2>'),
     ]
-    source_mapping.set_source_mapping('file1.py', mapping)
+
+    api = pydevd_api.PyDevdAPI()
+    py_db = _DummyPyDB()
+    filename = 'c:\\temp\\bar.py' if IS_WINDOWS else '/temp/bar.py'
+    api.set_source_mapping(py_db, filename, mapping)
 
     # Map to server
-    assert source_mapping.map_to_server('file1.py', 1) == ('file1.py', 1, False)
-    assert source_mapping.map_to_server('file1.py', 2) == ('file1.py', 2, False)
+    assert source_mapping.map_to_server(filename, 1) == (filename, 1, False)
+    assert source_mapping.map_to_server(filename, 2) == (filename, 2, False)
 
-    assert source_mapping.map_to_server('file1.py', 3) == ('<cell1>', 5, True)
-    assert source_mapping.map_to_server('file1.py', 4) == ('<cell1>', 6, True)
-    assert source_mapping.map_to_server('file1.py', 5) == ('<cell1>', 7, True)
-    assert source_mapping.map_to_server('file1.py', 6) == ('<cell1>', 8, True)
+    assert source_mapping.map_to_server(filename, 3) == ('<cell1>', 5, True)
+    assert source_mapping.map_to_server(filename, 4) == ('<cell1>', 6, True)
+    assert source_mapping.map_to_server(filename, 5) == ('<cell1>', 7, True)
+    assert source_mapping.map_to_server(filename, 6) == ('<cell1>', 8, True)
 
-    assert source_mapping.map_to_server('file1.py', 7) == ('file1.py', 7, False)
+    assert source_mapping.map_to_server(filename, 7) == (filename, 7, False)
 
-    assert source_mapping.map_to_server('file1.py', 10) == ('<cell2>', 1, True)
-    assert source_mapping.map_to_server('file1.py', 11) == ('<cell2>', 2, True)
+    assert source_mapping.map_to_server(filename, 10) == ('<cell2>', 1, True)
+    assert source_mapping.map_to_server(filename, 11) == ('<cell2>', 2, True)
 
-    assert source_mapping.map_to_server('file1.py', 12) == ('file1.py', 12, False)
+    assert source_mapping.map_to_server(filename, 12) == (filename, 12, False)
 
     # Map to client
-    assert source_mapping.map_to_client('file1.py', 1) == ('file1.py', 1, False)
-    assert source_mapping.map_to_client('file1.py', 2) == ('file1.py', 2, False)
+    assert source_mapping.map_to_client(filename, 1) == (filename, 1, False)
+    assert source_mapping.map_to_client(filename, 2) == (filename, 2, False)
 
-    assert source_mapping.map_to_client('<cell1>', 5) == ('file1.py', 3, True)
-    assert source_mapping.map_to_client('<cell1>', 6) == ('file1.py', 4, True)
-    assert source_mapping.map_to_client('<cell1>', 7) == ('file1.py', 5, True)
-    assert source_mapping.map_to_client('<cell1>', 8) == ('file1.py', 6, True)
+    assert source_mapping.map_to_client('<cell1>', 5) == (filename, 3, True)
+    assert source_mapping.map_to_client('<cell1>', 6) == (filename, 4, True)
+    assert source_mapping.map_to_client('<cell1>', 7) == (filename, 5, True)
+    assert source_mapping.map_to_client('<cell1>', 8) == (filename, 6, True)
 
-    assert source_mapping.map_to_client('file1.py', 7) == ('file1.py', 7, False)
+    assert source_mapping.map_to_client(filename, 7) == (filename, 7, False)
 
-    assert source_mapping.map_to_client('<cell2>', 1) == ('file1.py', 10, True)
-    assert source_mapping.map_to_client('<cell2>', 2) == ('file1.py', 11, True)
+    assert source_mapping.map_to_client('<cell2>', 1) == (filename, 10, True)
+    assert source_mapping.map_to_client('<cell2>', 2) == (filename, 11, True)
 
-    assert source_mapping.map_to_client('file1.py', 12) == ('file1.py', 12, False)
+    assert source_mapping.map_to_client(filename, 12) == (filename, 12, False)
 

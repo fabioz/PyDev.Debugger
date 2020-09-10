@@ -16,6 +16,7 @@ DONT_TRACE_DIRS = {
     '_pydevd_frame_eval': PYDEV_FILE,
     'pydev_ipython': PYDEV_FILE,
     'pydev_sitecustomize': PYDEV_FILE,
+    'pydevd.egg-info': PYDEV_FILE,
     'pydevd_attach_to_process': PYDEV_FILE,
     'pydevd_concurrency_analyser': PYDEV_FILE,
     'pydevd_plugins': PYDEV_FILE,
