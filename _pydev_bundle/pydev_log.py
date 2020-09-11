@@ -1,4 +1,5 @@
-from _pydevd_bundle.pydevd_constants import DebugInfoHolder, SHOW_COMPILE_CYTHON_COMMAND_LINE, NULL
+from _pydevd_bundle.pydevd_constants import DebugInfoHolder, SHOW_COMPILE_CYTHON_COMMAND_LINE, NULL, \
+    IS_PY3K
 from contextlib import contextmanager
 import traceback
 import os
@@ -109,13 +110,23 @@ def _pydevd_log(level, msg, *args):
                 msg = '%s - %s' % (msg, args)
             msg = '%s\n' % (msg,)
             try:
-                initialize_debug_stream()  # Do it as late as possible
-                _LoggingGlobals._debug_stream.write(msg)
-            except TypeError:
-                if isinstance(msg, bytes):
-                    # Depending on the StringIO flavor, it may only accept unicode.
-                    msg = msg.decode('utf-8', 'replace')
+                try:
+                    initialize_debug_stream()  # Do it as late as possible
                     _LoggingGlobals._debug_stream.write(msg)
+                except TypeError:
+                    if isinstance(msg, bytes):
+                        # Depending on the StringIO flavor, it may only accept unicode.
+                        msg = msg.decode('utf-8', 'replace')
+                        _LoggingGlobals._debug_stream.write(msg)
+            except UnicodeEncodeError:
+                # When writing to the stream it's possible that the string can't be represented
+                # in the encoding expected (in this case, convert it to the stream encoding
+                # or ascii if we can't find one suitable using a suitable replace).
+                encoding = getattr(_LoggingGlobals._debug_stream, 'encoding', 'ascii')
+                msg = msg.encode(encoding, 'backslashreplace')
+                msg = msg.decode(encoding)
+                _LoggingGlobals._debug_stream.write(msg)
+
             _LoggingGlobals._debug_stream.flush()
         except:
             pass
