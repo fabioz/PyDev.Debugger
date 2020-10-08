@@ -762,6 +762,27 @@ def test_case_user_unhandled_exception_coroutine(case_setup, stop):
 
 
 @pytest.mark.skipif(IS_PY26, reason='Not ok on Python 2.6')
+def test_case_user_unhandled_exception_dont_stop(case_setup):
+
+    with case_setup.test_file(
+            'my_code/my_code_exception_user_unhandled.py',) as writer:
+        json_facade = JsonFacade(writer)
+
+        not_my_code_dir = debugger_unittest._get_debugger_test_file('not_my_code')
+        json_facade.write_launch(
+            debugStdLib=True,
+            rules=[
+                {'path': not_my_code_dir, 'include':False},
+            ]
+        )
+
+        json_facade.write_set_exception_breakpoints(['userUnhandled'])
+        json_facade.write_make_initial_run()
+
+        writer.finished_ok = True
+
+
+@pytest.mark.skipif(IS_PY26, reason='Not ok on Python 2.6')
 def test_case_user_unhandled_exception_stop_on_yield(case_setup, pyfile):
 
     @pyfile
