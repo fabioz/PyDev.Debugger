@@ -129,7 +129,7 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython, 
             target = "%s/%s.pyx" % (dir_name, target_pydevd_name,)
             cythonize([target])
 
-            # Hacks needed in CPython 3.8 and 3.9 to access PyInterpreterState.eval_frame.
+            # Workarounds needed in CPython 3.8 and 3.9 to access PyInterpreterState.eval_frame.
             for c_file in c_files:
                 with open(c_file, 'r') as stream:
                     c_file_contents = stream.read()
