@@ -1,0 +1,125 @@
+name: PyDev.Debugger Tests
+
+on:
+  - push
+  - pull_request
+
+env:
+    DISPLAY: ":99"
+    
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [
+          "windows-py27-checkdebug",
+          "ubuntu-py27-cython",
+          "ubuntu-pypy3",
+          "macos-py37-cython",
+          "ubuntu-py38-cython-checkbin",
+          "windows-py39-cython",
+        ]
+        
+        include:
+          - name: "windows-py27-checkdebug"
+            python: "2.7"
+            os: windows-latest
+            PYDEVD_USE_CYTHON: NO
+          - name: "ubuntu-py27-cython"
+            python: "2.7"
+            os: ubuntu-latest
+            PYDEVD_USE_CYTHON: YES
+          - name: "ubuntu-pypy3"
+            python: "pypy3"
+            os: ubuntu-latest
+            PYDEVD_USE_CYTHON: NO
+          - name: "macos-py37-cython"
+            python: "3.7"
+            os: macos-latest
+            PYDEVD_USE_CYTHON: YES
+          - name: "ubuntu-py38-cython-checkbin"
+            python: "3.8"
+            os: ubuntu-latest
+            PYDEVD_USE_CYTHON: YES
+          - name: "windows-py39-cython"
+            python: "3.9"
+            os: windows-latest
+            PYDEVD_USE_CYTHON: YES
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python }}
+    - name: Install gdb/xvfb/ptrace_scope
+      run: |
+        sudo apt-get install gdb
+        sudo sysctl kernel.yama.ptrace_scope=0
+        sudo apt-get install xvfb
+        Xvfb -ac :99 -screen 0 1280x1024x16 > /dev/null 2>&1 &
+      if: contains(matrix.name, 'ubuntu')
+    - name: Install common Python deps
+      run: |
+        pip install --upgrade pip
+        pip install wheel --no-warn-script-location
+        pip install cython --no-warn-script-location
+        pip install psutil --no-warn-script-location
+        pip install numpy --no-warn-script-location
+        pip install pytest --no-warn-script-location
+        pip install pytest-xdist --no-warn-script-location
+        pip install psutil --no-warn-script-location
+        pip install ipython --no-warn-script-location
+        pip install untangle --no-warn-script-location
+    - name: Install Python 2.7 deps
+      if: contains(matrix.name, 'py27')
+      run: |
+        pip install "django>=1.7,<1.8" --no-warn-script-location
+        pip install pathlib2 --no-warn-script-location
+        pip install gevent --no-warn-script-location
+        pip install cherrypy --no-warn-script-location
+    - name: Install Python 3.x deps
+      if: contains(matrix.name, 'py3') && !contains(matrix.name, 'pypy')
+      run: |
+        pip install PySide2 --no-warn-script-location
+        pip install django
+        pip install trio
+        pip install gevent --no-warn-script-location
+        pip install cherrypy --no-warn-script-location
+    - name: Install Pypy 3 deps
+      if: contains(matrix.name, 'py3') && contains(matrix.name, 'pypy')
+      run: |
+        pip install trio
+    - name: Check cython unchanged
+      if: contains(matrix.name, 'checkbin')
+      env:
+        PYTHONPATH: .
+      run: |
+        python build_tools/build.py
+        python build_tools/check_no_git_modifications.py
+    - name: Create cython binaries
+      if: contains(matrix.name, 'cython')
+      run: |
+        python setup_cython.py build_ext --inplace
+    - name: Check debug
+      if: contains(matrix.name, 'checkdebug')
+      run: |
+        ./.github/install_and_run_debug_py.sh
+    - name: Run Python 2.7 tests
+      if: contains(matrix.name, '27')
+      env:
+        PYTHONPATH: .
+        PYDEVD_USE_CYTHON: ${{matrix.PYDEVD_USE_CYTHON }}
+      run: |
+        python -m pytest -rf --ignore=_pydevd_frame_eval/vendored
+    - name: Run Python 3.x tests
+      if: ${{ !contains(matrix.name, '27') }}
+      env:
+        PYTHONPATH: .
+        PYDEVD_USE_CYTHON: ${{matrix.PYDEVD_USE_CYTHON }}
+      run: |
+        python -m pytest -n auto -rf
+
