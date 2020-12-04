@@ -248,15 +248,41 @@ def patch_args(args, is_exec=False):
         # the final list should have items from the unquoted_args as they were initially.
         args_as_str = _get_str_type_compatible('', unquoted_args)
 
-        params_with_flag = ('-W', '-X', '--check-hash-based-pycs', '--jit')
+        params_with_value_in_separate_arg = (
+            '--check-hash-based-pycs',
+            '--jit'  # pypy option
+        )
+
+        # All short switches may be combined together. The ones below require a value and the
+        # value itself may be embedded in the arg.
+        #
+        # i.e.: Python accepts things as:
+        #
+        # python -OQold -qmtest
+        #
+        # Which is the same as:
+        #
+        # python -O -Q old -q -m test
+        #
+        # or even:
+        #
+        # python -OQold "-vcimport sys;print(sys)"
+        #
+        # Which is the same as:
+        #
+        # python -O -Q old -v -c "import sys;print(sys)"
+
+        params_with_combinable_arg = set(('W', 'X', 'Q', 'c', 'm'))
 
         module_name = None
+        before_module_flag = ''
         module_name_i_start = -1
         module_name_i_end = -1
 
         code = None
         code_i = -1
         code_i_end = -1
+        code_flag = ''
 
         filename = None
         filename_i = -1
@@ -273,34 +299,66 @@ def patch_args(args, is_exec=False):
                     pydev_log.debug('Unable to fix arguments to attach debugger on subprocess when reading from stdin ("python ... -").')
                     return original_args
 
-                if arg_as_str.startswith('-m'):
-                    module_name_i_start = i
-                    if arg_as_str == '-m':
-                        module_name = unquoted_args[i + 1]
-                        module_name_i_end = i + 1
-                    else:
-                        # i.e.: python -mmodule_name
-                        module_name = unquoted_args[i][2:]
-                        module_name_i_end = module_name_i_start
-                    break
+                if arg_as_str.startswith(params_with_value_in_separate_arg):
+                    if arg_as_str in params_with_value_in_separate_arg:
+                        ignore_next = True
+                    continue
 
-                if arg_as_str.startswith('-c'):
-                    if arg_as_str == '-c':
-                        code = unquoted_args[i + 1]
-                        code_i_end = i + 2
-                    else:
-                        # i.e.: python "-cimport sys"
-                        code = unquoted_args[i][2:]
-                        code_i_end = i + 1
-                    code_i = i
-                    break
+                break_out = False
+                for j, c in enumerate(arg_as_str):
 
-                if arg_as_str.startswith(params_with_flag):
                     # i.e.: Python supports -X faulthandler as well as -Xfaulthandler
                     # (in one case we have to ignore the next and in the other we don't
                     # have to ignore it).
-                    if arg_as_str in params_with_flag:
-                        ignore_next = True
+                    if c in params_with_combinable_arg:
+                        remainder = arg_as_str[j + 1:]
+                        if not remainder:
+                            ignore_next = True
+
+                        if c == 'm':
+                            # i.e.: Something as
+                            # python -qm test
+                            # python -m test
+                            # python -qmtest
+                            before_module_flag = arg_as_str[:j]  # before_module_flag would then be "-q"
+                            if before_module_flag == '-':
+                                before_module_flag = ''
+                            module_name_i_start = i
+                            if not remainder:
+                                module_name = unquoted_args[i + 1]
+                                module_name_i_end = i + 1
+                            else:
+                                # i.e.: python -qmtest should provide 'test' as the module_name
+                                module_name = unquoted_args[i][j + 1:]
+                                module_name_i_end = module_name_i_start
+                            break_out = True
+                            break
+
+                        elif c == 'c':
+                            # i.e.: Something as
+                            # python -qc "import sys"
+                            # python -c "import sys"
+                            # python "-qcimport sys"
+                            code_flag = arg_as_str[:j + 1]  # code_flag would then be "-qc"
+
+                            if not remainder:
+                                # arg_as_str is something as "-qc", "import sys"
+                                code = unquoted_args[i + 1]
+                                code_i_end = i + 2
+                            else:
+                                # if arg_as_str is something as "-qcimport sys"
+                                code = remainder  # code would be "import sys"
+                                code_i_end = i + 1
+                            code_i = i
+                            break_out = True
+                            break
+
+                        else:
+                            break
+
+                if break_out:
+                    break
+
             else:
                 # It doesn't start with '-' and we didn't ignore this entry:
                 # this means that this is the file to be executed.
@@ -330,7 +388,7 @@ def patch_args(args, is_exec=False):
             if port is not None:
                 new_args = []
                 new_args.extend(unquoted_args[:code_i])
-                new_args.append('-c')
+                new_args.append(code_flag)
                 new_args.append(_get_python_c_args(host, port, code, unquoted_args, SetupHolder.setup))
                 new_args.extend(unquoted_args[code_i_end:])
 
@@ -347,6 +405,8 @@ def patch_args(args, is_exec=False):
         from _pydevd_bundle.pydevd_command_line_handling import setup_to_argv
         new_args = []
         new_args.extend(unquoted_args[:first_non_vm_index])
+        if before_module_flag:
+            new_args.append(before_module_flag)
         new_args.extend(setup_to_argv(
             _get_setup_updated_with_protocol_and_ppid(SetupHolder.setup, is_exec=is_exec)
         ))
@@ -355,8 +415,8 @@ def patch_args(args, is_exec=False):
         if module_name is not None:
             assert module_name_i_start != -1
             assert module_name_i_end != -1
-            # Always insert at pos == 1 (i.e.: pydevd "--module" --multiprocess ...)
-            new_args.insert(2, '--module')
+            # Always after 'pydevd' (i.e.: pydevd "--module" --multiprocess ...)
+            new_args.insert(2 if not before_module_flag else 3, '--module')
             new_args.append(module_name)
             new_args.extend(unquoted_args[module_name_i_end + 1:])
 
