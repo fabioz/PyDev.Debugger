@@ -7,6 +7,12 @@ import sys  # @NoMove
 if sys.version_info[:2] < (2, 6):
     raise RuntimeError('The PyDev.Debugger requires Python 2.6 onwards to be run. If you need to use an older Python version, use an older version of the debugger.')
 
+import os  # @NoMove
+# allow the debugger to work in isolated mode Python
+here = os.path.dirname(os.path.abspath(__file__))
+if here not in sys.path:
+    sys.path.insert(0, here)
+
 import atexit
 from collections import defaultdict
 from contextlib import contextmanager
