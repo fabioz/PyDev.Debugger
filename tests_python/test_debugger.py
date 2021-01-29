@@ -17,7 +17,7 @@ from tests_python.debugger_unittest import (CMD_SET_PROPERTY_TRACE, REASON_CAUGH
     IS_APPVEYOR, wait_for_condition, CMD_GET_FRAME, CMD_GET_BREAKPOINT_EXCEPTION,
     CMD_THREAD_SUSPEND, CMD_STEP_OVER, REASON_STEP_OVER, CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION,
     CMD_THREAD_RESUME_SINGLE_NOTIFICATION, REASON_STEP_RETURN, REASON_STEP_RETURN_MY_CODE,
-    REASON_STEP_OVER_MY_CODE, REASON_STEP_INTO, CMD_THREAD_KILL, IS_PYPY, REASON_STOP_ON_START)
+    REASON_STEP_OVER_MY_CODE, REASON_STEP_INTO, CMD_THREAD_KILL, IS_PYPY, REASON_STOP_ON_START, CMD_THREAD_RUN)
 from _pydevd_bundle.pydevd_constants import IS_WINDOWS, IS_PY38_OR_GREATER, \
     IS_MAC
 from _pydevd_bundle.pydevd_comm_constants import CMD_RELOAD_CODE, CMD_INPUT_REQUESTED
@@ -4200,6 +4200,26 @@ def test_frame_eval_mode_corner_case_many(case_setup, break_name):
             writer.write_run_thread(hit.thread_id)
 
             writer.finished_ok = True
+
+
+def test_execv(case_setup):
+    from tests_python.debugger_unittest import AbstractWriterThread
+    with case_setup.test_file('_debugger_case_execv.py') as writer:
+        break_line = writer.get_line_index_with_content('break here')
+        writer.write_add_breakpoint(break_line)
+
+        writer.write_make_initial_run()
+
+        hit = writer.wait_for_breakpoint_hit()
+        writer.write_run_thread(hit.thread_id)
+
+        writer.wait_for_message(CMD_THREAD_RUN, expect_xml=False)
+
+        hit = writer.wait_for_breakpoint_hit()
+        writer.write_run_thread(hit.thread_id)
+
+        writer.finished_ok = True
+
 
 # Jython needs some vars to be set locally.
 # set JAVA_HOME=c:\bin\jdk1.8.0_172
