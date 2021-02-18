@@ -57,7 +57,8 @@ jobs:
         python-version: ${{ matrix.python }}
     - name: Install gdb/xvfb/ptrace_scope
       run: |
-        # sudo apt-get install gdb
+        sudo apt-get update
+        sudo apt-get install gdb
         sudo sysctl kernel.yama.ptrace_scope=0
         sudo apt-get install xvfb
         Xvfb -ac :99 -screen 0 1280x1024x16 > /dev/null 2>&1 &
