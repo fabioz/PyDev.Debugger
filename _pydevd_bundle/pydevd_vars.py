@@ -279,10 +279,12 @@ def eval_in_context(expression, globals, locals):
             if IS_PY2 and isinstance(expression, unicode):
                 expression = expression.encode('utf-8')
 
-            if '__' in expression:
-                # Try to handle '__' name mangling...
+            if '.__' in expression:
+                # Try to handle '__' name mangling (for simple cases such as self.__variable.__another_var).
                 split = expression.split('.')
-                curr = locals.get(split[0])
+                entry = split[0]
+
+                curr = locals[entry]  # Note: we want the KeyError if it's not there.
                 for entry in split[1:]:
                     if entry.startswith('__') and not hasattr(curr, entry):
                         entry = '_%s%s' % (curr.__class__.__name__, entry)
