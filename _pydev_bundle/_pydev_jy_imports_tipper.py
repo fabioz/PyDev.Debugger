@@ -1,6 +1,6 @@
 try:
     import StringIO
-except:
+except ImportError:
     import io as StringIO
 
 import traceback
@@ -17,8 +17,13 @@ from org.python import core #@UnresolvedImport
 from org.python.core import PyClass #@UnresolvedImport
 
 try:
+    unicode
+except NameError:
+    unicode = str
+
+try:
     xrange
-except:
+except NameError:
     xrange = range
 
 
