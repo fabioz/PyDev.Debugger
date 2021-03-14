@@ -769,7 +769,7 @@ class DebugRegister (StaticClass):
     disableMask = tuple( [_registerMask ^ x for x in enableMask] ) # The registerMask from the class is not there in py3
     try:
         del x # It's not there in py3
-    except:
+    except NameError:
         pass
 
     # orMask, andMask = triggerMask[register][trigger]

@@ -69,6 +69,16 @@ import traceback
 # too many variables named "cmd" to have a module by the same name :P
 from cmd import Cmd
 
+try:
+    raw_input
+except NameError:
+    raw_input = input
+
+try:
+    reload
+except NameError:
+    from importlib import reload
+
 # lazy imports
 readline = None
 

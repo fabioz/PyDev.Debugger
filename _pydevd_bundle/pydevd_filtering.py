@@ -14,9 +14,11 @@ from _pydevd_bundle.pydevd_constants import USER_CODE_BASENAMES_STARTING_WITH, \
 from _pydevd_bundle import pydevd_constants
 
 try:
-    xrange  # noqa
+    unicode
+    xrange
 except NameError:
-    xrange = range  # noqa
+    unicode = str
+    xrange = range
 
 ExcludeFilter = namedtuple('ExcludeFilter', 'name, exclude, is_path')
 

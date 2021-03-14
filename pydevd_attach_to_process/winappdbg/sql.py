@@ -58,6 +58,8 @@ from crash import Crash, Marshaller, pickle, HIGHEST_PROTOCOL
 from textio import CrashDump
 import win32
 
+from . import compat
+
 #------------------------------------------------------------------------------
 
 try:

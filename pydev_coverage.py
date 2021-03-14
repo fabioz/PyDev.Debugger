@@ -1,6 +1,10 @@
 '''
 Entry point module to run code-coverage.
 '''
+try:
+    raw_input
+except NameError:
+    raw_input = input
 
 
 def is_valid_py_file(path):

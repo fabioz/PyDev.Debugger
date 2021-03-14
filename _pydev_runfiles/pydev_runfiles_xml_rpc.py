@@ -7,6 +7,11 @@ from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 from _pydev_bundle.pydev_imports import xmlrpclib, _queue
 from _pydevd_bundle.pydevd_constants import Null, IS_PY3K
 
+try:
+    unicode
+except NameError:
+    unicode = str
+
 Queue = _queue.Queue
 
 #This may happen in IronPython (in Python it shouldn't happen as there are

@@ -38,7 +38,7 @@ Module instrumentation.
     DebugSymbolsWarning
 """
 
-from __future__ import with_statement
+from __future__ import unicode_literals, with_statement
 
 __revision__ = "$Id$"
 
@@ -56,6 +56,11 @@ Process = None
 import os
 import warnings
 import traceback
+
+try:
+    long
+except NameError:
+    long = int
 
 #==============================================================================
 

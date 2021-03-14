@@ -15,7 +15,7 @@ import inspect
 
 try:
     xrange = xrange
-except:
+except NameError:
     xrange = range
 
 
@@ -520,7 +520,7 @@ def _compose_line_contents(line_contents, previous_line_tokens):
 
             try:
                 from StringIO import StringIO
-            except:
+            except ImportError:
                 from io import StringIO
             stream = StringIO()
             _print_after_info(line_contents, stream)

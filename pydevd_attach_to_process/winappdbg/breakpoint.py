@@ -73,6 +73,11 @@ import ctypes
 import warnings
 import traceback
 
+try:
+    long
+except NameError:
+    long = int
+
 #==============================================================================
 
 class BreakpointWarning (UserWarning):

@@ -18,6 +18,11 @@ except ImportError:
     IS_JYTHON = False
     from _pydev_bundle import _pydev_imports_tipper
 
+try:
+    unicode
+except NameError: 
+    unicode = str
+
 dir2 = _pydev_imports_tipper.generate_imports_tip_for_module
 
 
@@ -84,6 +89,7 @@ class Completer:
         returns None.  The completion should begin with 'text'.
 
         """
+        global __main__
         if self.use_main_ns:
             # In pydev this option should never be used
             raise RuntimeError('Namespace must be provided!')

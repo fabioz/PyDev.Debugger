@@ -7,6 +7,11 @@ from _pydevd_bundle.pydevd_constants import HTTP_PROTOCOL, HTTP_JSON_PROTOCOL, \
 import json
 from _pydev_bundle import pydev_log
 
+try:
+    unicode
+except NameError:
+    unicode = str
+
 
 class _BaseNetCommand(object):
 

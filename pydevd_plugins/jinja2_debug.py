@@ -6,6 +6,11 @@ from pydevd_file_utils import canonical_normalized_path
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, FCode
 from _pydev_bundle import pydev_log
 
+try:
+    unicode
+except NameError: 
+    unicode = str
+
 
 class Jinja2LineBreakpoint(LineBreakpoint):
 

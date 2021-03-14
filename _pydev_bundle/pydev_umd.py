@@ -33,6 +33,12 @@ OTHER DEALINGS IN THE SOFTWARE.
 import sys
 import os
 
+try:
+    basestring
+except NameError:
+    basestring = str,
+
+
 # The following classes and functions are mainly intended to be used from
 # an interactive Python session
 class UserModuleDeleter:
@@ -164,7 +170,8 @@ def runfile(filename, args=None, wdir=None, namespace=None):
         except (UnicodeError, TypeError):
             pass
         os.chdir(wdir)
-    execfile(filename, namespace)
+    with open(filename) as in_file:
+        exec(in_file.read(), namespace)
     sys.argv = ['']
     if old_file is None:
         del namespace['__file__']

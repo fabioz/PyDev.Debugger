@@ -9,7 +9,7 @@ import ctypes
 
 try:
     from urllib import quote
-except:
+except ImportError:
     from urllib.parse import quote  # @UnresolvedImport
 
 import inspect
@@ -17,6 +17,13 @@ import sys
 from _pydevd_bundle.pydevd_constants import IS_PY3K, USE_CUSTOM_SYS_CURRENT_FRAMES, IS_PYPY, SUPPORT_GEVENT, \
     GEVENT_SUPPORT_NOT_SET_MSG, GENERATED_LEN_ATTR_NAME
 from _pydev_imps._pydev_saved_modules import threading
+
+try:
+    basestring
+    unicode
+except NameError:
+    basestring = str,
+    unicode = str
 
 
 def save_main_module(file, module_name):

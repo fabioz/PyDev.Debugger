@@ -17,6 +17,13 @@ try:
 except:
     frame_type = None
 
+try:
+    long
+    unicode
+except NameError:
+    long = int
+    unicode = str
+
 
 def make_valid_xml_value(s):
     # Same thing as xml.sax.saxutils.escape but also escaping double quotes.

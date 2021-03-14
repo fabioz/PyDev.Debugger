@@ -41,6 +41,7 @@ Functions for text input, logging or text output.
     DebugLog
     CrashDump
 """
+from __future__ import print_function
 
 __revision__ = "$Id$"
 
@@ -401,7 +402,7 @@ class HexOutput (StaticClass):
         """
         fd = open(filename, 'w')
         for integer in values:
-            print >> fd, cls.integer(integer, bits)
+            print(cls.integer(integer, bits), file=fd)
         fd.close()
 
     @classmethod
@@ -420,7 +421,7 @@ class HexOutput (StaticClass):
         """
         fd = open(filename, 'w')
         for string in values:
-            print >> fd, string
+            print(string, file=fd)
         fd.close()
 
     @classmethod
@@ -448,7 +449,7 @@ class HexOutput (StaticClass):
                 parsed = cls.integer(original, bits)
             except TypeError:
                 parsed = repr(original)
-            print >> fd, parsed
+            print(parsed, file=fd)
         fd.close()
 
 #------------------------------------------------------------------------------

@@ -20,6 +20,10 @@ try:
 except:
     pass
 
+try:
+    unicode
+except NameError: 
+    unicode = str
 
 class DjangoLineBreakpoint(LineBreakpoint):
 

@@ -24,7 +24,7 @@ else:
 
 try:
     xrange
-except:
+except NameError:
     xrange = range
 
 # completion types.

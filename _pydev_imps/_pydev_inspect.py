@@ -290,12 +290,12 @@ def getfile(object):
     if ismodule(object):
         if hasattr(object, '__file__'):
             return object.__file__
-        raise TypeError, 'arg is a built-in module'
+        raise TypeError('arg is a built-in module')
     if isclass(object):
         object = sys.modules.get(object.__module__)
         if hasattr(object, '__file__'):
             return object.__file__
-        raise TypeError, 'arg is a built-in class'
+        raise TypeError('arg is a built-in class')
     if ismethod(object):
         object = object.im_func
     if isfunction(object):
@@ -306,14 +306,14 @@ def getfile(object):
         object = object.f_code
     if iscode(object):
         return object.co_filename
-    raise TypeError, 'arg is not a module, class, method, ' \
-                     'function, traceback, frame, or code object'
+    raise TypeError('arg is not a module, class, method, '
+                    'function, traceback, frame, or code object')
 
 def getmoduleinfo(path):
     """Get the module name, suffix, mode, and module type for a given file."""
     filename = os.path.basename(path)
     suffixes = map(lambda (suffix, mode, mtype):
-                   (-len(suffix), suffix, mode, mtype), imp.get_suffixes())
+-                  (-len(suffix), suffix, mode, mtype), imp.get_suffixes())
     suffixes.sort() # try longest suffixes first, in case they overlap
     for neglen, suffix, mode, mtype in suffixes:
         if filename[neglen:] == suffix:
@@ -384,7 +384,7 @@ def findsource(object):
     try:
         file = open(getsourcefile(object))
     except (TypeError, IOError):
-        raise IOError, 'could not get source code'
+        raise IOError('could not get source code')
     lines = file.readlines()
     file.close()
 
@@ -396,7 +396,7 @@ def findsource(object):
         pat = re.compile(r'^\s*class\s*' + name + r'\b')
         for i in range(len(lines)):
             if pat.match(lines[i]): return lines, i
-        else: raise IOError, 'could not find class definition'
+        else: raise IOError('could not find class definition')
 
     if ismethod(object):
         object = object.im_func
@@ -408,14 +408,14 @@ def findsource(object):
         object = object.f_code
     if iscode(object):
         if not hasattr(object, 'co_firstlineno'):
-            raise IOError, 'could not find function definition'
+            raise IOError('could not find function definition')
         lnum = object.co_firstlineno - 1
         pat = re.compile(r'^(\s*def\s)|(.*\slambda(:|\s))')
         while lnum > 0:
             if pat.match(lines[lnum]): break
             lnum = lnum - 1
         return lines, lnum
-    raise IOError, 'could not find code object'
+    raise IOError('could not find code object')
 
 def getcomments(object):
     """Get lines of comments immediately preceding an object's source code."""
@@ -488,15 +488,15 @@ class BlockFinder:
             self.indent = self.indent + 1
         elif type == tokenize.DEDENT:
             self.indent = self.indent - 1
-            if self.indent == 0: raise EndOfBlock, self.last
+            if self.indent == 0:raise_(EndOfBlock, self.last)
         elif type == tokenize.NAME and scol == 0:
-            raise EndOfBlock, self.last
+            raise_(EndOfBlock, self.last)
 
 def getblock(lines):
     """Extract the block of code at the top of the given list of lines."""
     try:
         tokenize.tokenize(ListReader(lines).readline, BlockFinder().tokeneater)
-    except EndOfBlock, eob:
+    except EndOfBlock as eob:
         return lines[:eob.args[0]]
     # Fooling the indent/dedent logic implies a one-line definition
     return lines[:1]
@@ -569,7 +569,7 @@ def getargs(co):
     Three things are returned: (args, varargs, varkw), where 'args' is
     a list of argument names (possibly containing nested lists), and
     'varargs' and 'varkw' are the names of the * and ** arguments or None."""
-    if not iscode(co): raise TypeError, 'arg is not a code object'
+    if not iscode(co): raise TypeError('arg is not a code object')
 
     nargs = co.co_argcount
     names = co.co_varnames
@@ -623,7 +623,7 @@ def getargspec(func):
     'defaults' is an n-tuple of the default values of the last n arguments."""
     if ismethod(func):
         func = func.im_func
-    if not isfunction(func): raise TypeError, 'arg is not a Python function'
+    if not isfunction(func): raise TypeError('arg is not a Python function')
     args, varargs, varkw = getargs(func.func_code)
     return args, varargs, varkw, func.func_defaults
 

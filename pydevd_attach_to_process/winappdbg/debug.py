@@ -56,6 +56,8 @@ from winappdbg.interactive import ConsoleDebugger
 import warnings
 ##import traceback
 
+from . import compat
+
 #==============================================================================
 
 # If you set this warning to be considered as an error, you can stop the

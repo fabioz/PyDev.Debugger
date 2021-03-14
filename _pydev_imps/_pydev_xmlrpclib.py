@@ -1,5 +1,6 @@
 #Just a copy of the version in python 2.5 to be used if it's not available in jython 2.1
 import sys
+# flake8: noqa
 
 #
 # XML-RPC CLIENT LIBRARY

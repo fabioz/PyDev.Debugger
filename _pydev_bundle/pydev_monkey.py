@@ -12,7 +12,7 @@ from _pydevd_bundle.pydevd_defaults import PydevdCustomization
 
 try:
     xrange
-except:
+except NameError:
     xrange = range
 
 #===============================================================================

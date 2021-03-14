@@ -19,6 +19,11 @@ from _pydevd_bundle.pydevd_net_command import NetCommand
 from _pydevd_bundle.pydevd_thread_lifecycle import pydevd_find_thread_by_id
 import pydevd_file_utils
 
+try:
+    unicode
+except NameError:
+    unicode = str
+
 
 class _PyDevCommandProcessor(object):
 

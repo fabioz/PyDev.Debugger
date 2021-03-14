@@ -3,6 +3,11 @@ import os
 import sys
 from contextlib import contextmanager
 
+try:
+    unicode
+except NameError:
+    unicode = str
+
 
 class IORedirector:
     '''

@@ -70,6 +70,11 @@ import traceback
 # delayed import
 System = None
 
+try:
+    long
+except NameError:
+    long = int
+
 #==============================================================================
 
 # TODO

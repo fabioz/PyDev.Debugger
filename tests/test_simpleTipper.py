@@ -66,17 +66,17 @@ class TestCPython(unittest.TestCase):
     def test_imports2b(self):
         try:
             file
-        except:
+        except NameError:
             pass
         else:
             tips = _pydev_imports_tipper.generate_tip('%s' % BUILTIN_MOD)
-            t = self.assert_in('file' , tips)
+            t = self.assert_in('file', tips)
             self.assertTrue('->' in t[1].strip() or 'file' in t[1])
 
     def test_imports2c(self):
         try:
             file  # file is not available on py 3
-        except:
+        except NameError:
             pass
         else:
             tips = _pydev_imports_tipper.generate_tip('%s.file' % BUILTIN_MOD)

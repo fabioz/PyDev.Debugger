@@ -17,8 +17,12 @@ JINJA2_SUSPEND = 3
 
 try:
     int_types = (int, long)
+    unicode
+    xrange
 except NameError:
     int_types = (int,)
+    unicode = str
+    xrange = range
 
 # types does not include a MethodWrapperType
 try:

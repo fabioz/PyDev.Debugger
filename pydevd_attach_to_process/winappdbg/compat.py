@@ -33,20 +33,29 @@ import types
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
 
-if PY3:
+try:
+    string_types = basestring,
+    integer_types = (int, long)
+    unichr = unichr
+    unicode = unicode
+    xrange = xrange
+except NameError:
     string_types = str,
     integer_types = int,
+    unicode = str
+    unichr = chr
+    xrange = range
+
+text_type = unicode
+
+if PY3:
     class_types = type,
-    text_type = str
-    binary_type = bytes
+    binary_type = bytes = bytes
 
     MAXSIZE = sys.maxsize
 else:
-    string_types = basestring,
-    integer_types = (int, long)
     class_types = (type, types.ClassType)
-    text_type = unicode
-    binary_type = str
+    binary_type = bytes = str
 
     if sys.platform.startswith("java"):
         # Jython always uses 32 bits.
@@ -68,9 +77,6 @@ else:
 
 
 if PY3:
-    xrange = range
-    unicode = str
-    bytes = bytes
     def iterkeys(d, **kw):
         if hasattr(d, 'iterkeys'):
             return iter(d.iterkeys(**kw))
@@ -94,9 +100,6 @@ if PY3:
     def keys(d, **kw):
         return list(iterkeys(d, **kw))
 else:
-    unicode = unicode
-    xrange = xrange
-    bytes = str
     def keys(d, **kw):
         return d.keys(**kw)
 
@@ -152,7 +155,6 @@ if PY3:
         return s
     def u(s):
         return s
-    unichr = chr
     if sys.version_info[1] <= 1:
         def int2byte(i):
             return bytes((i,))
@@ -171,7 +173,6 @@ else:
     # Workaround for standalone backslash
     def u(s):
         return unicode(s.replace(r'\\', r'\\\\'), "unicode_escape")
-    unichr = unichr
     int2byte = chr
     def byte2int(bs):
         return ord(bs[0])

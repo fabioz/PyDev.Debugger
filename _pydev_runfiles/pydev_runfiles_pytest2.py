@@ -10,8 +10,15 @@ import time
 
 try:
     from pathlib import Path
-except:
+except ImportError:
     Path = None
+
+try:
+    basestring
+    unicode
+except NameError:
+    basestring = str,
+    unicode = str
 
 #=========================================================================
 # Load filters with tests we should skip

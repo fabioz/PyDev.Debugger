@@ -8,14 +8,14 @@ from _pydevd_bundle.pydevd_constants import IS_PY2
 import locale
 from _pydev_bundle import pydev_log
 
-# Py3 compat - alias unicode to str, and xrange to range
+# Py3 compat - alias unichr to chr, unicode to str, and xrange to range
 try:
-    unicode  # noqa
+    unichr
+    unicode
+    xrange
 except NameError:
+    unichr = chr
     unicode = str
-try:
-    xrange  # noqa
-except NameError:
     xrange = range
 
 

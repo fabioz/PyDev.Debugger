@@ -32,6 +32,10 @@ except:  # ImportError or AttributeError.
             return a + b
         return a + '/' + b
 
+try:
+    unicode
+except NameError:
+    unicode = str
 
 IS_PYTHON_3_ONWARDS = 0
 
@@ -45,8 +49,8 @@ try:
     # Just check if False and True are defined (depends on version, not whether it's jython/python)
     False
     True
-except:
-    exec ('True, False = 1,0')  # An exec is used so that python 3k does not give a syntax error
+except NameError:
+    exec('True, False = 1, 0')  # An exec is used so that python 3k does not give a syntax error
 
 if sys.platform == "cygwin":
 

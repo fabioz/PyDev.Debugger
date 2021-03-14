@@ -12,7 +12,7 @@ import pytest
 
 try:
     xrange
-except:
+except NameError:
     xrange = range
 
 def eq_(a, b):

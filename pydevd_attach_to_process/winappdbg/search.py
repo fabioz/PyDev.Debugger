@@ -64,6 +64,8 @@ try:
 except ImportError:
     import re
 
+from . import compat
+
 #==============================================================================
 
 class Pattern (object):

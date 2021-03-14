@@ -25,6 +25,11 @@ from _pydevd_bundle import pydevd_save_locals, pydevd_timeout, pydevd_constants,
 from _pydev_bundle.pydev_imports import Exec, execfile
 from _pydevd_bundle.pydevd_utils import to_string
 
+try:
+    unicode
+except NameError:
+    unicode = str
+
 SENTINEL_VALUE = []
 
 
