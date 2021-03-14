@@ -9,7 +9,7 @@ import os
 
 try:
     xrange
-except ImportError:
+except NameError:
     xrange = range
 
 def main():
