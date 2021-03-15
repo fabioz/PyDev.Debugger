@@ -472,6 +472,11 @@ def start_client(host, port):
 
     s = socket(AF_INET, SOCK_STREAM)
 
+    # Since python 3.4, sockets are by default non inheritable,
+    # inheritance must be set to true to allow applications to work with child processes
+    if hasattr(s, 'set_inheritable'):
+        s.set_inheritable(True)
+
     #  Set TCP keepalive on an open socket.
     #  It activates after 1 second (TCP_KEEPIDLE,) of idleness,
     #  then sends a keepalive ping once every 3 seconds (TCP_KEEPINTVL),
