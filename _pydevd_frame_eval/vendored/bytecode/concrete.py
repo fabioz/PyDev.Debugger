@@ -286,16 +286,16 @@ class ConcreteBytecode(_bytecode._BaseBytecodeList):
                 lnotab.append(b"\xff\x00")
                 doff -= 255
 
-            while dlineno < -127:
-                lnotab.append(struct.pack("Bb", 0, -127))
-                dlineno -= -127
+            while dlineno < -128:
+                lnotab.append(struct.pack("Bb", 0, -128))
+                dlineno -= -128
 
-            while dlineno > 126:
-                lnotab.append(struct.pack("Bb", 0, 126))
-                dlineno -= 126
+            while dlineno > 127:
+                lnotab.append(struct.pack("Bb", 0, 127))
+                dlineno -= 127
 
             assert 0 <= doff <= 255
-            assert -127 <= dlineno <= 126
+            assert -128 <= dlineno <= 127
 
             lnotab.append(struct.pack("Bb", doff, dlineno))
 
@@ -353,17 +353,17 @@ class ConcreteBytecode(_bytecode._BaseBytecodeList):
         if extended_arg is not None:
             raise ValueError("EXTENDED_ARG at the end of the code")
 
-    def compute_stacksize(self):
+    def compute_stacksize(self, *, check_pre_and_post=True):
         bytecode = self.to_bytecode()
         cfg = _bytecode.ControlFlowGraph.from_bytecode(bytecode)
-        return cfg.compute_stacksize()
+        return cfg.compute_stacksize(check_pre_and_post=check_pre_and_post)
 
-    def to_code(self, stacksize=None):
+    def to_code(self, stacksize=None, *, check_pre_and_post=True):
         code_str, linenos = self._assemble_code()
         lnotab = self._assemble_lnotab(self.first_lineno, linenos)
         nlocals = len(self.varnames)
         if stacksize is None:
-            stacksize = self.compute_stacksize()
+            stacksize = self.compute_stacksize(check_pre_and_post=check_pre_and_post)
 
         if sys.version_info < (3, 8):
             return types.CodeType(
