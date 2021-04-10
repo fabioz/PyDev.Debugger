@@ -38,14 +38,15 @@ class ConcreteInstr(Instr):
     It has a read-only size attribute.
     """
 
-    __slots__ = ("_size", "_extended_args")
+    __slots__ = ("_size", "_extended_args", "offset")
 
-    def __init__(self, name, arg=UNSET, *, lineno=None, extended_args=None):
+    def __init__(self, name, arg=UNSET, *, lineno=None, extended_args=None, offset=None):
         # Allow to remember a potentially meaningless EXTENDED_ARG emitted by
         # Python to properly compute the size and avoid messing up the jump
         # targets
         self._extended_args = extended_args
         self._set(name, arg, lineno)
+        self.offset = offset
 
     def _check_arg(self, name, opcode, arg):
         if opcode >= _opcode.HAVE_ARGUMENT:
@@ -140,7 +141,10 @@ class ConcreteInstr(Instr):
         else:
             arg = UNSET
         name = _opcode.opname[op]
-        return cls(name, arg, lineno=lineno)
+        # fabioz: added offset to ConcreteBytecode
+        # Need to keep an eye on https://github.com/MatthieuDartiailh/bytecode/issues/48 in
+        # case the library decides to add this in some other way.
+        return cls(name, arg, lineno=lineno, offset=offset)
 
 
 class ConcreteBytecode(_bytecode._BaseBytecodeList):
@@ -344,6 +348,7 @@ class ConcreteBytecode(_bytecode._BaseBytecodeList):
                     arg,
                     lineno=instr.lineno,
                     extended_args=nb_extended_args,
+                    offset=instr.offset
                 )
                 instructions[index] = instr
                 nb_extended_args = 0
@@ -455,7 +460,7 @@ class ConcreteBytecode(_bytecode._BaseBytecodeList):
                 arg = Compare(arg)
 
             if jump_target is None:
-                instr = Instr(instr.name, arg, lineno=lineno)
+                instr = Instr(instr.name, arg, lineno=lineno, offset=instr.offset)
             else:
                 instr_index = len(instructions)
             instructions.append(instr)
@@ -469,7 +474,7 @@ class ConcreteBytecode(_bytecode._BaseBytecodeList):
             instr = instructions[index]
             # FIXME: better error reporting on missing label
             label = labels[jump_target]
-            instructions[index] = Instr(instr.name, label, lineno=instr.lineno)
+            instructions[index] = Instr(instr.name, label, lineno=instr.lineno, offset=instr.offset)
 
         bytecode = _bytecode.Bytecode()
         bytecode._copy_attr_from(self)

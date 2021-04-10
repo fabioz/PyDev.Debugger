@@ -164,10 +164,11 @@ if sys.version_info < (3, 8):
 class Instr:
     """Abstract instruction."""
 
-    __slots__ = ("_name", "_opcode", "_arg", "_lineno")
+    __slots__ = ("_name", "_opcode", "_arg", "_lineno", "offset")
 
-    def __init__(self, name, arg=UNSET, *, lineno=None):
+    def __init__(self, name, arg=UNSET, *, lineno=None, offset=None):
         self._set(name, arg, lineno)
+        self.offset = offset
 
     def _check_arg(self, name, opcode, arg):
         if name == "EXTENDED_ARG":
@@ -339,7 +340,7 @@ class Instr:
         )
 
     def copy(self):
-        return self.__class__(self._name, self._arg, lineno=self._lineno)
+        return self.__class__(self._name, self._arg, lineno=self._lineno, offset=self.offset)
 
     def __repr__(self):
         if self._arg is not UNSET:
