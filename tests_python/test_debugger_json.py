@@ -5471,6 +5471,7 @@ def do_something():
         writer.finished_ok = True
 
 
+@pytest.mark.skipif(IS_PY2, reason='Python 3 onwards required.')
 def test_step_into_target_basic(case_setup):
     with case_setup.test_file('_debugger_case_smart_step_into.py') as writer:
         json_facade = JsonFacade(writer)
@@ -5495,6 +5496,7 @@ def test_step_into_target_basic(case_setup):
         writer.finished_ok = True
 
 
+@pytest.mark.skipif(IS_PY2, reason='Python 3 onwards required.')
 def test_step_into_target_multiple(case_setup):
     with case_setup.test_file('_debugger_case_smart_step_into2.py') as writer:
         json_facade = JsonFacade(writer)

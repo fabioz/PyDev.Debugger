@@ -3479,6 +3479,7 @@ def test_step_return_my_code(case_setup):
         writer.finished_ok = True
 
 
+@pytest.mark.skipif(IS_PY2, reason='Python 3 onwards required.')
 def test_smart_step_into_case1(case_setup):
     with case_setup.test_file('_debugger_case_smart_step_into.py') as writer:
         line = writer.get_line_index_with_content('break here')
@@ -3501,6 +3502,7 @@ def test_smart_step_into_case1(case_setup):
         writer.finished_ok = True
 
 
+@pytest.mark.skipif(IS_PY2, reason='Python 3 onwards required.')
 def test_smart_step_into_case2(case_setup):
     with case_setup.test_file('_debugger_case_smart_step_into2.py') as writer:
         line = writer.get_line_index_with_content('break here')

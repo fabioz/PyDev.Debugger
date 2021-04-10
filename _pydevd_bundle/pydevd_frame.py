@@ -10,7 +10,12 @@ from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raise
 from _pydevd_bundle.pydevd_utils import get_clsname_for_code
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
 from _pydevd_bundle.pydevd_comm_constants import constant_to_str
-from _pydevd_bundle.pydevd_bytecode_utils import get_smart_step_into_variant_from_frame_offset
+try:
+    from _pydevd_bundle.pydevd_bytecode_utils import get_smart_step_into_variant_from_frame_offset
+except ImportError:
+
+    def get_smart_step_into_variant_from_frame_offset(*args, **kwargs):
+        return None
 
 # IFDEF CYTHON
 # cython_inline_constant: CMD_STEP_INTO = 107
