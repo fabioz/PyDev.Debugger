@@ -94,7 +94,13 @@ except:
     from urllib.parse import quote_plus, unquote_plus  # @Reimport @UnresolvedImport
 
 import pydevconsole
-from _pydevd_bundle import pydevd_vars, pydevd_io, pydevd_reload, pydevd_bytecode_utils
+from _pydevd_bundle import pydevd_vars, pydevd_io, pydevd_reload
+
+try:
+    from _pydevd_bundle import pydevd_bytecode_utils
+except ImportError:
+    pydevd_bytecode_utils = None  # i.e.: Not available on Py2.
+
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_vm_type
 import sys
@@ -965,7 +971,11 @@ def internal_get_smart_step_into_variants(dbg, seq, thread_id, frame_id, start_l
             dbg.writer.add_command(cmd)
             return
 
-        variants = pydevd_bytecode_utils.calculate_smart_step_into_variants(frame, int(start_line), int(end_line))
+        if pydevd_bytecode_utils is None:
+            variants = []
+        else:
+            variants = pydevd_bytecode_utils.calculate_smart_step_into_variants(frame, int(start_line), int(end_line))
+
         info = set_additional_thread_info(thread)
 
         # Store the last request (may be used afterwards when stepping).
@@ -1013,7 +1023,11 @@ def internal_get_step_in_targets_json(dbg, seq, thread_id, frame_id, request, se
 
         start_line = 0
         end_line = 99999999
-        variants = pydevd_bytecode_utils.calculate_smart_step_into_variants(frame, start_line, end_line)
+        if pydevd_bytecode_utils is None:
+            variants = []
+        else:
+            variants = pydevd_bytecode_utils.calculate_smart_step_into_variants(frame, start_line, end_line)
+
         info = set_additional_thread_info(thread)
         targets = []
         for variant in variants:
