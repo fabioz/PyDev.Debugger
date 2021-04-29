@@ -13,7 +13,6 @@ from types import CodeType
 from _pydevd_frame_eval.vendored import bytecode
 from _pydevd_frame_eval.vendored.bytecode import cfg as bytecode_cfg
 import dis
-from collections import namedtuple
 import opcode as _opcode
 
 from _pydevd_bundle.pydevd_constants import IS_PY3K, KeyifyList, DebugInfoHolder
@@ -66,7 +65,23 @@ _COMP_OP_MAP = {
     'not in': '__contains__',
 }
 
-Target = namedtuple('Target', ['arg', 'lineno', 'offset'])
+
+class Target(object):
+    __slots__ = ['arg', 'lineno', 'offset', 'children_targets']
+
+    def __init__(self, arg, lineno, offset, children_targets=()):
+        self.arg = arg
+        self.lineno = lineno
+        self.offset = offset
+        self.children_targets = children_targets
+
+    def __repr__(self):
+        ret = []
+        for s in self.__slots__:
+            ret.append('%s: %s' % (s, getattr(self, s)))
+        return 'Target(%s)' % ', '.join(ret)
+
+    __str__ = __repr__
 
 
 class _TargetIdHashable(object):
@@ -96,7 +111,8 @@ class _StackInterpreter(object):
         self._stack = deque()
         self.function_calls = []
         self.load_attrs = {}
-        self.analyze_code_objects = set()
+        self.func = set()
+        self.func_name_id_to_code_object = {}
 
     def __str__(self):
         return 'Stack:\nFunction calls:\n%s\nLoad attrs:\n%s\n' % (self.function_calls, list(self.load_attrs.values()))
@@ -145,7 +161,21 @@ class _StackInterpreter(object):
     def _handle_call_from_instr(self, func_name_instr, func_call_instr):
         self.load_attrs.pop(_TargetIdHashable(func_name_instr), None)
         call_name = self._getcallname(func_name_instr)
-        if call_name not in(None, '<listcomp>', '<genexpr>'):
+        if not call_name:
+            pass  # Ignore if we can't identify a name
+        elif call_name in ('<listcomp>', '<genexpr>'):
+            code_obj = self.func_name_id_to_code_object[_TargetIdHashable(func_name_instr)]
+            if code_obj is not None:
+                children_targets = _get_smart_step_into_targets(code_obj)
+                if children_targets:
+                    # i.e.: we have targets inside of a <listcomp> or <genexpr>.
+                    # Note that to actually match this in the debugger we need to do matches on 2 frames,
+                    # the one with the <listcomp> and then the actual target inside the <listcomp>.
+                    self.function_calls.append(
+                        Target(call_name, func_name_instr.lineno, func_call_instr.offset, children_targets))
+
+        else:
+            # Ok, regular call
             self.function_calls.append(Target(call_name, func_name_instr.lineno, func_call_instr.offset))
         self._stack.append(func_call_instr)  # Keep the func call as the result
 
@@ -208,7 +238,7 @@ class _StackInterpreter(object):
 
     def on_MAKE_FUNCTION(self, instr):
         qualname = self._stack.pop()
-        code_obj = self._stack.pop()
+        code_obj_instr = self._stack.pop()
         arg = instr.arg
         if arg & 0x08:
             _func_closure = self._stack.pop()
@@ -221,8 +251,8 @@ class _StackInterpreter(object):
 
         call_name = self._getcallname(qualname)
         if call_name in ('<genexpr>', '<listcomp>'):
-            if isinstance(code_obj.arg, CodeType):
-                self.analyze_code_objects.add(code_obj.arg)
+            if isinstance(code_obj_instr.arg, CodeType):
+                self.func_name_id_to_code_object[_TargetIdHashable(qualname)] = code_obj_instr.arg
         self._stack.append(qualname)
 
     def on_LOAD_FAST(self, instr):
@@ -409,6 +439,9 @@ class _StackInterpreter(object):
         except IndexError:
             pass  # Ok (in the end of blocks)
 
+    def on_BUILD_LIST_FROM_ARG(self, instr):
+        self._stack.append(instr)
+
     def on_BUILD_MAP(self, instr):
         for _i in range(instr.arg):
             self._stack.pop()
@@ -505,9 +538,9 @@ class _StackInterpreter(object):
 
 
 def _get_smart_step_into_targets(code):
-    analyzed_code_objects = set()
-    analyzed_code_objects.add(code)
-
+    '''
+    :return list(Target)
+    '''
     b = bytecode.Bytecode.from_code(code)
     cfg = bytecode_cfg.ControlFlowGraph.from_bytecode(b)
 
@@ -540,13 +573,9 @@ def _get_smart_step_into_targets(code):
                     if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 2:
                         pydev_log.exception('Exception computing step into targets (handled).')
 
-        for code_obj in stack.analyze_code_objects:
-            if code_obj not in analyzed_code_objects:
-                analyzed_code_objects.add(code_obj)
-                ret.extend(_get_smart_step_into_targets(code_obj))
-
         ret.extend(stack.function_calls)
         ret.extend(stack.load_attrs.values())
+
     return ret
 
 
@@ -554,7 +583,70 @@ def _get_smart_step_into_targets(code):
 # Also, as the offset is the instruction offset within the frame, it's possible to
 # to inspect the parent frame for frame.f_lasti to know where we actually are (as the
 # caller name may not always match the new frame name).
-Variant = namedtuple('Variant', ['name', 'is_visited', 'line', 'offset', 'call_order'])
+class Variant(object):
+    __slots__ = ['name', 'is_visited', 'line', 'offset', 'call_order', 'children_variants', 'parent']
+
+    def __init__(self, name, is_visited, line, offset, call_order, children_variants=None):
+        self.name = name
+        self.is_visited = is_visited
+        self.line = line
+        self.offset = offset
+        self.call_order = call_order
+        self.children_variants = children_variants
+        self.parent = None
+        if children_variants:
+            for variant in children_variants:
+                variant.parent = self
+
+    def __repr__(self):
+        ret = []
+        for s in self.__slots__:
+            if s == 'parent':
+                try:
+                    parent = self.parent
+                except AttributeError:
+                    ret.append('%s: <not set>' % (s,))
+                else:
+                    if parent is None:
+                        ret.append('parent: None')
+                    else:
+                        ret.append('parent: %s (%s)' % (parent.name, parent.offset))
+                continue
+
+            if s == 'children_variants':
+                ret.append('children_variants: %s' % (len(self.children_variants) if self.children_variants else 0))
+                continue
+
+            try:
+                ret.append('%s: %s' % (s, getattr(self, s)))
+            except AttributeError:
+                ret.append('%s: <not set>' % (s,))
+        return 'Variant(%s)' % ', '.join(ret)
+
+    __str__ = __repr__
+
+
+def _convert_target_to_variant(target, start_line, end_line, call_order_cache, lasti, base):
+    name = target.arg
+    if not isinstance(name, str):
+        return
+    if target.lineno > end_line:
+        return
+    if target.lineno < start_line:
+        return
+
+    call_order = call_order_cache.get(name, 0) + 1
+    call_order_cache[name] = call_order
+    is_visited = target.offset <= lasti
+
+    children_targets = target.children_targets
+    children_variants = None
+    if children_targets:
+        children_variants = [
+            _convert_target_to_variant(child, start_line, end_line, call_order_cache, lasti, base)
+            for child in target.children_targets]
+
+    return Variant(name, is_visited, target.lineno - base, target.offset, call_order, children_variants)
 
 
 def calculate_smart_step_into_variants(frame, start_line, end_line, base=0):
@@ -569,7 +661,6 @@ def calculate_smart_step_into_variants(frame, start_line, end_line, base=0):
     :raise: :py:class:`RuntimeError` if failed to parse the bytecode or if dis cannot be used.
     """
     variants = []
-    is_context_reached = False
     code = frame.f_code
     lasti = frame.f_lasti
 
@@ -578,22 +669,11 @@ def calculate_smart_step_into_variants(frame, start_line, end_line, base=0):
         dis.dis(code)
 
     for target in _get_smart_step_into_targets(code):
-        name = target.arg
-        if not isinstance(name, str):
+        variant = _convert_target_to_variant(target, start_line, end_line, call_order_cache, lasti, base)
+        if variant is None:
             continue
+        variants.append(variant)
 
-        if target.lineno and target.lineno > end_line:
-            break
-        if not is_context_reached and target.lineno is not None and target.lineno >= start_line:
-            is_context_reached = True
-        if not is_context_reached:
-            continue
-
-        call_order = call_order_cache.get(name, 0) + 1
-        call_order_cache[name] = call_order
-        variants.append(
-            Variant(
-                name, target.offset <= lasti, target.lineno - base, target.offset, call_order))
     return variants
 
 
