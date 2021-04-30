@@ -15,7 +15,7 @@ from _pydevd_frame_eval.vendored.bytecode import cfg as bytecode_cfg
 import dis
 import opcode as _opcode
 
-from _pydevd_bundle.pydevd_constants import IS_PY3K, KeyifyList, DebugInfoHolder
+from _pydevd_bundle.pydevd_constants import KeyifyList, DebugInfoHolder
 from bisect import bisect
 from collections import deque
 
@@ -41,17 +41,7 @@ _BINARY_OP_MAP = {
     'BINARY_OR': '__or__',
     'BINARY_XOR': '__xor__',
     'BINARY_SUBSCR': '__getitem__',
-}
-
-if not IS_PY3K:
-    _BINARY_OP_MAP['BINARY_DIVIDE'] = '__div__'
-
-_UNARY_OPS = set([opname for opname in dis.opname if opname.startswith('UNARY_') and opname != 'UNARY_NOT'])
-
-_UNARY_OP_MAP = {
-    'UNARY_POSITIVE': '__pos__',
-    'UNARY_NEGATIVE': '__neg__',
-    'UNARY_INVERT': '__invert__',
+    'BINARY_DIVIDE': '__div__'
 }
 
 _COMP_OP_MAP = {
@@ -138,6 +128,9 @@ class _StackInterpreter(object):
             return name.split('.')[-1]
         return name
 
+    def _no_stack_change(self, instr):
+        pass  # Can be aliased when the instruction does nothing.
+
     def on_LOAD_GLOBAL(self, instr):
         self._stack.append(instr)
 
@@ -156,14 +149,15 @@ class _StackInterpreter(object):
             self._stack.pop()
         except IndexError:
             pass  # Ok, we may have a block just with the store
-        self._stack.append(instr)
+
+        # Note: it stores in the locals and doesn't put anything in the stack.
 
     def _handle_call_from_instr(self, func_name_instr, func_call_instr):
         self.load_attrs.pop(_TargetIdHashable(func_name_instr), None)
         call_name = self._getcallname(func_name_instr)
         if not call_name:
             pass  # Ignore if we can't identify a name
-        elif call_name in ('<listcomp>', '<genexpr>'):
+        elif call_name in ('<listcomp>', '<genexpr>', '<setcomp>', '<dictcomp>'):
             code_obj = self.func_name_id_to_code_object[_TargetIdHashable(func_name_instr)]
             if code_obj is not None:
                 children_targets = _get_smart_step_into_targets(code_obj)
@@ -250,7 +244,7 @@ class _StackInterpreter(object):
             _func_defaults = self._stack.pop()
 
         call_name = self._getcallname(qualname)
-        if call_name in ('<genexpr>', '<listcomp>'):
+        if call_name in ('<genexpr>', '<listcomp>', '<setcomp>', '<dictcomp>'):
             if isinstance(code_obj_instr.arg, CodeType):
                 self.func_name_id_to_code_object[_TargetIdHashable(qualname)] = code_obj_instr.arg
         self._stack.append(qualname)
@@ -324,17 +318,13 @@ class _StackInterpreter(object):
         func_name_instr = self._stack.pop()
         self._handle_call_from_instr(func_name_instr, instr)
 
-    def on_YIELD_VALUE(self, instr):
-        pass  # ok: doesn't change the stack
-
-    def on_SETUP_LOOP(self, instr):
-        pass  # ok: doesn't change the stack
-
-    def on_FOR_ITER(self, instr):
-        pass  # ok: doesn't change the stack
-
-    def on_BREAK_LOOP(self, instr):
-        pass  # ok: doesn't change the stack
+    on_YIELD_VALUE = _no_stack_change
+    on_SETUP_LOOP = _no_stack_change
+    on_FOR_ITER = _no_stack_change
+    on_BREAK_LOOP = _no_stack_change
+    on_JUMP_ABSOLUTE = _no_stack_change
+    on_RERAISE = _no_stack_change
+    on_LIST_TO_TUPLE = _no_stack_change
 
     def on_JUMP_IF_FALSE_OR_POP(self, instr):
         try:
@@ -353,15 +343,6 @@ class _StackInterpreter(object):
             self._stack.pop()
         except IndexError:
             return
-
-    def on_JUMP_ABSOLUTE(self, instr):
-        pass  # ok: doesn't change the stack
-
-    def on_RERAISE(self, instr):
-        pass  # ok: doesn't change the stack
-
-    def on_LIST_TO_TUPLE(self, instr):
-        pass  # ok: doesn't change the stack
 
     def on_ROT_TWO(self, instr):
         try:
@@ -449,30 +430,24 @@ class _StackInterpreter(object):
         self._stack.append(instr)
 
     def on_BUILD_CONST_KEY_MAP(self, instr):
-        self._stack.pop()  # keys
+        self.on_POP_TOP(instr)  # keys
         for _i in range(instr.arg):
-            self._stack.pop()  # value
+            self.on_POP_TOP(instr)  # value
         self._stack.append(instr)
 
-    def on_RETURN_VALUE(self, instr):
+    on_RETURN_VALUE = on_POP_TOP
+    on_POP_JUMP_IF_FALSE = on_POP_TOP
+    on_POP_JUMP_IF_TRUE = on_POP_TOP
+    on_DICT_MERGE = on_POP_TOP
+    on_LIST_APPEND = on_POP_TOP
+    on_SET_ADD = on_POP_TOP
+    on_LIST_EXTEND = on_POP_TOP
+
+    # ok: doesn't change the stack (converts top to getiter(top))
+    on_GET_ITER = _no_stack_change
+
+    def on_MAP_ADD(self, instr):
         self.on_POP_TOP(instr)
-
-    def on_POP_JUMP_IF_FALSE(self, instr):
-        self.on_POP_TOP(instr)
-
-    def on_POP_JUMP_IF_TRUE(self, instr):
-        self.on_POP_TOP(instr)
-
-    def on_DICT_MERGE(self, instr):
-        self.on_POP_TOP(instr)
-
-    def on_GET_ITER(self, instr):
-        pass  # ok: doesn't change the stack (converts top to getiter(top))
-
-    def on_LIST_APPEND(self, instr):
-        self.on_POP_TOP(instr)
-
-    def on_LIST_EXTEND(self, instr):
         self.on_POP_TOP(instr)
 
     def on_UNPACK_SEQUENCE(self, instr):
@@ -482,7 +457,7 @@ class _StackInterpreter(object):
 
     def on_BUILD_LIST(self, instr):
         for _i in range(instr.arg):
-            self._stack.pop()
+            self.on_POP_TOP(instr)
         self._stack.append(instr)
 
     on_BUILD_TUPLE = on_BUILD_LIST
@@ -492,40 +467,46 @@ class _StackInterpreter(object):
     on_BUILD_MAP_UNPACK_WITH_CALL = on_BUILD_LIST
     on_BUILD_SET = on_BUILD_LIST
 
-    def on_SETUP_FINALLY(self, instr):
-        pass
+    on_SETUP_FINALLY = _no_stack_change
 
     def on_RAISE_VARARGS(self, instr):
-        pass
+        for _i in range(instr.arg):
+            self.on_POP_TOP(instr)
 
-    def on_POP_BLOCK(self, instr):
-        pass
+    on_POP_BLOCK = _no_stack_change
+    on_JUMP_FORWARD = _no_stack_change
+    on_POP_EXCEPT = _no_stack_change
+    on_SETUP_EXCEPT = _no_stack_change
+    on_WITH_EXCEPT_START = _no_stack_change
 
-    def on_JUMP_FORWARD(self, instr):
-        pass
+    on_END_FINALLY = _no_stack_change
+    on_BEGIN_FINALLY = _no_stack_change
+    on_SETUP_WITH = _no_stack_change
+    on_WITH_CLEANUP_START = _no_stack_change
+    on_WITH_CLEANUP_FINISH = _no_stack_change
 
-    def on_POP_EXCEPT(self, instr):
-        pass
+    def on_INPLACE_ADD(self, instr):
+        # This would actually pop 2 and leave the value in the stack.
+        # In a += 1 it pop `a` and `1` and leave the resulting value
+        # for a load. In our case, let's just pop the `1` and leave the `a`
+        # instead of leaving the INPLACE_ADD bytecode.
+        try:
+            self._stack.pop()
+        except IndexError:
+            pass
 
-    def on_SETUP_EXCEPT(self, instr):
-        pass
-
-    on_WITH_EXCEPT_START = on_SETUP_EXCEPT
-
-    def on_END_FINALLY(self, instr):
-        pass
-
-    def on_BEGIN_FINALLY(self, instr):
-        pass
-
-    def on_SETUP_WITH(self, instr):
-        pass
-
-    def on_WITH_CLEANUP_START(self, instr):
-        pass
-
-    def on_WITH_CLEANUP_FINISH(self, instr):
-        pass
+    on_INPLACE_POWER = on_INPLACE_ADD
+    on_INPLACE_MULTIPLY = on_INPLACE_ADD
+    on_INPLACE_MATRIX_MULTIPLY = on_INPLACE_ADD
+    on_INPLACE_TRUE_DIVIDE = on_INPLACE_ADD
+    on_INPLACE_FLOOR_DIVIDE = on_INPLACE_ADD
+    on_INPLACE_MODULO = on_INPLACE_ADD
+    on_INPLACE_SUBTRACT = on_INPLACE_ADD
+    on_INPLACE_RSHIFT = on_INPLACE_ADD
+    on_INPLACE_LSHIFT = on_INPLACE_ADD
+    on_INPLACE_AND = on_INPLACE_ADD
+    on_INPLACE_OR = on_INPLACE_ADD
+    on_INPLACE_XOR = on_INPLACE_ADD
 
     def on_DUP_TOP(self, instr):
         try:
@@ -535,6 +516,54 @@ class _StackInterpreter(object):
             self._stack.append(instr)
         else:
             self._stack.append(i)
+
+    def on_DUP_TOP_TWO(self, instr):
+        if len(self._stack) == 0:
+            self._stack.append(instr)
+            return
+
+        if len(self._stack) == 1:
+            i = self._stack[-1]
+            self._stack.append(i)
+            self._stack.append(instr)
+            return
+
+        i = self._stack[-1]
+        j = self._stack[-2]
+        self._stack.append(j)
+        self._stack.append(i)
+
+    def on_BUILD_SLICE(self, instr):
+        for _ in range(instr.arg):
+            try:
+                self._stack.pop()
+            except IndexError:
+                pass
+        self._stack.append(instr)
+
+    def on_STORE_SUBSCR(self, instr):
+        try:
+            self._stack.pop()
+            self._stack.pop()
+            self._stack.pop()
+        except IndexError:
+            pass
+
+    def on_DELETE_SUBSCR(self, instr):
+        try:
+            self._stack.pop()
+            self._stack.pop()
+        except IndexError:
+            pass
+
+    # Note: on Python 3 this is only found on interactive mode to print the results of
+    # some evaluation.
+    on_PRINT_EXPR = on_POP_TOP
+
+    on_UNARY_POSITIVE = _no_stack_change
+    on_UNARY_NEGATIVE = _no_stack_change
+    on_UNARY_NOT = _no_stack_change
+    on_UNARY_INVERT = _no_stack_change
 
 
 def _get_smart_step_into_targets(code):
