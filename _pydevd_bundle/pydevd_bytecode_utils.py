@@ -333,6 +333,12 @@ class _StackInterpreter(object):
     on_JUMP_ABSOLUTE = _no_stack_change
     on_RERAISE = _no_stack_change
     on_LIST_TO_TUPLE = _no_stack_change
+    on_GET_AITER = _no_stack_change
+
+    def on_GET_ANEXT(self, instr):
+        self._stack.append(instr)
+
+    on_END_ASYNC_FOR = on_POP_TOP
 
     def on_JUMP_IF_FALSE_OR_POP(self, instr):
         try:

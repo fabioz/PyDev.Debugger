@@ -751,6 +751,28 @@ def test_smart_step_into_bytecode_info_034():
     check_name_and_line(found, [('_getframe', 1), ('call', 2)])
 
 
+def test_smart_step_into_bytecode_info_035():
+
+    func = '''async def function():
+    async for a in b():
+        await call()
+'''
+    locs = {}
+    exec(func, globals(), locs)
+
+    function = locs['function']
+
+    # Just create the needed bits we use from the frame.
+    class frame(object):
+        f_code = function.__code__
+        f_lasti = 0
+
+    found = pydevd_bytecode_utils.calculate_smart_step_into_variants(
+        frame, 0, 99999, base=function.__code__.co_firstlineno)
+
+    check_name_and_line(found, [('b', 1), ('call', 2)])
+
+
 def test_get_smart_step_into_variant_from_frame_offset():
     from _pydevd_bundle.pydevd_bytecode_utils import Variant
 
