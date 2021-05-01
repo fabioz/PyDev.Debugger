@@ -131,6 +131,12 @@ class _StackInterpreter(object):
     def _no_stack_change(self, instr):
         pass  # Can be aliased when the instruction does nothing.
 
+    def on_POP_TOP(self, instr):
+        try:
+            self._stack.pop()
+        except IndexError:
+            pass  # Ok (in the end of blocks)
+
     def on_LOAD_GLOBAL(self, instr):
         self._stack.append(instr)
 
@@ -318,7 +324,9 @@ class _StackInterpreter(object):
         func_name_instr = self._stack.pop()
         self._handle_call_from_instr(func_name_instr, instr)
 
-    on_YIELD_VALUE = _no_stack_change
+    on_YIELD_VALUE = on_POP_TOP
+    on_YIELD_FROM = on_POP_TOP
+
     on_SETUP_LOOP = _no_stack_change
     on_FOR_ITER = _no_stack_change
     on_BREAK_LOOP = _no_stack_change
@@ -414,12 +422,6 @@ class _StackInterpreter(object):
         self._stack.append(p2)
         self._stack.append(p3)
 
-    def on_POP_TOP(self, instr):
-        try:
-            self._stack.pop()
-        except IndexError:
-            pass  # Ok (in the end of blocks)
-
     def on_BUILD_LIST_FROM_ARG(self, instr):
         self._stack.append(instr)
 
@@ -445,6 +447,7 @@ class _StackInterpreter(object):
 
     # ok: doesn't change the stack (converts top to getiter(top))
     on_GET_ITER = _no_stack_change
+    on_GET_AWAITABLE = _no_stack_change
 
     def on_MAP_ADD(self, instr):
         self.on_POP_TOP(instr)
