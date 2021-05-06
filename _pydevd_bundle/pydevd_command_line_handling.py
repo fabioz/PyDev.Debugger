@@ -69,6 +69,7 @@ ACCEPTED_ARG_HANDLERS = [
     ArgHandlerWithParam('client-access-token'),
 
     ArgHandlerBool('server'),
+    ArgHandlerBool('continue'),
     ArgHandlerBool('DEBUG_RECORD_SOCKET_READS'),
     ArgHandlerBool('multiproc'),  # Used by PyCharm (reuses connection: ssh tunneling)
     ArgHandlerBool('multiprocess'),  # Used by PyDev (creates new connection to ide)

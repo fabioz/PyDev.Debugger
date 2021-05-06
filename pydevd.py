@@ -3276,14 +3276,21 @@ def main():
 
         apply_debugger_options(setup)
 
+        wait = True
+        if setup['continue']:
+            wait = False
+
         try:
-            debugger.connect(host, port)
+            if wait:
+                debugger.connect(host, port)
+            else:
+                debugger.create_wait_for_connection_thread()
         except:
             sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
             pydev_log.exception()
             sys.exit(1)
 
-        globals = debugger.run(setup['file'], None, None, is_module)
+        globals = debugger.run(setup['file'], None, None, is_module, set_trace=wait)
 
         if setup['cmd-line']:
             debugger.wait_for_commands(globals)
