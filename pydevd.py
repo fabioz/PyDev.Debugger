@@ -1376,6 +1376,8 @@ class PyDB(object):
 
         def run(self):
             host = SetupHolder.setup['client']
+            if host is None:
+                host = 'localhost'
             port = SetupHolder.setup['port']
 
             self._server_socket = create_server_socket(host=host, port=port)
@@ -2240,7 +2242,7 @@ class PyDB(object):
         from _pydev_bundle.pydev_monkey import patch_thread_modules
         patch_thread_modules()
 
-    def run(self, file, globals=None, locals=None, is_module=False, set_trace=True):
+    def run(self, file, globals=None, locals=None, is_module=False, set_trace=True, wait=True):
         module_name = None
         entry_point_fn = ''
         if is_module:
@@ -2322,7 +2324,8 @@ class PyDB(object):
             sys.path.insert(0, os.path.split(os_path_abspath(file))[0])
 
         if set_trace:
-            self.wait_for_ready_to_run()
+            if wait:
+                self.wait_for_ready_to_run()
 
             # call prepare_to_run when we already have all information about breakpoints
             self.prepare_to_run()
@@ -3290,7 +3293,7 @@ def main():
             pydev_log.exception()
             sys.exit(1)
 
-        globals = debugger.run(setup['file'], None, None, is_module, set_trace=wait)
+        globals = debugger.run(setup['file'], None, None, is_module, wait=wait)
 
         if setup['cmd-line']:
             debugger.wait_for_commands(globals)
