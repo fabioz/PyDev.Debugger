@@ -1377,7 +1377,7 @@ class PyDB(object):
         def run(self):
             host = SetupHolder.setup['client']
             if host is None:
-                host = 'localhost'
+                host = ''
             port = SetupHolder.setup['port']
 
             self._server_socket = create_server_socket(host=host, port=port)
