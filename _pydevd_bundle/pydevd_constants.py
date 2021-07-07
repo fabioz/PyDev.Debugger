@@ -102,6 +102,7 @@ IS_LINUX = sys.platform in ('linux', 'linux2')
 IS_MAC = sys.platform == 'darwin'
 
 IS_64BIT_PROCESS = sys.maxsize > (2 ** 32)
+IS_MAC_ARM64 = IS_MAC and IS_64BIT_PROCESS and platform.processor() == 'arm'
 
 IS_JYTHON = pydevd_vm_type.get_vm_type() == pydevd_vm_type.PydevdVmType.JYTHON
 IS_JYTH_LESS25 = False

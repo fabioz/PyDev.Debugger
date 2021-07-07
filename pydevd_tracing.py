@@ -1,4 +1,4 @@
-from _pydevd_bundle.pydevd_constants import get_frame, IS_CPYTHON, IS_64BIT_PROCESS, IS_WINDOWS, \
+from _pydevd_bundle.pydevd_constants import get_frame, IS_CPYTHON, IS_64BIT_PROCESS, IS_MAC_ARM64, IS_WINDOWS, \
     IS_LINUX, IS_MAC, IS_PY2, DebugInfoHolder, LOAD_NATIVE_LIB_FLAG, \
     ENV_FALSE_LOWER_VALUES, GlobalDebuggerHolder, ForkSafeLock
 from _pydev_imps._pydev_saved_modules import thread, threading
@@ -147,7 +147,9 @@ def _load_python_helper_lib_uncached():
         filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'attach_linux_%s.so' % (suffix,))
 
     elif IS_MAC:
-        if IS_64BIT_PROCESS:
+        if IS_MAC_ARM64:
+            suffix = 'arm64.dylib'
+        elif IS_64BIT_PROCESS:
             suffix = 'x86_64.dylib'
         else:
             suffix = 'x86.dylib'
