@@ -14,7 +14,8 @@ from _pydevd_bundle.pydevd_comm_constants import CMD_THREAD_CREATE, CMD_RETURN, 
     CMD_STEP_RETURN, CMD_STEP_CAUGHT_EXCEPTION, CMD_ADD_EXCEPTION_BREAK, CMD_SET_BREAK, \
     CMD_SET_NEXT_STATEMENT, CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION, \
     CMD_THREAD_RESUME_SINGLE_NOTIFICATION, CMD_THREAD_KILL, CMD_STOP_ON_START, CMD_INPUT_REQUESTED, \
-    CMD_EXIT, CMD_STEP_INTO_COROUTINE, CMD_STEP_RETURN_MY_CODE, CMD_SMART_STEP_INTO
+    CMD_EXIT, CMD_STEP_INTO_COROUTINE, CMD_STEP_RETURN_MY_CODE, CMD_SMART_STEP_INTO, \
+    CMD_SET_FUNCTION_BREAK
 from _pydevd_bundle.pydevd_constants import get_thread_id, dict_values, ForkSafeLock
 from _pydevd_bundle.pydevd_net_command import NetCommand, NULL_NET_COMMAND
 from _pydevd_bundle.pydevd_net_command_factory_xml import NetCommandFactory
@@ -315,6 +316,7 @@ class NetCommandFactoryJson(NetCommandFactory):
         thread = pydevd_find_thread_by_id(thread_id)
         info = set_additional_thread_info(thread)
 
+        preserve_focus_hint = False
         if stop_reason in self._STEP_REASONS:
             if info.pydev_original_step_cmd == CMD_STOP_ON_START:
 
@@ -327,10 +329,13 @@ class NetCommandFactoryJson(NetCommandFactory):
             stop_reason = 'exception'
         elif stop_reason == CMD_SET_BREAK:
             stop_reason = 'breakpoint'
+        elif stop_reason == CMD_SET_FUNCTION_BREAK:
+            stop_reason = 'function breakpoint'
         elif stop_reason == CMD_SET_NEXT_STATEMENT:
             stop_reason = 'goto'
         else:
             stop_reason = 'pause'
+            preserve_focus_hint = True
 
         if stop_reason == 'exception':
             exception_info_response = build_exception_info_response(
@@ -346,7 +351,7 @@ class NetCommandFactoryJson(NetCommandFactory):
             threadId=thread_id,
             text=exc_name,
             allThreadsStopped=True,
-            preserveFocusHint=stop_reason not in ['step', 'exception', 'breakpoint', 'entry', 'goto'],
+            preserveFocusHint=preserve_focus_hint,
         )
         event = pydevd_schema.StoppedEvent(body)
         return NetCommand(CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION, 0, event, is_json=True)
