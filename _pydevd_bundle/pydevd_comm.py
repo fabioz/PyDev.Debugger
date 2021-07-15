@@ -1164,6 +1164,7 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
         ctx = NULL
 
     with ctx:
+        frame_tracker = None
         if IS_PY2 and isinstance(expression, unicode):
             try:
                 expression.encode('utf-8')
@@ -1182,8 +1183,19 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
                 _global_frame = next(__create_frame())
 
             frame = _global_frame
-            try_exec = True  # Always exec in this case
-            eval_result = None
+            frame_tracker = py_db.suspended_frames_manager.get_global_frames_tracker(py_db)
+
+            # Feature: when evaluating an expression, provide a way to query its result. For
+            # that we must add it as a variable reference. Note that we don't actually store
+            # a reference to the actual variable (because this is considered a 'global' scope,
+            # evaluating something and keeping a reference would make the result
+            eval_result = pydevd_vars.evaluate_expression(py_db, frame, expression, is_exec=False)
+            is_error = isinstance_checked(eval_result, ExceptionOnEvaluate)
+            if is_error:
+                try_exec = True
+            else:
+                try_exec = False
+
         else:
             frame = py_db.find_frame(thread_id, frame_id)
             eval_result = pydevd_vars.evaluate_expression(py_db, frame, expression, is_exec=False)
@@ -1240,12 +1252,13 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
             _evaluate_response(py_db, request, result='')
             return
 
-        # Ok, we have the result (could be an error), let's put it into the saved variables.
-        frame_tracker = py_db.suspended_frames_manager.get_frame_tracker(thread_id)
-        if frame_tracker is None:
-            # This is not really expected.
-            _evaluate_response(py_db, request, result='', error_message='Thread id: %s is not current thread id.' % (thread_id,))
-            return
+        if frame_tracker is None:  # when using the global context it'd already be set.
+            # Ok, we have the result (could be an error), let's put it into the saved variables.
+            frame_tracker = py_db.suspended_frames_manager.get_frame_tracker(thread_id)
+            if frame_tracker is None:
+                # This is not really expected.
+                _evaluate_response(py_db, request, result='', error_message='Thread id: %s is not current thread id.' % (thread_id,))
+                return
 
     variable = frame_tracker.obtain_as_variable(expression, eval_result, frame=frame)
 

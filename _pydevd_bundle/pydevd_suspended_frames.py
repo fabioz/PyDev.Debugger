@@ -436,6 +436,33 @@ class _FramesTracker(object):
             return cmd
 
 
+class _GlobalFramesTracker(object):
+
+    def __init__(self, py_db):
+        self._variable_reference_to_variable = {}
+        self.py_db = py_db
+
+    def _register_variable(self, variable):
+        variable_reference = variable.get_variable_reference()
+        self._variable_reference_to_variable[variable_reference] = variable
+
+    def get_variable(self, variable_reference):
+        return self._variable_reference_to_variable[variable_reference]
+
+    def obtain_as_variable(self, expression, value, evaluate_name=None, frame=None):
+        if evaluate_name is None:
+            evaluate_name = expression
+
+        variable_reference = id(value)
+        variable = self._variable_reference_to_variable.get(variable_reference)
+        if variable is not None:
+            return variable
+
+        # Still not created, let's do it now.
+        return _ObjectVariable(
+            self.py_db, variable_reference, value, self._register_variable, is_return_value=False, evaluate_name=evaluate_name, frame=frame)
+
+
 class SuspendedFramesManager(object):
 
     def __init__(self):
@@ -444,6 +471,13 @@ class SuspendedFramesManager(object):
 
         # Mappings
         self._variable_reference_to_frames_tracker = {}
+        self._global_frames_tracker = None
+
+    def get_global_frames_tracker(self, py_db):
+        global_frames_tracker = self._global_frames_tracker
+        if global_frames_tracker is None:
+            self._global_frames_tracker = global_frames_tracker = _GlobalFramesTracker(py_db)
+        return global_frames_tracker
 
     def _get_tracker_for_variable_reference(self, variable_reference):
         tracker = self._variable_reference_to_frames_tracker.get(variable_reference)
@@ -488,6 +522,14 @@ class SuspendedFramesManager(object):
         '''
         frames_tracker = self._get_tracker_for_variable_reference(variable_reference)
         if frames_tracker is None:
+            global_frames_tracker = self._global_frames_tracker
+            if global_frames_tracker is not None:
+                # If it wasn't lazily created (to add a variable), we don't need to check it.
+                try:
+                    return global_frames_tracker.get_variable(variable_reference)
+                except KeyError:
+                    pass
+            # It wasn't in the global, so, throw the key error at this point.
             raise KeyError()
         return frames_tracker.get_variable(variable_reference)
 

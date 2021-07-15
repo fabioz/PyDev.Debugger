@@ -1929,6 +1929,32 @@ def test_evaluate_no_name_mangling(case_setup):
         writer.finished_ok = True
 
 
+def test_evaluate_no_frame_id(case_setup):
+
+    with case_setup.test_file('_debugger_case_local_variables2.py') as writer:
+        json_facade = JsonFacade(writer)
+
+        writer.write_add_breakpoint(writer.get_line_index_with_content('Break here'))
+        json_facade.write_make_initial_run()
+
+        json_hit = json_facade.wait_for_thread_stopped()
+        json_hit = json_facade.get_stack_as_json_hit(json_hit.thread_id)
+
+        evaluate_response = json_facade.evaluate(
+            '__import__("sys").executable',
+            frameId=None,
+            context='watch',
+        )
+
+        evaluate_response_body = evaluate_response.body.to_dict()
+
+        variables_reference = json_facade.pop_variables_reference([evaluate_response_body])
+        assert [r for r in variables_reference if r != 0]
+
+        json_facade.write_continue()
+        writer.finished_ok = True
+
+
 def test_evaluate_block_repl(case_setup):
 
     with case_setup.test_file('_debugger_case_local_variables2.py') as writer:
