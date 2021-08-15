@@ -21,6 +21,7 @@ jobs:
           "macos-py37-cython",
           "ubuntu-py38-cython-checkbin",
           "windows-py39-cython",
+          "windows-py310",
         ]
         
         include:
@@ -48,11 +49,15 @@ jobs:
             python: "3.9"
             os: windows-latest
             PYDEVD_USE_CYTHON: YES
+          - name: "windows-py310"
+            python: "3.10.0-rc.1"
+            os: windows-latest
+            PYDEVD_USE_CYTHON: NO
 
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python ${{ matrix.python }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python }}
     - name: Install gdb/xvfb/ptrace_scope

@@ -126,12 +126,12 @@ if __name__ == '__main__':
     sys.exit = skip_successful_exit
 
     connect_status_queue = _queue.Queue()
-    interpreter = InterpreterInterface(host, int(client_port), threading.currentThread(), connect_status_queue=connect_status_queue)
+    interpreter = InterpreterInterface(host, int(client_port), threading.current_thread(), connect_status_queue=connect_status_queue)
 
     server_thread = threading.Thread(target=start_console_server,
                                      name='ServerThread',
                                      args=(host, int(port), interpreter))
-    server_thread.setDaemon(True)
+    server_thread.daemon = True
     server_thread.start()
 
     sys.stdin = StdIn(interpreter, host, client_port, sys.stdin)
