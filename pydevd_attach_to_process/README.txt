@@ -9,3 +9,8 @@ it should be called as;
 python attach_pydevd.py --port 5678 --pid 1234
 
 Note that the client is responsible for having a remote debugger alive in the given port for the attach to work.
+
+
+The binaries are now compiled at:
+- https://github.com/fabioz/PyDev.Debugger.binaries/actions
+(after generation the binaries are copied to this repo)
