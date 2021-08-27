@@ -1647,8 +1647,8 @@ cdef class ThreadTracer:
         cdef PyDBAdditionalThreadInfo additional_info;
         # ENDIF
 
-        # DEBUG = 'code_to_debug' in frame.f_code.co_filename
-        # if DEBUG: print('ENTER: trace_dispatch: %s %s %s %s' % (frame.f_code.co_filename, frame.f_lineno, event, frame.f_code.co_name))
+        DEBUG = True  # 'code_to_debug' in frame.f_code.co_filename
+        if DEBUG: print('ENTER: trace_dispatch: %s %s %s %s %s' % (frame.f_code.co_filename, frame.f_lineno, event, frame.f_code.co_name, threading.current_thread()))
         py_db, t, additional_info, cache_skips, frame_skips_cache = self._args
         if additional_info.is_tracing:
             return None if event == 'call' else NO_FTRACE  # we don't wan't to trace code invoked from pydevd_frame.trace_dispatch

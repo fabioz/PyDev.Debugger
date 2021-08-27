@@ -5309,6 +5309,43 @@ def test_debugger_case_deadlock_interrupt_thread(case_setup, pyfile):
         writer.finished_ok = True
 
 
+@pytest.mark.skipif(IS_PY26, reason='Only Python 2.7 onwards.')
+def test_debugger_case_interrupt_thread_missing_breakpoints(case_setup, pyfile):
+
+    @pyfile
+    def case_infinite_evaluate():
+
+        def infinite_evaluate():
+            import time
+            while True:
+                time.sleep(.1)
+
+        print('TEST SUCEEDED!')  # Break here
+
+    def get_environ(self):
+        env = os.environ.copy()
+        env['PYDEVD_INTERRUPT_THREAD_TIMEOUT'] = '0.5'
+        return env
+
+    # Sometimes we end up with a different return code on Linux when interrupting (even
+    # though we go through completion and print the 'TEST SUCEEDED' msg).
+    with case_setup.test_file(
+        case_infinite_evaluate, get_environ=get_environ, EXPECTED_RETURNCODE='any') as writer:
+        json_facade = JsonFacade(writer)
+        json_facade.write_launch(justMyCode=False)
+        json_facade.write_set_breakpoints(writer.get_line_index_with_content('Break here'))
+
+        json_facade.write_make_initial_run()
+        json_hit = json_facade.wait_for_thread_stopped()
+
+        # If threads aren't resumed, this will deadlock.
+        json_facade.evaluate('infinite_evaluate()', json_hit.frame_id, wait_for_response=False)
+
+        json_facade.write_continue()
+
+        writer.finished_ok = True
+
+
 @pytest.mark.parametrize('launch_through_link', [True, False])
 @pytest.mark.parametrize('breakpoints_through_link', [True, False])
 def test_debugger_case_symlink(case_setup, tmpdir, launch_through_link, breakpoints_through_link):
