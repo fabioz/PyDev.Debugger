@@ -49,10 +49,10 @@ jobs:
             python: "3.9"
             os: windows-latest
             PYDEVD_USE_CYTHON: YES
-          - name: "windows-py310"
+          - name: "windows-py310-cython"
             python: "3.10.0-rc.1"
             os: windows-latest
-            PYDEVD_USE_CYTHON: NO
+            PYDEVD_USE_CYTHON: YES
 
     steps:
     - uses: actions/checkout@v1
