@@ -21,7 +21,7 @@ jobs:
           "macos-py37-cython",
           "ubuntu-py38-cython-checkbin",
           "windows-py39-cython",
-          "windows-py310",
+          "windows-py310-cython",
         ]
         
         include:
