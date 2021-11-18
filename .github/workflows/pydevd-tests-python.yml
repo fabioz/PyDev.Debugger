@@ -50,7 +50,7 @@ jobs:
             os: windows-latest
             PYDEVD_USE_CYTHON: YES
           - name: "windows-py310-cython"
-            python: "3.10.0-rc.1"
+            python: "3.10.0"
             os: windows-latest
             PYDEVD_USE_CYTHON: YES
 
@@ -97,6 +97,10 @@ jobs:
     - name: Install Gevent
       if: contains(matrix.name, 'py3') && !contains(matrix.name, 'pypy') && !contains(matrix.name, 'py310')
       run: pip install gevent==20.9.0 --no-warn-script-location
+    - name: Install Pandas
+      if: contains(matrix.name, 'py310') && !contains(matrix.name, 'pypy')
+      # The pandas Styler also requires jinja2. 
+      run: pip install pandas jinja2 --no-warn-script-location
     - name: Install Pypy 3 deps
       if: contains(matrix.name, 'py3') && contains(matrix.name, 'pypy')
       run: |
