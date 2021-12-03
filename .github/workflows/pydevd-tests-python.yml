@@ -66,6 +66,7 @@ jobs:
         sudo apt-get install gdb
         sudo sysctl kernel.yama.ptrace_scope=0
         sudo apt-get install xvfb
+        sudo apt-get install libqt5x11extras5
         Xvfb -ac :99 -screen 0 1280x1024x16 > /dev/null 2>&1 &
       if: contains(matrix.name, 'ubuntu')
     - name: Install common Python deps
@@ -120,6 +121,7 @@ jobs:
     - name: Run Python 2.7 tests
       if: contains(matrix.name, '27')
       env:
+        # QT_DEBUG_PLUGINS: 1
         PYTHONPATH: .
         PYDEVD_USE_CYTHON: ${{matrix.PYDEVD_USE_CYTHON }}
       run: |
@@ -127,6 +129,7 @@ jobs:
     - name: Run Python 3.x tests
       if: ${{ !contains(matrix.name, '27') }}
       env:
+        # QT_DEBUG_PLUGINS: 1
         PYTHONPATH: .
         PYDEVD_USE_CYTHON: ${{matrix.PYDEVD_USE_CYTHON }}
       run: |
