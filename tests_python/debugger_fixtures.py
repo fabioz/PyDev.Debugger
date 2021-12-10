@@ -530,3 +530,30 @@ def case_setup_flask(debugger_runner_simple):
                 yield writer
 
     return CaseSetup()
+
+
+@pytest.fixture
+def substed_dir_and_drive(tmpdir):
+    from string import ascii_lowercase
+    import subprocess
+
+    for c in ascii_lowercase[7:]:  # Create a subst drive from H-Z.
+        c += ":"
+        if not os.path.exists(c):
+            drive = c
+            break
+    else:
+        raise AssertionError("Unable to find suitable drive letter for subst.")
+
+    directory = tmpdir.join('subst_dir')
+    directory.mkdir()
+
+    args = ["subst", drive, str(directory)]
+    subprocess.check_call(args)
+    assert os.path.exists(drive)
+    try:
+        yield str(directory), drive
+    finally:
+        args = ["subst", "/D", drive]
+        subprocess.check_call(args)
+

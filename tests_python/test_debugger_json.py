@@ -5985,6 +5985,29 @@ def test_pandas(case_setup, pyfile):
         writer.finished_ok = True
 
 
+@pytest.mark.skipif(sys.platform != 'win32', reason='subst only available in Windows.')
+def test_with_subst(substed_dir_and_drive, case_setup):
+    substed_dir, drive = substed_dir_and_drive
+    target_file = drive + '/my_test.py'
+    with open(target_file, 'w') as stream:
+        stream.write('''
+print('TEST SUCEEDED')  # Break here
+''')
+
+    with case_setup.test_file(target_file) as writer:
+        json_facade = JsonFacade(writer)
+        json_facade.write_launch(justMyCode=False)
+
+        bp = writer.get_line_index_with_content('Break here')
+        json_facade.write_set_breakpoints([bp])
+
+        json_facade.write_make_initial_run()
+
+        json_facade.wait_for_thread_stopped()
+        json_facade.write_continue()
+        writer.finished_ok = True
+
+
 if __name__ == '__main__':
     pytest.main(['-k', 'test_case_skipping_filters', '-s'])
 
