@@ -12,6 +12,9 @@ from _pydevd_bundle import pydevd_save_locals
 from _pydevd_bundle.pydevd_io import IOBuf
 from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle.pydevd_xml import make_valid_xml_value
+from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
+from _pydev_imps._pydev_saved_modules import threading
+from _pydevd_bundle.pydevd_constants import STATE_RUN, get_global_debugger
 
 CONSOLE_OUTPUT = "output"
 CONSOLE_ERROR = "error"
@@ -152,7 +155,16 @@ class DebugConsole(InteractiveConsole, BaseInterpreterInterface):
 
         """
         try:
-            Exec(code, self.frame.f_globals, self.frame.f_locals)
+            additional_info = set_additional_thread_info(threading.current_thread())
+            is_tracing = additional_info.is_tracing
+            state = additional_info.pydev_state
+            try:
+                additional_info.is_tracing = 0
+                additional_info.pydev_state = STATE_RUN
+                sys.call_tracing(Exec, (code, self.frame.f_globals, self.frame.f_locals))
+            finally:
+                additional_info.is_tracing = is_tracing
+                additional_info.pydev_state = state
             pydevd_save_locals.save_locals(self.frame)
         except SystemExit:
             raise
