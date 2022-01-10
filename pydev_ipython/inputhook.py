@@ -38,11 +38,9 @@ GUI_NONE = 'none'  # i.e. disable
 # Utilities
 #-----------------------------------------------------------------------------
 
-
 def ignore_CTRL_C():
     """Ignore CTRL+C (not implemented)."""
     pass
-
 
 def allow_CTRL_C():
     """Take CTRL+C into account (not implemented)."""
@@ -299,6 +297,7 @@ class InputHookManager(object):
         """
         self.clear_inputhook()
 
+
     def enable_glut(self, app=None):
         """ Enable event loop integration with GLUT.
 
@@ -330,14 +329,13 @@ class InputHookManager(object):
                                               glut_idle, inputhook_glut
 
         if GUI_GLUT not in self._apps:
-            argv = getattr(sys, 'argv', [])
-            glut.glutInit(argv)
+            glut.glutInit(sys.argv)
             glut.glutInitDisplayMode(glut_display_mode)
             # This is specific to freeglut
             if bool(glut.glutSetOption):
                 glut.glutSetOption(glut.GLUT_ACTION_ON_WINDOW_CLOSE,
                                     glut.GLUT_ACTION_GLUTMAINLOOP_RETURNS)
-            glut.glutCreateWindow(argv[0] if len(argv) > 0 else '')
+            glut.glutCreateWindow(sys.argv[0])
             glut.glutReshapeWindow(1, 1)
             glut.glutHideWindow()
             glut.glutWMCloseFunc(glut_close)
@@ -350,6 +348,7 @@ class InputHookManager(object):
         self.set_inputhook(inputhook_glut)
         self._current_gui = GUI_GLUT
         self._apps[GUI_GLUT] = True
+
 
     def disable_glut(self):
         """Disable event loop integration with glut.
@@ -424,25 +423,12 @@ class InputHookManager(object):
     def enable_mac(self, app=None):
         """ Enable event loop integration with MacOSX.
 
-        We call function pyplot.pause, which updates and displays active
-        figure during pause. It's not MacOSX-specific, but it enables to
-        avoid inputhooks in native MacOSX backend.
-        Also we shouldn't import pyplot, until user does it. Cause it's
-        possible to choose backend before importing pyplot for the first
-        time only.
+        Uses native inputhooks for MacOSX that significantly improve
+        performance and responsiveness.
+
         """
 
-        def inputhook_mac(app=None):
-            if self.pyplot_imported:
-                pyplot = sys.modules['matplotlib.pyplot']
-                try:
-                    pyplot.pause(0.01)
-                except:
-                    pass
-            else:
-                if 'matplotlib.pyplot' in sys.modules:
-                    self.pyplot_imported = True
-
+        from pydev_ipython.inputhookmac import inputhook_mac
         self.set_inputhook(inputhook_mac)
         self._current_gui = GUI_OSX
 
@@ -452,7 +438,6 @@ class InputHookManager(object):
     def current_gui(self):
         """Return a string indicating the currently active GUI or None."""
         return self._current_gui
-
 
 inputhook_manager = InputHookManager()
 
@@ -486,7 +471,6 @@ stdin_ready = inputhook_manager.return_control
 set_return_control_callback = inputhook_manager.set_return_control_callback
 get_return_control_callback = inputhook_manager.get_return_control_callback
 get_inputhook = inputhook_manager.get_inputhook
-
 
 # Convenience function to switch amongst them
 def enable_gui(gui=None, app=None):
@@ -535,10 +519,9 @@ def enable_gui(gui=None, app=None):
         if gui is None or gui == '':
             gui_hook = clear_inputhook
         else:
-            e = "Invalid GUI request %r, valid ones are:%s" % (gui, list(guis.keys()))
+            e = "Invalid GUI request %r, valid ones are:%s" % (gui, guis.keys())
             raise ValueError(e)
     return gui_hook(app)
-
 
 __all__ = [
     "GUI_WX",
@@ -552,6 +535,7 @@ __all__ = [
     "GUI_PYGLET",
     "GUI_GTK3",
     "GUI_NONE",
+
 
     "ignore_CTRL_C",
     "allow_CTRL_C",
