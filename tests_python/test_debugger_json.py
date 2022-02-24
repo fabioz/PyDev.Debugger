@@ -5988,6 +5988,35 @@ def test_pandas(case_setup, pyfile):
         writer.finished_ok = True
 
 
+def test_same_lineno_and_filename(case_setup, pyfile):
+
+    @pyfile
+    def target():
+
+        def some_code():
+            print('1')  # Break here
+
+        code_obj = compile('''
+        func()
+        ''', __file__, 'exec')
+
+        code_obj = code_obj.replace(co_name=some_code.__code__.co_name, co_firstlineno=some_code.__code__.co_firstlineno)
+        exec(code_obj, {'func': some_code})
+
+        print('TEST SUCEEDED')
+
+    with case_setup.test_file(target) as writer:
+        json_facade = JsonFacade(writer)
+
+        writer.write_add_breakpoint(writer.get_line_index_with_content('Break here'))
+        json_facade.write_launch(justMyCode=False)
+        json_facade.write_make_initial_run()
+
+        json_hit = json_facade.wait_for_thread_stopped()
+        json_facade.write_continue()
+        writer.finished_ok = True
+
+
 if __name__ == '__main__':
     pytest.main(['-k', 'test_case_skipping_filters', '-s'])
 
