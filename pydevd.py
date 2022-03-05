@@ -111,7 +111,7 @@ if SUPPORT_GEVENT:
 if USE_CUSTOM_SYS_CURRENT_FRAMES_MAP:
     from _pydevd_bundle.pydevd_constants import constructed_tid_to_last_frame
 
-__version_info__ = (2, 7, 0)
+__version_info__ = (2, 8, 0)
 __version_info_str__ = []
 for v in __version_info__:
     __version_info_str__.append(str(v))
