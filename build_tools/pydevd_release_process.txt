@@ -216,11 +216,6 @@ python setup.py sdist bdist_wheel
 conda deactivate
 dir dist
 
-activate py35_64
-python setup.py sdist bdist_wheel
-conda deactivate
-dir dist
-
 activate py36_64
 python setup.py sdist bdist_wheel
 conda deactivate
