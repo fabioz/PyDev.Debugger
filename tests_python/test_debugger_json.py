@@ -21,8 +21,8 @@ from _pydevd_bundle.pydevd_constants import (int_types, IS_64BIT_PROCESS,
     PY_VERSION_STR, PY_IMPL_VERSION_STR, PY_IMPL_NAME, IS_PY36_OR_GREATER,
     IS_PYPY, GENERATED_LEN_ATTR_NAME, IS_WINDOWS, IS_LINUX, IS_MAC, IS_PY38_OR_GREATER)
 from tests_python import debugger_unittest
-from tests_python.debug_constants import TEST_CHERRYPY, IS_PY2, TEST_DJANGO, TEST_FLASK, IS_PY26, \
-    IS_PY27, IS_CPYTHON, TEST_GEVENT, TEST_CYTHON
+from tests_python.debug_constants import TEST_CHERRYPY, IS_PY2, TEST_DJANGO, TEST_FLASK, \
+    IS_CPYTHON, TEST_GEVENT, TEST_CYTHON
 from tests_python.debugger_unittest import (IS_JYTHON, IS_APPVEYOR, overrides,
     get_free_port, wait_for_condition)
 from _pydevd_bundle.pydevd_utils import DAPGrouper
@@ -592,7 +592,6 @@ def test_case_json_logpoint_and_step(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY26, reason='Failing on Python 2.6')
 def test_case_json_hit_count_and_step(case_setup):
     with case_setup.test_file('_debugger_case_hit_count.py') as writer:
         json_facade = JsonFacade(writer)
@@ -756,7 +755,6 @@ def _check_current_line(json_hit, current_line):
             rep))
 
 
-@pytest.mark.skipif(IS_PY26, reason='Not ok on Python 2.6')
 @pytest.mark.parametrize('stop', [False, True])
 def test_case_user_unhandled_exception(case_setup, stop):
 
@@ -851,7 +849,6 @@ def test_case_user_unhandled_exception_coroutine(case_setup, stop):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY26, reason='Not ok on Python 2.6')
 def test_case_user_unhandled_exception_dont_stop(case_setup):
 
     with case_setup.test_file(
@@ -872,7 +869,6 @@ def test_case_user_unhandled_exception_dont_stop(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY26, reason='Not ok on Python 2.6')
 def test_case_user_unhandled_exception_stop_on_yield(case_setup, pyfile):
 
     @pyfile
@@ -1097,10 +1093,7 @@ def test_case_unhandled_exception_generator(case_setup, target_file):
         if 'generator' in target_file:
             expected_frame_names = ['<genexpr>', 'f', '<module>']
         else:
-            if IS_PY27 or IS_PY26:
-                expected_frame_names = ['f', '<module>']
-            else:
-                expected_frame_names = ['<listcomp>', 'f', '<module>']
+            expected_frame_names = ['<listcomp>', 'f', '<module>']
 
         frame_names = [f['name'] for f in frames]
         assert frame_names == expected_frame_names
@@ -1584,7 +1577,6 @@ def test_modules(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY26, reason='Python 2.6 does not have an ordered dict')
 def test_dict_ordered(case_setup):
     with case_setup.test_file('_debugger_case_odict.py') as writer:
         json_facade = JsonFacade(writer)
@@ -2057,7 +2049,6 @@ def test_evaluate_block_clipboard(case_setup, pyfile):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY26, reason='__dir__ not customizable on Python 2.6')
 def test_exception_on_dir(case_setup):
     with case_setup.test_file('_debugger_case_dir_exception.py') as writer:
         json_facade = JsonFacade(writer)
@@ -2263,7 +2254,6 @@ def test_evaluate_unicode(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY26, reason='Not ok on Python 2.6.')
 def test_evaluate_exec_unicode(case_setup):
 
     def get_environ(writer):
@@ -3804,7 +3794,6 @@ cherrypy.quickstart(HelloWorld())
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY26, reason='Flaky on Python 2.6.')
 def test_wait_for_attach(case_setup_remote_attach_to):
     host_port = get_socket_name(close=True)
 
@@ -4761,7 +4750,6 @@ def test_subprocess_pydevd_customization(case_setup_remote, command_line_args):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY26, reason='Only Python 2.7 onwards.')
 def test_subprocess_then_fork(case_setup_multiprocessing):
     import threading
     from tests_python.debugger_unittest import AbstractWriterThread
@@ -5445,7 +5433,6 @@ def test_variable_presentation(case_setup, var_presentation, check_func):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY26, reason='Only Python 2.7 onwards.')
 def test_debugger_case_deadlock_thread_eval(case_setup):
 
     def get_environ(self):
@@ -5469,7 +5456,6 @@ def test_debugger_case_deadlock_thread_eval(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY26, reason='Only Python 2.7 onwards.')
 def test_debugger_case_breakpoint_on_unblock_thread_eval(case_setup):
 
     from _pydevd_bundle._debug_adapter.pydevd_schema import EvaluateResponse
@@ -5509,7 +5495,6 @@ def test_debugger_case_breakpoint_on_unblock_thread_eval(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY26, reason='Only Python 2.7 onwards.')
 def test_debugger_case_unblock_manually(case_setup):
 
     from _pydevd_bundle._debug_adapter.pydevd_schema import EvaluateResponse
@@ -5545,7 +5530,6 @@ def test_debugger_case_unblock_manually(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY26, reason='Only Python 2.7 onwards.')
 def test_debugger_case_deadlock_notify_evaluate_timeout(case_setup, pyfile):
 
     @pyfile
@@ -5582,7 +5566,6 @@ def test_debugger_case_deadlock_notify_evaluate_timeout(case_setup, pyfile):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY26, reason='Only Python 2.7 onwards.')
 def test_debugger_case_deadlock_interrupt_thread(case_setup, pyfile):
 
     @pyfile

@@ -35,7 +35,6 @@ from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdI
 from _pydev_bundle.pydev_console_utils import CodeFragment
 
 IS_PYTHON_3_ONWARDS = sys.version_info[0] >= 3
-IS_PY24 = sys.version_info[0] == 2 and sys.version_info[1] == 4
 
 
 class Command:
@@ -371,10 +370,7 @@ def start_console_server(host, port, interpreter):
         from _pydev_bundle.pydev_imports import SimpleXMLRPCServer as XMLRPCServer  # @Reimport
 
         try:
-            if IS_PY24:
-                server = XMLRPCServer((host, port), logRequests=False)
-            else:
-                server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
+            server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
 
         except:
             sys.stderr.write('Error starting server with host: "%s", port: "%s", client_port: "%s"\n' % (host, port, interpreter.client_port))

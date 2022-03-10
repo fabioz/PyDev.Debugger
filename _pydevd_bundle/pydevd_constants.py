@@ -166,45 +166,19 @@ CYTHON_SUPPORTED = False
 python_implementation = platform.python_implementation()
 if python_implementation == 'CPython':
     # Only available for CPython!
-    if (
-        (sys.version_info[0] == 2 and sys.version_info[1] >= 6)
-        or (sys.version_info[0] == 3 and sys.version_info[1] >= 3)
-        or (sys.version_info[0] > 3)
-        ):
-        # Supported in 2.6,2.7 or 3.3 onwards (32 or 64)
-        CYTHON_SUPPORTED = True
+    CYTHON_SUPPORTED = True
 
 #=======================================================================================================================
 # Python 3?
 #=======================================================================================================================
-IS_PY3K = False
-IS_PY34_OR_GREATER = False
-IS_PY35_OR_GREATER = False
-IS_PY36_OR_GREATER = False
-IS_PY37_OR_GREATER = False
-IS_PY38_OR_GREATER = False
-IS_PY39_OR_GREATER = False
-IS_PY310_OR_GREATER = False
-IS_PY2 = True
-IS_PY27 = False
-IS_PY24 = False
-try:
-    if sys.version_info[0] >= 3:
-        IS_PY3K = True
-        IS_PY2 = False
-        IS_PY34_OR_GREATER = sys.version_info >= (3, 4)
-        IS_PY35_OR_GREATER = sys.version_info >= (3, 5)
-        IS_PY36_OR_GREATER = sys.version_info >= (3, 6)
-        IS_PY37_OR_GREATER = sys.version_info >= (3, 7)
-        IS_PY38_OR_GREATER = sys.version_info >= (3, 8)
-        IS_PY39_OR_GREATER = sys.version_info >= (3, 9)
-        IS_PY310_OR_GREATER = sys.version_info >= (3, 10)
-    elif sys.version_info[0] == 2 and sys.version_info[1] == 7:
-        IS_PY27 = True
-    elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
-        IS_PY24 = True
-except AttributeError:
-    pass  # Not all versions have sys.version_info
+IS_PY3K = True
+IS_PY2 = False
+IS_PY35_OR_GREATER = sys.version_info >= (3, 5)
+IS_PY36_OR_GREATER = sys.version_info >= (3, 6)
+IS_PY37_OR_GREATER = sys.version_info >= (3, 7)
+IS_PY38_OR_GREATER = sys.version_info >= (3, 8)
+IS_PY39_OR_GREATER = sys.version_info >= (3, 9)
+IS_PY310_OR_GREATER = sys.version_info >= (3, 10)
 
 
 def version_str(v):
@@ -562,11 +536,8 @@ def iter_chars(b):
     return iter(b)
 
 
-try:
-    xrange = xrange
-except:
-    # Python 3k does not have it
-    xrange = range
+# Python 3k does not have it
+xrange = range
 
 try:
     import itertools
@@ -574,10 +545,7 @@ try:
 except:
     izip = zip
 
-try:
-    from StringIO import StringIO
-except:
-    from io import StringIO
+from io import StringIO
 
 if IS_JYTHON:
 

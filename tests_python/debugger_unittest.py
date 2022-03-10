@@ -742,14 +742,6 @@ class AbstractWriterThread(threading.Thread):
             if line.strip().startswith('at '):
                 return True
 
-        if IS_PY26:
-            # Sometimes in the ci there's an unhandled exception which doesn't have a stack trace
-            # (apparently this happens when a daemon thread dies during process shutdown).
-            # This was only reproducible on the ci on Python 2.6, so, ignoring that output on Python 2.6 only.
-            for expected in (
-                'Unhandled exception in thread started by <_pydev_bundle.pydev_monkey._NewThreadStartupWithTrace'):
-                if expected in line:
-                    return True
         return False
 
     def additional_output_checks(self, stdout, stderr):

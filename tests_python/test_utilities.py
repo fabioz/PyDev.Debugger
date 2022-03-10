@@ -1,7 +1,7 @@
 import threading
 
 from _pydevd_bundle.pydevd_utils import convert_dap_log_message_to_expression
-from tests_python.debug_constants import IS_PY26, IS_PY3K, TEST_GEVENT, IS_CPYTHON
+from tests_python.debug_constants import IS_PY3K, TEST_GEVENT, IS_CPYTHON
 import sys
 from _pydevd_bundle.pydevd_constants import IS_WINDOWS, IS_PY2, IS_PYPY, IS_JYTHON
 import pytest
@@ -162,13 +162,11 @@ def test_convert_dap_log_message_to_expression():
         'a (22, 33)} 2'
     )
 
-    if not IS_PY26:
-        # Note: set literal not valid for Python 2.6.
-        assert check_dap_log_message(
-            'a {{1: {1}}}',
-            "'a %s' % ({1: {1}},)",
-            'a {1: {1}}' if IS_PY3K else 'a {1: set([1])}',
-        )
+    assert check_dap_log_message(
+        'a {{1: {1}}}',
+        "'a %s' % ({1: {1}},)",
+        'a {1: {1}}' if IS_PY3K else 'a {1: set([1])}',
+    )
 
     # Error condition.
     assert check_dap_log_message(
@@ -180,10 +178,7 @@ def test_convert_dap_log_message_to_expression():
 
 def test_pydevd_log():
     from _pydev_bundle import pydev_log
-    try:
-        import StringIO as io
-    except:
-        import io
+    import io
     from _pydev_bundle.pydev_log import log_context
 
     stream = io.StringIO()

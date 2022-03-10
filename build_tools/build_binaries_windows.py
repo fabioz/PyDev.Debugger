@@ -17,14 +17,12 @@ miniconda_envs = os.getenv('MINICONDA_ENVS', r'C:\bin\Miniconda3\envs')
 
 python_installations = [
 
-    r'%s\py27_32\python.exe' % miniconda_envs,
     r'%s\py36_32\python.exe' % miniconda_envs,
     r'%s\py37_32\python.exe' % miniconda_envs,
     r'%s\py38_32\python.exe' % miniconda_envs,
     r'%s\py39_32\python.exe' % miniconda_envs,
     r'%s\py310_32\python.exe' % miniconda_envs,
 
-    r'%s\py27_64\python.exe' % miniconda_envs,
     r'%s\py36_64\python.exe' % miniconda_envs,
     r'%s\py37_64\python.exe' % miniconda_envs,
     r'%s\py38_64\python.exe' % miniconda_envs,

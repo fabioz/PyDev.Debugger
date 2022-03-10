@@ -1,4 +1,4 @@
-from _pydevd_bundle.pydevd_constants import dict_iter_values, IS_PY24
+from _pydevd_bundle.pydevd_constants import dict_iter_values
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_import_class
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
@@ -179,9 +179,6 @@ def stop_on_unhandled_exception(py_db, thread, additional_info, arg):
 
 
 def get_exception_class(kls):
-    if IS_PY24 and "BaseException" == kls:
-        kls = "Exception"
-
     try:
         return eval(kls)
     except:

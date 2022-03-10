@@ -902,10 +902,7 @@ def get_abs_path_real_path_and_base_from_frame(frame, NORM_PATHS_AND_BASE_CONTAI
 
 
 def get_fullname(mod_name):
-    if IS_PY3K:
-        import pkgutil
-    else:
-        from _pydev_imps import _pydev_pkgutil_old as pkgutil
+    import pkgutil
     try:
         loader = pkgutil.get_loader(mod_name)
     except:
