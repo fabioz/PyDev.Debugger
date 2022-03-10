@@ -51,7 +51,7 @@ from _pydevd_bundle.pydevd_comm_constants import (CMD_THREAD_SUSPEND, CMD_STEP_I
     CMD_STEP_INTO_MY_CODE, CMD_STEP_OVER, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE,
     CMD_SET_NEXT_STATEMENT, CMD_STEP_RETURN, CMD_ADD_EXCEPTION_BREAK, CMD_STEP_RETURN_MY_CODE,
     CMD_STEP_OVER_MY_CODE, constant_to_str, CMD_STEP_INTO_COROUTINE)
-from _pydevd_bundle.pydevd_constants import (IS_JYTH_LESS25, get_thread_id, get_current_thread_id,
+from _pydevd_bundle.pydevd_constants import (get_thread_id, get_current_thread_id,
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame,
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, NULL,
     NO_FTRACE, IS_IRONPYTHON, JSON_PROTOCOL, IS_CPYTHON, HTTP_JSON_PROTOCOL, USE_CUSTOM_SYS_CURRENT_FRAMES_MAP, call_only_once,
@@ -161,10 +161,7 @@ def install_breakpointhook(pydevd_breakpointhook=None):
 # Install the breakpoint hook at import time.
 install_breakpointhook()
 
-SUPPORT_PLUGINS = not IS_JYTH_LESS25
-PluginManager = None
-if SUPPORT_PLUGINS:
-    from _pydevd_bundle.pydevd_plugin_utils import PluginManager
+from _pydevd_bundle.pydevd_plugin_utils import PluginManager
 
 threadingEnumerate = threading.enumerate
 threadingCurrentThread = threading.current_thread
@@ -1160,7 +1157,7 @@ class PyDB(object):
         return self._threads_suspended_single_notification
 
     def get_plugin_lazy_init(self):
-        if self.plugin is None and SUPPORT_PLUGINS:
+        if self.plugin is None:
             self.plugin = PluginManager(self)
         return self.plugin
 

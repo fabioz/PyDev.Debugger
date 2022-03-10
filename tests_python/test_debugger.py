@@ -4301,8 +4301,7 @@ def test_frame_eval_mode_corner_case_many(case_setup, break_name):
             writer.finished_ok = True
 
 
-if IS_PY3K:
-    check_shadowed = [
+check_shadowed = [
     (
         u'''
 if __name__ == '__main__':
@@ -4322,30 +4321,7 @@ if __name__ == '__main__':
         'queue.py',
         u'raise AssertionError("error on import")'
     )
-    ]
-
-else:
-    check_shadowed = [
-    (
-        u'''
-if __name__ == '__main__':
-    import Queue
-    print(Queue)
-''',
-        'Queue.py',
-        u'shadowed = True\n'
-    ),
-
-    (
-        u'''
-if __name__ == '__main__':
-    import Queue
-    print(Queue)
-''',
-        'Queue.py',
-        u'raise AssertionError("error on import")'
-    )
-    ]
+]
 
 
 @pytest.mark.parametrize('module_name_and_content', check_shadowed)

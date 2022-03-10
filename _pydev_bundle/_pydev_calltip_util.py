@@ -4,7 +4,7 @@ Author: Yuli Fitterman
 '''
 import types
 
-from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_PY3K
+from _pydevd_bundle.pydevd_constants import IS_JYTHON
 
 try:
     import inspect
@@ -53,7 +53,7 @@ def get_description(obj):
     fn_name = None
     fn_class = None
     if isinstance(fob, (types.FunctionType, types.MethodType)):
-        spec_info = inspect.getfullargspec(fob) if IS_PY3K else inspect.getargspec(fob)
+        spec_info = inspect.getfullargspec(fob)
         argspec = inspect.formatargspec(*spec_info)
         fn_name = getattr(fob, '__name__', None)
         if isinstance(obj, type) or type(obj).__name__ == 'classobj':

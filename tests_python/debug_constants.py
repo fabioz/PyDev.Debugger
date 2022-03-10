@@ -5,7 +5,6 @@ import platform
 TEST_CYTHON = os.getenv('PYDEVD_USE_CYTHON', None) == 'YES'
 PYDEVD_TEST_VM = os.getenv('PYDEVD_TEST_VM', None)
 
-IS_PY3K = sys.version_info[0] >= 3
 IS_PY36_OR_GREATER = sys.version_info[0:2] >= (3, 6)
 IS_CPYTHON = platform.python_implementation() == 'CPython'
 

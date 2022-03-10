@@ -1,7 +1,7 @@
 import threading
 
 from _pydevd_bundle.pydevd_utils import convert_dap_log_message_to_expression
-from tests_python.debug_constants import IS_PY3K, TEST_GEVENT, IS_CPYTHON
+from tests_python.debug_constants import TEST_GEVENT, IS_CPYTHON
 import sys
 from _pydevd_bundle.pydevd_constants import IS_WINDOWS, IS_PYPY, IS_JYTHON
 import pytest
@@ -161,7 +161,7 @@ def test_convert_dap_log_message_to_expression():
     assert check_dap_log_message(
         'a {{1: {1}}}',
         "'a %s' % ({1: {1}},)",
-        'a {1: {1}}' if IS_PY3K else 'a {1: set([1])}',
+        'a {1: {1}}'
     )
 
     # Error condition.
@@ -418,13 +418,10 @@ def test_find_main_thread_id():
 def test_get_ppid():
     from _pydevd_bundle.pydevd_api import PyDevdAPI
     api = PyDevdAPI()
-    if IS_PY3K:
-        # On python 3 we can check that our internal api which is used for Python 2 gives the
-        # same result as os.getppid.
-        ppid = os.getppid()
-        assert api._get_windows_ppid() == ppid
-    else:
-        assert api._get_windows_ppid() is not None
+    # On python 3 we can check that our internal api which is used for Python 2 gives the
+    # same result as os.getppid.
+    ppid = os.getppid()
+    assert api._get_windows_ppid() == ppid
 
 
 def _check_gevent(expect_msg):

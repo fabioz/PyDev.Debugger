@@ -104,15 +104,12 @@ IS_MAC = sys.platform == 'darwin'
 IS_64BIT_PROCESS = sys.maxsize > (2 ** 32)
 
 IS_JYTHON = pydevd_vm_type.get_vm_type() == pydevd_vm_type.PydevdVmType.JYTHON
-IS_JYTH_LESS25 = False
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 
 if IS_JYTHON:
     import java.lang.System  # @UnresolvedImport
     IS_WINDOWS = java.lang.System.getProperty("os.name").lower().startswith("windows")
-    if sys.version_info[0] == 2 and sys.version_info[1] < 5:
-        IS_JYTH_LESS25 = True
 
 USE_CUSTOM_SYS_CURRENT_FRAMES = not hasattr(sys, '_current_frames') or IS_PYPY
 USE_CUSTOM_SYS_CURRENT_FRAMES_MAP = USE_CUSTOM_SYS_CURRENT_FRAMES and (IS_PYPY or IS_IRONPYTHON)
@@ -171,8 +168,6 @@ if python_implementation == 'CPython':
 #=======================================================================================================================
 # Python 3?
 #=======================================================================================================================
-IS_PY3K = True
-IS_PY35_OR_GREATER = sys.version_info >= (3, 5)
 IS_PY36_OR_GREATER = sys.version_info >= (3, 6)
 IS_PY37_OR_GREATER = sys.version_info >= (3, 7)
 IS_PY38_OR_GREATER = sys.version_info >= (3, 8)
@@ -445,68 +440,29 @@ def after_fork():
 _thread_id_lock = ForkSafeLock()
 thread_get_ident = thread.get_ident
 
-if IS_PY3K:
 
-    def dict_keys(d):
-        return list(d.keys())
+def dict_keys(d):
+    return list(d.keys())
 
-    def dict_values(d):
-        return list(d.values())
 
-    dict_iter_values = dict.values
+def dict_values(d):
+    return list(d.values())
 
-    def dict_iter_items(d):
-        return d.items()
 
-    def dict_items(d):
-        return list(d.items())
+dict_iter_values = dict.values
 
-    def as_str(s):
-        assert isinstance(s, str)
-        return s
 
-else:
-    dict_keys = None
-    try:
-        dict_keys = dict.keys
-    except:
-        pass
+def dict_iter_items(d):
+    return d.items()
 
-    if IS_JYTHON or not dict_keys:
 
-        def dict_keys(d):
-            return d.keys()
+def dict_items(d):
+    return list(d.items())
 
-    try:
-        dict_iter_values = dict.itervalues
-    except:
-        try:
-            dict_iter_values = dict.values  # Older versions don't have the itervalues
-        except:
 
-            def dict_iter_values(d):
-                return d.values()
-
-    try:
-        dict_values = dict.values
-    except:
-
-        def dict_values(d):
-            return d.values()
-
-    def dict_iter_items(d):
-        try:
-            return d.iteritems()
-        except:
-            return d.items()
-
-    def dict_items(d):
-        return d.items()
-
-    def as_str(s):
-        if isinstance(s, unicode):
-            return s.encode('utf-8')
-        return s
+def as_str(s):
+    assert isinstance(s, str)
+    return s
 
 
 def silence_warnings_decorator(func):

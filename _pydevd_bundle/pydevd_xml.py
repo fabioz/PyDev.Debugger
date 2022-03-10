@@ -2,7 +2,7 @@ from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_extension_utils
 from _pydevd_bundle import pydevd_resolver
 import sys
-from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
+from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, \
     BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_ASYNC, \
     DEFAULT_VALUE
 from _pydev_bundle.pydev_imports import quote
@@ -357,12 +357,8 @@ def get_variable_details(val, evaluate_full_value=True, to_string=None):
 
     # fix to work with unicode values
     try:
-        if not IS_PY3K:
-            if value.__class__ == unicode:  # @UndefinedVariable
-                value = value.encode('utf-8', 'replace')
-        else:
-            if value.__class__ == bytes:
-                value = value.decode('utf-8', 'replace')
+        if value.__class__ == bytes:
+            value = value.decode('utf-8', 'replace')
     except TypeError:
         pass
 

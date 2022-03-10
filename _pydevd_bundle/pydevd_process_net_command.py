@@ -11,7 +11,7 @@ from _pydevd_bundle.pydevd_breakpoints import get_exception_class
 from _pydevd_bundle.pydevd_comm import (
     InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, InternalRunCustomOperation,
     internal_get_next_statement_targets, internal_get_smart_step_into_variants)
-from _pydevd_bundle.pydevd_constants import IS_PY3K, NEXT_VALUE_SEPARATOR, IS_WINDOWS, NULL
+from _pydevd_bundle.pydevd_constants import NEXT_VALUE_SEPARATOR, IS_WINDOWS, NULL
 from _pydevd_bundle.pydevd_comm_constants import ID_TO_MEANING, CMD_EXEC_EXPRESSION, CMD_AUTHENTICATE
 from _pydevd_bundle.pydevd_api import PyDevdAPI
 from _pydev_bundle.pydev_imports import StringIO
@@ -667,9 +667,6 @@ class _PyDevCommandProcessor(object):
     def cmd_ignore_thrown_exception_at(self, py_db, cmd_id, seq, text):
         if text:
             replace = 'REPLACE:'  # Not all 3.x versions support u'REPLACE:', so, doing workaround.
-            if not IS_PY3K:
-                replace = unicode(replace)  # noqa
-
             if text.startswith(replace):
                 text = text[8:]
                 py_db.filename_to_lines_where_exceptions_are_ignored.clear()
@@ -694,9 +691,6 @@ class _PyDevCommandProcessor(object):
     def cmd_enable_dont_trace(self, py_db, cmd_id, seq, text):
         if text:
             true_str = 'true'  # Not all 3.x versions support u'str', so, doing workaround.
-            if not IS_PY3K:
-                true_str = unicode(true_str)  # noqa
-
             mode = text.strip() == true_str
             pydevd_dont_trace.trace_filter(mode)
 
