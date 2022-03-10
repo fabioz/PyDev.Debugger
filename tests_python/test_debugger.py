@@ -38,15 +38,9 @@ pytest_plugins = [
     str('tests_python.debugger_fixtures'),
 ]
 
-try:
-    xrange
-except:
-    xrange = range
+xrange = range
 
-if IS_PY2:
-    builtin_qualifier = "__builtin__"
-else:
-    builtin_qualifier = "builtins"
+builtin_qualifier = "builtins"
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='Test needs gc.get_referrers/reference counting to really check anything.')
@@ -2424,14 +2418,11 @@ def test_py_37_breakpoint(case_setup, filename):
 
 
 def _get_generator_cases():
-    if IS_PY2:
-        return ('_debugger_case_generator_py2.py',)
-    else:
-        # On py3 we should check both versions.
-        return (
-            '_debugger_case_generator_py2.py',
-            '_debugger_case_generator_py3.py',
-        )
+    # On py3 we should check both versions.
+    return (
+        '_debugger_case_generator_py2.py',
+        '_debugger_case_generator_py3.py',
+    )
 
 
 @pytest.mark.parametrize("filename", _get_generator_cases())
@@ -3498,7 +3489,6 @@ def test_step_return_my_code(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY2, reason='Python 3 onwards required.')
 def test_smart_step_into_case1(case_setup):
     with case_setup.test_file('_debugger_case_smart_step_into.py') as writer:
         line = writer.get_line_index_with_content('break here')
@@ -3521,7 +3511,6 @@ def test_smart_step_into_case1(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY2, reason='Python 3 onwards required.')
 def test_smart_step_into_case2(case_setup):
     with case_setup.test_file('_debugger_case_smart_step_into2.py') as writer:
         line = writer.get_line_index_with_content('break here')
@@ -3550,7 +3539,6 @@ def test_smart_step_into_case2(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY2, reason='Python 3 onwards required.')
 def test_smart_step_into_case3(case_setup):
     with case_setup.test_file('_debugger_case_smart_step_into3.py') as writer:
         line = writer.get_line_index_with_content('break here')
@@ -3904,11 +3892,9 @@ def test_matplotlib_activation(case_setup):
 
 _GENERATOR_FILES = [
     '_debugger_case_generator3.py',
+    '_debugger_case_generator.py',
+    '_debugger_case_generator2.py',
 ]
-
-if not IS_PY2:
-    _GENERATOR_FILES.append('_debugger_case_generator.py')
-    _GENERATOR_FILES.append('_debugger_case_generator2.py')
 
 
 @pytest.mark.parametrize('target_filename', _GENERATOR_FILES)

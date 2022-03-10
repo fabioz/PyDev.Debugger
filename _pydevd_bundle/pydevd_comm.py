@@ -71,7 +71,7 @@ from _pydev_imps._pydev_saved_modules import time
 from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import socket as socket_module
 from _pydevd_bundle.pydevd_constants import (DebugInfoHolder, IS_WINDOWS, IS_JYTHON,
-    IS_PY2, IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC,
+    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC,
     get_global_debugger, GetGlobalDebugger, set_global_debugger, silence_warnings_decorator)  # Keep for backward compatibility @UnusedImport
 from _pydev_bundle.pydev_override import overrides
 import weakref
@@ -583,9 +583,6 @@ def _send_io_message(py_db, s):
 def internal_reload_code(dbg, seq, module_name, filename):
     try:
         found_module_to_reload = False
-        if IS_PY2 and isinstance(filename, unicode):
-            filename = filename.encode(sys.getfilesystemencoding())
-
         if module_name is not None:
             module_name = module_name
             if module_name not in sys.modules:
@@ -726,11 +723,6 @@ class InternalSetNextStatementThread(InternalThreadCommand):
         self.cmd_id = cmd_id
         self.line = line
         self.seq = seq
-
-        if IS_PY2:
-            if isinstance(func_name, unicode):
-                # On cython with python 2.X it requires an str, not unicode (but on python 3.3 it should be a str, not bytes).
-                func_name = func_name.encode('utf-8')
 
         self.func_name = func_name
 
@@ -1167,12 +1159,6 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
         ctx = NULL
 
     with ctx:
-        if IS_PY2 and isinstance(expression, unicode):
-            try:
-                expression.encode('utf-8')
-            except Exception:
-                _evaluate_response(py_db, request, '', error_message='Expression is not valid utf-8.')
-                raise
 
         try_exec = False
         if frame_id is None:
@@ -1338,19 +1324,6 @@ def internal_set_expression_json(py_db, request, thread_id):
     if hasattr(fmt, 'to_dict'):
         fmt = fmt.to_dict()
 
-    if IS_PY2 and isinstance(expression, unicode):
-        try:
-            expression = expression.encode('utf-8')
-        except:
-            _evaluate_response(py_db, request, '', error_message='Expression is not valid utf-8.')
-            raise
-    if IS_PY2 and isinstance(value, unicode):
-        try:
-            value = value.encode('utf-8')
-        except:
-            _evaluate_response(py_db, request, '', error_message='Value is not valid utf-8.')
-            raise
-
     frame = py_db.find_frame(thread_id, frame_id)
     exec_code = '%s = (%s)' % (expression, value)
     result = pydevd_vars.evaluate_expression(py_db, frame, exec_code, is_exec=True)
@@ -1402,12 +1375,6 @@ def internal_get_completions(dbg, seq, thread_id, frame_id, act_tok, line=-1, co
 
             frame = dbg.find_frame(thread_id, frame_id)
             if frame is not None:
-                if IS_PY2:
-                    if not isinstance(act_tok, bytes):
-                        act_tok = act_tok.encode('utf-8')
-                    if not isinstance(qualifier, bytes):
-                        qualifier = qualifier.encode('utf-8')
-
                 completions = _pydev_completer.generate_completions(frame, act_tok)
 
                 # Note that qualifier and start are only actually valid for the

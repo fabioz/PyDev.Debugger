@@ -172,7 +172,6 @@ if python_implementation == 'CPython':
 # Python 3?
 #=======================================================================================================================
 IS_PY3K = True
-IS_PY2 = False
 IS_PY35_OR_GREATER = sys.version_info >= (3, 5)
 IS_PY36_OR_GREATER = sys.version_info >= (3, 6)
 IS_PY37_OR_GREATER = sys.version_info >= (3, 7)
@@ -283,7 +282,7 @@ LOAD_VALUES_ASYNC = is_true_in_env('PYDEVD_LOAD_VALUES_ASYNC')
 DEFAULT_VALUE = "__pydevd_value_async"
 ASYNC_EVAL_TIMEOUT_SEC = 60
 NEXT_VALUE_SEPARATOR = "__pydev_val__"
-BUILTINS_MODULE_NAME = '__builtin__' if IS_PY2 else 'builtins'
+BUILTINS_MODULE_NAME = 'builtins'
 SHOW_DEBUG_INFO_ENV = is_true_in_env(('PYCHARM_DEBUG', 'PYDEV_DEBUG', 'PYDEVD_DEBUG'))
 
 # Pandas customization.
@@ -529,10 +528,9 @@ def sorted_dict_repr(d):
 def iter_chars(b):
     # In Python 2, we can iterate bytes or unicode with individual characters, but Python 3 onwards
     # changed that behavior so that when iterating bytes we actually get ints!
-    if not IS_PY2:
-        if isinstance(b, bytes):
-            # i.e.: do something as struct.unpack('3c', b)
-            return iter(struct.unpack(str(len(b)) + 'c', b))
+    if isinstance(b, bytes):
+        # i.e.: do something as struct.unpack('3c', b)
+        return iter(struct.unpack(str(len(b)) + 'c', b))
     return iter(b)
 
 

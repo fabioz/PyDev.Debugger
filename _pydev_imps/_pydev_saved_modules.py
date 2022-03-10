@@ -1,8 +1,6 @@
 import sys
 import os
 
-IS_PY2 = sys.version_info < (3,)
-
 
 def find_in_pythonpath(module_name):
     # Check all the occurrences where we could match the given module/package in the PYTHONPATH.

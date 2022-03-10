@@ -3,10 +3,9 @@ import threading
 from _pydevd_bundle.pydevd_utils import convert_dap_log_message_to_expression
 from tests_python.debug_constants import IS_PY3K, TEST_GEVENT, IS_CPYTHON
 import sys
-from _pydevd_bundle.pydevd_constants import IS_WINDOWS, IS_PY2, IS_PYPY, IS_JYTHON
+from _pydevd_bundle.pydevd_constants import IS_WINDOWS, IS_PYPY, IS_JYTHON
 import pytest
 import os
-import codecs
 from _pydevd_bundle.pydevd_thread_lifecycle import pydevd_find_thread_by_id
 
 
@@ -19,11 +18,8 @@ def test_expression_to_evaluate():
     assert _expression_to_evaluate(b'  for a in b:\nfoo') == b'  for a in b:\nfoo'
     assert _expression_to_evaluate(b'\tfor a in b:\n\t\tfoo') == b'for a in b:\n\tfoo'
 
-    if IS_PY2:
-        assert _expression_to_evaluate(u'  expr') == (codecs.BOM_UTF8 + b'expr')
-    else:
-        assert _expression_to_evaluate(u'  expr') == u'expr'
-        assert _expression_to_evaluate(u'  for a in expr:\n  pass') == u'for a in expr:\npass'
+    assert _expression_to_evaluate(u'  expr') == u'expr'
+    assert _expression_to_evaluate(u'  for a in expr:\n  pass') == u'for a in expr:\npass'
 
 
 @pytest.mark.skipif(IS_WINDOWS, reason='Brittle on Windows.')

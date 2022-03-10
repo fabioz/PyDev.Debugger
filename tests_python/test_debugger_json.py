@@ -21,7 +21,7 @@ from _pydevd_bundle.pydevd_constants import (int_types, IS_64BIT_PROCESS,
     PY_VERSION_STR, PY_IMPL_VERSION_STR, PY_IMPL_NAME, IS_PY36_OR_GREATER,
     IS_PYPY, GENERATED_LEN_ATTR_NAME, IS_WINDOWS, IS_LINUX, IS_MAC, IS_PY38_OR_GREATER)
 from tests_python import debugger_unittest
-from tests_python.debug_constants import TEST_CHERRYPY, IS_PY2, TEST_DJANGO, TEST_FLASK, \
+from tests_python.debug_constants import TEST_CHERRYPY, TEST_DJANGO, TEST_FLASK, \
     IS_CPYTHON, TEST_GEVENT, TEST_CYTHON
 from tests_python.debugger_unittest import (IS_JYTHON, IS_APPVEYOR, overrides,
     get_free_port, wait_for_condition)
@@ -136,11 +136,6 @@ class JsonFacade(object):
         json_hit = self.get_stack_as_json_hit(stopped_event.body.threadId)
         if file is not None:
             path = json_hit.stack_trace_response.body.stackFrames[0]['source']['path']
-            if IS_PY2:
-                if isinstance(file, bytes):
-                    file = file.decode('utf-8')
-                if isinstance(path, bytes):
-                    path = path.decode('utf-8')
 
             if not path.endswith(file):
                 # pytest may give a lowercase tempdir, so, also check with
@@ -1626,23 +1621,13 @@ def test_stack_and_variables_dict(case_setup):
         assert isinstance(dict_variable_reference, int_types)
         # : :type variables_response: VariablesResponse
 
-        if IS_PY2:
-            print(repr(variables_response.body.variables[-1]))
-            expected_unicode = {
-                u'name': u'\u16a0',
-                u'value': u"u'\\u16a1'",
-                u'type': u'unicode',
-                u'presentationHint': {u'attributes': [u'rawString']},
-                u'evaluateName': u'\u16a0',
-            }
-        else:
-            expected_unicode = {
-                'name': u'\u16A0',
-                'value': "'\u16a1'",
-                'type': 'str',
-                'presentationHint': {'attributes': ['rawString']},
-                'evaluateName': u'\u16A0',
-            }
+        expected_unicode = {
+            'name': u'\u16A0',
+            'value': "'\u16a1'",
+            'type': 'str',
+            'presentationHint': {'attributes': ['rawString']},
+            'evaluateName': u'\u16A0',
+        }
         assert variables_response.body.variables == [
             {'name': 'variable_for_test_1', 'value': '10', 'type': 'int', 'evaluateName': 'variable_for_test_1'},
             {'name': 'variable_for_test_2', 'value': '20', 'type': 'int', 'evaluateName': 'variable_for_test_2'},
@@ -1679,13 +1664,9 @@ def test_variables_with_same_name(case_setup):
         assert isinstance(dict_variable_reference, int_types)
         # : :type variables_response: VariablesResponse
 
-        if not IS_PY2:
-            assert variables_response.body.variables == [
-                {'name': 'td', 'value': "{foo: 'bar', gad: 'zooks', foo: 'bur'}", 'type': 'dict', 'evaluateName': 'td'}
-            ]
-        else:
-            # The value may change the representation on Python 2 as dictionaries don't keep the insertion order.
-            assert len(variables_response.body.variables) == 1
+        assert variables_response.body.variables == [
+            {'name': 'td', 'value': "{foo: 'bar', gad: 'zooks', foo: 'bur'}", 'type': 'dict', 'evaluateName': 'td'}
+        ]
 
         dict_variables_response = json_facade.get_variables_response(dict_variable_reference)
         # Note that we don't have the evaluateName because it's not possible to create a key
@@ -1772,8 +1753,7 @@ def test_hasattr_failure(case_setup):
 
         evaluate_response = json_facade.evaluate('obj', json_hit.frame_id, context='hover')
         evaluate_response_body = evaluate_response.body.to_dict()
-        if not IS_PY2:
-            assert evaluate_response_body['result'] == 'An exception was raised: RuntimeError()'
+        assert evaluate_response_body['result'] == 'An exception was raised: RuntimeError()'
 
         json_facade.evaluate('not_there', json_hit.frame_id, context='hover', success=False)
         json_facade.evaluate('not_there', json_hit.frame_id, context='watch', success=False)
@@ -2077,9 +2057,6 @@ def test_exception_on_dir(case_setup):
 ])
 @pytest.mark.parametrize('asyncio', [True, False])
 def test_return_value_regular(case_setup, scenario, asyncio):
-    if IS_PY2 and asyncio:
-        raise pytest.skip('asyncio not available for python 2.')
-
     with case_setup.test_file('_debugger_case_return_value.py' if not asyncio else '_debugger_case_return_value_asyncio.py') as writer:
         json_facade = JsonFacade(writer)
 
@@ -2138,10 +2115,7 @@ def test_stack_and_variables_set_and_list(case_setup):
         variables_response = json_facade.get_variables_response(json_hit.frame_id)
 
         variables_references = json_facade.pop_variables_reference(variables_response.body.variables)
-        if IS_PY2:
-            expected_set = "set(['a'])"
-        else:
-            expected_set = "{'a'}"
+        expected_set = "{'a'}"
         assert variables_response.body.variables == [
             {'type': 'list', 'evaluateName': 'variable_for_test_1', 'name': 'variable_for_test_1', 'value': "['a', 'b']"},
             {'type': 'set', 'evaluateName': 'variable_for_test_2', 'name': 'variable_for_test_2', 'value': expected_set}
@@ -2216,39 +2190,12 @@ def test_evaluate_unicode(case_setup):
 
         evaluate_response_body = evaluate_response.body.to_dict()
 
-        if IS_PY2:
-            # The error can be referenced.
-            variables_reference = json_facade.pop_variables_reference([evaluate_response_body])
-
-            assert evaluate_response_body == {
-                'result': u"SyntaxError('invalid syntax', ('<string>', 1, 1, '\\xe1\\x9a\\xa0'))",
-                'type': u'SyntaxError',
-                'presentationHint': {},
-            }
-
-            assert len(variables_reference) == 1
-            reference = variables_reference[0]
-            assert reference > 0
-            variables_response = json_facade.get_variables_response(reference)
-            child_variables = variables_response.to_dict()['body']['variables']
-            assert len(child_variables) == 2
-            for c in child_variables:
-                if c[u'type'] == u'SyntaxError':
-                    assert c.pop('variablesReference') > 0
-                    assert c == {
-                        u'type': u'SyntaxError',
-                        u'evaluateName': u'\u16a0.result',
-                        u'name': u'result',
-                        u'value': u"SyntaxError('invalid syntax', ('<string>', 1, 1, '\\xe1\\x9a\\xa0'))"
-                    }
-
-        else:
-            assert evaluate_response_body == {
-                'result': "'\u16a1'",
-                'type': 'str',
-                'variablesReference': 0,
-                'presentationHint': {'attributes': ['rawString']},
-            }
+        assert evaluate_response_body == {
+            'result': "'\u16a1'",
+            'type': 'str',
+            'variablesReference': 0,
+            'presentationHint': {'attributes': ['rawString']},
+        }
 
         json_facade.write_continue()
         writer.finished_ok = True
@@ -2392,7 +2339,7 @@ def test_evaluate_variable_references(case_setup):
 
         assert evaluate_response_body == {
             'type': 'set',
-            'result': "set(['a'])" if IS_PY2 else "{'a'}",
+            'result': "{'a'}",
             'presentationHint': {},
         }
         assert len(variables_reference) == 1
@@ -4028,9 +3975,6 @@ def test_path_translation_and_source_reference(case_setup):
 
     translated_dir_not_ascii = u'áéíóú汉字'
 
-    if IS_PY2:
-        translated_dir_not_ascii = translated_dir_not_ascii.encode(file_system_encoding)
-
     def get_file_in_client(writer):
         # Instead of using: test_python/_debugger_case_path_translation.py
         # we'll set the breakpoints at foo/_debugger_case_path_translation.py
@@ -4053,8 +3997,6 @@ def test_path_translation_and_source_reference(case_setup):
         bp_line = writer.get_line_index_with_content('break here')
         assert writer.TEST_FILE.endswith('_debugger_case_path_translation.py')
         local_root = os.path.dirname(get_file_in_client(writer))
-        if IS_PY2:
-            local_root = local_root.decode(file_system_encoding).encode('utf-8')
         json_facade.write_launch(pathMappings=[{
             'localRoot': local_root,
             'remoteRoot': os.path.dirname(writer.TEST_FILE),
@@ -4081,11 +4023,6 @@ def test_path_translation_and_source_reference(case_setup):
 
         path = stack_frame['source']['path']
         file_in_client_unicode = file_in_client
-        if IS_PY2:
-            if isinstance(path, bytes):
-                path = path.decode('utf-8')
-            if isinstance(file_in_client_unicode, bytes):
-                file_in_client_unicode = file_in_client_unicode.decode(file_system_encoding)
 
         assert path == file_in_client_unicode
         source_reference = stack_frame['source']['sourceReference']
@@ -4558,11 +4495,6 @@ def test_redirect_output(case_setup):
                 output_event = json_facade.wait_for_json_message(OutputEvent)
                 output = output_event.body.output
                 category = output_event.body.category
-                if IS_PY2:
-                    if isinstance(output, unicode):  # noqa -- unicode not available in py3
-                        output = output.encode('utf-8')
-                    if isinstance(category, unicode):  # noqa -- unicode not available in py3
-                        category = category.encode('utf-8')
                 msg = (output, category)
             except Exception:
                 for msg in msgs:
@@ -5775,7 +5707,6 @@ def do_something():
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY2, reason='Python 3 onwards required.')
 def test_step_into_target_basic(case_setup):
     with case_setup.test_file('_debugger_case_smart_step_into.py') as writer:
         json_facade = JsonFacade(writer)
@@ -5800,7 +5731,6 @@ def test_step_into_target_basic(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY2, reason='Python 3 onwards required.')
 def test_step_into_target_multiple(case_setup):
     with case_setup.test_file('_debugger_case_smart_step_into2.py') as writer:
         json_facade = JsonFacade(writer)
@@ -5825,7 +5755,6 @@ def test_step_into_target_multiple(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY2, reason='Python 3 onwards required.')
 def test_step_into_target_genexpr(case_setup):
     with case_setup.test_file('_debugger_case_smart_step_into3.py') as writer:
         json_facade = JsonFacade(writer)

@@ -1,22 +1,16 @@
 from _pydevd_bundle.pydevd_constants import get_frame, IS_CPYTHON, IS_64BIT_PROCESS, IS_WINDOWS, \
-    IS_LINUX, IS_MAC, IS_PY2, DebugInfoHolder, LOAD_NATIVE_LIB_FLAG, \
-    ENV_FALSE_LOWER_VALUES, GlobalDebuggerHolder, ForkSafeLock
+    IS_LINUX, IS_MAC, DebugInfoHolder, LOAD_NATIVE_LIB_FLAG, \
+    ENV_FALSE_LOWER_VALUES, ForkSafeLock
 from _pydev_imps._pydev_saved_modules import thread, threading
 from _pydev_bundle import pydev_log, pydev_monkey
-from os.path import os
+import os.path
 import platform
 try:
     import ctypes
 except ImportError:
     ctypes = None
 
-try:
-    import cStringIO as StringIO  # may not always be available @UnusedImport
-except:
-    try:
-        import StringIO  # @Reimport
-    except:
-        import io as StringIO
+import io as StringIO
 
 import sys  # @Reimport
 import traceback
@@ -314,10 +308,7 @@ def set_trace_to_threads(tracing_func, thread_idents=None, create_dummy_thread=T
 
                     def _set_ident(self):
                         # Note: Hack to set the thread ident that we want.
-                        if IS_PY2:
-                            self._Thread__ident = thread_ident
-                        else:
-                            self._ident = thread_ident
+                        self._ident = thread_ident
 
                 t = _DummyThread()
                 # Reset to the base class (don't expose our own version of the class).
