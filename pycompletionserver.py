@@ -209,11 +209,7 @@ class CompletionServer:
             totalsent = totalsent + sent
 
     def send(self, msg):
-        if not hasattr(self.socket, 'sendall'):
-            # Older versions (jython 2.1)
-            self.emulated_sendall(msg)
-        else:
-            self.socket.sendall(bytearray(msg, 'utf-8'))
+        self.socket.sendall(bytearray(msg, 'utf-8'))
 
     def run(self):
         # Echo server program

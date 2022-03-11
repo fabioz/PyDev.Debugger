@@ -70,10 +70,8 @@ def main():
             python_install, os.path.join(root_dir, 'build_tools', 'build.py'), '--no-remove-binaries', '--target-pyd-name=%s' % new_name, '--force-cython']
         if i != 0:
             args.append('--no-regenerate-files')
-        version_number = extract_version(python_install)
-        if version_number.startswith('3'):
-            name_frame_eval = 'pydevd_frame_evaluator_%s_%s' % (sys.platform, extract_version(python_install))
-            args.append('--target-pyd-frame-eval=%s' % name_frame_eval)
+        name_frame_eval = 'pydevd_frame_evaluator_%s_%s' % (sys.platform, extract_version(python_install))
+        args.append('--target-pyd-frame-eval=%s' % name_frame_eval)
         print('Calling: %s' % (' '.join(args)))
 
         env = os.environ.copy()
