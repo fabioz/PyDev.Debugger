@@ -90,15 +90,9 @@ from _pydevd_bundle.pydevd_frame_utils import create_frames_list_from_exception_
 import pydevd_file_utils
 import itertools
 from urllib.parse import quote_plus, unquote_plus
-
 import pydevconsole
 from _pydevd_bundle import pydevd_vars, pydevd_io, pydevd_reload
-
-try:
-    from _pydevd_bundle import pydevd_bytecode_utils
-except ImportError:
-    pydevd_bytecode_utils = None  # i.e.: Not available on Py2.
-
+from _pydevd_bundle import pydevd_bytecode_utils
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_vm_type
 import sys
@@ -112,7 +106,7 @@ from _pydev_bundle import _pydev_completer
 from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle import pydevd_console
 from _pydev_bundle.pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
-import io as StringIO
+from io import StringIO
 
 # CMD_XXX constants imported for backward compatibility
 from _pydevd_bundle.pydevd_comm_constants import *  # @UnusedWildImport

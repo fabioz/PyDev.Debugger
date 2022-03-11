@@ -1,6 +1,5 @@
-import io as StringIO
-
 import traceback
+from io import StringIO
 from java.lang import StringBuffer  # @UnresolvedImport
 from java.lang import String  # @UnresolvedImport
 import java.lang  # @UnresolvedImport

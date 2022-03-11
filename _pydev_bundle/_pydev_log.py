@@ -1,6 +1,6 @@
 import traceback
 import sys
-import io as StringIO  # Python 3.0
+from io import StringIO
 
 
 class Log:
