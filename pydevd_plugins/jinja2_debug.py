@@ -1,4 +1,4 @@
-from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_iter_items, dict_keys, JINJA2_SUSPEND
+from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, JINJA2_SUSPEND
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
 from pydevd_file_utils import canonical_normalized_path
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, FCode
@@ -314,7 +314,7 @@ def has_exception_breaks(plugin):
 
 
 def has_line_breaks(plugin):
-    for _canonical_normalized_filename, breakpoints in dict_iter_items(plugin.main_debugger.jinja2_breakpoints):
+    for _canonical_normalized_filename, breakpoints in plugin.main_debugger.jinja2_breakpoints.items():
         if len(breakpoints) > 0:
             return True
     return False
@@ -474,7 +474,7 @@ def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
     thread = args[3]
     exception, value, trace = arg
     if pydb.jinja2_exception_break and exception is not None:
-        exception_type = dict_keys(pydb.jinja2_exception_break)[0]
+        exception_type = list(pydb.jinja2_exception_break.keys())[0]
         if exception.__name__ in ('UndefinedError', 'TemplateNotFound', 'TemplatesNotFound'):
             # errors in rendering
             render_frame = _find_jinja2_render_frame(frame)

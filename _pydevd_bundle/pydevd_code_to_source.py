@@ -8,10 +8,10 @@ Note: this is a work in progress / proof of concept / not ready to be used.
 import dis
 
 from _pydevd_bundle.pydevd_collect_bytecode_info import iter_instructions
-from _pydevd_bundle.pydevd_constants import dict_iter_items
 from _pydev_bundle import pydev_log
 import sys
 import inspect
+from io import StringIO
 
 xrange = range
 
@@ -495,10 +495,6 @@ def _compose_line_contents(line_contents, previous_line_tokens):
                 if token not in handled:
                     lst.append(token.tok)
 
-            try:
-                from StringIO import StringIO
-            except:
-                from io import StringIO
             stream = StringIO()
             _print_after_info(line_contents, stream)
             pydev_log.critical('Error. After markers are not correct:\n%s', stream.getvalue())
@@ -554,7 +550,7 @@ class _PyCodeToSource(object):
         #         print(d, getattr(code, d))
         line_to_contents = _PyCodeToSource(code, self.memo).build_line_to_contents()
         lines = []
-        for line, contents in sorted(dict_iter_items(line_to_contents)):
+        for line, contents in sorted(line_to_contents.items()):
             lines.append(line)
             self.writer.get_line(line).extend(contents)
         if DEBUG:
@@ -564,13 +560,11 @@ class _PyCodeToSource(object):
     def disassemble(self):
         show_lines = False
         line_to_contents = self.build_line_to_contents()
-        from io import StringIO
-
         stream = StringIO()
         last_line = 0
         indent = ''
         previous_line_tokens = set()
-        for i_line, contents in sorted(dict_iter_items(line_to_contents)):
+        for i_line, contents in sorted(line_to_contents.items()):
             while last_line < i_line - 1:
                 if show_lines:
                     stream.write(u"%s.\n" % (last_line + 1,))

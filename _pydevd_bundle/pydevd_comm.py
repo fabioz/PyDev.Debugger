@@ -71,7 +71,7 @@ from _pydev_imps._pydev_saved_modules import time
 from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import socket as socket_module
 from _pydevd_bundle.pydevd_constants import (DebugInfoHolder, IS_WINDOWS, IS_JYTHON,
-    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC,
+    IS_PY36_OR_GREATER, STATE_RUN, ASYNC_EVAL_TIMEOUT_SEC,
     get_global_debugger, GetGlobalDebugger, set_global_debugger, silence_warnings_decorator)  # Keep for backward compatibility @UnusedImport
 from _pydev_bundle.pydev_override import overrides
 import weakref
@@ -89,11 +89,7 @@ import dis
 from _pydevd_bundle.pydevd_frame_utils import create_frames_list_from_exception_cause
 import pydevd_file_utils
 import itertools
-from functools import partial
-try:
-    from urllib import quote_plus, unquote_plus  # @UnresolvedImport
-except:
-    from urllib.parse import quote_plus, unquote_plus  # @Reimport @UnresolvedImport
+from urllib.parse import quote_plus, unquote_plus
 
 import pydevconsole
 from _pydevd_bundle import pydevd_vars, pydevd_io, pydevd_reload
@@ -116,13 +112,7 @@ from _pydev_bundle import _pydev_completer
 from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle import pydevd_console
 from _pydev_bundle.pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
-try:
-    import cStringIO as StringIO  # may not always be available @UnusedImport
-except:
-    try:
-        import StringIO  # @Reimport @UnresolvedImport
-    except:
-        import io as StringIO
+import io as StringIO
 
 # CMD_XXX constants imported for backward compatibility
 from _pydevd_bundle.pydevd_comm_constants import *  # @UnusedWildImport
@@ -800,18 +790,18 @@ class InternalGetVariable(InternalThreadCommand):
     def do_it(self, dbg):
         ''' Converts request into python variable '''
         try:
-            xml = StringIO.StringIO()
+            xml = StringIO()
             xml.write("<xml>")
-            _typeName, val_dict = pydevd_vars.resolve_compound_variable_fields(
+            type_name, val_dict = pydevd_vars.resolve_compound_variable_fields(
                 dbg, self.thread_id, self.frame_id, self.scope, self.attributes)
             if val_dict is None:
                 val_dict = {}
 
             # assume properly ordered if resolver returns 'OrderedDict'
             # check type as string to support OrderedDict backport for older Python
-            keys = dict_keys(val_dict)
-            if not (_typeName == "OrderedDict" or val_dict.__class__.__name__ == "OrderedDict" or IS_PY36_OR_GREATER):
-                keys.sort(key=compare_object_attrs_key)
+            keys = list(val_dict)
+            if not (type_name == "OrderedDict" or val_dict.__class__.__name__ == "OrderedDict" or IS_PY36_OR_GREATER):
+                keys = sorted(keys, key=compare_object_attrs_key)
 
             timer = Timer()
             for k in keys:
@@ -1800,7 +1790,7 @@ class AbstractGetValueAsyncThread(PyDBDaemonThread):
     @overrides(PyDBDaemonThread._on_run)
     def _on_run(self):
         start = time.time()
-        xml = StringIO.StringIO()
+        xml = StringIO()
         xml.write("<xml>")
         for (var_obj, name) in self.var_objs:
             current_time = time.time()

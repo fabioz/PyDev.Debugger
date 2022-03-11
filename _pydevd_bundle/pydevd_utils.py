@@ -96,7 +96,7 @@ def is_string(x):
 
 
 def to_string(x):
-    if is_string(x):
+    if isinstance(x, str):
         return x
     else:
         return str(x)

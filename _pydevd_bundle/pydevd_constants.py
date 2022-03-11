@@ -441,25 +441,6 @@ _thread_id_lock = ForkSafeLock()
 thread_get_ident = thread.get_ident
 
 
-def dict_keys(d):
-    return list(d.keys())
-
-
-def dict_values(d):
-    return list(d.values())
-
-
-dict_iter_values = dict.values
-
-
-def dict_iter_items(d):
-    return d.items()
-
-
-def dict_items(d):
-    return list(d.items())
-
-
 def as_str(s):
     assert isinstance(s, str)
     return s
@@ -477,7 +458,7 @@ def silence_warnings_decorator(func):
 
 
 def sorted_dict_repr(d):
-    s = sorted(dict_iter_items(d), key=lambda x:str(x[0]))
+    s = sorted(d.items(), key=lambda x:str(x[0]))
     return '{' + ', '.join(('%r: %r' % x) for x in s) + '}'
 
 
@@ -492,14 +473,7 @@ def iter_chars(b):
 
 # Python 3k does not have it
 xrange = range
-
-try:
-    import itertools
-    izip = itertools.izip
-except:
-    izip = zip
-
-from io import StringIO
+izip = zip
 
 if IS_JYTHON:
 

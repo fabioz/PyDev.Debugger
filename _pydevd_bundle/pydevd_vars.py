@@ -3,22 +3,18 @@
 """
 import pickle
 from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, \
-    iter_chars, silence_warnings_decorator, dict_iter_items
+    iter_chars, silence_warnings_decorator
 
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
 from _pydev_bundle import pydev_log
-import codecs
-import os
 import functools
 from _pydevd_bundle.pydevd_thread_lifecycle import resume_threads, mark_thread_suspended, suspend_all_threads
 from _pydevd_bundle.pydevd_comm_constants import CMD_SET_BREAK
 
-from io import StringIO
 import sys  # @Reimport
 
 from _pydev_imps._pydev_saved_modules import threading
-import traceback
-from _pydevd_bundle import pydevd_save_locals, pydevd_timeout, pydevd_constants, pydevd_utils
+from _pydevd_bundle import pydevd_save_locals, pydevd_timeout, pydevd_constants
 from _pydev_bundle.pydev_imports import Exec, execfile
 from _pydevd_bundle.pydevd_utils import to_string
 
@@ -382,7 +378,7 @@ def _update_globals_and_locals(updated_globals, initial_globals, frame):
     # one that enabled creating and using variables during the same evaluation.
     assert updated_globals is not None
     changed = False
-    for key, val in dict_iter_items(updated_globals):
+    for key, val in updated_globals.items():
         if initial_globals.get(key) is not val:
             changed = True
             frame.f_locals[key] = val

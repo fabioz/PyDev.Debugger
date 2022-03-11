@@ -4,7 +4,7 @@ from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle.pydevd_constants import GlobalDebuggerHolder
-from _pydevd_bundle.pydevd_constants import get_thread_id,
+from _pydevd_bundle.pydevd_constants import get_thread_id
 from _pydevd_bundle.pydevd_net_command import NetCommand
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import ObjectWrapper, wrap_attr
 import pydevd_file_utils
@@ -66,7 +66,7 @@ def get_text_list_for_frame(frame):
             cmdTextList.append(variables)
             cmdTextList.append("</frame>")
             curFrame = curFrame.f_back
-    except :
+    except:
         pydev_log.exception()
 
     return cmdTextList

@@ -11,8 +11,7 @@ except ImportError:
     ctypes = None
 
 import io as StringIO
-
-import sys  # @Reimport
+import sys
 import traceback
 
 _original_settrace = sys.settrace
@@ -29,7 +28,7 @@ class TracingFunctionHolder:
 
 def get_exception_traceback_str():
     exc_info = sys.exc_info()
-    s = StringIO.StringIO()
+    s = StringIO()
     traceback.print_exception(exc_info[0], exc_info[1], exc_info[2], file=s)
     return s.getvalue()
 
@@ -41,7 +40,7 @@ def _get_stack_str(frame):
           '\nto see how to restore the debug tracing back correctly.\n'
 
     if TracingFunctionHolder._traceback_limit:
-        s = StringIO.StringIO()
+        s = StringIO()
         s.write('Call Location:\n')
         traceback.print_stack(f=frame, limit=TracingFunctionHolder._traceback_limit, file=s)
         msg = msg + s.getvalue()

@@ -2,7 +2,7 @@ import inspect
 
 from _pydev_bundle import pydev_log
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
-from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_iter_items, DJANGO_SUSPEND, \
+from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, DJANGO_SUSPEND, \
     DebugInfoHolder
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, FCode, just_raised, ignore_exception_trace
 from pydevd_file_utils import canonical_normalized_path, absolute_path
@@ -455,7 +455,7 @@ def has_exception_breaks(plugin):
 
 
 def has_line_breaks(plugin):
-    for _canonical_normalized_filename, breakpoints in dict_iter_items(plugin.main_debugger.django_breakpoints):
+    for _canonical_normalized_filename, breakpoints in plugin.main_debugger.django_breakpoints.items():
         if len(breakpoints) > 0:
             return True
     return False

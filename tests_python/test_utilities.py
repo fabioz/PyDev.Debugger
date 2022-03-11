@@ -84,10 +84,7 @@ conftest.py:67: AssertionError
             error_msg += 'Current main thread not instance of: %s (%s)' % (
                 threading._MainThread, current_thread.__class__.__mro__,)
 
-        try:
-            from StringIO import StringIO
-        except:
-            from io import StringIO
+        from io import StringIO
 
         stream = StringIO()
         dump_threads(stream=stream)
@@ -233,10 +230,7 @@ def test_pydevd_logging_files(tmpdir):
     import os.path
     from _pydev_bundle.pydev_log import _LoggingGlobals
 
-    try:
-        import StringIO as io
-    except:
-        import io
+    import io
     from _pydev_bundle.pydev_log import log_context
 
     stream = io.StringIO()
