@@ -10,7 +10,7 @@ try:
 except ImportError:
     ctypes = None
 
-import io as StringIO
+from io import StringIO
 import sys
 import traceback
 
