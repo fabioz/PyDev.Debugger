@@ -15,8 +15,6 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py27-checkdebug",
-          "ubuntu-py27-cython",
           "ubuntu-pypy3",
           "macos-py37-cython",
           "ubuntu-py38-cython-checkbin",
@@ -25,14 +23,6 @@ jobs:
         ]
         
         include:
-          - name: "windows-py27-checkdebug"
-            python: "2.7"
-            os: windows-latest
-            PYDEVD_USE_CYTHON: NO
-          - name: "ubuntu-py27-cython"
-            python: "2.7"
-            os: ubuntu-latest
-            PYDEVD_USE_CYTHON: YES
           - name: "ubuntu-pypy3"
             python: "pypy3"
             os: ubuntu-latest
@@ -81,13 +71,6 @@ jobs:
         pip install psutil --no-warn-script-location
         pip install ipython --no-warn-script-location
         pip install untangle --no-warn-script-location
-    - name: Install Python 2.7 deps
-      if: contains(matrix.name, 'py27')
-      run: |
-        pip install "django>=1.7,<1.8" --no-warn-script-location
-        pip install pathlib2 --no-warn-script-location
-        pip install gevent==20.9.0 --no-warn-script-location
-        pip install cherrypy --no-warn-script-location
     - name: Install Python 3.x deps
       if: contains(matrix.name, 'py3') && !contains(matrix.name, 'pypy')
       run: |
@@ -118,16 +101,7 @@ jobs:
       if: contains(matrix.name, 'checkdebug')
       run: |
         ./.github/install_and_run_debug_py.sh
-    - name: Run Python 2.7 tests
-      if: contains(matrix.name, '27')
-      env:
-        # QT_DEBUG_PLUGINS: 1
-        PYTHONPATH: .
-        PYDEVD_USE_CYTHON: ${{matrix.PYDEVD_USE_CYTHON }}
-      run: |
-        python -m pytest -rf --ignore=_pydevd_frame_eval/vendored
     - name: Run Python 3.x tests
-      if: ${{ !contains(matrix.name, '27') }}
       env:
         # QT_DEBUG_PLUGINS: 1
         PYTHONPATH: .

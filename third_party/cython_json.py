@@ -14,6 +14,7 @@ accepted_info = {
     'PyClassDef': set(['name', 'doc', 'body', 'bases', 'decorators', 'pos'])
 }
 
+
 def node_to_dict(node, _recurse_level=0, memo=None):
     nodeid = id(node)  # just to be sure it's checked by identity in the memo
     if memo is None:
@@ -35,7 +36,6 @@ def node_to_dict(node, _recurse_level=0, memo=None):
         if _recurse_level == 1:
             data['__version__'] = Cython.__version__
 
-
         dct = node.__dict__
         accepted = accepted_info.get(node_name)
         if accepted is None:
@@ -45,7 +45,6 @@ def node_to_dict(node, _recurse_level=0, memo=None):
             #     if key not in accepted:
             #         print('Skipped: %s' % (key,))
             items = [(key, dct[key]) for key in accepted]
-
 
         for attr_name, attr in items:
             if attr_name in ("pos", "position"):
@@ -234,10 +233,7 @@ class CythonJsonServer(object):
             else:
                 result = {'command': '<unexpected>', 'received': json_contents}
         except:
-            try:
-                from StringIO import StringIO
-            except:
-                from io import StringIO
+            from io import StringIO
             s = StringIO()
             traceback.print_exc(file=s)
             result = {'command': '<errored>', 'error': s.getvalue()}

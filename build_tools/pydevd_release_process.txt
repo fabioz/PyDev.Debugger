@@ -9,13 +9,6 @@ __version_info__ in pydevd.py
 
 set CONDA_FORCE_32BIT=1
 
-conda create -y -f -n py27_32 python=2.7 cython numpy nose ipython pip
-activate py27_32
-pip install "django>=1.7,<1.8"
-pip install -U "setuptools>=0.9"
-pip install -U "pip>=1.4" "wheel>=0.21" twine
-conda deactivate
-
 conda create -y -f -n py36_32 python=3.6 cython numpy nose ipython pip
 activate py36_32
 pip install "django>=1.9"
@@ -53,14 +46,6 @@ conda deactivate
 
 
 set CONDA_FORCE_32BIT=
-
-conda create -y -f -n py27_64 python=2.7 cython numpy nose ipython pip
-activate py27_64
-pip install "django>=1.7,<1.8"
-pip install -U "setuptools>=0.9"
-pip install -U "pip>=1.4" "wheel>=0.21" twine
-conda deactivate
-
 
 conda create -y -f -n py36_64 python=3.6 cython numpy nose ipython pip
 activate py36_64
@@ -101,10 +86,6 @@ conda deactivate
 
 set CONDA_FORCE_32BIT=1
 
-activate py27_32
-pip install cython==0.29.28
-conda deactivate
-
 activate py36_32
 pip install cython==0.29.28
 conda deactivate
@@ -126,10 +107,6 @@ pip install cython==0.29.28
 conda deactivate
 
 set CONDA_FORCE_32BIT=
-
-activate py27_64
-pip install cython==0.29.28
-conda deactivate
 
 activate py36_64
 pip install cython==0.29.28
@@ -181,11 +158,6 @@ C:\bin\Python38-32\python build_tools\build_binaries_windows.py
 
 rm dist/pydevd*
 
-activate py27_32
-python setup.py sdist bdist_wheel
-conda deactivate
-dir dist
-
 activate py36_32
 python setup.py sdist bdist_wheel
 conda deactivate
@@ -207,11 +179,6 @@ conda deactivate
 dir dist
 
 activate py310_32
-python setup.py sdist bdist_wheel
-conda deactivate
-dir dist
-
-activate py27_64
 python setup.py sdist bdist_wheel
 conda deactivate
 dir dist
