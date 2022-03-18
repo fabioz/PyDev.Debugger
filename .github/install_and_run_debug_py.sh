@@ -1,5 +1,5 @@
 # Build the cython extensions (to check that we don't crash when they're there in debug mode).
-python setup_cython.py build_ext --inplace
+python setup_pydevd_cython.py build_ext --inplace
 
 curl -L https://www.python.org/ftp/python/3.8.3/Python-3.8.3.tgz -o Python-3.8.3.tgz
 tar -xzf Python-3.8.3.tgz

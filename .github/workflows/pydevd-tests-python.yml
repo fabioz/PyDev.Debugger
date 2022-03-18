@@ -96,7 +96,7 @@ jobs:
     - name: Create cython binaries
       if: contains(matrix.name, 'cython')
       run: |
-        python setup_cython.py build_ext --inplace
+        python setup_pydevd_cython.py build_ext --inplace
     - name: Check debug
       if: contains(matrix.name, 'checkdebug')
       run: |
