@@ -250,6 +250,8 @@ def _get_str_type_compatible(s, args):
 # Things related to monkey-patching
 #===============================================================================
 def is_python(path):
+    if isinstance(path, os.PathLike):
+        path = path.__fspath__()
     single_quote, double_quote = _get_str_type_compatible(path, ["'", '"'])
 
     if path.endswith(single_quote) or path.endswith(double_quote):
