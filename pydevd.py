@@ -681,7 +681,7 @@ class PyDB(object):
             except:
                 self.threading_get_ident = None  # Jython
                 self.threading_active = None
-        self.threading_current_thread = threading.currentThread
+        self.threading_current_thread = threading.current_thread
         self.set_additional_thread_info = set_additional_thread_info
         self.stop_on_unhandled_exception = stop_on_unhandled_exception
         self.collect_return_info = collect_return_info

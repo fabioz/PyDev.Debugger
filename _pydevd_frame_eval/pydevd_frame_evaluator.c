@@ -2703,7 +2703,7 @@ static PyObject *__pyx_f_18_pydevd_frame_eval_22pydevd_frame_evaluator_10ThreadI
  *         # print('Can create dummy thread for thread started in: %s %s' % (basename, co_name))
  * 
  *     cdef initialize_if_possible(self):             # <<<<<<<<<<<<<<
- *         # Don't call threading.currentThread because if we're too early in the process
+ *         # Don't call threading.current_thread because if we're too early in the process
  *         # we may create a dummy thread.
  */
 
@@ -2739,7 +2739,7 @@ static PyObject *__pyx_f_18_pydevd_frame_eval_22pydevd_frame_evaluator_10ThreadI
   __Pyx_RefNannySetupContext("initialize_if_possible", 0);
 
   /* "_pydevd_frame_eval/pydevd_frame_evaluator.pyx":89
- *         # Don't call threading.currentThread because if we're too early in the process
+ *         # Don't call threading.current_thread because if we're too early in the process
  *         # we may create a dummy thread.
  *         self.inside_frame_eval += 1             # <<<<<<<<<<<<<<
  * 
@@ -3359,7 +3359,7 @@ static PyObject *__pyx_f_18_pydevd_frame_eval_22pydevd_frame_evaluator_10ThreadI
  *         # print('Can create dummy thread for thread started in: %s %s' % (basename, co_name))
  * 
  *     cdef initialize_if_possible(self):             # <<<<<<<<<<<<<<
- *         # Don't call threading.currentThread because if we're too early in the process
+ *         # Don't call threading.current_thread because if we're too early in the process
  *         # we may create a dummy thread.
  */
 

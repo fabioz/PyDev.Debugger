@@ -24634,7 +24634,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_6fix_top_level_trace_
  *                 return None, False
  * 
  *             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):             # <<<<<<<<<<<<<<
- *                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
+ *                 # Note: be careful not to use threading.current_thread to avoid creating a dummy thread.
  *                 t = f_unhandled.f_locals.get('self')
  */
       __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f_unhandled, __pyx_n_s_f_code); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1414, __pyx_L1_error)
@@ -24657,7 +24657,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_6fix_top_level_trace_
 
         /* "_pydevd_bundle/pydevd_cython.pyx":1416
  *             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):
- *                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
+ *                 # Note: be careful not to use threading.current_thread to avoid creating a dummy thread.
  *                 t = f_unhandled.f_locals.get('self')             # <<<<<<<<<<<<<<
  *                 force_only_unhandled_tracer = True
  *                 if t is not None and isinstance(t, threading.Thread):
@@ -24686,7 +24686,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_6fix_top_level_trace_
         __pyx_t_4 = 0;
 
         /* "_pydevd_bundle/pydevd_cython.pyx":1417
- *                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
+ *                 # Note: be careful not to use threading.current_thread to avoid creating a dummy thread.
  *                 t = f_unhandled.f_locals.get('self')
  *                 force_only_unhandled_tracer = True             # <<<<<<<<<<<<<<
  *                 if t is not None and isinstance(t, threading.Thread):
@@ -24752,7 +24752,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_6fix_top_level_trace_
  *                 return None, False
  * 
  *             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):             # <<<<<<<<<<<<<<
- *                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
+ *                 # Note: be careful not to use threading.current_thread to avoid creating a dummy thread.
  *                 t = f_unhandled.f_locals.get('self')
  */
       }

@@ -1412,7 +1412,7 @@ def fix_top_level_trace_and_get_trace_func(py_db, frame):
                 return None, False
 
             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):
-                # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
+                # Note: be careful not to use threading.current_thread to avoid creating a dummy thread.
                 t = f_unhandled.f_locals.get('self')
                 force_only_unhandled_tracer = True
                 if t is not None and isinstance(t, threading.Thread):
