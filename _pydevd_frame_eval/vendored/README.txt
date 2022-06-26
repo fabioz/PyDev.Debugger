@@ -13,6 +13,8 @@ python -m pip install https://github.com/MatthieuDartiailh/bytecode/archive/main
 Then run 'pydevd_fix_code.py' to fix the imports on the vendored file, run its tests (to see
 if things are still ok) and commit.
 
-Then, to finish, apply the patch to add the offset to the instructions (bcb8a28669e9178f96f5d71af7259e0674acc47c)
+Then, to finish, apply the patch to add the offset to the instructions
+found in the file pydevd_offset_patch.diff; this applies to version
+0.13.0 of the 'bytecode' library.
 
 Note: commit the egg-info as a note of the license (force if needed).

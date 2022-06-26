@@ -1,4 +1,5 @@
 from collections import namedtuple
+import contextlib
 import dis
 from functools import partial
 import itertools
@@ -36,7 +37,8 @@ class DebugHelper(object):
     def write_bytecode(self, b, op_number=None, prefix=''):
         filename, op_number = self._get_filename(op_number, prefix)
         with open(filename, 'w') as stream:
-            bytecode.dump_bytecode(b, stream=stream, lineno=True)
+            with contextlib.redirect_stdout(stream):
+                bytecode.dump_bytecode(b, lineno=True)
         return op_number
 
     def write_dis(self, code_to_modify, op_number=None, prefix=''):
