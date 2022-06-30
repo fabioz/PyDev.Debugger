@@ -20,6 +20,7 @@ jobs:
           "ubuntu-py38-cython-checkbin",
           "windows-py39-cython",
           "windows-py310-cython",
+#           "windows-py311",
         ]
         
         include:
@@ -40,9 +41,13 @@ jobs:
             os: windows-latest
             PYDEVD_USE_CYTHON: YES
           - name: "windows-py310-cython"
-            python: "3.10.0"
+            python: "3.10"
             os: windows-latest
             PYDEVD_USE_CYTHON: YES
+#           - name: "windows-py311"
+#             python: "3.11.0-beta.1"
+#             os: windows-latest
+#             PYDEVD_USE_CYTHON: NO
 
     steps:
     - uses: actions/checkout@v1
@@ -72,7 +77,7 @@ jobs:
         pip install ipython --no-warn-script-location
         pip install untangle --no-warn-script-location
     - name: Install Python 3.x deps
-      if: contains(matrix.name, 'py3') && !contains(matrix.name, 'pypy')
+      if: contains(matrix.name, 'py3') && !contains(matrix.name, 'pypy') && !contains(matrix.name, 'py311')
       run: |
         pip install PySide2 --no-warn-script-location
         pip install django
