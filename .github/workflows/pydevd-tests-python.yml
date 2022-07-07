@@ -20,7 +20,7 @@ jobs:
           "ubuntu-py38-cython-checkbin",
           "windows-py39-cython",
           "windows-py310-cython",
-#           "windows-py311",
+          "windows-py311-cython",
         ]
         
         include:
@@ -44,10 +44,11 @@ jobs:
             python: "3.10"
             os: windows-latest
             PYDEVD_USE_CYTHON: YES
-#           - name: "windows-py311"
-#             python: "3.11.0-beta.1"
-#             os: windows-latest
-#             PYDEVD_USE_CYTHON: NO
+          # See: https://github.com/actions/python-versions/releases
+          - name: "windows-py311-cython"
+            python: "3.11.0-beta.3"
+            os: windows-latest
+            PYDEVD_USE_CYTHON: YES
 
     steps:
     - uses: actions/checkout@v1
