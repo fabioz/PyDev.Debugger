@@ -1,6 +1,9 @@
 import traceback
 import sys
-from io import StringIO
+if sys.version_info[0] <= 2:
+    from StringIO import StringIO
+else:
+    from io import StringIO
 
 
 class Log:

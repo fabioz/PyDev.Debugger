@@ -3,6 +3,14 @@ Entry-point module to start the code-completion server for PyDev.
 
 @author Fabio Zadrozny
 '''
+import sys
+IS_PYTHON_3_ONWARDS = sys.version_info[0] >= 3
+
+if not IS_PYTHON_3_ONWARDS:
+    import __builtin__
+else:
+    import builtins as __builtin__  # Python 3.0
+
 from _pydevd_bundle.pydevd_constants import IS_JYTHON
 
 if IS_JYTHON:
@@ -39,9 +47,15 @@ for name, mod in sys.modules.items():
 
 import traceback
 
-from io import StringIO
+try:
+    from StringIO import StringIO
+except:
+    from io import StringIO #Python 3.0
 
-from urllib.parse import quote_plus, unquote_plus
+try:
+    from urllib import quote_plus, unquote_plus
+except ImportError:
+    from urllib.parse import quote_plus, unquote_plus #Python 3.0
 
 INFO1 = 1
 INFO2 = 2
@@ -209,7 +223,15 @@ class CompletionServer:
             totalsent = totalsent + sent
 
     def send(self, msg):
-        self.socket.sendall(bytearray(msg, 'utf-8'))
+        if not hasattr(self.socket, 'sendall'):
+            #Older versions (jython 2.1)
+            self.emulated_sendall(msg)
+        else:
+            if IS_PYTHON_3_ONWARDS:
+                self.socket.sendall(bytearray(msg, 'utf-8'))
+            else:
+                self.socket.sendall(msg)
+
 
     def run(self):
         # Echo server program
@@ -230,7 +252,10 @@ class CompletionServer:
                     received = self.socket.recv(BUFFER_SIZE)
                     if len(received) == 0:
                         raise Exit()  # ok, connection ended
-                    data = data + received.decode('utf-8')
+                    if IS_PYTHON_3_ONWARDS:
+                        data = data + received.decode('utf-8')
+                    else:
+                        data = data + received
 
                 try:
                     try:
