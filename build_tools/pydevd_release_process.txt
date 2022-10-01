@@ -87,45 +87,45 @@ conda deactivate
 set CONDA_FORCE_32BIT=1
 
 activate py36_32
-pip install cython==0.29.28
+pip install cython==0.29.32
 conda deactivate
 
 activate py37_32
-pip install cython==0.29.28
+pip install cython==0.29.32
 conda deactivate
 
 activate py38_32
-pip install cython==0.29.28
+pip install cython==0.29.32
 conda deactivate
 
 activate py39_32
-pip install cython==0.29.28
+pip install cython==0.29.32
 conda deactivate
 
 activate py310_32
-pip install cython==0.29.28
+pip install cython==0.29.32
 conda deactivate
 
 set CONDA_FORCE_32BIT=
 
 activate py36_64
-pip install cython==0.29.28
+pip install cython==0.29.32
 conda deactivate
 
 activate py37_64
-pip install cython==0.29.28
+pip install cython==0.29.32
 conda deactivate
 
 activate py38_64
-pip install cython==0.29.28
+pip install cython==0.29.32
 conda deactivate
 
 activate py39_64
-pip install cython==0.29.28
+pip install cython==0.29.32
 conda deactivate
 
 activate py310_64
-pip install cython==0.29.28
+pip install cython==0.29.32
 conda deactivate
 
 4. Regenerate the .pyx and .c
@@ -211,6 +211,6 @@ dir dist
 # Note: uploading with twine gives an error in the end, but apparently it works (check final result in pypi).
 twine upload dist/pydevd*
 
-git tag pydev_debugger_2_8_0 -a -m "PyDev.Debugger 2.8.0"
+git tag pydev_debugger_2_9_0 -a -m "PyDev.Debugger 2.9.0"
 git push --tags
 
