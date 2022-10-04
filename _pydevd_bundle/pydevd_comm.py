@@ -124,7 +124,7 @@ AF_INET, SOCK_STREAM, SHUT_WR, SOL_SOCKET, IPPROTO_TCP, socket = (
 
 if IS_WINDOWS and not IS_JYTHON:
     SO_EXCLUSIVEADDRUSE = socket_module.SO_EXCLUSIVEADDRUSE
-elif not IS_WASM:
+if not IS_WASM:
     SO_REUSEADDR = socket_module.SO_REUSEADDR
 
 class ReaderThread(PyDBDaemonThread):
