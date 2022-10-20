@@ -111,7 +111,7 @@ def build():
             if sys.version_info[:2] in ((2, 6), (2, 7)):
                 vcvarsall = msvc9compiler.find_vcvarsall(9.0)
             elif sys.version_info[:2] in ((3, 5), (3, 6), (3, 7), (3, 8), (3, 9), (3, 10), (3, 11)):
-                vcvarsall = msvc9compiler.find_vcvarsall(14.0)
+                vcvarsall = msvc9compiler.find_vcvarsall(15.0)
             if vcvarsall is None or not os.path.exists(vcvarsall):
                 raise RuntimeError('Error finding vcvarsall.')
 

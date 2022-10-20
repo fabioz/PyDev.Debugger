@@ -132,14 +132,15 @@ conda deactivate
 ===============================
 
 cd /D x:\pydev\plugins\org.python.pydev.core\pysrc
+"C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
 set PYTHONPATH=x:\pydev\plugins\org.python.pydev.core\pysrc
-python build_tools\build.py
+C:\bin\Miniconda\envs\py_38_tests\python.exe build_tools\build.py
 
 ${ptvsd_folder}
+"C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
 cd /D X:\ptvsd_workspace\ptvsd\src\debugpy\_vendored\pydevd
 set PYTHONPATH=X:\ptvsd_workspace\ptvsd\src\debugpy\_vendored\pydevd
-python build_tools\build.py
-
+C:\bin\Miniconda\envs\py_38_tests\python.exe build_tools\build.py
 
 cd ~/Desktop/Pydev/plugins/org.python.pydev.core/pysrc
 export PYTHONPATH=~/Desktop/Pydev/plugins/org.python.pydev.core/pysrc
@@ -211,6 +212,6 @@ dir dist
 # Note: uploading with twine gives an error in the end, but apparently it works (check final result in pypi).
 twine upload dist/pydevd*
 
-git tag pydev_debugger_2_9_0 -a -m "PyDev.Debugger 2.9.0"
+git tag pydev_debugger_2_9_1 -a -m "PyDev.Debugger 2.9.1"
 git push --tags
 
