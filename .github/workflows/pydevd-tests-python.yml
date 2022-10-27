@@ -21,6 +21,7 @@ jobs:
           "windows-py39-cython",
           "windows-py310-cython",
           "windows-py311-cython",
+          "ubuntu-py311-cython",
         ]
         
         include:
@@ -46,8 +47,12 @@ jobs:
             PYDEVD_USE_CYTHON: YES
           # See: https://github.com/actions/python-versions/releases
           - name: "windows-py311-cython"
-            python: "3.11.0-beta.3"
+            python: "3.11.0"
             os: windows-latest
+            PYDEVD_USE_CYTHON: YES
+          - name: "ubuntu-py311-cython"
+            python: "3.11.0"
+            os: ubuntu-latest
             PYDEVD_USE_CYTHON: YES
 
     steps:
