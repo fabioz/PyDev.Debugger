@@ -7,46 +7,6 @@ __version_info__ in pydevd.py
 2. Create conda envs
 =====================
 
-set CONDA_FORCE_32BIT=1
-
-conda create -y -f -n py36_32 python=3.6 cython numpy nose ipython pip
-activate py36_32
-pip install "django>=1.9"
-pip install -U "setuptools>=0.9"
-pip install -U "pip>=1.4" "wheel>=0.21" twine
-conda deactivate
-
-conda create -y -f -n py37_32 python=3.7 cython numpy pip
-activate py37_32
-pip install "django>=1.9"
-pip install -U "setuptools>=0.9"
-pip install -U "pip>=1.4" "wheel>=0.21" twine
-conda deactivate
-
-conda create -y -f -n py38_32 python=3.8 cython pip
-activate py38_32
-pip install "django>=1.9"
-pip install -U "setuptools>=0.9"
-pip install -U "pip>=1.4" "wheel>=0.21" twine
-conda deactivate
-
-conda create -y -f -n py39_32 python=3.9 cython pip
-activate py39_32
-pip install "django>=1.9"
-pip install -U "setuptools>=0.9"
-pip install -U "pip>=1.4" "wheel>=0.21" twine
-conda deactivate
-
-conda create -y -f -n py310_32 python=3.10 cython pip
-activate py310_32
-pip install "django>=1.9"
-pip install -U "setuptools>=0.9"
-pip install -U "pip>=1.4" "wheel>=0.21" twine
-conda deactivate
-
-
-set CONDA_FORCE_32BIT=
-
 conda create -y -f -n py36_64 python=3.6 cython numpy nose ipython pip
 activate py36_64
 pip install "django>=1.9"
@@ -82,31 +42,15 @@ pip install -U "setuptools>=0.9"
 pip install -U "pip>=1.4" "wheel>=0.21" twine
 conda deactivate
 
+conda create -y -f -n py311_64 python=3.11 -c conda-forge
+activate py311_64
+pip install cython
+pip install "django>=1.9"
+pip install -U "setuptools>=0.9"
+pip install -U "pip>=1.4" "wheel>=0.21" twine
+conda deactivate
+
 ### UPDATE CYTHON
-
-set CONDA_FORCE_32BIT=1
-
-activate py36_32
-pip install cython==0.29.32
-conda deactivate
-
-activate py37_32
-pip install cython==0.29.32
-conda deactivate
-
-activate py38_32
-pip install cython==0.29.32
-conda deactivate
-
-activate py39_32
-pip install cython==0.29.32
-conda deactivate
-
-activate py310_32
-pip install cython==0.29.32
-conda deactivate
-
-set CONDA_FORCE_32BIT=
 
 activate py36_64
 pip install cython==0.29.32
@@ -128,11 +72,15 @@ activate py310_64
 pip install cython==0.29.32
 conda deactivate
 
+activate py311_64
+pip install cython==0.29.32
+conda deactivate
+
 4. Regenerate the .pyx and .c
 ===============================
 
-cd /D x:\pydev\plugins\org.python.pydev.core\pysrc
 "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+cd /D x:\pydev\plugins\org.python.pydev.core\pysrc
 set PYTHONPATH=x:\pydev\plugins\org.python.pydev.core\pysrc
 C:\bin\Miniconda\envs\py_38_tests\python.exe build_tools\build.py
 
@@ -159,31 +107,6 @@ C:\bin\Python38-32\python build_tools\build_binaries_windows.py
 
 rm dist/pydevd*
 
-activate py36_32
-python setup.py sdist bdist_wheel
-conda deactivate
-dir dist
-
-activate py37_32
-python setup.py sdist bdist_wheel
-conda deactivate
-dir dist
-
-activate py38_32
-python setup.py sdist bdist_wheel
-conda deactivate
-dir dist
-
-activate py39_32
-python setup.py sdist bdist_wheel
-conda deactivate
-dir dist
-
-activate py310_32
-python setup.py sdist bdist_wheel
-conda deactivate
-dir dist
-
 activate py36_64
 python setup.py sdist bdist_wheel
 conda deactivate
@@ -209,9 +132,14 @@ python setup.py sdist bdist_wheel
 conda deactivate
 dir dist
 
+activate py311_64
+python setup.py sdist bdist_wheel
+conda deactivate
+dir dist
+
 # Note: uploading with twine gives an error in the end, but apparently it works (check final result in pypi).
 twine upload dist/pydevd*
 
-git tag pydev_debugger_2_9_1 -a -m "PyDev.Debugger 2.9.1"
+git tag pydev_debugger_2_9_2 -a -m "PyDev.Debugger 2.9.2"
 git push --tags
 
