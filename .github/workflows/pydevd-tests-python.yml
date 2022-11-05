@@ -118,5 +118,5 @@ jobs:
         PYTHONPATH: .
         PYDEVD_USE_CYTHON: ${{matrix.PYDEVD_USE_CYTHON }}
       run: |
-        python -m pytest -n auto -rf
+        python -m pytest -n auto -rfE
 
