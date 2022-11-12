@@ -1,13 +1,19 @@
 try:
-    from PySide import QtCore
-except:
     try:
-        from PySide2 import QtCore
+        from PySide import QtCore  # @UnresolvedImport
     except:
         try:
-            from PyQt4 import QtCore
+            from PySide2 import QtCore  # @UnresolvedImport
         except:
-            from PyQt5 import QtCore
+            from PySide6 import QtCore  # @UnresolvedImport
+except:
+    try:
+        from PyQt4 import QtCore # @UnresolvedImport
+    except:
+        try:
+            from PyQt5 import QtCore # @UnresolvedImport
+        except:
+            from PyQt6 import QtCore  # @UnresolvedImport
 
 
 class TestObject(QtCore.QObject):
@@ -30,7 +36,7 @@ class TestThread(QtCore.QThread):
 
 def on_start():
     print('On start called1')
-    print('On start called2')
+    print('On start called2') # break here
 
 
 app = QtCore.QCoreApplication([])
@@ -43,5 +49,9 @@ some_object.testSignal.connect(on_start)
 some_thread.finished.connect(app.quit)
 
 some_thread.start()
-app.exec_()
+# Qt6: exec_ is deprecated/removed
+if hasattr(app, 'exec'):
+    app.exec()
+else:
+    app.exec_()
 print('TEST SUCEEDED!')

@@ -5,12 +5,18 @@ try:
     try:
         from PySide import QtCore  # @UnresolvedImport
     except:
-        from PySide2 import QtCore  # @UnresolvedImport
+        try:
+            from PySide2 import QtCore  # @UnresolvedImport
+        except:
+            from PySide6 import QtCore  # @UnresolvedImport
 except:
     try:
-        from PyQt4 import QtCore
+        from PyQt4 import QtCore # @UnresolvedImport
     except:
-        from PyQt5 import QtCore
+        try:
+            from PyQt5 import QtCore # @UnresolvedImport
+        except:
+            from PyQt6 import QtCore  # @UnresolvedImport
 
 # Using a QRunnable
 # http://doc.qt.nokia.com/latest/qthreadpool.html
@@ -30,6 +36,10 @@ class Runnable(QtCore.QRunnable):
 app = QtCore.QCoreApplication([])
 runnable = Runnable()
 QtCore.QThreadPool.globalInstance().start(runnable)
-app.exec_()
+# Qt6: exec_ is deprecated/removed
+if hasattr(app, 'exec'):
+    app.exec()
+else:
+    app.exec_()
 QtCore.QThreadPool.globalInstance().waitForDone()
 print('TEST SUCEEDED!')
