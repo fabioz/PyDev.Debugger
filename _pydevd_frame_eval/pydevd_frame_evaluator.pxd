@@ -48,16 +48,17 @@ cdef extern from "frameobject.h":
 cdef extern from "release_mem.h":
     void release_co_extra(void *)
 
-cdef extern from "code.h":
+cdef extern from *:
+    '''
+#if PY_VERSION_HEX >= 0x030B0000
+#include "cpython/code.h"
+#else
+#include "code.h"
+#endif
+    '''
     ctypedef void freefunc(void *)
     int _PyCode_GetExtra(PyObject *code, Py_ssize_t index, void **extra)
     int _PyCode_SetExtra(PyObject *code, Py_ssize_t index, void *extra)
-    
-# TODO: Things are in a different place for Python 3.11.
-# cdef extern from "cpython/code.h":
-#     ctypedef void freefunc(void *)
-#     int _PyCode_GetExtra(PyObject *code, Py_ssize_t index, void **extra)
-#     int _PyCode_SetExtra(PyObject *code, Py_ssize_t index, void *extra)
 
 cdef extern from "Python.h":
     void Py_INCREF(object o)

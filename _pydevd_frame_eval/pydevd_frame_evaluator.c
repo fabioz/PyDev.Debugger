@@ -766,7 +766,13 @@ static CYTHON_INLINE float __PYX_NAN() {
 /* Early includes */
 #include "frameobject.h"
 #include "release_mem.h"
+
+#if PY_VERSION_HEX >= 0x030B0000
+#include "cpython/code.h"
+#else
 #include "code.h"
+#endif
+    
 #include "pystate.h"
 #if PY_VERSION_HEX >= 0x03080000
 #include "internal/pycore_pystate.h"
