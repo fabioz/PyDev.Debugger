@@ -319,6 +319,10 @@ class PyDevJsonCommandProcessor(object):
         self.api.request_completions(py_db, seq, thread_id, frame_id, text, line=line, column=column)
 
     def _resolve_remote_root(self, local_root, remote_root):
+        env_remote_root = os.environ.get("PYDEVD_REMOTE_ROOT", None)
+        if env_remote_root is not None:
+            return env_remote_root
+
         if remote_root == '.':
             cwd = os.getcwd()
             append_pathsep = local_root.endswith('\\') or local_root.endswith('/')
