@@ -26,7 +26,7 @@ jobs:
         
         include:
           - name: "ubuntu-pypy3"
-            python: "pypy3"
+            python: "pypy3.8"
             os: ubuntu-latest
             PYDEVD_USE_CYTHON: NO
           - name: "macos-py37-cython"
@@ -58,7 +58,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python ${{ matrix.python }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python }}
     - name: Install gdb/xvfb/ptrace_scope
