@@ -56,7 +56,7 @@ from _pydevd_bundle.pydevd_constants import (get_thread_id, get_current_thread_i
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, NULL,
     NO_FTRACE, IS_IRONPYTHON, JSON_PROTOCOL, IS_CPYTHON, HTTP_JSON_PROTOCOL, USE_CUSTOM_SYS_CURRENT_FRAMES_MAP, call_only_once,
     ForkSafeLock, IGNORE_BASENAMES_STARTING_WITH, EXCEPTION_TYPE_UNHANDLED, SUPPORT_GEVENT,
-    PYDEVD_IPYTHON_COMPATIBLE_DEBUGGING, PYDEVD_IPYTHON_CONTEXT)
+    PYDEVD_IPYTHON_COMPATIBLE_DEBUGGING, PYDEVD_IPYTHON_CONTEXT, PYDEVD_REMOTE_ROOT)
 from _pydevd_bundle.pydevd_defaults import PydevdCustomization  # Note: import alias used on pydev_monkey.
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE, LIB_FILE, DONT_TRACE_DIRS
@@ -3263,6 +3263,8 @@ def _log_initial_info():
     pydev_log.debug("Using cython: %s", USING_CYTHON)
     pydev_log.debug("Using frame eval: %s", USING_FRAME_EVAL)
     pydev_log.debug("Using gevent mode: %s / imported gevent module support: %s", SUPPORT_GEVENT, bool(pydevd_gevent_integration))
+    if PYDEVD_REMOTE_ROOT is not None:
+        pydev_log.debug("Using remote root: %s", PYDEVD_REMOTE_ROOT)
 
 
 def config(protocol='', debug_mode='', preimport=''):

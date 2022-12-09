@@ -29,7 +29,7 @@ from _pydevd_bundle.pydevd_json_debug_options import _extract_debug_options, Deb
 from _pydevd_bundle.pydevd_net_command import NetCommand
 from _pydevd_bundle.pydevd_utils import convert_dap_log_message_to_expression, ScopeRequest
 from _pydevd_bundle.pydevd_constants import (PY_IMPL_NAME, DebugInfoHolder, PY_VERSION_STR,
-    PY_IMPL_VERSION_STR, IS_64BIT_PROCESS)
+    PY_IMPL_VERSION_STR, IS_64BIT_PROCESS, PYDEVD_REMOTE_ROOT)
 from _pydevd_bundle.pydevd_trace_dispatch import USING_CYTHON
 from _pydevd_frame_eval.pydevd_frame_eval_main import USING_FRAME_EVAL
 from _pydevd_bundle.pydevd_comm import internal_get_step_in_targets_json
@@ -319,9 +319,8 @@ class PyDevJsonCommandProcessor(object):
         self.api.request_completions(py_db, seq, thread_id, frame_id, text, line=line, column=column)
 
     def _resolve_remote_root(self, local_root, remote_root):
-        env_remote_root = os.environ.get("PYDEVD_REMOTE_ROOT", None)
-        if env_remote_root is not None:
-            return env_remote_root
+        if PYDEVD_REMOTE_ROOT is not None:
+            return PYDEVD_REMOTE_ROOT
 
         if remote_root == '.':
             cwd = os.getcwd()
