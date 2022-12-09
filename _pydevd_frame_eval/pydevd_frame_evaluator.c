@@ -1042,6 +1042,7 @@ struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo {
   PyObject *pydev_smart_step_into_variants;
   PyObject *target_id_to_smart_step_into_variant;
   int pydev_use_scoped_step_frame;
+  PyObject *stop_reason;
 };
 
 

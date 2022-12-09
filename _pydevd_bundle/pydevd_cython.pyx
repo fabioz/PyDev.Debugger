@@ -61,13 +61,14 @@ cdef class PyDBAdditionalThreadInfo:
 #         'target_id_to_smart_step_into_variant',
 # 
 #         'pydev_use_scoped_step_frame',
-#         'stop_info',
+#         'stop_reason',
 #     ]
     # ENDIF
 
     def __init__(self):
         self.pydev_state = STATE_RUN  # STATE_RUN or STATE_SUSPEND
         self.pydev_step_stop = None
+        self.stop_reason = None
 
         # Note: we have `pydev_original_step_cmd` and `pydev_step_cmd` because the original is to
         # say the action that started it and the other is to say what's the current tracing behavior
