@@ -1678,58 +1678,61 @@ class PyDB(object):
                     # (so, clear the cache related to that).
                     self._running_thread_ids = {}
 
-    def process_internal_commands(self):
-        '''
-        This function processes internal commands.
-        '''
-        # If this method is being called before the debugger is ready to run we should not notify
-        # about threads and should only process commands sent to all threads.
+    def _send_thread_notifications(self):
+        program_threads_alive = {}
+        self.check_output_redirect()
+
+        all_threads = threadingEnumerate()
+        program_threads_dead = []
+        with self._lock_running_thread_ids:
+            reset_cache = not self._running_thread_ids
+
+            for t in all_threads:
+                if getattr(t, 'is_pydev_daemon_thread', False):
+                    pass  # I.e.: skip the DummyThreads created from pydev daemon threads
+                elif isinstance(t, PyDBDaemonThread):
+                    pydev_log.error_once('Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.')
+
+                elif is_thread_alive(t):
+                    if reset_cache:
+                        # Fix multiprocessing debug with breakpoints in both main and child processes
+                        # (https://youtrack.jetbrains.com/issue/PY-17092) When the new process is created, the main
+                        # thread in the new process already has the attribute 'pydevd_id', so the new thread doesn't
+                        # get new id with its process number and the debugger loses access to both threads.
+                        # Therefore we should update thread_id for every main thread in the new process.
+                        clear_cached_thread_id(t)
+
+                    thread_id = get_thread_id(t)
+                    program_threads_alive[thread_id] = t
+
+                    self.notify_thread_created(thread_id, t, use_lock=False)
+
+            # Compute and notify about threads which are no longer alive.
+            thread_ids = list(self._running_thread_ids.keys())
+            for thread_id in thread_ids:
+                if thread_id not in program_threads_alive:
+                    program_threads_dead.append(thread_id)
+
+            for thread_id in program_threads_dead:
+                self.notify_thread_not_alive(thread_id, use_lock=False)
+
+        has_threads_alive = len(program_threads_alive) > 0
+        return has_threads_alive
+
+    def _collect_commands_to_execute(self):
         ready_to_run = self.ready_to_run
 
         dispose = False
         with self._main_lock:
-            program_threads_alive = {}
+            has_threads_alive = False
+
             if ready_to_run:
-                self.check_output_redirect()
-
-                all_threads = threadingEnumerate()
-                program_threads_dead = []
-                with self._lock_running_thread_ids:
-                    reset_cache = not self._running_thread_ids
-
-                    for t in all_threads:
-                        if getattr(t, 'is_pydev_daemon_thread', False):
-                            pass  # I.e.: skip the DummyThreads created from pydev daemon threads
-                        elif isinstance(t, PyDBDaemonThread):
-                            pydev_log.error_once('Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.')
-
-                        elif is_thread_alive(t):
-                            if reset_cache:
-                                # Fix multiprocessing debug with breakpoints in both main and child processes
-                                # (https://youtrack.jetbrains.com/issue/PY-17092) When the new process is created, the main
-                                # thread in the new process already has the attribute 'pydevd_id', so the new thread doesn't
-                                # get new id with its process number and the debugger loses access to both threads.
-                                # Therefore we should update thread_id for every main thread in the new process.
-                                clear_cached_thread_id(t)
-
-                            thread_id = get_thread_id(t)
-                            program_threads_alive[thread_id] = t
-
-                            self.notify_thread_created(thread_id, t, use_lock=False)
-
-                    # Compute and notify about threads which are no longer alive.
-                    thread_ids = list(self._running_thread_ids.keys())
-                    for thread_id in thread_ids:
-                        if thread_id not in program_threads_alive:
-                            program_threads_dead.append(thread_id)
-
-                    for thread_id in program_threads_dead:
-                        self.notify_thread_not_alive(thread_id, use_lock=False)
+                has_threads_alive = self._send_thread_notifications()
 
             cmds_to_execute = []
 
             # Without self._lock_running_thread_ids
-            if len(program_threads_alive) == 0 and ready_to_run:
+            if not has_threads_alive and ready_to_run:
                 dispose = True
             else:
                 # Actually process the commands now (make sure we don't have a lock for _lock_running_thread_ids
@@ -1771,7 +1774,15 @@ class PyDB(object):
                         # this is how we exit
                         for int_cmd in cmds_to_add_back:
                             queue.put(int_cmd)
+        return cmds_to_execute, dispose
 
+    def process_internal_commands(self):
+        '''
+        This function processes internal commands.
+        '''
+        # If this method is being called before the debugger is ready to run we should not notify
+        # about threads and should only process commands sent to all threads.
+        cmds_to_execute, dispose = self._collect_commands_to_execute()
         if dispose:
             # Note: must be called without the main lock to avoid deadlocks.
             self.dispose_and_kill_all_pydevd_threads()
@@ -2012,10 +2023,11 @@ class PyDB(object):
         # print('--- end stack ---')
 
         # Send the suspend message
-        message = thread.additional_info.pydev_message
-        suspend_type = thread.additional_info.trace_suspend_type
-        thread.additional_info.trace_suspend_type = 'trace'  # Reset to trace mode for next call.
-        stop_reason = thread.stop_reason
+        additional_info = thread.additional_info
+        message = additional_info.pydev_message
+        suspend_type = additional_info.trace_suspend_type
+        additional_info.trace_suspend_type = 'trace'  # Reset to trace mode for next call.
+        stop_reason = additional_info.stop_reason
 
         frames_list = None
 
@@ -2036,14 +2048,14 @@ class PyDB(object):
                 frame.f_code.co_filename,
                 event,
                 arg,
-                constant_to_str(thread.additional_info.pydev_step_cmd),
-                constant_to_str(thread.additional_info.pydev_original_step_cmd),
+                constant_to_str(additional_info.pydev_step_cmd),
+                constant_to_str(additional_info.pydev_original_step_cmd),
                 thread,
                 thread_id,
                 id(thread),
             )
             for f in frames_list:
-                pydev_log.debug('  Stack: %s, %s, %s', f.f_code.co_filename, f.f_code.co_name, f.f_lineno)
+                pydev_log.debug('  Stack: File "%s", line %s, in %s', f.f_code.co_filename, f.f_lineno, f.f_code.co_name)
 
         with self.suspended_frames_manager.track_frames(self) as frames_tracker:
             frames_tracker.track(thread_id, frames_list)
@@ -2144,7 +2156,7 @@ class PyDB(object):
                 cmd = self.cmd_factory.make_thread_run_message(get_current_thread_id(thread), info.pydev_step_cmd)
                 self.writer.add_command(cmd)
                 info.pydev_state = STATE_SUSPEND
-                thread.stop_reason = CMD_SET_NEXT_STATEMENT
+                info.stop_reason = CMD_SET_NEXT_STATEMENT
                 keep_suspended = True
 
             else:
@@ -2152,7 +2164,7 @@ class PyDB(object):
                 info.pydev_original_step_cmd = -1
                 info.pydev_step_cmd = -1
                 info.pydev_state = STATE_SUSPEND
-                thread.stop_reason = CMD_THREAD_SUSPEND
+                info.stop_reason = CMD_THREAD_SUSPEND
                 # return to the suspend state and wait for other command (without sending any
                 # additional notification to the client).
                 return self._do_wait_suspend(thread, frame, event, arg, suspend_type, from_this_thread, frames_tracker)

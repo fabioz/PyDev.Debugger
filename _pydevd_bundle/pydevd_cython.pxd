@@ -25,3 +25,4 @@ cdef class PyDBAdditionalThreadInfo:
     cdef public tuple pydev_smart_step_into_variants
     cdef public dict target_id_to_smart_step_into_variant
     cdef public bint pydev_use_scoped_step_frame
+    cdef public object stop_reason

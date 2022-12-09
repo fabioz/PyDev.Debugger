@@ -55,12 +55,14 @@ class PyDBAdditionalThreadInfo(object):
         'target_id_to_smart_step_into_variant',
 
         'pydev_use_scoped_step_frame',
+        'stop_reason',
     ]
     # ENDIF
 
     def __init__(self):
         self.pydev_state = STATE_RUN  # STATE_RUN or STATE_SUSPEND
         self.pydev_step_stop = None
+        self.stop_reason = None
 
         # Note: we have `pydev_original_step_cmd` and `pydev_step_cmd` because the original is to
         # say the action that started it and the other is to say what's the current tracing behavior
@@ -103,6 +105,32 @@ class PyDBAdditionalThreadInfo(object):
         #
         # See: https://github.com/microsoft/debugpy/issues/869#issuecomment-1132141003
         self.pydev_use_scoped_step_frame = False
+
+    def push_recursive_tracing(self):
+        # Save current state
+        is_tracing = self.is_tracing
+        state = self.pydev_state
+        pydev_step_cmd = self.pydev_step_cmd
+        pydev_step_stop = self.pydev_step_stop
+        pydev_original_step_cmd = self.pydev_original_step_cmd
+
+        # Update state to start tracing again
+        self.is_tracing = 0
+        self.pydev_step_cmd = -1
+        self.pydev_step_stop = None
+        self.pydev_original_step_cmd = -1
+        self.pydev_state = STATE_RUN
+
+        # Return the previous state to be passed on to pop_recursive_tracing.
+        return (is_tracing, state, pydev_step_cmd, pydev_step_stop, pydev_original_step_cmd)
+
+    def pop_recursive_tracing(self, prev_state):
+        is_tracing, state, pydev_step_cmd, pydev_step_stop, pydev_original_step_cmd = prev_state
+        self.is_tracing = is_tracing
+        self.pydev_state = state
+        self.pydev_step_cmd = pydev_step_cmd
+        self.pydev_step_stop = pydev_step_stop
+        self.pydev_original_step_cmd = pydev_original_step_cmd
 
     def get_topmost_frame(self, thread):
         '''

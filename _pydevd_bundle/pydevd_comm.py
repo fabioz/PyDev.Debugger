@@ -1513,7 +1513,7 @@ def build_exception_info_response(dbg, thread_id, thread, request_seq, set_addit
     if current_paused_frame_name:
         name += '       (note: full exception trace is shown but execution is paused at: %s)' % (current_paused_frame_name,)
 
-    if thread.stop_reason == CMD_STEP_CAUGHT_EXCEPTION:
+    if additional_info.stop_reason == CMD_STEP_CAUGHT_EXCEPTION:
         break_mode = pydevd_schema.ExceptionBreakMode.ALWAYS
     else:
         break_mode = pydevd_schema.ExceptionBreakMode.UNHANDLED

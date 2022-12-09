@@ -5,14 +5,14 @@ import traceback
 from _pydevd_bundle.pydevconsole_code import InteractiveConsole, _EvalAwaitInNewEventLoop
 from _pydev_bundle import _pydev_completer
 from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn
-from _pydev_bundle.pydev_imports import Exec
 from _pydev_bundle.pydev_override import overrides
-from _pydevd_bundle import pydevd_save_locals
 from _pydevd_bundle.pydevd_io import IOBuf
 from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle.pydevd_xml import make_valid_xml_value
 import inspect
+from _pydev_bundle._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_save_locals import update_globals_and_locals
+from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 
 CONSOLE_OUTPUT = "output"
 CONSOLE_ERROR = "error"
@@ -173,7 +173,12 @@ class DebugConsole(InteractiveConsole, BaseInterpreterInterface):
 
             else:
                 try:
-                    exec(code, updated_globals, updated_locals)
+                    additional_info = set_additional_thread_info(threading.current_thread())
+                    try:
+                        state = additional_info.push_recursive_tracing()
+                        sys.call_tracing(exec, (code, updated_globals, updated_locals))
+                    finally:
+                        additional_info.pop_recursive_tracing(state)
                 finally:
                     update_globals_and_locals(updated_globals, initial_globals, self.frame)
         except SystemExit:

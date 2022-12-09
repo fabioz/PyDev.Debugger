@@ -28,7 +28,7 @@ def mark_thread_suspended(thread, stop_reason, original_step_cmd=-1):
     info.suspend_type = PYTHON_SUSPEND
     if original_step_cmd != -1:
         stop_reason = original_step_cmd
-    thread.stop_reason = stop_reason
+    info.stop_reason = stop_reason
 
     # Note: don't set the 'pydev_original_step_cmd' here if unset.
 
