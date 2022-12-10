@@ -79,7 +79,7 @@ conda deactivate
 4. Regenerate the .pyx and .c
 ===============================
 
-"C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+set FORCE_PYDEVD_VC_VARS=C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat
 cd /D x:\pydev\plugins\org.python.pydev.core\pysrc
 set PYTHONPATH=x:\pydev\plugins\org.python.pydev.core\pysrc
 C:\bin\Miniconda\envs\py_38_tests\python.exe build_tools\build.py
