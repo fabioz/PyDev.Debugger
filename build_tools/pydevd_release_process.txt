@@ -140,6 +140,6 @@ dir dist
 # Note: uploading with twine gives an error in the end, but apparently it works (check final result in pypi).
 twine upload dist/pydevd*
 
-git tag pydev_debugger_2_9_2 -a -m "PyDev.Debugger 2.9.2"
+git tag pydev_debugger_2_9_3 -a -m "PyDev.Debugger 2.9.3"
 git push --tags
 
