@@ -111,37 +111,37 @@ deactivate
 
 activate py36_64
 python setup.py sdist bdist_wheel
-conda deactivate
+deactivate
 dir dist
 
 activate py37_64
 python setup.py sdist bdist_wheel
-conda deactivate
+deactivate
 dir dist
 
 activate py38_64
 python setup.py sdist bdist_wheel
-conda deactivate
+deactivate
 dir dist
 
 activate py39_64
 python setup.py sdist bdist_wheel
-conda deactivate
+deactivate
 dir dist
 
 activate py310_64
 python setup.py sdist bdist_wheel
-conda deactivate
+deactivate
 dir dist
 
 activate py311_64
 python setup.py sdist bdist_wheel
-conda deactivate
+deactivate
 dir dist
 
 # Note: uploading with twine gives an error in the end, but apparently it works (check final result in pypi).
-twine upload dist/pydevd*
+twine upload dist/pydevd* --repository pydevd
 
-git tag pydev_debugger_2_9_3 -a -m "PyDev.Debugger 2.9.3"
+git tag pydev_debugger_2_9_5 -a -m "PyDev.Debugger 2.9.5"
 git push --tags
 
