@@ -59,7 +59,7 @@ args = dict(
     description='PyDev.Debugger (used in PyDev, PyCharm and VSCode Python)',
     author='Fabio Zadrozny and others',
     url='https://github.com/fabioz/PyDev.Debugger/',
-    license=['EPL', 'Apache 2.0'],
+    license='EPL, Apache 2.0',
     packages=[
         '_pydev_bundle',
         '_pydev_bundle.fsnotify',
