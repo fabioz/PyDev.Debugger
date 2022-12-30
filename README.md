@@ -23,11 +23,3 @@ For `Python 2` please keep using `pydevd 2.8.0`.
 Recent versions contain speedup modules using Cython, which are generated with a few changes in the regular files
 to `cythonize` the files. To update and compile the cython sources (and generate some other auto-generated files),
 `build_tools/build.py` should be run -- note that the resulting .pyx and .c files should be commited.
-
-GitHub Actions (CI):
-
-.. |github_actions| https://github.com/fabioz/PyDev.Debugger/workflows/PyDev.Debugger Tests/badge.svg
-  :target: https://github.com/fabioz/PyDev.Debugger/workflows/PyDev.Debugger Tests/badge.svg
-
-|github_actions|
-

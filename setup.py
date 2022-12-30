@@ -53,14 +53,14 @@ for root, dirs, files in os.walk("pydevd_attach_to_process"):
 import pydevd
 version = pydevd.__version__
 
-with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'README.rst'), 'r', encoding='utf-8') as stream:
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'README.md'), 'r', encoding='utf-8') as stream:
     long_description = stream.read()
 
 args = dict(
     name='pydevd',
     version=version,
     description='PyDev.Debugger (used in PyDev, PyCharm and VSCode Python)',
-    long_description_content_type='text/x-rst',
+    long_description_content_type='text/markdown',
     long_description=long_description,
     author='Fabio Zadrozny and others',
     url='https://github.com/fabioz/PyDev.Debugger/',
