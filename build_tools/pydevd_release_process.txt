@@ -3,8 +3,26 @@
 
 __version_info__ in pydevd.py
 
+Create tag:
+-----------
+git tag pydev_debugger_2_9_5 -a -m "PyDev.Debugger 2.9.5"
+git push --tags
 
-2. Create conda envs
+
+(pushing the tag does the release to PyPi now)
+
+
+
+
+
+
+
+
+
+Old release process (locally):
+=================================
+
+Create conda envs
 =====================
 
 conda create -y -f -n py36_64 python=3.6 cython numpy nose ipython pip
@@ -76,7 +94,7 @@ activate py311_64
 pip install cython==0.29.32
 conda deactivate
 
-4. Regenerate the .pyx and .c
+Regenerate the .pyx and .c
 ===============================
 
 set FORCE_PYDEVD_VC_VARS=C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat
@@ -94,7 +112,7 @@ cd ~/Desktop/Pydev/plugins/org.python.pydev.core/pysrc
 export PYTHONPATH=~/Desktop/Pydev/plugins/org.python.pydev.core/pysrc
 python build_tools/build.py
 
-3. Generate new version
+Generate new version
 ======================
 
 cd /D x:\debugpyws\PyDev.Debugger
