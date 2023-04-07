@@ -165,7 +165,7 @@ def collect_return_info(co, use_func_first_line=False):
     op_offset_to_line = dict(dis.findlinestarts(co))
     for instruction in iter_instructions(co):
         curr_op_name = instruction.opname
-        if curr_op_name == 'RETURN_VALUE':
+        if curr_op_name in ('RETURN_VALUE', 'RETURN_CONST'):
             lst.append(ReturnInfo(_get_line(op_offset_to_line, instruction.offset, firstlineno, search=True)))
 
     return lst
