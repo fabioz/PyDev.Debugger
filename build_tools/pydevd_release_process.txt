@@ -5,7 +5,7 @@ __version_info__ in pydevd.py
 
 Create tag:
 -----------
-git tag pydev_debugger_2_9_5 -a -m "PyDev.Debugger 2.9.5"
+git tag pydev_debugger_2_9_6 -a -m "PyDev.Debugger 2.9.6"
 git push --tags
 
 
