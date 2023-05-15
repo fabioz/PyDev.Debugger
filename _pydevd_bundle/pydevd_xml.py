@@ -20,7 +20,7 @@ except:
 
 def make_valid_xml_value(s):
     # Same thing as xml.sax.saxutils.escape but also escaping double quotes.
-    return s.replace("&", "&amp;").replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+    return str(s).replace("&", "&amp;").replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
 
 
 class ExceptionOnEvaluate:
