@@ -293,10 +293,10 @@ class PathOperations (StaticClass):
         # XXX TODO
         # There are probably some native paths that
         # won't be converted by this naive approach.
-        if name.startswith(compat.b("\\")):
-            if name.startswith(compat.b("\\??\\")):
+        if name.startswith("\\"):
+            if name.startswith("\\??\\"):
                 name = name[4:]
-            elif name.startswith(compat.b("\\SystemRoot\\")):
+            elif name.startswith("\\SystemRoot\\"):
                 system_root_path = os.environ['SYSTEMROOT']
                 if system_root_path.endswith('\\'):
                     system_root_path = system_root_path[:-1]
@@ -312,10 +312,10 @@ class PathOperations (StaticClass):
                                                  win32.ERROR_PATH_NOT_FOUND):
                             continue
                         raise
-                    if not device_native_path.endswith(compat.b('\\')):
-                        device_native_path += compat.b('\\')
+                    if not device_native_path.endswith('\\'):
+                        device_native_path += '\\'
                     if name.startswith(device_native_path):
-                        name = drive_letter + compat.b('\\') + \
+                        name = drive_letter + '\\' + \
                                               name[ len(device_native_path) : ]
                         break
         return name
