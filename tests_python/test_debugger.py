@@ -713,6 +713,9 @@ def test_case_16_resolve_numpy_array(case_setup):
         import numpy
     except ImportError:
         pytest.skip('numpy not available')
+
+    from numpy.lib import NumpyVersion
+
     with case_setup.test_file('_debugger_case16.py') as writer:
         writer.write_add_breakpoint(9, 'main')
         writer.write_make_initial_run()
@@ -748,7 +751,11 @@ def test_case_16_resolve_numpy_array(case_setup):
             '<var name="min" type="complex128"',
             '<var name="max" type="complex128"',
             '<var name="shape" type="tuple"',
-            '<var name="dtype" type="dtype',
+            (
+                '<var name="dtype" type="Complex128DType"'
+                if NumpyVersion(numpy.__version__) >= '1.25.0' else
+                '<var name="dtype" type="dtype'
+            ),
             '<var name="size" type="int"',
         ))
         # ...and check that the internals are resolved properly
@@ -770,7 +777,11 @@ def test_case_16_resolve_numpy_array(case_setup):
                 '<var name="max" type="int32" qualifier="numpy" value="int32%253A 99999"',
             ],
             '<var name="shape" type="tuple"',
-            '<var name="dtype" type="dtype',
+            (
+                '<var name="dtype" type="Int64DType"'
+                if NumpyVersion(numpy.__version__) >= '1.25.0' else
+                '<var name="dtype" type="dtype'
+            ),
             '<var name="size" type="int"'
         ))
         writer.write_get_variable(hit.thread_id, hit.frame_id, 'bigarray\t__internals__')
@@ -793,7 +804,11 @@ def test_case_16_resolve_numpy_array(case_setup):
                 '<var name="max" type="str" qualifier="{0}" value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
             ],
             '<var name="shape" type="tuple"',
-            '<var name="dtype" type="dtype',
+            (
+                '<var name="dtype" type="Int64DType"'
+                if NumpyVersion(numpy.__version__) >= '1.25.0' else
+                '<var name="dtype" type="dtype'
+            ),
             '<var name="size" type="int"',
         ))
         writer.write_get_variable(hit.thread_id, hit.frame_id, 'hugearray\t__internals__')
