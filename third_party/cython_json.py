@@ -6,6 +6,12 @@ import json
 import traceback
 import os
 
+try:
+    from Cython.Compiler import Errors
+    Errors.init_thread() # This is needed in Cython 3.0.0 (otherwise reporting errors will throw exception).
+except Exception:
+    pass
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Note: Cython has some recursive structures in some classes, so, parsing only what we really
