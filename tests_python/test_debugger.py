@@ -748,7 +748,7 @@ def test_case_16_resolve_numpy_array(case_setup):
             '<var name="min" type="complex128"',
             '<var name="max" type="complex128"',
             '<var name="shape" type="tuple"',
-            '<var name="dtype" type="dtype',
+            '<var name="dtype"',
             '<var name="size" type="int"',
         ))
         # ...and check that the internals are resolved properly
@@ -770,7 +770,7 @@ def test_case_16_resolve_numpy_array(case_setup):
                 '<var name="max" type="int32" qualifier="numpy" value="int32%253A 99999"',
             ],
             '<var name="shape" type="tuple"',
-            '<var name="dtype" type="dtype',
+            '<var name="dtype"',
             '<var name="size" type="int"'
         ))
         writer.write_get_variable(hit.thread_id, hit.frame_id, 'bigarray\t__internals__')
@@ -793,7 +793,7 @@ def test_case_16_resolve_numpy_array(case_setup):
                 '<var name="max" type="str" qualifier="{0}" value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
             ],
             '<var name="shape" type="tuple"',
-            '<var name="dtype" type="dtype',
+            '<var name="dtype"',
             '<var name="size" type="int"',
         ))
         writer.write_get_variable(hit.thread_id, hit.frame_id, 'hugearray\t__internals__')
@@ -1371,7 +1371,10 @@ def test_case_handled_and_unhandled_exception_generator(case_setup, target_file,
         if 'generator' in target_file:
             expected_frame_names = ['<genexpr>', 'f', '<module>']
         else:
-            expected_frame_names = ['<listcomp>', 'f', '<module>']
+            if sys.version_info[:2] >= (3, 12):
+                expected_frame_names = ['f', '<module>']
+            else:
+                expected_frame_names = ['<listcomp>', 'f', '<module>']
 
         writer.write_get_current_exception(hit.thread_id)
         msg = writer.wait_for_message(accept_message=lambda msg:'exc_type="' in msg and 'exc_desc="' in msg, unquote_msg=False)

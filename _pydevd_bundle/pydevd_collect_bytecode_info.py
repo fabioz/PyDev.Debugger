@@ -153,7 +153,7 @@ def iter_instructions(co):
 
 
 def collect_return_info(co, use_func_first_line=False):
-    if not hasattr(co, 'co_lnotab'):
+    if not hasattr(co, 'co_lines') and not hasattr(co, 'co_lnotab'):
         return []
 
     if use_func_first_line:
@@ -256,7 +256,7 @@ if sys.version_info[:2] <= (3, 9):
 
     def collect_try_except_info(co, use_func_first_line=False):
         # We no longer have 'END_FINALLY', so, we need to do things differently in Python 3.9
-        if not hasattr(co, 'co_lnotab'):
+        if not hasattr(co, 'co_lines') and not hasattr(co, 'co_lnotab'):
             return []
 
         if use_func_first_line:
@@ -376,7 +376,7 @@ elif sys.version_info[:2] == (3, 10):
 
     def collect_try_except_info(co, use_func_first_line=False):
         # We no longer have 'END_FINALLY', so, we need to do things differently in Python 3.9
-        if not hasattr(co, 'co_lnotab'):
+        if not hasattr(co, 'co_lines') and not hasattr(co, 'co_lnotab'):
             return []
 
         if use_func_first_line:
@@ -552,6 +552,11 @@ class _MsgPart(object):
         self.line = line
         self.tok = tok
 
+    def __str__(self) -> str:
+        return '_MsgPart(line: %s tok: %s)' % (self.line, self.tok)
+
+    __repr__ = __str__
+
     @classmethod
     def add_to_line_to_contents(cls, obj, line_to_contents, line=None):
         if isinstance(obj, (list, tuple)):
@@ -669,7 +674,7 @@ class _Disassembler(object):
             )
             return RESTART_FROM_LOOKAHEAD
 
-        if next_instruction.opname in ('CALL_FUNCTION', 'PRECALL'):
+        if next_instruction.opname in ('CALL_FUNCTION', 'PRECALL', 'CALL'):
             if len(found) == next_instruction.argval + 1:
                 force_restart = False
                 delta = 0
@@ -804,8 +809,11 @@ class _Disassembler(object):
 
         instruction = self.instructions.pop(0)
 
-        if instruction.opname in 'RESUME':
+        if instruction.opname in ('RESUME', 'NULL'):
             return None
+
+        if instruction.opname == 'RETURN_CONST':
+            return (msg(instruction, 'return ', line=self.min_line(instruction)), msg(instruction))
 
         if instruction.opname in ('LOAD_GLOBAL', 'LOAD_FAST', 'LOAD_CONST', 'LOAD_NAME'):
             next_instruction = self.instructions[0]

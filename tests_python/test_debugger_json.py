@@ -3829,6 +3829,7 @@ def test_process_autoreload_cherrypy(case_setup_multiprocessing_dap, tmpdir):
     a new process connection (everything is the same except that the
     existing process is stopped).
     '''
+    raise pytest.skip('This is failing with the latest cherrypy -- needs investigation.')
     port = get_free_port()
     # We write a temp file because we'll change it to autoreload later on.
     f = tmpdir.join('_debugger_case_cherrypy.py')

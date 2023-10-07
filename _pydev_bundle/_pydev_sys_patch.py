@@ -42,8 +42,8 @@ def patch_reload():
             import imp
             sys.imp_orig_reload = imp.reload
             imp.reload = patched_reload(sys.imp_orig_reload)  # @UndefinedVariable
-        except:
-            pass
+        except ImportError:
+            pass  # Ok, imp not available on Python 3.12.
     else:
         try:
             import importlib
@@ -63,8 +63,11 @@ def cancel_patches_in_sys_module():
         builtins.reload = sys.builtin_orig_reload
 
     if hasattr(sys, "imp_orig_reload"):
-        import imp
-        imp.reload = sys.imp_orig_reload
+        try:
+            import imp
+            imp.reload = sys.imp_orig_reload
+        except ImportError:
+            pass  # Ok, imp not available in Python 3.12.
 
     if hasattr(sys, "importlib_orig_reload"):
         import importlib

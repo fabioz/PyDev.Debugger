@@ -105,7 +105,7 @@ def build():
 
         if 'GITHUB_ACTION' not in os.environ:
             env = os.environ.copy()
-            if sys.version_info[:2] in ((3, 6), (3, 7), (3, 8), (3, 9), (3, 10), (3, 11)):
+            if sys.version_info[:2] in ((3, 6), (3, 7), (3, 8), (3, 9), (3, 10), (3, 11), (3, 12)):
                 FORCE_PYDEVD_VC_VARS = os.environ.get('FORCE_PYDEVD_VC_VARS')
                 if FORCE_PYDEVD_VC_VARS:
                     env.update(get_environment_from_batch_command([FORCE_PYDEVD_VC_VARS], initial=os.environ.copy()))

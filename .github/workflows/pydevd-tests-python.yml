@@ -22,6 +22,7 @@ jobs:
           "windows-py310-cython",
           "windows-py311-cython",
           "ubuntu-py311-cython",
+          "ubuntu-py312-cython",
         ]
         
         include:
@@ -54,6 +55,10 @@ jobs:
             python: "3.11.0"
             os: ubuntu-latest
             PYDEVD_USE_CYTHON: YES
+          - name: "ubuntu-py312-cython"
+            python: "3.12.0"
+            os: ubuntu-latest
+            PYDEVD_USE_CYTHON: YES
 
     steps:
     - uses: actions/checkout@v1
@@ -73,8 +78,9 @@ jobs:
     - name: Install common Python deps
       run: |
         pip install --upgrade pip
+        pip install setuptools --no-warn-script-location
         pip install wheel --no-warn-script-location
-        pip install cython --no-warn-script-location
+        pip install "cython>3" --no-warn-script-location
         pip install psutil --no-warn-script-location
         pip install numpy --no-warn-script-location
         pip install pytest --no-warn-script-location
@@ -83,12 +89,12 @@ jobs:
         pip install ipython --no-warn-script-location
         pip install untangle --no-warn-script-location
     - name: Install Python 3.x deps
-      if: contains(matrix.name, 'py3') && !contains(matrix.name, 'pypy') && !contains(matrix.name, 'py311')
+      if: contains(matrix.name, 'py3') && !contains(matrix.name, 'pypy') && !contains(matrix.name, 'py311') && !contains(matrix.name, 'py312')
       run: |
         pip install PySide2 --no-warn-script-location
         pip install django
         pip install cherrypy --no-warn-script-location
-        pip install gevent greenlet==1.1.3
+        pip install gevent greenlet
     - name: Install Pandas
       if: contains(matrix.name, 'py310') && !contains(matrix.name, 'pypy')
       # The pandas Styler also requires jinja2. 
