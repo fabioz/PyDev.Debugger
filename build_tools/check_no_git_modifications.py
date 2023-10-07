@@ -7,12 +7,24 @@ expected_differences = set(line.strip() for line in r'''
 -  "_pydevd_bundle\\\\pydevd_cython.pxd",
 +  "_pydevd_bundle/pydevd_cython.pyx",
 +  "_pydevd_bundle/pydevd_cython.pxd",
+
 --- a/_pydevd_frame_eval/pydevd_frame_evaluator.c
 +++ b/_pydevd_frame_eval/pydevd_frame_evaluator.c
 -  "_pydevd_frame_eval\\\\pydevd_frame_evaluator.pyx",
 +  "_pydevd_frame_eval/pydevd_frame_evaluator.pyx",
 -  "_pydevd_bundle\\\\pydevd_cython.pxd",
 +  "_pydevd_bundle/pydevd_cython.pxd",
+
+
+-  "_pydevd_bundle/pydevd_cython.pyx",
+-  "_pydevd_bundle/pydevd_cython.pxd",
++  "_pydevd_bundle\\\\pydevd_cython.pyx",
++  "_pydevd_bundle\\\\pydevd_cython.pxd",
+
+-  "_pydevd_frame_eval/pydevd_frame_evaluator.pyx",
++  "_pydevd_frame_eval\\\\pydevd_frame_evaluator.pyx",
+-  "_pydevd_bundle/pydevd_cython.pxd",
++  "_pydevd_bundle\\\\pydevd_cython.pxd",
 '''.splitlines() if line.strip())
 
 
@@ -50,6 +62,7 @@ def main():
                 for line in output.decode('utf-8').splitlines():
                     if line.startswith('+') or line.startswith('-'):
                         if line.strip() not in expected_differences:
+                            print('Found unexpected: %r' % (line,))
                             found_unexpected = True
 
         if files and found_unexpected:
