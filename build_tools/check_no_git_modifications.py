@@ -45,25 +45,15 @@ def main():
         files.discard('.travis_install_python_deps.sh')
         files.discard('miniconda.sh')
         files.discard('build_tools/check_no_git_modifications.py')
-        pydevd_cython = None
-        pydevd_frame_evaluator = None
         found_unexpected = True
-        if len(files) == 2:
-            for f in files:
-                if f.endswith('pydevd_cython.c'):
-                    pydevd_cython = f
-
-                elif f.endswith('pydevd_frame_evaluator.c'):
-                    pydevd_frame_evaluator = f
-
-            if pydevd_cython and pydevd_frame_evaluator:
-                found_unexpected = False
-                output = subprocess.check_output('git diff'.split())
-                for line in output.decode('utf-8').splitlines():
-                    if line.startswith('+') or line.startswith('-'):
-                        if line.strip() not in expected_differences:
-                            print('Found unexpected: %r' % (line,))
-                            found_unexpected = True
+        if files:
+            found_unexpected = False
+            output = subprocess.check_output('git diff'.split())
+            for line in output.decode('utf-8').splitlines():
+                if line.startswith('+') or line.startswith('-'):
+                    if line.strip() not in expected_differences:
+                        print('Found unexpected: %r' % (line,))
+                        found_unexpected = True
 
         if files and found_unexpected:
             # If there are modifications, show a diff of the modifications and fail the script.

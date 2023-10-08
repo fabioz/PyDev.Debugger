@@ -1,4 +1,4 @@
-name: PyDev.Debugger Tests
+name: PyDev.Debugger TESTS
 
 on:
   - push
