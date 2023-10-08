@@ -22,6 +22,9 @@ python_installations = [
     r'%s\py39_64\python.exe' % miniconda_envs,
     r'%s\py310_64\python.exe' % miniconda_envs,
     r'%s\py311_64\python.exe' % miniconda_envs,
+    r'%s\py312_64\python.exe' % miniconda_envs,
+
+    # See: build_tools\pydevd_release_process.txt when adding a new one
 ]
 
 root_dir = os.path.dirname(os.path.dirname(__file__))

@@ -68,30 +68,42 @@ pip install -U "setuptools>=0.9"
 pip install -U "pip>=1.4" "wheel>=0.21" twine
 conda deactivate
 
+conda create -y -f -n py312_64 python=3.11 -c conda-forge
+activate py312_64
+pip install cython
+pip install "django>=1.9"
+pip install -U "setuptools>=0.9"
+pip install -U "pip>=1.4" "wheel>=0.21" twine
+conda deactivate
+
 ### UPDATE CYTHON
 
 activate py36_64
-pip install cython==0.29.32
+pip install cython==3.0.3
 conda deactivate
 
 activate py37_64
-pip install cython==0.29.32
+pip install cython==3.0.3
 conda deactivate
 
 activate py38_64
-pip install cython==0.29.32
+pip install cython==3.0.3
 conda deactivate
 
 activate py39_64
-pip install cython==0.29.32
+pip install cython==3.0.3
 conda deactivate
 
 activate py310_64
-pip install cython==0.29.32
+pip install cython==3.0.3
 conda deactivate
 
 activate py311_64
-pip install cython==0.29.32
+pip install cython==3.0.3
+conda deactivate
+
+activate py312_64
+pip install cython==3.0.3
 conda deactivate
 
 Regenerate the .pyx and .c
