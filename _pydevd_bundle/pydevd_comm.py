@@ -112,8 +112,9 @@ from io import StringIO
 from _pydevd_bundle.pydevd_comm_constants import *  # @UnusedWildImport
 
 # Socket import aliases:
-AF_INET, SOCK_STREAM, SHUT_WR, SOL_SOCKET, IPPROTO_TCP, socket = (
+AF_INET, AF_INET6, SOCK_STREAM, SHUT_WR, SOL_SOCKET, IPPROTO_TCP, socket = (
     socket_module.AF_INET,
+    socket_module.AF_INET6,
     socket_module.SOCK_STREAM,
     socket_module.SHUT_WR,
     socket_module.SOL_SOCKET,
@@ -463,7 +464,14 @@ def start_client(host, port):
     ''' connects to a host/port '''
     pydev_log.info("Connecting to %s:%s", host, port)
 
-    s = socket(AF_INET, SOCK_STREAM)
+    address_family = AF_INET
+    for res in socket_module.getaddrinfo(host, port, 0, SOCK_STREAM):
+        if res[0] == AF_INET6:
+            # Prefer IPv6 addresses.
+            address_family = res[0]
+            break
+
+    s = socket(address_family, SOCK_STREAM)
 
     #  Set TCP keepalive on an open socket.
     #  It activates after 1 second (TCP_KEEPIDLE,) of idleness,
