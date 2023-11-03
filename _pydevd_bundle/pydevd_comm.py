@@ -466,10 +466,13 @@ def start_client(host, port):
 
     address_family = AF_INET
     for res in socket_module.getaddrinfo(host, port, 0, SOCK_STREAM):
-        if res[0] == AF_INET6:
-            # Prefer IPv6 addresses.
+        if res[0] == AF_INET:
             address_family = res[0]
+            # Prefer IPv4 addresses for backward compat.
             break
+        if res[0] == AF_INET6:
+            # Don't break after this - if the socket is dual-stack prefer IPv4.
+            address_family = res[0]
 
     s = socket(address_family, SOCK_STREAM)
 
