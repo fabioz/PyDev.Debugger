@@ -4,7 +4,7 @@ from _pydev_bundle import pydev_log
 from _pydevd_bundle.pydevd_trace_dispatch import USING_CYTHON
 from _pydevd_bundle.pydevd_constants import USE_CYTHON_FLAG, ENV_FALSE_LOWER_VALUES, \
     ENV_TRUE_LOWER_VALUES, IS_PY36_OR_GREATER, IS_PY38_OR_GREATER, SUPPORT_GEVENT, IS_PYTHON_STACKLESS, \
-    PYDEVD_USE_FRAME_EVAL, PYDEVD_IPYTHON_COMPATIBLE_DEBUGGING
+    PYDEVD_USE_FRAME_EVAL, PYDEVD_IPYTHON_COMPATIBLE_DEBUGGING, IS_PY311_OR_GREATER
 
 frame_eval_func = None
 stop_frame_eval = None
@@ -32,7 +32,8 @@ elif SUPPORT_GEVENT or (IS_PYTHON_STACKLESS and not IS_PY38_OR_GREATER):
     # Same problem with Stackless.
     # https://github.com/stackless-dev/stackless/issues/240
 
-elif PYDEVD_USE_FRAME_EVAL in ENV_TRUE_LOWER_VALUES:
+elif PYDEVD_USE_FRAME_EVAL in ENV_TRUE_LOWER_VALUES and not IS_PY311_OR_GREATER:
+    # Python 3.11 onwards doesn't have frame eval mode implemented
     # Fail if unable to use
     from _pydevd_frame_eval.pydevd_frame_eval_cython_wrapper import frame_eval_func, stop_frame_eval, dummy_trace_dispatch, clear_thread_local_info
     USING_FRAME_EVAL = True
@@ -40,7 +41,8 @@ elif PYDEVD_USE_FRAME_EVAL in ENV_TRUE_LOWER_VALUES:
 else:
     USING_FRAME_EVAL = False
     # Try to use if possible
-    if IS_PY36_OR_GREATER:
+    if IS_PY36_OR_GREATER and not IS_PY311_OR_GREATER:
+        # Python 3.11 onwards doesn't have frame eval mode implemented
         try:
             from _pydevd_frame_eval.pydevd_frame_eval_cython_wrapper import frame_eval_func, stop_frame_eval, dummy_trace_dispatch, clear_thread_local_info
             USING_FRAME_EVAL = True
