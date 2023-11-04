@@ -6649,6 +6649,33 @@ def test_soft_terminate(case_setup_dap, pyfile, soft_kill):
         writer.finished_ok = True
 
 
+def test_remote_root_set_in_env_var(case_setup_dap, pyfile):
+
+    def get_environ(self):
+        env = os.environ.copy()
+        print(os.path.dirname(self.TEST_FILE))
+        env["PYDEVD_REMOTE_ROOT"] = os.path.dirname(self.TEST_FILE)
+        return env
+
+    @pyfile
+    def target():
+        print('TEST SUCEEDED')  # break here
+
+    with case_setup_dap.test_file(target, get_environ=get_environ) as writer:
+        json_facade = JsonFacade(writer)
+
+        json_facade.write_launch(pathMappings=[{
+            'localRoot': os.path.dirname(writer.TEST_FILE),
+            'remoteRoot': "/tmp/somepath",  # A path we likely aren't writing to
+        }])
+        break_line = writer.get_line_index_with_content('break here')
+        json_facade.write_set_breakpoints(break_line)
+        json_facade.write_make_initial_run()
+        json_facade.wait_for_thread_stopped(line=break_line)
+        json_facade.write_continue()
+        writer.finished_ok = True
+
+
 if __name__ == '__main__':
     pytest.main(['-k', 'test_replace_process', '-s'])
 
