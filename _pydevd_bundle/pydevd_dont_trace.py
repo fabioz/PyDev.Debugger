@@ -28,7 +28,7 @@ RE_DECORATOR = re.compile(r'^\s*@')
 _filename_to_ignored_lines = {}
 
 
-def default_should_trace_hook(frame, absolute_filename):
+def default_should_trace_hook(code, absolute_filename):
     '''
     Return True if this frame should be traced, False if tracing should be blocked.
     '''
@@ -72,7 +72,7 @@ def default_should_trace_hook(frame, absolute_filename):
 
         _filename_to_ignored_lines[absolute_filename] = ignored_lines
 
-    func_line = frame.f_code.co_firstlineno - 1  # co_firstlineno is 1-based, so -1 is needed
+    func_line = code.co_firstlineno - 1  # co_firstlineno is 1-based, so -1 is needed
     return not (
         func_line - 1 in ignored_lines or  # -1 to get line before method
         func_line in ignored_lines)  # method line

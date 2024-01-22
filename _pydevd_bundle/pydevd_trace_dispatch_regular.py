@@ -2,7 +2,7 @@ from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_bundle.pydev_log import exception as pydev_log_exception
 from _pydev_bundle._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_constants import (get_current_thread_id, NO_FTRACE,
-    USE_CUSTOM_SYS_CURRENT_FRAMES_MAP, ForkSafeLock)
+    USE_CUSTOM_SYS_CURRENT_FRAMES_MAP, ForkSafeLock, PYDEVD_USE_SYS_MONITORING)
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 
 # IFDEF CYTHON
@@ -488,3 +488,8 @@ if USE_CUSTOM_SYS_CURRENT_FRAMES_MAP:
         return _original_call(self, frame, event, arg)
 
     ThreadTracer.__call__ = __call__
+
+if PYDEVD_USE_SYS_MONITORING:
+
+    def fix_top_level_trace_and_get_trace_func(*args, **kwargs):
+        raise RuntimeError('Not used in sys.monitoring mode.')

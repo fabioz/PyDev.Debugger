@@ -3,12 +3,13 @@ from _pydev_bundle import _pydev_saved_modules
 from _pydevd_bundle.pydevd_utils import notify_about_gevent_if_needed
 import weakref
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_IRONPYTHON, \
-    PYDEVD_APPLY_PATCHING_TO_HIDE_PYDEVD_THREADS
+    PYDEVD_APPLY_PATCHING_TO_HIDE_PYDEVD_THREADS, PYDEVD_USE_SYS_MONITORING
 from _pydev_bundle.pydev_log import exception as pydev_log_exception
 import sys
 from _pydev_bundle import pydev_log
 import pydevd_tracing
 from _pydevd_bundle.pydevd_collect_bytecode_info import iter_instructions
+from _pydevd_sys_monitoring import pydevd_sys_monitoring
 
 if IS_JYTHON:
     import org.python.core as JyCore  # @UnresolvedImport
@@ -67,6 +68,9 @@ class PyDBDaemonThread(threading.Thread):
 
     def _stop_trace(self):
         if self.pydev_do_not_trace:
+            if PYDEVD_USE_SYS_MONITORING:
+                pydevd_sys_monitoring.stop_monitoring(all_threads=False)
+                return
             pydevd_tracing.SetTrace(None)  # no debugging on this thread
 
 

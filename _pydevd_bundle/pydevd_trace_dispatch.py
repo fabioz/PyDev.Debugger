@@ -34,16 +34,19 @@ def delete_old_compiled_extensions():
 if USE_CYTHON_FLAG in ENV_TRUE_LOWER_VALUES:
     # We must import the cython version if forcing cython
     from _pydevd_bundle.pydevd_cython_wrapper import trace_dispatch, global_cache_skips, global_cache_frame_skips, fix_top_level_trace_and_get_trace_func
+    from _pydevd_bundle.pydevd_cython_wrapper import should_stop_on_exception, handle_exception, is_unhandled_exception
     USING_CYTHON = True
 
 elif USE_CYTHON_FLAG in ENV_FALSE_LOWER_VALUES:
     # Use the regular version if not forcing cython
     from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch, global_cache_skips, global_cache_frame_skips, fix_top_level_trace_and_get_trace_func  # @UnusedImport
+    from .pydevd_frame import should_stop_on_exception, handle_exception, is_unhandled_exception
 
 else:
     # Regular: use fallback if not found and give message to user
     try:
         from _pydevd_bundle.pydevd_cython_wrapper import trace_dispatch, global_cache_skips, global_cache_frame_skips, fix_top_level_trace_and_get_trace_func
+        from _pydevd_bundle.pydevd_cython_wrapper import should_stop_on_exception, handle_exception, is_unhandled_exception
 
         # This version number is always available
         from _pydevd_bundle.pydevd_additional_thread_info_regular import version as regular_version
@@ -58,5 +61,6 @@ else:
 
     except ImportError:
         from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch, global_cache_skips, global_cache_frame_skips, fix_top_level_trace_and_get_trace_func  # @UnusedImport
+        from .pydevd_frame import should_stop_on_exception, handle_exception, is_unhandled_exception
         pydev_log.show_compile_cython_command_line()
 

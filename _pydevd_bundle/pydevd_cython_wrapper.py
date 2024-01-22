@@ -49,4 +49,10 @@ _set_additional_thread_info_lock = mod._set_additional_thread_info_lock
 
 fix_top_level_trace_and_get_trace_func = mod.fix_top_level_trace_and_get_trace_func
 
+handle_exception = mod.handle_exception
+
+should_stop_on_exception = mod.should_stop_on_exception
+
+is_unhandled_exception = mod.is_unhandled_exception
+
 version = getattr(mod, 'version', 0)

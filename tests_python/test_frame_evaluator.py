@@ -2,9 +2,10 @@ import sys
 import threading
 import pytest
 from tests_python.debugger_unittest import IS_PY36_OR_GREATER, IS_CPYTHON
-from tests_python.debug_constants import TEST_CYTHON, TODO_PY311
+from tests_python.debug_constants import TEST_CYTHON
+from _pydevd_bundle.pydevd_constants import IS_PY311_OR_GREATER
 
-pytestmark = pytest.mark.skipif(not IS_PY36_OR_GREATER or not IS_CPYTHON or not TEST_CYTHON or TODO_PY311, reason='Requires CPython >= 3.6')
+pytestmark = pytest.mark.skipif(not IS_PY36_OR_GREATER or not IS_CPYTHON or not TEST_CYTHON or IS_PY311_OR_GREATER, reason='Requires CPython >= 3.6 < 3.11')
 
 
 def get_foo_frame():

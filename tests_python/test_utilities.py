@@ -3,10 +3,12 @@ import threading
 from _pydevd_bundle.pydevd_utils import convert_dap_log_message_to_expression
 from tests_python.debug_constants import TEST_GEVENT, IS_CPYTHON
 import sys
-from _pydevd_bundle.pydevd_constants import IS_WINDOWS, IS_PYPY, IS_JYTHON
+from _pydevd_bundle.pydevd_constants import IS_WINDOWS, IS_PYPY, IS_JYTHON, \
+    PYDEVD_USE_SYS_MONITORING
 import pytest
 import os
 from _pydevd_bundle.pydevd_thread_lifecycle import pydevd_find_thread_by_id
+from _pydevd_bundle.pydevd_dont_trace_files import LIB_FILE
 
 
 def test_expression_to_evaluate():
@@ -346,7 +348,9 @@ def _check_in_separate_process(method_name, module_name='test_utilities', update
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='Functionality to trace other threads requires CPython.')
+@pytest.mark.skipif(PYDEVD_USE_SYS_MONITORING, reason='Tracing is not used with sys.monitoring.')
 def test_tracing_other_threads():
+
     # Note: run this test in a separate process so that it doesn't mess with any current tracing
     # in our current process.
     _check_in_separate_process('_check_tracing_other_threads')
@@ -373,6 +377,7 @@ def _check_basic_tracing():
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='Functionality to trace other threads requires CPython.')
+@pytest.mark.skipif(PYDEVD_USE_SYS_MONITORING, reason='Tracing is not used with sys.monitoring.')
 def test_tracing_basic():
     _check_in_separate_process('_check_basic_tracing')
 
@@ -525,7 +530,7 @@ def test_threading_hide_pydevd():
     t1.start()
 
     # i.e.: the patching doesn't work for other implementations.
-    if IS_CPYTHON:
+    if IS_CPYTHON or IS_PYPY:
         assert threading.active_count() == current_count + 1
         assert t0 not in threading.enumerate()
     else:
@@ -548,3 +553,4 @@ def test_import_token_from_module():
 
     assert import_attr_from_module('sys.settrace') == sys.settrace
     assert import_attr_from_module('threading.Thread.start') == threading.Thread.start
+

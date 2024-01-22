@@ -12,6 +12,7 @@ from pydevd_file_utils import normcase
 from _pydevd_bundle.pydevd_constants import USER_CODE_BASENAMES_STARTING_WITH, \
     LIBRARY_CODE_BASENAMES_STARTING_WITH, IS_PYPY, IS_WINDOWS
 from _pydevd_bundle import pydevd_constants
+from _pydevd_bundle.pydevd_constants import is_true_in_env
 
 ExcludeFilter = namedtuple('ExcludeFilter', 'name, exclude, is_path')
 
@@ -101,7 +102,7 @@ class FilesFiltering(object):
         self._use_libraries_filter = False
         self.require_module = False  # True if some exclude filter filters by the module.
 
-        self.set_use_libraries_filter(os.getenv('PYDEVD_FILTER_LIBRARIES') is not None)
+        self.set_use_libraries_filter(is_true_in_env('PYDEVD_FILTER_LIBRARIES'))
 
         project_roots = os.getenv('IDE_PROJECT_ROOTS', None)
         if project_roots is not None:

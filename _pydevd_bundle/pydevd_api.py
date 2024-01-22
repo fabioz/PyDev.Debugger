@@ -15,7 +15,8 @@ from _pydevd_bundle.pydevd_comm import (InternalGetThreadStack, internal_get_com
 from _pydevd_bundle.pydevd_comm_constants import (CMD_THREAD_SUSPEND, file_system_encoding,
     CMD_STEP_INTO_MY_CODE, CMD_STOP_ON_START, CMD_SMART_STEP_INTO)
 from _pydevd_bundle.pydevd_constants import (get_current_thread_id, set_protocol, get_protocol,
-    HTTP_JSON_PROTOCOL, JSON_PROTOCOL, DebugInfoHolder, IS_WINDOWS)
+    HTTP_JSON_PROTOCOL, JSON_PROTOCOL, DebugInfoHolder, IS_WINDOWS,
+    PYDEVD_USE_SYS_MONITORING)
 from _pydevd_bundle.pydevd_net_command_factory_json import NetCommandFactoryJson
 from _pydevd_bundle.pydevd_net_command_factory_xml import NetCommandFactory
 import pydevd_file_utils
@@ -32,6 +33,7 @@ from _pydevd_bundle.pydevd_utils import DAPGrouper, interrupt_main_thread
 from _pydevd_bundle.pydevd_daemon_thread import run_as_pydevd_daemon_thread
 from _pydevd_bundle.pydevd_thread_lifecycle import pydevd_find_thread_by_id, resume_threads
 import tokenize
+from _pydevd_sys_monitoring import pydevd_sys_monitoring
 
 try:
     import dis
@@ -562,7 +564,7 @@ class PyDevdAPI(object):
         id_to_pybreakpoint[breakpoint_id] = added_breakpoint
         py_db.consolidate_breakpoints(canonical_normalized_filename, id_to_pybreakpoint, file_to_line_to_breakpoints)
         if py_db.plugin is not None:
-            py_db.has_plugin_line_breaks = py_db.plugin.has_line_breaks()
+            py_db.has_plugin_line_breaks = py_db.plugin.has_line_breaks(py_db)
             py_db.plugin.after_breakpoints_consolidated(py_db, canonical_normalized_filename, id_to_pybreakpoint, file_to_line_to_breakpoints)
 
         py_db.on_breakpoints_changed()
@@ -680,7 +682,7 @@ class PyDevdAPI(object):
                 del id_to_pybreakpoint[breakpoint_id]
                 py_db.consolidate_breakpoints(canonical_normalized_filename, id_to_pybreakpoint, file_to_line_to_breakpoints)
                 if py_db.plugin is not None:
-                    py_db.has_plugin_line_breaks = py_db.plugin.has_line_breaks()
+                    py_db.has_plugin_line_breaks = py_db.plugin.has_line_breaks(py_db)
                     py_db.plugin.after_breakpoints_consolidated(py_db, canonical_normalized_filename, id_to_pybreakpoint, file_to_line_to_breakpoints)
 
             except KeyError:
@@ -797,7 +799,7 @@ class PyDevdAPI(object):
             supported_type = plugin.add_breakpoint('add_exception_breakpoint', py_db, breakpoint_type, exception)
 
         if supported_type:
-            py_db.has_plugin_exception_breaks = py_db.plugin.has_exception_breaks()
+            py_db.has_plugin_exception_breaks = py_db.plugin.has_exception_breaks(py_db)
             py_db.on_breakpoints_changed()
         else:
             raise NameError(breakpoint_type)
@@ -830,7 +832,7 @@ class PyDevdAPI(object):
         supported_type = plugin.remove_exception_breakpoint(py_db, exception_type, exception)
 
         if supported_type:
-            py_db.has_plugin_exception_breaks = py_db.plugin.has_exception_breaks()
+            py_db.has_plugin_exception_breaks = py_db.plugin.has_exception_breaks(py_db)
         else:
             pydev_log.info('No exception of type: %s was previously registered.', exception_type)
 
@@ -924,6 +926,9 @@ class PyDevdAPI(object):
             info = set_additional_thread_info(main_thread)
             info.pydev_original_step_cmd = CMD_STOP_ON_START
             info.pydev_step_cmd = CMD_STEP_INTO_MY_CODE
+            if PYDEVD_USE_SYS_MONITORING:
+                pydevd_sys_monitoring.update_monitor_events(suspend_requested=True)
+                pydevd_sys_monitoring.restart_events()
 
     def set_ignore_system_exit_codes(self, py_db, ignore_system_exit_codes):
         py_db.set_ignore_system_exit_codes(ignore_system_exit_codes)

@@ -4,14 +4,15 @@ import pytest
 import time
 
 from contextlib import contextmanager
-from tests_python.debugger_unittest import IS_PY36_OR_GREATER, IS_CPYTHON
-from tests_python.debug_constants import TEST_CYTHON, TODO_PY311
+from tests_python.debugger_unittest import IS_CPYTHON
+from tests_python.debug_constants import TEST_CYTHON
+from _pydevd_bundle.pydevd_constants import IS_PY312_OR_GREATER, IS_PY311_OR_GREATER
 
 pytest_plugins = [
     str('tests_python.debugger_fixtures'),
 ]
 
-pytestmark = pytest.mark.skipif(not IS_PY36_OR_GREATER or not IS_CPYTHON or not TEST_CYTHON or TODO_PY311, reason='Requires CPython >= 3.6')
+pytestmark = pytest.mark.skipif(not IS_CPYTHON or not TEST_CYTHON, reason='Requires binaries')
 
 
 @pytest.fixture
@@ -19,7 +20,8 @@ def case_setup_force_frame_eval(case_setup):
 
     def get_environ(writer):
         env = os.environ.copy()
-        env['PYDEVD_USE_FRAME_EVAL'] = 'YES'
+        if IS_PY311_OR_GREATER:
+            env['PYDEVD_USE_FRAME_EVAL'] = 'YES'
         env['PYDEVD_USE_CYTHON'] = 'YES'
         return env
 
@@ -42,7 +44,12 @@ def test_step_and_resume(case_setup_force_frame_eval):
         writer.write_make_initial_run()
 
         hit = writer.wait_for_breakpoint_hit()
-        assert hit.suspend_type == 'frame_eval'
+        if IS_PY312_OR_GREATER:
+            assert hit.suspend_type == "sys_monitor"
+        elif IS_PY311_OR_GREATER:
+            assert hit.suspend_type == "trace"
+        else:
+            assert hit.suspend_type == "frame_eval"
         assert hit.line == 10
 
         writer.write_step_over(hit.thread_id)
@@ -50,7 +57,10 @@ def test_step_and_resume(case_setup_force_frame_eval):
 
         assert hit.line == 11
         # we use tracing debugger while stepping
-        assert hit.suspend_type == "trace"
+        if IS_PY312_OR_GREATER:
+            assert hit.suspend_type == "sys_monitor"
+        else:
+            assert hit.suspend_type == "trace"
 
         writer.write_run_thread(hit.thread_id)
 
@@ -58,7 +68,12 @@ def test_step_and_resume(case_setup_force_frame_eval):
 
         assert hit.line == 2
         # we enable frame evaluation debugger after "Resume" command
-        assert hit.suspend_type == "frame_eval"
+        if IS_PY312_OR_GREATER:
+            assert hit.suspend_type == "sys_monitor"
+        elif IS_PY311_OR_GREATER:
+            assert hit.suspend_type == "trace"
+        else:
+            assert hit.suspend_type == "frame_eval"
 
         writer.write_run_thread(hit.thread_id)
 
@@ -72,7 +87,12 @@ def test_step_return(case_setup_force_frame_eval):
 
         hit = writer.wait_for_breakpoint_hit()
 
-        assert hit.suspend_type == "frame_eval"
+        if IS_PY312_OR_GREATER:
+            assert hit.suspend_type == "sys_monitor"
+        elif IS_PY311_OR_GREATER:
+            assert hit.suspend_type == "trace"
+        else:
+            assert hit.suspend_type == "frame_eval"
         writer.write_get_frame(hit.thread_id, hit.frame_id)
 
         writer.write_step_return(hit.thread_id)
@@ -81,7 +101,10 @@ def test_step_return(case_setup_force_frame_eval):
 
         assert hit.line == 8
         # Step return uses temporary breakpoint, so we use tracing debugger
-        assert hit.suspend_type == "trace"
+        if IS_PY312_OR_GREATER:
+            assert hit.suspend_type == "sys_monitor"
+        else:
+            assert hit.suspend_type == "trace"
 
         writer.write_step_in(hit.thread_id)
 
@@ -90,7 +113,10 @@ def test_step_return(case_setup_force_frame_eval):
         # goes to line 4 in jython (function declaration line)
         assert hit.line in (4, 5)
         # we use tracing debugger for stepping
-        assert hit.suspend_type == "trace", 'Expected suspend type to be "trace", but was: %s' % hit.suspend_type
+        if IS_PY312_OR_GREATER:
+            assert hit.suspend_type == "sys_monitor"
+        else:
+            assert hit.suspend_type == "trace", 'Expected suspend type to be "trace", but was: %s' % hit.suspend_type
 
         writer.write_run_thread(hit.thread_id)
 
@@ -107,7 +133,10 @@ def test_add_break_while_running(case_setup_force_frame_eval):
 
         assert hit.line == 4
         # we use tracing debugger if breakpoint was added while running
-        assert hit.suspend_type == "trace"
+        if IS_PY312_OR_GREATER:
+            assert hit.suspend_type == "sys_monitor"
+        else:
+            assert hit.suspend_type == "trace"
 
         writer.write_get_frame(hit.thread_id, hit.frame_id)
 
@@ -116,7 +145,10 @@ def test_add_break_while_running(case_setup_force_frame_eval):
         hit = writer.wait_for_breakpoint_hit()
         assert hit.line == 4
         # we still use tracing debugger
-        assert hit.suspend_type == "trace"
+        if IS_PY312_OR_GREATER:
+            assert hit.suspend_type == "sys_monitor"
+        else:
+            assert hit.suspend_type == "trace"
 
         writer.write_get_frame(hit.thread_id, hit.frame_id)
 
@@ -137,7 +169,10 @@ def test_exc_break(case_setup_force_frame_eval):
 
         assert hit.line == 10
         # we use tracing debugger if there are exception breakpoints
-        assert hit.suspend_type == "trace"
+        if IS_PY312_OR_GREATER:
+            assert hit.suspend_type == "sys_monitor"
+        else:
+            assert hit.suspend_type == "trace"
 
         writer.write_run_thread(hit.thread_id)
 
@@ -154,7 +189,12 @@ def test_add_exc_break_while_running(case_setup_force_frame_eval):
 
         assert hit.line == 10
         # we use tracing debugger if there are exception breakpoints
-        assert hit.suspend_type == "frame_eval"
+        if IS_PY312_OR_GREATER:
+            assert hit.suspend_type == "sys_monitor"
+        elif IS_PY311_OR_GREATER:
+            assert hit.suspend_type == "trace"
+        else:
+            assert hit.suspend_type == "frame_eval"
 
         writer.write_add_exception_breakpoint_with_policy('IndexError', "1", "0", "0")
 
@@ -164,7 +204,10 @@ def test_add_exc_break_while_running(case_setup_force_frame_eval):
 
         assert hit.line == 2
         # we use tracing debugger if exception break was added
-        assert hit.suspend_type == "trace"
+        if IS_PY312_OR_GREATER:
+            assert hit.suspend_type == "sys_monitor"
+        else:
+            assert hit.suspend_type == "trace"
 
         writer.write_run_thread(hit.thread_id)
 
@@ -180,13 +223,19 @@ def test_add_termination_exc_break(case_setup_force_frame_eval):
         hit = writer.wait_for_breakpoint_hit(line=10)
 
         # we can use frame evaluation with exception breakpoint with "On termination" suspend policy
-        assert hit.suspend_type == "frame_eval"
+        if IS_PY312_OR_GREATER:
+            assert hit.suspend_type == "sys_monitor"
+        elif IS_PY311_OR_GREATER:
+            assert hit.suspend_type == "trace"
+        else:
+            assert hit.suspend_type == "frame_eval"
 
         writer.write_run_thread(hit.thread_id)
 
         writer.finished_ok = True
 
 
+@pytest.mark.skipif(IS_PY311_OR_GREATER, reason="frame eval not supported in python 3.11 or newer.")
 def test_frame_eval_whitebox_test(case_setup_force_frame_eval):
     from tests_python.debugger_unittest import CMD_STEP_INTO, CMD_STEP_RETURN, CMD_STEP_OVER
 
@@ -197,7 +246,12 @@ def test_frame_eval_whitebox_test(case_setup_force_frame_eval):
         writer.write_make_initial_run()
 
         hit = writer.wait_for_breakpoint_hit(line=line_on_global)
-        assert hit.suspend_type == "frame_eval"
+        if IS_PY312_OR_GREATER:
+            assert hit.suspend_type == "sys_monitor"
+        elif IS_PY311_OR_GREATER:
+            assert hit.suspend_type == "trace"
+        else:
+            assert hit.suspend_type == "frame_eval"
 
         writer.write_step_over(hit.thread_id)
         hit = writer.wait_for_breakpoint_hit(reason=CMD_STEP_OVER)
@@ -225,7 +279,12 @@ def test_frame_eval_change_breakpoints(case_setup_force_frame_eval):
         writer.write_make_initial_run()
 
         hit = writer.wait_for_breakpoint_hit(line=break2_line)
-        assert hit.suspend_type == "frame_eval"
+        if IS_PY312_OR_GREATER:
+            assert hit.suspend_type == "sys_monitor"
+        elif IS_PY311_OR_GREATER:
+            assert hit.suspend_type == "trace"
+        else:
+            assert hit.suspend_type == "frame_eval"
 
         writer.write_remove_breakpoint(break2_id)
         writer.write_add_breakpoint(break1_line, 'None')
@@ -258,8 +317,11 @@ def test_generator_code_cache(case_setup_force_frame_eval):
         hit = writer.wait_for_breakpoint_hit(line=break2_line)
         writer.write_run_thread(hit.thread_id)
 
-        hit = writer.wait_for_breakpoint_hit(line=break2_line)
-        writer.write_run_thread(hit.thread_id)
+        if not IS_PY312_OR_GREATER:
+            # On python 3.12 there's no list-comprehension additional frame,
+            # so, one less step is expected.
+            hit = writer.wait_for_breakpoint_hit(line=break2_line)
+            writer.write_run_thread(hit.thread_id)
 
         writer.finished_ok = True
 
@@ -271,7 +333,12 @@ def test_break_line_1(case_setup_force_frame_eval):
         writer.write_make_initial_run()
 
         hit = writer.wait_for_breakpoint_hit(line=break1_line)
-        assert hit.suspend_type == "frame_eval"
+        if IS_PY312_OR_GREATER:
+            assert hit.suspend_type == "sys_monitor"
+        elif IS_PY311_OR_GREATER:
+            assert hit.suspend_type == "trace"
+        else:
+            assert hit.suspend_type == "frame_eval"
 
         writer.write_run_thread(hit.thread_id)
 

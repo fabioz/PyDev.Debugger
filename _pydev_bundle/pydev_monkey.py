@@ -4,7 +4,7 @@ import re
 import sys
 from _pydev_bundle._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_JYTHON, get_current_thread_id, \
-    sorted_dict_repr, set_global_debugger, DebugInfoHolder
+    sorted_dict_repr, set_global_debugger, DebugInfoHolder, PYDEVD_USE_SYS_MONITORING
 from _pydev_bundle import pydev_log
 from contextlib import contextmanager
 from _pydevd_bundle import pydevd_constants, pydevd_defaults
@@ -234,7 +234,8 @@ def _on_forked_process(setup_tracing=True):
 
 def _on_set_trace_for_new_thread(global_debugger):
     if global_debugger is not None:
-        global_debugger.enable_tracing()
+        if not PYDEVD_USE_SYS_MONITORING:
+            global_debugger.enable_tracing()
 
 
 def _get_str_type_compatible(s, args):

@@ -6,6 +6,7 @@ from _pydevd_frame_eval.vendored.bytecode.flags import infer_flags
 
 
 class BaseBytecode:
+
     def __init__(self):
         self.argcount = 0
         if sys.version_info > (3, 8):
@@ -129,6 +130,7 @@ class _BaseBytecodeList(BaseBytecode, list):
 
 
 class _InstrList(list):
+
     def _flat(self):
         instructions = []
         labels = {}
@@ -160,6 +162,7 @@ class _InstrList(list):
 
 
 class Bytecode(_InstrList, _BaseBytecodeList):
+
     def __init__(self, instructions=()):
         BaseBytecode.__init__(self)
         self.argnames = []
@@ -188,6 +191,8 @@ class Bytecode(_InstrList, _BaseBytecodeList):
 
     @staticmethod
     def from_code(code):
+        if sys.version_info[:2] >= (3, 11):
+            raise RuntimeError('This is not updated for Python 3.11 onwards, use only up to Python 3.10!!')
         concrete = _bytecode.ConcreteBytecode.from_code(code)
         return concrete.to_bytecode()
 

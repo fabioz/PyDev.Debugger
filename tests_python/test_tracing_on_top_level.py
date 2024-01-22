@@ -2,8 +2,11 @@ from pydevd import PyDB
 import pytest
 from tests_python.debugger_unittest import IS_CPYTHON
 import threading
+from _pydevd_bundle.pydevd_constants import PYDEVD_USE_SYS_MONITORING
 
 DEBUG = False
+
+pytestmark = pytest.mark.skipif(PYDEVD_USE_SYS_MONITORING, reason='The tests in this module requires tracing.')
 
 
 class DummyTopLevelFrame(object):
@@ -118,7 +121,7 @@ class _TraceTopLevel(object):
         self.assert_no_commands('CMD_THREAD_SUSPEND', 'CMD_THREAD_RUN')
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def trace_top_level():
     # Note: we trace with a dummy frame with no f_back to simulate the issue in a remote attach.
     yield _TraceTopLevel()

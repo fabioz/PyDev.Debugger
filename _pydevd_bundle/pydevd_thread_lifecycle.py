@@ -1,9 +1,12 @@
 from _pydevd_bundle import pydevd_utils
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydevd_bundle.pydevd_comm_constants import CMD_STEP_INTO, CMD_THREAD_SUSPEND
-from _pydevd_bundle.pydevd_constants import PYTHON_SUSPEND, STATE_SUSPEND, get_thread_id, STATE_RUN
+from _pydevd_bundle.pydevd_constants import PYTHON_SUSPEND, STATE_SUSPEND, get_thread_id, STATE_RUN, \
+    PYDEVD_USE_SYS_MONITORING
 from _pydev_bundle._pydev_saved_modules import threading
 from _pydev_bundle import pydev_log
+import sys
+from _pydevd_sys_monitoring import pydevd_sys_monitoring
 
 
 def pydevd_find_thread_by_id(thread_id):
@@ -23,7 +26,7 @@ def pydevd_find_thread_by_id(thread_id):
     return None
 
 
-def mark_thread_suspended(thread, stop_reason, original_step_cmd=-1):
+def mark_thread_suspended(thread, stop_reason: int, original_step_cmd: int=-1):
     info = set_additional_thread_info(thread)
     info.suspend_type = PYTHON_SUSPEND
     if original_step_cmd != -1:
@@ -77,6 +80,9 @@ def suspend_all_threads(py_db, except_thread):
     Suspend all except the one passed as a parameter.
     :param except_thread:
     '''
+    if PYDEVD_USE_SYS_MONITORING:
+        pydevd_sys_monitoring.update_monitor_events(suspend_requested=True)
+
     pydev_log.info('Suspending all threads except: %s', except_thread)
     all_threads = pydevd_utils.get_non_pydevd_threads()
     for t in all_threads:
@@ -91,6 +97,10 @@ def suspend_all_threads(py_db, except_thread):
             # Reset the tracing as in this case as it could've set scopes to be untraced.
             if frame is not None:
                 try:
-                    py_db.set_trace_for_frame_and_parents(frame)
+                    py_db.set_trace_for_frame_and_parents(t.ident, frame)
                 finally:
                     frame = None
+
+    if PYDEVD_USE_SYS_MONITORING:
+        # After suspending the frames we need the monitoring to be reset.
+        pydevd_sys_monitoring.restart_events()

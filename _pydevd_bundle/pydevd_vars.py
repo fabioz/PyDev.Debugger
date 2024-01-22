@@ -607,7 +607,7 @@ def change_attr_expression(frame, attr, expression, dbg, value=SENTINEL_VALUE):
 
         if dbg.plugin and value is SENTINEL_VALUE:
             result = dbg.plugin.change_variable(frame, attr, expression)
-            if result:
+            if result is not dbg.plugin.EMPTY_SENTINEL:
                 return result
 
         if attr[:7] == "Globals":

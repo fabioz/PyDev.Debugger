@@ -169,6 +169,10 @@ IS_PY38_OR_GREATER = sys.version_info >= (3, 8)
 IS_PY39_OR_GREATER = sys.version_info >= (3, 9)
 IS_PY310_OR_GREATER = sys.version_info >= (3, 10)
 IS_PY311_OR_GREATER = sys.version_info >= (3, 11)
+IS_PY312_OR_GREATER = sys.version_info >= (3, 12)
+
+# Not currently supported in Python 3.12.
+SUPPORT_ATTACH_TO_PID = not IS_PY312_OR_GREATER
 
 
 def version_str(v):
@@ -188,6 +192,18 @@ except AttributeError:
 
 ENV_TRUE_LOWER_VALUES = ('yes', 'true', '1')
 ENV_FALSE_LOWER_VALUES = ('no', 'false', '0')
+
+PYDEVD_USE_SYS_MONITORING = IS_PY312_OR_GREATER and hasattr(sys, 'monitoring')
+if PYDEVD_USE_SYS_MONITORING:  # Default gotten, let's see if it was somehow customize by the user.
+    _use_sys_monitoring_env_var = os.getenv('PYDEVD_USE_SYS_MONITORING', '').lower()
+    if _use_sys_monitoring_env_var:
+        # Check if the user specified something.
+        if _use_sys_monitoring_env_var in ENV_FALSE_LOWER_VALUES:
+            PYDEVD_USE_SYS_MONITORING = False
+        elif _use_sys_monitoring_env_var in ENV_TRUE_LOWER_VALUES:
+            PYDEVD_USE_SYS_MONITORING = True
+        else:
+            raise RuntimeError('Unrecognized value for PYDEVD_USE_SYS_MONITORING: %s' % (_use_sys_monitoring_env_var,))
 
 
 def is_true_in_env(env_key):
@@ -506,7 +522,7 @@ def iter_chars(b):
     return iter(b)
 
 
-if IS_JYTHON:
+if IS_JYTHON or PYDEVD_USE_SYS_MONITORING:
 
     def NO_FTRACE(frame, event, arg):
         return None

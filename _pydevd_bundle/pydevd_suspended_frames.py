@@ -433,13 +433,13 @@ class _FramesTracker(object):
         with self._lock:
             return self._frame_id_to_frame.get(frame_id)
 
-    def create_thread_suspend_command(self, thread_id, stop_reason, message, suspend_type):
+    def create_thread_suspend_command(self, thread_id, stop_reason, message, trace_suspend_type):
         with self._lock:
             # First one is topmost frame suspended.
             frames_list = self._thread_id_to_frames_list[thread_id]
 
             cmd = self.py_db.cmd_factory.make_thread_suspend_message(
-                self.py_db, thread_id, frames_list, stop_reason, message, suspend_type)
+                self.py_db, thread_id, frames_list, stop_reason, message, trace_suspend_type)
 
             frames_list = None
             return cmd

@@ -1,6 +1,6 @@
 from _pydevd_bundle.pydevd_constants import get_frame, IS_CPYTHON, IS_64BIT_PROCESS, IS_WINDOWS, \
     IS_LINUX, IS_MAC, DebugInfoHolder, LOAD_NATIVE_LIB_FLAG, \
-    ENV_FALSE_LOWER_VALUES, ForkSafeLock
+    ENV_FALSE_LOWER_VALUES, ForkSafeLock, PYDEVD_USE_SYS_MONITORING
 from _pydev_bundle._pydev_saved_modules import thread, threading
 from _pydev_bundle import pydev_log, pydev_monkey
 import os.path
@@ -45,6 +45,8 @@ def _get_stack_str(frame):
 
 
 def _internal_set_trace(tracing_func):
+    if PYDEVD_USE_SYS_MONITORING:
+        raise RuntimeError("pydevd: Using sys.monitoring, sys.settrace should not be called.")
     if TracingFunctionHolder._warn:
         frame = get_frame()
         if frame is not None and frame.f_back is not None:
@@ -81,6 +83,8 @@ _last_tracing_func_thread_local = threading.local()
 
 
 def SetTrace(tracing_func):
+    if PYDEVD_USE_SYS_MONITORING:
+        raise RuntimeError('SetTrace should not be used when using sys.monitoring.')
     _last_tracing_func_thread_local.tracing_func = tracing_func
 
     if tracing_func is not None:
@@ -108,12 +112,16 @@ def reapply_settrace():
 
 
 def replace_sys_set_trace_func():
+    if PYDEVD_USE_SYS_MONITORING:
+        return
     if TracingFunctionHolder._original_tracing is None:
         TracingFunctionHolder._original_tracing = sys.settrace
         sys.settrace = _internal_set_trace
 
 
 def restore_sys_set_trace_func():
+    if PYDEVD_USE_SYS_MONITORING:
+        return
     if TracingFunctionHolder._original_tracing is not None:
         sys.settrace = TracingFunctionHolder._original_tracing
         TracingFunctionHolder._original_tracing = None
@@ -272,6 +280,8 @@ def _load_python_helper_lib_uncached():
 
 
 def set_trace_to_threads(tracing_func, thread_idents=None, create_dummy_thread=True):
+    if PYDEVD_USE_SYS_MONITORING:
+        raise RuntimeError('Should not be called when using sys.monitoring.')
     assert tracing_func is not None
 
     ret = 0

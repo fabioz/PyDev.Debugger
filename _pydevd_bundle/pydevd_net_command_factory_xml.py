@@ -236,7 +236,7 @@ class NetCommandFactory(object):
         frames_list,
         stop_reason=None,
         message=None,
-        suspend_type="trace",
+        trace_suspend_type="trace",
         ):
         """
         :return tuple(str,str):
@@ -273,8 +273,8 @@ class NetCommandFactory(object):
             append(' stop_reason="%s"' % (stop_reason,))
         if message is not None:
             append(' message="%s"' % (message,))
-        if suspend_type is not None:
-            append(' suspend_type="%s"' % (suspend_type,))
+        if trace_suspend_type is not None:
+            append(' suspend_type="%s"' % (trace_suspend_type,))
         append('>')
         thread_stack_str = self.make_thread_stack_str(py_db, frames_list)
         append(thread_stack_str)
@@ -282,10 +282,10 @@ class NetCommandFactory(object):
 
         return ''.join(cmd_text_list), thread_stack_str
 
-    def make_thread_suspend_message(self, py_db, thread_id, frames_list, stop_reason, message, suspend_type):
+    def make_thread_suspend_message(self, py_db, thread_id, frames_list, stop_reason, message, trace_suspend_type):
         try:
             thread_suspend_str, thread_stack_str = self.make_thread_suspend_str(
-                py_db, thread_id, frames_list, stop_reason, message, suspend_type)
+                py_db, thread_id, frames_list, stop_reason, message, trace_suspend_type)
             cmd = NetCommand(CMD_THREAD_SUSPEND, 0, thread_suspend_str)
             cmd.thread_stack_str = thread_stack_str
             cmd.thread_suspend_str = thread_suspend_str

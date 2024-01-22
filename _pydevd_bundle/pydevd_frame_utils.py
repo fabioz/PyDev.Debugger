@@ -34,6 +34,9 @@ class FCode(object):
         self.co_firstlineno = 1
         self.co_flags = 0
 
+    def co_lines(self):
+        return ()
+
 
 def add_exception_to_frame(frame, exception_info):
     frame.f_locals['__exception__'] = exception_info

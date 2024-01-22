@@ -64,7 +64,7 @@ args = dict(
     long_description=long_description,
     author='Fabio Zadrozny and others',
     url='https://github.com/fabioz/PyDev.Debugger/',
-    license='EPL, Apache 2.0',
+    license='EPL',
     packages=[
         '_pydev_bundle',
         '_pydev_bundle.fsnotify',
@@ -106,7 +106,6 @@ args = dict(
         'Intended Audience :: Developers',
 
         'License :: OSI Approved :: Eclipse Public License 1.0 (EPL-1.0)',
-        'License :: OSI Approved :: Apache Software License',
 
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',

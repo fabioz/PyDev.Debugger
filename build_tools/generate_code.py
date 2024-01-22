@@ -114,6 +114,10 @@ DONT_TRACE_DIRS = {
 %(pydev_dirs)s
 }
 
+LIB_FILES_IN_DONT_TRACE_DIRS = {
+%(pydev_lib_files_in_dont_trace_dirs)s
+}
+
 DONT_TRACE = {
     # commonly used things from the stdlib that we don't want to trace
     'Queue.py':LIB_FILE,
@@ -140,6 +144,7 @@ DONT_TRACE['codecs.py'] = LIB_FILE
 
     pydev_files = []
     pydev_dirs = []
+    pydev_lib_files_in_dont_trace_dirs = []
 
     exclude_dirs = [
         '.git',
@@ -158,7 +163,6 @@ DONT_TRACE['codecs.py'] = LIB_FILE
         'test_pydevd_reload',
         'third_party',
         '__pycache__',
-        'pydev_ipython',
         'vendored',
         '.mypy_cache',
         'pydevd.egg-info',
@@ -167,6 +171,10 @@ DONT_TRACE['codecs.py'] = LIB_FILE
     for root, dirs, files in os.walk(root_dir):
 
         for d in dirs:
+            if d == 'pydev_ipython':
+                pydev_dirs.append("    '%s': LIB_FILE," % (d,))
+                continue
+
             if 'pydev' in d and d != 'pydevd.egg-info':
                 # print(os.path.join(root, d))
                 pydev_dirs.append("    '%s': PYDEV_FILE," % (d,))
@@ -176,6 +184,12 @@ DONT_TRACE['codecs.py'] = LIB_FILE
                 dirs.remove(d)
             except:
                 pass
+
+        if os.path.basename(root) == 'pydev_ipython':
+            for f in files:
+                if f.endswith('.py'):
+                    pydev_lib_files_in_dont_trace_dirs.append("    '%s'," % (f,))
+            continue
 
         for f in files:
             if f.endswith('.py'):
@@ -194,6 +208,7 @@ DONT_TRACE['codecs.py'] = LIB_FILE
     contents = template % (dict(
         pydev_files='\n'.join(sorted(set(pydev_files))),
         pydev_dirs='\n'.join(sorted(set(pydev_dirs))),
+        pydev_lib_files_in_dont_trace_dirs='\n'.join(sorted(set(pydev_lib_files_in_dont_trace_dirs))),
     ))
     assert 'pydevd.py' in contents
     assert 'pydevd_dont_trace.py' in contents

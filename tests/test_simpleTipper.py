@@ -142,7 +142,8 @@ class TestCPython(unittest.TestCase):
             '(o: object, name: str, val: object)',
             '(source, filename, mode, flags, dont_inherit, optimize)',
             '(source, filename, mode, flags, dont_inherit)',
-            '(source, filename, mode, flags, dont_inherit, optimize, _feature_version=-1)'
+            '(source, filename, mode, flags, dont_inherit, optimize, _feature_version=-1)',
+            '(source, filename, mode, flags, dont_inherit, optimize, _feature_version)',
         )  # args
 
         t = self.assert_in('setattr' , tip)

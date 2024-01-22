@@ -134,6 +134,7 @@ class PyDBAdditionalThreadInfo(object):
 
 
 _set_additional_thread_info_lock = ForkSafeLock()
+_next_additional_info = [PyDBAdditionalThreadInfo()]
 
 
 def set_additional_thread_info(thread):
@@ -145,9 +146,19 @@ def set_additional_thread_info(thread):
         with _set_additional_thread_info_lock:
             # If it's not there, set it within a lock to avoid any racing
             # conditions.
-            additional_info = getattr(thread, 'additional_info', None)
+            try:
+                additional_info = thread.additional_info
+            except:
+                additional_info = None
+
             if additional_info is None:
-                additional_info = PyDBAdditionalThreadInfo()
-            thread.additional_info = additional_info
+                # Note: don't call PyDBAdditionalThreadInfo constructor at this
+                # point as it can piggy-back into the debugger which could
+                # get here again, rather get the global ref which was pre-created
+                # and add a new entry only after we set thread.additional_info.
+                additional_info = _next_additional_info[0]
+                thread.additional_info = additional_info
+                del _next_additional_info[:]
+                _next_additional_info.append(PyDBAdditionalThreadInfo())
 
     return additional_info

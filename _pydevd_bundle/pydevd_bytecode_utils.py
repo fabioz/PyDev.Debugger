@@ -6,7 +6,7 @@ Note: not importable from Python 2.
 
 from _pydev_bundle import pydev_log
 from types import CodeType
-from _pydevd_frame_eval.vendored.bytecode.instr import _Variable
+from _pydevd_frame_eval.vendored.bytecode.instr import _Variable, Label
 from _pydevd_frame_eval.vendored import bytecode
 from _pydevd_frame_eval.vendored.bytecode import cfg as bytecode_cfg
 import dis
@@ -15,9 +15,12 @@ import opcode as _opcode
 from _pydevd_bundle.pydevd_constants import KeyifyList, DebugInfoHolder, IS_PY311_OR_GREATER
 from bisect import bisect
 from collections import deque
+import traceback
 
 # When True, throws errors on unknown bytecodes, when False, ignore those as if they didn't change the stack.
 STRICT_MODE = False
+
+GO_INTO_INNER_CODES = True
 
 DEBUG = False
 
@@ -54,11 +57,17 @@ _COMP_OP_MAP = {
 
 
 class Target(object):
-    __slots__ = ['arg', 'lineno', 'offset', 'children_targets']
+    __slots__ = ['arg', 'lineno', 'endlineno', 'startcol', 'endcol', 'offset', 'children_targets']
 
-    def __init__(self, arg, lineno, offset, children_targets=()):
+    def __init__(self, arg, lineno, offset, children_targets=(),
+        # These are optional (only Python 3.11 onwards).
+        endlineno=-1, startcol=-1, endcol=-1):
         self.arg = arg
         self.lineno = lineno
+        self.endlineno = endlineno
+        self.startcol = startcol
+        self.endcol = endcol
+
         self.offset = offset
         self.children_targets = children_targets
 
@@ -129,6 +138,10 @@ class _StackInterpreter(object):
             name = name.co_qualname  # Note: only available for Python 3.11
         if isinstance(name, _Variable):
             name = name.name
+        if isinstance(name, tuple):
+            # Load attr in Python 3.12 comes with (bool, name)
+            if len(name) == 2 and isinstance(name[0], bool) and isinstance(name[1], str):
+                name = name[1]
 
         if not isinstance(name, str):
             return None
@@ -205,7 +218,7 @@ class _StackInterpreter(object):
             pass  # Ignore if we can't identify a name
         elif call_name in ('<listcomp>', '<genexpr>', '<setcomp>', '<dictcomp>'):
             code_obj = self.func_name_id_to_code_object[_TargetIdHashable(func_name_instr)]
-            if code_obj is not None:
+            if code_obj is not None and GO_INTO_INNER_CODES:
                 children_targets = _get_smart_step_into_targets(code_obj)
                 if children_targets:
                     # i.e.: we have targets inside of a <listcomp> or <genexpr>.
@@ -308,6 +321,9 @@ class _StackInterpreter(object):
     def on_LOAD_FAST(self, instr):
         self._stack.append(instr)
 
+    on_LOAD_FAST_AND_CLEAR = on_LOAD_FAST
+    on_LOAD_FAST_CHECK = on_LOAD_FAST
+
     def on_LOAD_ASSERTION_ERROR(self, instr):
         self._stack.append(instr)
 
@@ -321,8 +337,43 @@ class _StackInterpreter(object):
         func_name_instr = self._stack.pop()
         self._handle_call_from_instr(func_name_instr, instr)
 
+    def on_CALL(self, instr):
+        # pop the actual args
+        for _ in range(instr.arg):
+            self._stack.pop()
+
+        func_name_instr = self._stack.pop()
+        if self._getcallname(func_name_instr) is None:
+            func_name_instr = self._stack.pop()
+
+        if self._stack:
+            peeked = self._stack[-1]
+            if peeked.name == 'PUSH_NULL':
+                self._stack.pop()
+
+        self._handle_call_from_instr(func_name_instr, instr)
+
+    def on_CALL_INTRINSIC_1(self, instr):
+        try:
+            func_name_instr = self._stack.pop()
+        except IndexError:
+            return
+
+        if self._stack:
+            peeked = self._stack[-1]
+            if peeked.name == 'PUSH_NULL':
+                self._stack.pop()
+
+        self._handle_call_from_instr(func_name_instr, instr)
+
     def on_PUSH_NULL(self, instr):
         self._stack.append(instr)
+
+    def on_KW_NAMES(self, instr):
+        return
+
+    def on_RETURN_CONST(self, instr):
+        return
 
     def on_CALL_FUNCTION(self, instr):
         arg = instr.arg
@@ -401,9 +452,9 @@ class _StackInterpreter(object):
         func_name_instr = self._stack.pop()
         self._handle_call_from_instr(func_name_instr, instr)
 
-    on_YIELD_VALUE = _no_stack_change
     on_GET_AITER = _no_stack_change
     on_GET_ANEXT = _no_stack_change
+    on_END_FOR = _no_stack_change
     on_END_ASYNC_FOR = _no_stack_change
     on_BEFORE_ASYNC_WITH = _no_stack_change
     on_SETUP_ASYNC_WITH = _no_stack_change
@@ -434,6 +485,13 @@ class _StackInterpreter(object):
             self._stack.pop()
         except IndexError:
             return
+
+    def on_SWAP(self, instr):
+        i = instr.arg
+        try:
+            self._stack[-i], self._stack[-1] = self._stack[-1], self._stack[-i]
+        except:
+            pass
 
     def on_ROT_TWO(self, instr):
         try:
@@ -520,6 +578,7 @@ class _StackInterpreter(object):
             self.on_POP_TOP(instr)  # value
         self._stack.append(instr)
 
+    on_YIELD_VALUE = on_POP_TOP
     on_RETURN_VALUE = on_POP_TOP
     on_POP_JUMP_IF_FALSE = on_POP_TOP
     on_POP_JUMP_IF_TRUE = on_POP_TOP
@@ -575,6 +634,8 @@ class _StackInterpreter(object):
 
     on_POP_BLOCK = _no_stack_change
     on_JUMP_FORWARD = _no_stack_change
+    on_JUMP_BACKWARD = _no_stack_change
+    on_JUMP_BACKWARD_NO_INTERRUPT = _no_stack_change
     on_POP_EXCEPT = _no_stack_change
     on_SETUP_EXCEPT = _no_stack_change
     on_WITH_EXCEPT_START = _no_stack_change
@@ -662,6 +723,7 @@ class _StackInterpreter(object):
     # some evaluation.
     on_PRINT_EXPR = on_POP_TOP
 
+    on_LABEL = _no_stack_change
     on_UNARY_POSITIVE = _no_stack_change
     on_UNARY_NEGATIVE = _no_stack_change
     on_UNARY_NOT = _no_stack_change
@@ -685,23 +747,29 @@ def _get_smart_step_into_targets(code):
             print('\nStart block----')
         stack = _StackInterpreter(block)
         for instr in block:
+            if isinstance(instr, (Label,)):
+                # No name for these
+                continue
             try:
                 func_name = 'on_%s' % (instr.name,)
                 func = getattr(stack, func_name, None)
-
-                if DEBUG:
-                    if instr.name != 'CACHE':  # Filter the ones we don't want to see.
-                        print('\nWill handle: ', instr, '>>', stack._getname(instr), '<<')
-                        print('Current stack:')
-                        for entry in stack._stack:
-                            print('    arg:', stack._getname(entry), '(', entry, ')')
 
                 if func is None:
                     if STRICT_MODE:
                         raise AssertionError('%s not found.' % (func_name,))
                     else:
+                        if DEBUG:
+                            print('Skipping: %s.' % (func_name,))
+
                         continue
                 func(instr)
+
+                if DEBUG:
+                    if instr.name != 'CACHE':  # Filter the ones we don't want to see.
+                        print('\nHandled: ', instr, '>>', stack._getname(instr), '<<')
+                        print('New stack:')
+                        for entry in stack._stack:
+                            print('    arg:', stack._getname(entry), '(', entry, ')')
             except:
                 if STRICT_MODE:
                     raise  # Error in strict mode.
@@ -717,6 +785,8 @@ def _get_smart_step_into_targets(code):
         # step into from stepping into properties).
         # ret.extend(stack.load_attrs.values())
 
+        if DEBUG:
+            print('\nEnd block----')
     return ret
 
 
@@ -725,12 +795,15 @@ def _get_smart_step_into_targets(code):
 # to inspect the parent frame for frame.f_lasti to know where we actually are (as the
 # caller name may not always match the new frame name).
 class Variant(object):
-    __slots__ = ['name', 'is_visited', 'line', 'offset', 'call_order', 'children_variants', 'parent']
+    __slots__ = ['name', 'is_visited', 'line', 'offset', 'call_order', 'children_variants', 'parent', 'endlineno', 'startcol', 'endcol']
 
-    def __init__(self, name, is_visited, line, offset, call_order, children_variants=None):
+    def __init__(self, name, is_visited, line, offset, call_order, children_variants=None, endlineno=-1, startcol=-1, endcol=-1):
         self.name = name
         self.is_visited = is_visited
         self.line = line
+        self.endlineno = endlineno
+        self.startcol = startcol
+        self.endcol = endcol
         self.offset = offset
         self.call_order = call_order
         self.children_variants = children_variants
@@ -759,7 +832,7 @@ class Variant(object):
                 continue
 
             try:
-                ret.append('%s: %s' % (s, getattr(self, s)))
+                ret.append('%s= %s' % (s, getattr(self, s)))
             except AttributeError:
                 ret.append('%s: <not set>' % (s,))
         return 'Variant(%s)' % ', '.join(ret)
@@ -767,7 +840,7 @@ class Variant(object):
     __str__ = __repr__
 
 
-def _convert_target_to_variant(target, start_line, end_line, call_order_cache, lasti, base):
+def _convert_target_to_variant(target, start_line, end_line, call_order_cache: dict, lasti:int, base:int):
     name = target.arg
     if not isinstance(name, str):
         return
@@ -787,7 +860,18 @@ def _convert_target_to_variant(target, start_line, end_line, call_order_cache, l
             _convert_target_to_variant(child, start_line, end_line, call_order_cache, lasti, base)
             for child in target.children_targets]
 
-    return Variant(name, is_visited, target.lineno - base, target.offset, call_order, children_variants)
+    return Variant(
+        name,
+        is_visited,
+        target.lineno - base,
+        target.offset,
+        call_order,
+        children_variants,
+        # Only really matter in Python 3.11
+        target.endlineno - base if target.endlineno >= 0 else -1,
+        target.startcol,
+        target.endcol,
+    )
 
 
 def calculate_smart_step_into_variants(frame, start_line, end_line, base=0):
@@ -801,6 +885,10 @@ def calculate_smart_step_into_variants(frame, start_line, end_line, base=0):
     :note: it's guaranteed that the offsets appear in order.
     :raise: :py:class:`RuntimeError` if failed to parse the bytecode or if dis cannot be used.
     """
+    if IS_PY311_OR_GREATER:
+        from . import pydevd_bytecode_utils_py311
+        return pydevd_bytecode_utils_py311.calculate_smart_step_into_variants(frame, start_line, end_line, base)
+
     variants = []
     code = frame.f_code
     lasti = frame.f_lasti

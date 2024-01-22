@@ -15,8 +15,8 @@ from setuptools import setup
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-IS_PY36_OR_GREATER = sys.version_info > (3, 6)
-TODO_PY311 = sys.version_info > (3, 11)
+IS_PY36_OR_GREATER = sys.version_info[:2] >= (3, 6)
+IS_PY311_ONWARDS = sys.version_info[:2] >= (3, 11)
 
 
 def process_args():
@@ -235,7 +235,7 @@ if target_pydevd_name is None:
     target_pydevd_name = extension_name
 build_extension("_pydevd_bundle", extension_name, target_pydevd_name, force_cython, extension_folder, True)
 
-if IS_PY36_OR_GREATER and not TODO_PY311:
+if IS_PY36_OR_GREATER and not IS_PY311_ONWARDS:
     extension_name = "pydevd_frame_evaluator"
     if target_frame_eval is None:
         target_frame_eval = extension_name

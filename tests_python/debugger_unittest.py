@@ -183,7 +183,7 @@ class IgnoreFailureError(RuntimeError):
 #=======================================================================================================================
 class ReaderThread(threading.Thread):
 
-    MESSAGES_TIMEOUT = 15
+    MESSAGES_TIMEOUT = 10
 
     def __init__(self, sock):
         threading.Thread.__init__(self)
@@ -688,6 +688,8 @@ class AbstractWriterThread(threading.Thread):
             'pydev debugger: New process is launching',
             'pydev debugger: To debug that process',
             '*** Multiprocess',
+            'WARNING: This is a development server. Do not use it in a production deployment',
+            'Press CTRL+C to quit',
             )):
             return True
 
@@ -1021,7 +1023,7 @@ class AbstractWriterThread(threading.Thread):
             if not isinstance(name, (list, tuple, set)):
                 assert name == hit_name
             else:
-                assert hit_name in name
+                assert hit_name in name, 'Hit: %s not in %s' % (hit_name, name)
 
         self.log.append('End(1): wait_for_breakpoint_hit: %s' % (msg.original_xml,))
 

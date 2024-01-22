@@ -972,21 +972,27 @@ def internal_get_smart_step_into_variants(dbg, seq, thread_id, frame_id, start_l
                 for child_variant in variant.children_variants:
                     # If there are child variants, the current one is just an intermediary, so,
                     # just create variants for the child (notifying properly about the parent too).
-                    xml += '<variant name="%s" isVisited="%s" line="%s" offset="%s" childOffset="%s" callOrder="%s"/>' % (
+                    xml += '<variant name="%s" isVisited="%s" line="%s" offset="%s" childOffset="%s" callOrder="%s" endlineno="%s" startcol="%s" endcol="%s"/>' % (
                         quote(child_variant.name),
                         str(child_variant.is_visited).lower(),
                         child_variant.line,
                         variant.offset,
                         child_variant.offset,
                         child_variant.call_order,
+                        variant.endlineno,
+                        variant.startcol,
+                        variant.endcol,
                     )
             else:
-                xml += '<variant name="%s" isVisited="%s" line="%s" offset="%s" childOffset="-1" callOrder="%s"/>' % (
+                xml += '<variant name="%s" isVisited="%s" line="%s" offset="%s" childOffset="-1" callOrder="%s" endlineno="%s" startcol="%s" endcol="%s"/>' % (
                     quote(variant.name),
                     str(variant.is_visited).lower(),
                     variant.line,
                     variant.offset,
                     variant.call_order,
+                    variant.endlineno,
+                    variant.startcol,
+                    variant.endcol,
                 )
 
         xml += "</xml>"
