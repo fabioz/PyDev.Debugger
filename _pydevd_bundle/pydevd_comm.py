@@ -98,7 +98,8 @@ from _pydevd_bundle import pydevd_vm_type
 import sys
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, \
-    notify_about_gevent_if_needed, isinstance_checked, ScopeRequest, getattr_checked, Timer
+    notify_about_gevent_if_needed, isinstance_checked, ScopeRequest, getattr_checked, Timer, \
+    is_current_thread_main_thread
 from _pydev_bundle import pydev_log, fsnotify
 from _pydev_bundle.pydev_log import exception as pydev_log_exception
 from _pydev_bundle import _pydev_completer
@@ -1737,24 +1738,39 @@ class InternalConsoleExec(InternalThreadCommand):
         self.frame_id = frame_id
         self.expression = expression
 
-    def do_it(self, dbg):
-        ''' Converts request into python variable '''
+    def init_matplotlib_in_debug_console(self, py_db):
+        # import hook and patches for matplotlib support in debug console
+        from _pydev_bundle.pydev_import_hook import import_hook_manager
+        if is_current_thread_main_thread():
+            for module in list(py_db.mpl_modules_for_patching):
+                import_hook_manager.add_module_name(module, py_db.mpl_modules_for_patching.pop(module))
+
+    def do_it(self, py_db):
+        if not py_db.mpl_hooks_in_debug_console and not py_db.gui_in_use:
+            # add import hooks for matplotlib patches if only debug console was started
+            try:
+                self.init_matplotlib_in_debug_console(py_db)
+                py_db.gui_in_use = True
+            except:
+                pydev_log.debug("Matplotlib support in debug console failed", traceback.format_exc())
+            py_db.mpl_hooks_in_debug_console = True
+
         try:
             try:
-                # don't trace new threads created by console command
+                # Don't trace new threads created by console command.
                 disable_trace_thread_modules()
 
-                result = pydevconsole.console_exec(self.thread_id, self.frame_id, self.expression, dbg)
+                result = pydevconsole.console_exec(self.thread_id, self.frame_id, self.expression, py_db)
                 xml = "<xml>"
                 xml += pydevd_xml.var_to_xml(result, "")
                 xml += "</xml>"
-                cmd = dbg.cmd_factory.make_evaluate_expression_message(self.sequence, xml)
-                dbg.writer.add_command(cmd)
+                cmd = py_db.cmd_factory.make_evaluate_expression_message(self.sequence, xml)
+                py_db.writer.add_command(cmd)
             except:
                 exc = get_exception_traceback_str()
                 sys.stderr.write('%s\n' % (exc,))
-                cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error evaluating console expression " + exc)
-                dbg.writer.add_command(cmd)
+                cmd = py_db.cmd_factory.make_error_message(self.sequence, "Error evaluating console expression " + exc)
+                py_db.writer.add_command(cmd)
         finally:
             enable_trace_thread_modules()
 

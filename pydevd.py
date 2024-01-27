@@ -1578,13 +1578,6 @@ class PyDB(object):
         if _global_redirect_stderr_to_server:
             _init_stderr_redirect()
 
-    def init_matplotlib_in_debug_console(self):
-        # import hook and patches for matplotlib support in debug console
-        from _pydev_bundle.pydev_import_hook import import_hook_manager
-        if is_current_thread_main_thread():
-            for module in list(self.mpl_modules_for_patching):
-                import_hook_manager.add_module_name(module, self.mpl_modules_for_patching.pop(module))
-
     def init_gui_support(self):
         if self._installed_gui_support:
             return
@@ -1788,37 +1781,27 @@ class PyDB(object):
 
                     try:
                         while True:
-                            int_cmd = queue.get(False)
-
-                            if not self.mpl_hooks_in_debug_console and isinstance(int_cmd, InternalConsoleExec) and not self.gui_in_use:
-                                # add import hooks for matplotlib patches if only debug console was started
-                                try:
-                                    self.init_matplotlib_in_debug_console()
-                                    self.gui_in_use = True
-                                except:
-                                    pydev_log.debug("Matplotlib support in debug console failed", traceback.format_exc())
-                                self.mpl_hooks_in_debug_console = True
-
-                            if int_cmd.can_be_executed_by(curr_thread_id):
-                                cmds_to_execute.append(int_cmd)
+                            internal_cmd = queue.get(False)
+                            if internal_cmd.can_be_executed_by(curr_thread_id):
+                                cmds_to_execute.append(internal_cmd)
                             else:
-                                pydev_log.verbose("NOT processing internal command: %s ", int_cmd)
-                                cmds_to_add_back.append(int_cmd)
+                                pydev_log.verbose("NOT processing internal command: %s ", internal_cmd)
+                                cmds_to_add_back.append(internal_cmd)
 
                     except _queue.Empty:  # @UndefinedVariable
                         # this is how we exit
-                        for int_cmd in cmds_to_add_back:
-                            queue.put(int_cmd)
+                        for internal_cmd in cmds_to_add_back:
+                            queue.put(internal_cmd)
 
         if dispose:
             # Note: must be called without the main lock to avoid deadlocks.
             self.dispose_and_kill_all_pydevd_threads()
         else:
             # Actually execute the commands without the main lock!
-            for int_cmd in cmds_to_execute:
-                pydev_log.verbose("processing internal command: %s", int_cmd)
+            for internal_cmd in cmds_to_execute:
+                pydev_log.verbose("processing internal command: %s", internal_cmd)
                 try:
-                    int_cmd.do_it(self)
+                    internal_cmd.do_it(self)
                 except:
                     pydev_log.exception('Error processing internal command.')
 
