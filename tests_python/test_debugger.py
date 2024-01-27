@@ -4635,6 +4635,38 @@ def test_debugger_hide_pydevd_threads(case_setup, pyfile):
         writer.write_run_thread(hit.thread_id)
         writer.finished_ok = True
 
+
+def test_multiple_threads_same_code(case_setup, pyfile):
+
+    with case_setup.test_file('_debugger_case_multiple_threads_same_code.py') as writer:
+            line = writer.get_line_index_with_content('break on main')
+            bpid_main = writer.write_add_breakpoint(line)
+            writer.write_make_initial_run()
+            hit_main = writer.wait_for_breakpoint_hit(line=line)
+
+            line = writer.get_line_index_with_content('break on thread')
+            bpid_thread = writer.write_add_breakpoint(line)
+
+            hit_thread = writer.wait_for_breakpoint_hit(line=line)
+            writer.write_run_thread(hit_thread.thread_id)
+
+            writer.write_step_return(hit_thread.thread_id)
+            hit_thread = writer.wait_for_breakpoint_hit(REASON_STEP_RETURN)
+
+            # Multiple steps in that thread.
+            for _i in range(2):
+                writer.write_step_over(hit_thread.thread_id)
+                hit_thread = writer.wait_for_breakpoint_hit((REASON_STEP_OVER, REASON_STOP_ON_BREAKPOINT))
+
+            # Remove breakpoint from thread so that it can finish cleanly.
+            writer.write_remove_breakpoint(bpid_thread)
+            writer.write_run_thread(hit_thread.thread_id)
+
+            # Ok, resume main
+            writer.write_run_thread(hit_main.thread_id)
+
+            writer.finished_ok = True
+
 # Jython needs some vars to be set locally.
 # set JAVA_HOME=c:\bin\jdk1.8.0_172
 # set PATH=%PATH%;C:\bin\jython2.7.0\bin

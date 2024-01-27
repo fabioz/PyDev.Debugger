@@ -48,7 +48,7 @@ from _pydevd_bundle import pydevd_io, pydevd_vm_type, pydevd_defaults
 from _pydevd_bundle import pydevd_utils
 from _pydevd_bundle import pydevd_runpy
 from _pydev_bundle.pydev_console_utils import DebugConsoleStdIn
-from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
+from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info, remove_additional_info
 from _pydevd_bundle.pydevd_breakpoints import ExceptionBreakpoint, get_exception_breakpoint
 from _pydevd_bundle.pydevd_comm_constants import (CMD_THREAD_SUSPEND, CMD_STEP_INTO, CMD_SET_BREAK,
     CMD_STEP_INTO_MY_CODE, CMD_STEP_OVER, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE,
@@ -1696,6 +1696,7 @@ class PyDB(object):
             was_notified = additional_info.pydev_notify_kill
             if not was_notified:
                 additional_info.pydev_notify_kill = True
+            remove_additional_info(additional_info)
 
         self.writer.add_command(self.cmd_factory.make_thread_killed_message(thread_id))
 
@@ -2116,30 +2117,35 @@ class PyDB(object):
 
     def _do_wait_suspend(self, thread, frame, event, arg, trace_suspend_type, from_this_thread, frames_tracker):
         info = thread.additional_info
-        info.step_in_initial_location = None
-        keep_suspended = False
+        try:
+            info.is_in_wait_loop = True
+            info.update_stepping_info()
+            info.step_in_initial_location = None
+            keep_suspended = False
 
-        with self._main_lock:  # Use lock to check if suspended state changed
-            activate_gui = info.pydev_state == STATE_SUSPEND and not self.pydb_disposed
-
-        in_main_thread = is_current_thread_main_thread()
-        if activate_gui and in_main_thread:
-            # before every stop check if matplotlib modules were imported inside script code
-            # or some GUI event loop needs to be activated
-            self._activate_gui_if_needed()
-
-        while True:
             with self._main_lock:  # Use lock to check if suspended state changed
-                if info.pydev_state != STATE_SUSPEND or (self.pydb_disposed and not self.terminate_requested):
-                    # Note: we can't exit here if terminate was requested while a breakpoint was hit.
-                    break
+                activate_gui = info.pydev_state == STATE_SUSPEND and not self.pydb_disposed
 
-            if in_main_thread and self.gui_in_use:
-                # call input hooks if only GUI is in use
-                self._call_input_hook()
+            in_main_thread = is_current_thread_main_thread()
+            if activate_gui and in_main_thread:
+                # before every stop check if matplotlib modules were imported inside script code
+                # or some GUI event loop needs to be activated
+                self._activate_gui_if_needed()
+            while True:
+                with self._main_lock:  # Use lock to check if suspended state changed
+                    if info.pydev_state != STATE_SUSPEND or (self.pydb_disposed and not self.terminate_requested):
+                        # Note: we can't exit here if terminate was requested while a breakpoint was hit.
+                        break
 
-            self.process_internal_commands()
-            time.sleep(0.01)
+                if in_main_thread and self.gui_in_use:
+                    # call input hooks if only GUI is in use
+                    self._call_input_hook()
+
+                self.process_internal_commands()
+                time.sleep(0.01)
+        finally:
+            info.is_in_wait_loop = False
+            info.update_stepping_info()
 
         self.cancel_async_evaluation(get_current_thread_id(thread), str(id(frame)))
 
@@ -2245,6 +2251,7 @@ class PyDB(object):
                 # print('Removing created frame: %s' % (frame_id,))
                 self.writer.add_command(self.cmd_factory.make_thread_killed_message(frame_id))
 
+        info.update_stepping_info()
         return keep_suspended
 
     def do_stop_on_unhandled_exception(self, thread, frame, frames_byid, arg):
@@ -2445,14 +2452,12 @@ class PyDB(object):
     def patch_threads(self):
         if PYDEVD_USE_SYS_MONITORING:
             pydevd_sys_monitoring.start_monitoring(all_threads=True)
-            from _pydev_bundle.pydev_monkey import patch_thread_modules
-            patch_thread_modules()
-            return
-        try:
-            # not available in jython!
-            threading.settrace(self.trace_dispatch)  # for all future threads
-        except:
-            pass
+        else:
+            try:
+                # not available in jython!
+                threading.settrace(self.trace_dispatch)  # for all future threads
+            except:
+                pass
 
         from _pydev_bundle.pydev_monkey import patch_thread_modules
         patch_thread_modules()
@@ -3047,6 +3052,7 @@ def _locked_settrace(
             additional_info.pydev_step_cmd = CMD_STEP_OVER
             additional_info.pydev_step_stop = stop_at_frame
             additional_info.suspend_type = PYTHON_SUSPEND
+            additional_info.update_stepping_info()
             if PYDEVD_USE_SYS_MONITORING:
                 pydevd_sys_monitoring.update_monitor_events(suspend_requested=True)
                 py_db.set_trace_for_frame_and_parents(t.ident, stop_at_frame)

@@ -616,11 +616,12 @@ class DebuggerRunner(object):
 
     def fail_with_message(self, msg, stdout, stderr, writerThread):
         log_contents = ''
-        for f in pydev_log.list_log_files(self.pydevd_debug_file):
-            if os.path.exists(f):
-                with open(f, 'r') as stream:
-                    log_contents += '\n-------------------- %s ------------------\n\n' % (f,)
-                    log_contents += stream.read()
+        if self.pydevd_debug_file:
+            for f in pydev_log.list_log_files(self.pydevd_debug_file):
+                if os.path.exists(f):
+                    with open(f, 'r') as stream:
+                        log_contents += '\n-------------------- %s ------------------\n\n' % (f,)
+                        log_contents += stream.read()
         msg += ("\n\n===========================\nStdout: \n" + ''.join(stdout) +
             "\n\n===========================\nStderr:" + ''.join(stderr) +
             "\n\n===========================\nWriter Log:\n" + '\n'.join(getattr(writerThread, 'log', [])) +

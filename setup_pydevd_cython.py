@@ -17,6 +17,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 IS_PY36_OR_GREATER = sys.version_info[:2] >= (3, 6)
 IS_PY311_ONWARDS = sys.version_info[:2] >= (3, 11)
+IS_PY312_ONWARDS = sys.version_info[:2] >= (3, 12)
 
 
 def process_args():
@@ -240,6 +241,12 @@ if IS_PY36_OR_GREATER and not IS_PY311_ONWARDS:
     if target_frame_eval is None:
         target_frame_eval = extension_name
     build_extension("_pydevd_frame_eval", extension_name, target_frame_eval, force_cython, extension_folder, True, template=True)
+
+if IS_PY312_ONWARDS:
+    extension_name = "_pydevd_sys_monitoring_cython"
+    if target_frame_eval is None:
+        target_frame_eval = extension_name
+    build_extension("_pydevd_sys_monitoring", extension_name, target_frame_eval, force_cython, extension_folder, True)
 
 if extension_folder:
     os.chdir(extension_folder)

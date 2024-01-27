@@ -676,6 +676,7 @@ def internal_step_in_thread(py_db, thread_id, cmd_id, set_additional_thread_info
         info.pydev_step_cmd = cmd_id
         info.pydev_step_stop = None
         info.pydev_state = STATE_RUN
+        info.update_stepping_info()
 
     if py_db.stepping_resumes_all_threads:
         resume_threads('*', except_thread=thread_to_step)
@@ -691,6 +692,7 @@ def internal_smart_step_into(py_db, thread_id, offset, child_offset, set_additio
         info.pydev_smart_parent_offset = int(offset)
         info.pydev_smart_child_offset = int(child_offset)
         info.pydev_state = STATE_RUN
+        info.update_stepping_info()
 
     if py_db.stepping_resumes_all_threads:
         resume_threads('*', except_thread=thread_to_step)
@@ -726,6 +728,7 @@ class InternalSetNextStatementThread(InternalThreadCommand):
             info.pydev_smart_parent_offset = -1
             info.pydev_smart_child_offset = -1
             info.pydev_state = STATE_RUN
+            info.update_stepping_info()
 
 
 @silence_warnings_decorator
