@@ -984,6 +984,7 @@ class PyDBFrame:
                             info.pydev_original_step_cmd = -1
                             info.pydev_step_cmd = -1
                             info.pydev_state = STATE_RUN
+                            info.update_stepping_info()
 
                 # if we are quitting, let's stop the tracing
                 if py_db.quitting:

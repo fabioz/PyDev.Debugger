@@ -185,17 +185,32 @@ def test_case_breakpoint_condition_exc(case_setup, skip_suspend_on_breakpoint_ex
             msg, ctx = writer.wait_for_output()
             check_error_msg(msg.replace('&gt;', '>'))
 
-        if expect_suspend:
-            writer.wait_for_message(CMD_GET_BREAKPOINT_EXCEPTION)
-            hit = writer.wait_for_breakpoint_hit()
+        def wait_for_suspend():
+
+            def accept_message(msg):
+                if msg.startswith('%s\t' % CMD_GET_BREAKPOINT_EXCEPTION) or \
+                    ('stop_reason="%s"' % REASON_STOP_ON_BREAKPOINT) in msg:
+                    return True
+                return False
+
+            # Order is not guaranteed.
+            msg1 = writer.wait_for_message(accept_message)
+            msg2 = writer.wait_for_message(accept_message)
+            try:
+                hitmsg = msg1
+                msg1.thread['stop_reason']
+            except:
+                hitmsg = msg2
+            hit = writer._get_stack_as_hit(hitmsg)
             writer.write_run_thread(hit.thread_id)
+
+        if expect_suspend:
+            wait_for_suspend()
 
         if IS_JYTHON:
             # Jython will break twice.
             if expect_suspend:
-                writer.wait_for_message(CMD_GET_BREAKPOINT_EXCEPTION)
-                hit = writer.wait_for_breakpoint_hit()
-                writer.write_run_thread(hit.thread_id)
+                wait_for_suspend()
 
         hit = writer.wait_for_breakpoint_hit()
         thread_id = hit.thread_id
@@ -1736,6 +1751,7 @@ def test_unhandled_exceptions_get_stack(case_setup_unhandled_exceptions):
 
 @pytest.mark.skipif(not IS_PY36_OR_GREATER, reason='Requires Python 3.')
 def test_case_throw_exc_reason_xml(case_setup):
+    from _pydevd_bundle.pydevd_comm_constants import CMD_SEND_CURR_EXCEPTION_TRACE
 
     def check_test_suceeded_msg(self, stdout, stderr):
         return 'TEST SUCEEDED' in ''.join(stderr)
@@ -1755,9 +1771,26 @@ def test_case_throw_exc_reason_xml(case_setup):
         writer.write_add_exception_breakpoint_with_policy('Exception', "0", "1", "0")
         writer.write_make_initial_run()
 
-        el = writer.wait_for_curr_exc_stack()
+        def accept_message(msg):
+            if msg.startswith('%s\t' % CMD_SEND_CURR_EXCEPTION_TRACE) or \
+                ('stop_reason="%s"' % REASON_UNCAUGHT_EXCEPTION) in msg:
+                return True
+            return False
+
+        # Order is not guaranteed.
+        msg1 = writer.wait_for_message(accept_message)
+        msg2 = writer.wait_for_message(accept_message)
+        try:
+            hitmsg = msg1
+            exctracemsg = msg2
+            msg1.thread['stop_reason']
+        except:
+            hitmsg = msg2
+            exctracemsg = msg1
+        hit = writer._get_stack_as_hit(hitmsg)
+
         name_and_lines = []
-        for frame in el.thread.frame:
+        for frame in exctracemsg.thread.frame:
             name_and_lines.append((frame['name'], frame['line']))
 
         assert name_and_lines == [
@@ -1770,7 +1803,6 @@ def test_case_throw_exc_reason_xml(case_setup):
             ('[Chained Exc: TEST SUCEEDED] method2', '2'),
         ]
 
-        hit = writer.wait_for_breakpoint_hit(REASON_UNCAUGHT_EXCEPTION)
         writer.write_get_thread_stack(hit.thread_id)
 
         writer.write_run_thread(hit.thread_id)
@@ -4634,6 +4666,38 @@ def test_debugger_hide_pydevd_threads(case_setup, pyfile):
         hit = writer.wait_for_breakpoint_hit(line=line)
         writer.write_run_thread(hit.thread_id)
         writer.finished_ok = True
+
+
+def test_multiple_threads_same_code(case_setup, pyfile):
+
+    with case_setup.test_file('_debugger_case_multiple_threads_same_code.py') as writer:
+            line = writer.get_line_index_with_content('break on main')
+            bpid_main = writer.write_add_breakpoint(line)
+            writer.write_make_initial_run()
+            hit_main = writer.wait_for_breakpoint_hit(line=line)
+
+            line = writer.get_line_index_with_content('break on thread')
+            bpid_thread = writer.write_add_breakpoint(line)
+
+            hit_thread = writer.wait_for_breakpoint_hit(line=line)
+            writer.write_run_thread(hit_thread.thread_id)
+
+            writer.write_step_return(hit_thread.thread_id)
+            hit_thread = writer.wait_for_breakpoint_hit(REASON_STEP_RETURN)
+
+            # Multiple steps in that thread.
+            for _i in range(2):
+                writer.write_step_over(hit_thread.thread_id)
+                hit_thread = writer.wait_for_breakpoint_hit((REASON_STEP_OVER, REASON_STOP_ON_BREAKPOINT))
+
+            # Remove breakpoint from thread so that it can finish cleanly.
+            writer.write_remove_breakpoint(bpid_thread)
+            writer.write_run_thread(hit_thread.thread_id)
+
+            # Ok, resume main
+            writer.write_run_thread(hit_main.thread_id)
+
+            writer.finished_ok = True
 
 # Jython needs some vars to be set locally.
 # set JAVA_HOME=c:\bin\jdk1.8.0_172

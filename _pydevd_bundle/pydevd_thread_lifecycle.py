@@ -43,7 +43,7 @@ def mark_thread_suspended(thread, stop_reason: int, original_step_cmd: int=-1):
 
     # Mark as suspended as the last thing.
     info.pydev_state = STATE_SUSPEND
-
+    info.update_stepping_info()
     return info
 
 
@@ -53,6 +53,7 @@ def internal_run_thread(thread, set_additional_thread_info):
     info.pydev_step_cmd = -1
     info.pydev_step_stop = None
     info.pydev_state = STATE_RUN
+    info.update_stepping_info()
 
 
 def resume_threads(thread_id, except_thread=None):

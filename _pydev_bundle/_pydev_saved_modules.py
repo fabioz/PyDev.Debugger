@@ -77,6 +77,9 @@ Please rename this file/folder so that the original module from the standard lib
 
 with VerifyShadowedImport('threading') as verify_shadowed:
     import threading;    verify_shadowed.check(threading, ['Thread', 'settrace', 'setprofile', 'Lock', 'RLock', 'current_thread'])
+    ThreadingEvent = threading.Event
+    ThreadingLock = threading.Lock
+    threading_current_thread = threading.current_thread
 
 with VerifyShadowedImport('time') as verify_shadowed:
     import time;    verify_shadowed.check(time, ['sleep', 'time', 'mktime'])

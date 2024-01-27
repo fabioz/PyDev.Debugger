@@ -167,13 +167,15 @@ def test_disabling_code(with_monitoring):
     assert executed == [('start', 'method', 0), ('line', 'method', method.__code__.co_firstlineno + 1)]
 
     del executed[:]
+
+    # Check: if disable once, even on a new thread we won't get notifications!
     t = threading.Thread(target=method)
     t.start()
     t.join()
 
-    # If disable once, even on a new thread we won't get notifications
     assert not executed
 
+    # Unless restart_events is called...
     monitor.restart_events()
     t = threading.Thread(target=method)
     t.start()

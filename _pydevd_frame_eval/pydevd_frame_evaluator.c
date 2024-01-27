@@ -1524,6 +1524,7 @@ struct __pyx_obj_18_pydevd_frame_eval_22pydevd_frame_evaluator__CacheValue;
  */
 struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo {
   PyObject_HEAD
+  struct __pyx_vtabstruct_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo *__pyx_vtab;
   int pydev_state;
   PyObject *pydev_step_stop;
   int pydev_original_step_cmd;
@@ -1550,6 +1551,8 @@ struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo {
   PyObject *pydev_smart_step_into_variants;
   PyObject *target_id_to_smart_step_into_variant;
   int pydev_use_scoped_step_frame;
+  PyObject *weak_thread;
+  int is_in_wait_loop;
 };
 
 
@@ -1623,6 +1626,21 @@ struct __pyx_obj_18_pydevd_frame_eval_22pydevd_frame_evaluator__CacheValue {
   PyObject *code_lines_as_set;
 };
 
+
+
+/* "_pydevd_bundle/pydevd_cython.pxd":1
+ * cdef class PyDBAdditionalThreadInfo:             # <<<<<<<<<<<<<<
+ *     cdef public int pydev_state
+ *     cdef public object pydev_step_stop # Actually, it's a frame or None
+ */
+
+struct __pyx_vtabstruct_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo {
+  PyObject *(*get_topmost_frame)(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo *, PyObject *, int __pyx_skip_dispatch);
+  PyObject *(*update_stepping_info)(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo *, int __pyx_skip_dispatch);
+  PyObject *(*_get_related_thread)(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo *, int __pyx_skip_dispatch);
+  int (*_is_stepping)(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo *, int __pyx_skip_dispatch);
+};
+static struct __pyx_vtabstruct_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo *__pyx_vtabptr_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo;
 
 
 /* "_pydevd_frame_eval/pydevd_frame_evaluator.pyx":24
@@ -19690,6 +19708,7 @@ static int __Pyx_modinit_type_import_code(void) {
   __pyx_t_1 = PyImport_ImportModule("_pydevd_bundle.pydevd_cython"); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo = __Pyx_ImportType_3_0_8(__pyx_t_1, "_pydevd_bundle.pydevd_cython", "PyDBAdditionalThreadInfo", sizeof(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo), __PYX_GET_STRUCT_ALIGNMENT_3_0_8(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo),__Pyx_ImportType_CheckSize_Warn_3_0_8); if (!__pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo) __PYX_ERR(2, 1, __pyx_L1_error)
+  __pyx_vtabptr_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo = (struct __pyx_vtabstruct_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo*)__Pyx_GetVtable(__pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo); if (unlikely(!__pyx_vtabptr_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo)) __PYX_ERR(2, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_RefNannyFinishContext();
   return 0;

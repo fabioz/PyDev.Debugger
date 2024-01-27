@@ -5,13 +5,10 @@ from __future__ import print_function
 # DO NOT edit manually!
 # DO NOT edit manually!
 from _pydevd_bundle.pydevd_constants import (STATE_RUN, PYTHON_SUSPEND, SUPPORT_GEVENT, ForkSafeLock,
-    _current_frames)
+    _current_frames, STATE_SUSPEND, get_global_debugger, get_thread_id)
 from _pydev_bundle import pydev_log
-# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
-pydev_log.debug("Using Cython speedups")
-# ELSE
-# from _pydevd_bundle.pydevd_frame import PyDBFrame
-# ENDIF
+from _pydev_bundle._pydev_saved_modules import threading
+import weakref
 
 version = 11
 
@@ -61,6 +58,10 @@ cdef class PyDBAdditionalThreadInfo:
 #         'target_id_to_smart_step_into_variant',
 # 
 #         'pydev_use_scoped_step_frame',
+# 
+#         'weak_thread',
+# 
+#         'is_in_wait_loop',
 #     ]
     # ENDIF
 
@@ -109,8 +110,61 @@ cdef class PyDBAdditionalThreadInfo:
         #
         # See: https://github.com/microsoft/debugpy/issues/869#issuecomment-1132141003
         self.pydev_use_scoped_step_frame = False
+        self.weak_thread = None
 
-    def get_topmost_frame(self, thread):
+        # Purpose: detect if this thread is suspended and actually in the wait loop
+        # at this time (otherwise it may be suspended but still didn't reach a point.
+        # to pause).
+        self.is_in_wait_loop = False
+
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+    cpdef object _get_related_thread(self):
+# ELSE
+#     def _get_related_thread(self):
+# ENDIF
+        if self.pydev_notify_kill:  # Already killed
+            return None
+
+        if self.weak_thread is None:
+            return None
+
+        thread = self.weak_thread()
+        if thread is None:
+            return False
+
+        if thread._is_stopped:
+            return None
+
+        if thread._ident is None:  # Can this happen?
+            pydev_log.critical('thread._ident is None in _get_related_thread!')
+            return None
+
+        if threading._active.get(thread._ident) is not thread:
+            return None
+
+        return thread
+
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+    cpdef bint _is_stepping(self):
+# ELSE
+#     def _is_stepping(self):
+# ENDIF
+        if self.pydev_state == STATE_RUN and self.pydev_step_cmd != -1:
+            # This means actually stepping in a step operation.
+            return True
+
+        if self.pydev_state == STATE_SUSPEND and self.is_in_wait_loop:
+            # This means stepping because it was suspended but still didn't
+            # reach a suspension point.
+            return True
+
+        return False
+
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+    cpdef get_topmost_frame(self, thread):
+# ELSE
+#     def get_topmost_frame(self, thread):
+# ENDIF
         '''
         Gets the topmost frame for the given thread. Note that it may be None
         and callers should remove the reference to the frame as soon as possible
@@ -118,7 +172,7 @@ cdef class PyDBAdditionalThreadInfo:
         '''
         # sys._current_frames(): dictionary with thread id -> topmost frame
         current_frames = _current_frames()
-        topmost_frame = current_frames.get(thread.ident)
+        topmost_frame = current_frames.get(thread._ident)
         if topmost_frame is None:
             # Note: this is expected for dummy threads (so, getting the topmost frame should be
             # treated as optional).
@@ -134,6 +188,13 @@ cdef class PyDBAdditionalThreadInfo:
 
         return topmost_frame
 
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+    cpdef update_stepping_info(self):
+# ELSE
+#     def update_stepping_info(self):
+# ENDIF
+        _update_stepping_info(self)
+
     def __str__(self):
         return 'State:%s Stop:%s Cmd: %s Kill:%s' % (
             self.pydev_state, self.pydev_step_stop, self.pydev_step_cmd, self.pydev_notify_kill)
@@ -143,7 +204,11 @@ _set_additional_thread_info_lock = ForkSafeLock()
 _next_additional_info = [PyDBAdditionalThreadInfo()]
 
 
-def set_additional_thread_info(thread):
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+cpdef set_additional_thread_info(thread):
+# ELSE
+# def set_additional_thread_info(thread):
+# ENDIF
     try:
         additional_info = thread.additional_info
         if additional_info is None:
@@ -164,10 +229,84 @@ def set_additional_thread_info(thread):
                 # and add a new entry only after we set thread.additional_info.
                 additional_info = _next_additional_info[0]
                 thread.additional_info = additional_info
+                additional_info.weak_thread = weakref.ref(thread)
+                add_additional_info(additional_info)
                 del _next_additional_info[:]
                 _next_additional_info.append(PyDBAdditionalThreadInfo())
 
     return additional_info
+
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+cdef set _all_infos
+cdef set _infos_stepping
+cdef object _update_infos_lock
+# ELSE
+# ENDIF
+
+
+_all_infos = set()
+_infos_stepping = set()
+_update_infos_lock = ForkSafeLock()
+
+
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+cdef _update_stepping_info(PyDBAdditionalThreadInfo info):
+# ELSE
+# def _update_stepping_info(info):
+# ENDIF
+    global _infos_stepping
+    global _all_infos
+
+    with _update_infos_lock:
+        # Removes entries that are no longer valid.
+        new_all_infos = set()
+        for info in _all_infos:
+            if info._get_related_thread() is not None:
+                new_all_infos.add(info)
+        _all_infos = new_all_infos
+
+        new_stepping = set()
+        for info in _all_infos:
+            if info._is_stepping():
+                new_stepping.add(info)
+        _infos_stepping = new_stepping
+
+    py_db = get_global_debugger()
+    if py_db is not None and not py_db.pydb_disposed:
+        thread = info.weak_thread()
+        if thread is not None:
+            thread_id = get_thread_id(thread)
+            _queue, event = py_db.get_internal_queue_and_event(thread_id)
+            event.set()
+
+
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+cpdef add_additional_info(PyDBAdditionalThreadInfo info):
+# ELSE
+# def add_additional_info(info):
+# ENDIF
+    with _update_infos_lock:
+        _all_infos.add(info)
+        if info._is_stepping():
+            _infos_stepping.add(info)
+
+
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+cpdef remove_additional_info(PyDBAdditionalThreadInfo info):
+# ELSE
+# def remove_additional_info(info):
+# ENDIF
+    with _update_infos_lock:
+        _all_infos.discard(info)
+        _infos_stepping.discard(info)
+
+
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+cpdef bint any_thread_stepping():
+# ELSE
+# def any_thread_stepping():
+# ENDIF
+    return bool(_infos_stepping)
 import linecache
 import os.path
 import re
@@ -1142,6 +1281,7 @@ cdef class PyDBFrame:
                             info.pydev_original_step_cmd = -1
                             info.pydev_step_cmd = -1
                             info.pydev_state = 1
+                            info.update_stepping_info()
 
                 # if we are quitting, let's stop the tracing
                 if py_db.quitting:

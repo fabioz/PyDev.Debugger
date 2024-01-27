@@ -67,8 +67,7 @@ import linecache
 import os
 
 from _pydev_bundle.pydev_imports import _queue
-from _pydev_bundle._pydev_saved_modules import time
-from _pydev_bundle._pydev_saved_modules import threading
+from _pydev_bundle._pydev_saved_modules import time, ThreadingEvent
 from _pydev_bundle._pydev_saved_modules import socket as socket_module
 from _pydevd_bundle.pydevd_constants import (DebugInfoHolder, IS_WINDOWS, IS_JYTHON, IS_WASM,
     IS_PY36_OR_GREATER, STATE_RUN, ASYNC_EVAL_TIMEOUT_SEC,
@@ -676,6 +675,7 @@ def internal_step_in_thread(py_db, thread_id, cmd_id, set_additional_thread_info
         info.pydev_step_cmd = cmd_id
         info.pydev_step_stop = None
         info.pydev_state = STATE_RUN
+        info.update_stepping_info()
 
     if py_db.stepping_resumes_all_threads:
         resume_threads('*', except_thread=thread_to_step)
@@ -691,6 +691,7 @@ def internal_smart_step_into(py_db, thread_id, offset, child_offset, set_additio
         info.pydev_smart_parent_offset = int(offset)
         info.pydev_smart_child_offset = int(child_offset)
         info.pydev_state = STATE_RUN
+        info.update_stepping_info()
 
     if py_db.stepping_resumes_all_threads:
         resume_threads('*', except_thread=thread_to_step)
@@ -726,6 +727,7 @@ class InternalSetNextStatementThread(InternalThreadCommand):
             info.pydev_smart_parent_offset = -1
             info.pydev_smart_child_offset = -1
             info.pydev_state = STATE_RUN
+            info.update_stepping_info()
 
 
 @silence_warnings_decorator
@@ -1825,7 +1827,7 @@ class AbstractGetValueAsyncThread(PyDBDaemonThread):
         self.frame_accessor = frame_accessor
         self.seq = seq
         self.var_objs = var_objects
-        self.cancel_event = threading.Event()
+        self.cancel_event = ThreadingEvent()
 
     def send_result(self, xml):
         raise NotImplementedError()

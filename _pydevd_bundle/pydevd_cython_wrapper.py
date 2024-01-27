@@ -41,6 +41,10 @@ PyDBAdditionalThreadInfo = mod.PyDBAdditionalThreadInfo
 
 set_additional_thread_info = mod.set_additional_thread_info
 
+any_thread_stepping = mod.any_thread_stepping
+
+remove_additional_info = mod.remove_additional_info
+
 global_cache_skips = mod.global_cache_skips
 
 global_cache_frame_skips = mod.global_cache_frame_skips

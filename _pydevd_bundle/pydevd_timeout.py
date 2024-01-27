@@ -1,4 +1,5 @@
-from _pydev_bundle._pydev_saved_modules import threading
+from _pydev_bundle._pydev_saved_modules import (ThreadingEvent,
+    ThreadingLock, threading_current_thread)
 from _pydevd_bundle.pydevd_daemon_thread import PyDBDaemonThread
 from _pydevd_bundle.pydevd_constants import thread_get_ident, IS_CPYTHON, NULL
 import ctypes
@@ -24,13 +25,13 @@ class _TimeoutThread(PyDBDaemonThread):
 
     def __init__(self, py_db):
         PyDBDaemonThread.__init__(self, py_db)
-        self._event = threading.Event()
+        self._event = ThreadingEvent()
         self._handles = []
 
         # We could probably do things valid without this lock so that it's possible to add
         # handles while processing, but the implementation would also be harder to follow,
         # so, for now, we're either processing or adding handles, not both at the same time.
-        self._lock = threading.Lock()
+        self._lock = ThreadingLock()
 
     def _on_run(self):
         wait_time = None
@@ -165,7 +166,7 @@ class TimeoutTracker(object):
 
     def __init__(self, py_db):
         self._thread = None
-        self._lock = threading.Lock()
+        self._lock = ThreadingLock()
         self._py_db = weakref.ref(py_db)
 
     def call_on_timeout(self, timeout, on_timeout, kwargs=None):
@@ -218,7 +219,7 @@ def create_interrupt_this_thread_callback():
     tid = thread_get_ident()
 
     if is_current_thread_main_thread():
-        main_thread = threading.current_thread()
+        main_thread = threading_current_thread()
 
         def raise_on_this_thread():
             pydev_log.debug('Callback to interrupt main thread.')

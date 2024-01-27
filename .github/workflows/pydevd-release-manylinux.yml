@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-python@v3
 
       - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.16.2
+        run: python -m pip install cibuildwheel==2.16.5
         
       - name: Remove .so files (will be rebuilt)
         run: rm pydevd_attach_to_process/*.so

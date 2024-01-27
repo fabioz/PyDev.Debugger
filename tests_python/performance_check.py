@@ -192,52 +192,65 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
 if __name__ == '__main__':
     # Python 3.10
     # Checking: regular
-    # method_calls_with_breakpoint: 0.355s
-    # method_calls_without_breakpoint: 0.367s
-    # method_calls_with_step_over: 0.375s
-    # method_calls_with_exception_breakpoint: 0.362s
-    # global_scope_1_with_breakpoint: 0.874s
-    # global_scope_2_with_breakpoint: 0.296s
+    # method_calls_with_breakpoint: 0.160s
+    # method_calls_without_breakpoint: 0.162s
+    # method_calls_with_step_over: 0.160s
+    # method_calls_with_exception_breakpoint: 0.159s
+    # global_scope_1_with_breakpoint: 0.382s
+    # global_scope_2_with_breakpoint: 0.141s
+    # Partial profile time: 43.90s
     # Checking: cython
-    # method_calls_with_breakpoint: 0.207s
-    # method_calls_without_breakpoint: 0.226s
-    # method_calls_with_step_over: 0.204s
-    # method_calls_with_exception_breakpoint: 0.219s
-    # global_scope_1_with_breakpoint: 0.583s
-    # global_scope_2_with_breakpoint: 0.298s
+    # method_calls_with_breakpoint: 0.094s
+    # method_calls_without_breakpoint: 0.094s
+    # method_calls_with_step_over: 0.094s
+    # method_calls_with_exception_breakpoint: 0.093s
+    # global_scope_1_with_breakpoint: 0.252s
+    # global_scope_2_with_breakpoint: 0.143s
+    # Partial profile time: 41.39s
     # Checking: frame_eval
-    # method_calls_with_breakpoint: 0.231s
-    # method_calls_without_breakpoint: 0.242s
-    # method_calls_with_step_over: 0.224s
-    # method_calls_with_exception_breakpoint: 0.245s
-    # global_scope_1_with_breakpoint: 0.587s
-    # global_scope_2_with_breakpoint: 0.292s
+    # method_calls_with_breakpoint: 0.095s
+    # method_calls_without_breakpoint: 0.094s
+    # method_calls_with_step_over: 0.096s
+    # method_calls_with_exception_breakpoint: 0.096s
+    # global_scope_1_with_breakpoint: 0.253s
+    # global_scope_2_with_breakpoint: 0.140s
+    # Partial profile time: 41.56s
 
-    # Python 3.11
+    # Python 3.12 (sys.monitoring)
     # Checking: regular
-    # method_calls_with_breakpoint: 0.344s
-    # method_calls_without_breakpoint: 0.361s
-    # method_calls_with_step_over: 0.362s
-    # method_calls_with_exception_breakpoint: 0.332s
-    # global_scope_1_with_breakpoint: 0.954s
-    # global_scope_2_with_breakpoint: 0.348s
+    # method_calls_with_breakpoint: 0.012s
+    # method_calls_without_breakpoint: 0.014s
+    # method_calls_with_step_over: 0.014s
+    # method_calls_with_exception_breakpoint: 0.013s
+    # global_scope_1_with_breakpoint: 0.058s
+    # global_scope_2_with_breakpoint: 0.078s
+    # Partial profile time: 42.59s
     # Checking: cython
-    # method_calls_with_breakpoint: 0.239s
-    # method_calls_without_breakpoint: 0.235s
-    # method_calls_with_step_over: 0.247s
-    # method_calls_with_exception_breakpoint: 0.257s
-    # global_scope_1_with_breakpoint: 0.734s
-    # global_scope_2_with_breakpoint: 0.342s
-    # TotalTime for profile: 139.12s
+    # method_calls_with_breakpoint: 0.012s
+    # method_calls_without_breakpoint: 0.014s
+    # method_calls_with_step_over: 0.014s
+    # method_calls_with_exception_breakpoint: 0.013s
+    # global_scope_1_with_breakpoint: 0.059s
+    # global_scope_2_with_breakpoint: 0.078s
+    # Partial profile time: 42.37s
 
-    # Python 3.12
-    # Checking: regular (sys.monitoring)
-    # method_calls_with_breakpoint: 0.343s
-    # method_calls_without_breakpoint: 0.029s
-    # method_calls_with_step_over: 0.347s
-    # method_calls_with_exception_breakpoint: 0.029s
-    # global_scope_1_with_breakpoint: 0.854s
-    # global_scope_2_with_breakpoint: 0.200s
+    # Python 3.12 (tracing)
+    # Checking: regular
+    # method_calls_with_breakpoint: 0.205s
+    # method_calls_without_breakpoint: 0.201s
+    # method_calls_with_step_over: 0.203s
+    # method_calls_with_exception_breakpoint: 0.203s
+    # global_scope_1_with_breakpoint: 0.499s
+    # global_scope_2_with_breakpoint: 0.137s
+    # Partial profile time: 44.55s
+    # Checking: cython
+    # method_calls_with_breakpoint: 0.112s
+    # method_calls_without_breakpoint: 0.113s
+    # method_calls_with_step_over: 0.113s
+    # method_calls_with_exception_breakpoint: 0.115s
+    # global_scope_1_with_breakpoint: 0.304s
+    # global_scope_2_with_breakpoint: 0.139s
+    # Partial profile time: 43.14s
 
     debugger_unittest.SHOW_WRITES_AND_READS = False
     debugger_unittest.SHOW_OTHER_DEBUG_INFO = False
@@ -253,8 +266,9 @@ if __name__ == '__main__':
             # CHECK_BASELINE, -- Checks against the version checked out at X:\PyDev.Debugger.baseline.
             CHECK_REGULAR,
             CHECK_CYTHON,
-            CHECK_FRAME_EVAL,
+            # CHECK_FRAME_EVAL,
         ):
+        partial_time = time.time()
         PerformanceWriterThread.CHECK = check
         msgs.append('Checking: %s' % (check,))
         check_debugger_performance = CheckDebuggerPerformance(tmpdir)
@@ -264,8 +278,9 @@ if __name__ == '__main__':
         msgs.append(check_debugger_performance.method_calls_with_exception_breakpoint())
         msgs.append(check_debugger_performance.global_scope_1_with_breakpoint())
         msgs.append(check_debugger_performance.global_scope_2_with_breakpoint())
+        msgs.append('Partial profile time: %.2fs' % (time.time() - partial_time,))
 
     for msg in msgs:
         print(msg)
-
     print('TotalTime for profile: %.2fs' % (time.time() - start_time,))
+

@@ -62,6 +62,7 @@ DONT_TRACE = {
     '_pydev_saved_modules.py': PYDEV_FILE,
     '_pydev_sys_patch.py': PYDEV_FILE,
     '_pydev_tipper_common.py': PYDEV_FILE,
+    '_pydevd_sys_monitoring.py': PYDEV_FILE,
     'django_debug.py': PYDEV_FILE,
     'jinja2_debug.py': PYDEV_FILE,
     'pycompletionserver.py': PYDEV_FILE,

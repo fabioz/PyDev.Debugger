@@ -20,7 +20,7 @@ except ImportError:
 # Import this first as it'll check for shadowed modules and will make sure that we import
 # things as needed for gevent.
 from _pydevd_bundle import pydevd_constants
-from typing import Optional
+from typing import Optional, Tuple
 from types import FrameType
 
 import atexit
@@ -41,14 +41,14 @@ from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_bundle.pydev_override import overrides
-from _pydev_bundle._pydev_saved_modules import threading, time, thread
+from _pydev_bundle._pydev_saved_modules import threading, time, thread, ThreadingEvent
 from _pydevd_bundle import pydevd_extension_utils, pydevd_frame_utils
 from _pydevd_bundle.pydevd_filtering import FilesFiltering, glob_matches_path
 from _pydevd_bundle import pydevd_io, pydevd_vm_type, pydevd_defaults
 from _pydevd_bundle import pydevd_utils
 from _pydevd_bundle import pydevd_runpy
 from _pydev_bundle.pydev_console_utils import DebugConsoleStdIn
-from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
+from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info, remove_additional_info
 from _pydevd_bundle.pydevd_breakpoints import ExceptionBreakpoint, get_exception_breakpoint
 from _pydevd_bundle.pydevd_comm_constants import (CMD_THREAD_SUSPEND, CMD_STEP_INTO, CMD_SET_BREAK,
     CMD_STEP_INTO_MY_CODE, CMD_STEP_OVER, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE,
@@ -193,6 +193,9 @@ pydev_log.debug('Using PYDEVD_IPYTHON_COMPATIBLE_DEBUGGING: %s', pydevd_constant
 if pydevd_constants.PYDEVD_IPYTHON_COMPATIBLE_DEBUGGING:
     pydev_log.debug('PYDEVD_IPYTHON_CONTEXT: %s', pydevd_constants.PYDEVD_IPYTHON_CONTEXT)
 
+TIMEOUT_SLOW = 0.2
+TIMEOUT_FAST = 1. / 50
+
 
 #=======================================================================================================================
 # PyDBCommandThread
@@ -207,7 +210,7 @@ class PyDBCommandThread(PyDBDaemonThread):
     @overrides(PyDBDaemonThread._on_run)
     def _on_run(self):
         # Delay a bit this initialization to wait for the main program to start.
-        self._py_db_command_thread_event.wait(0.3)
+        self._py_db_command_thread_event.wait(TIMEOUT_SLOW)
 
         if self._kill_received:
             return
@@ -215,11 +218,11 @@ class PyDBCommandThread(PyDBDaemonThread):
         try:
             while not self._kill_received:
                 try:
-                    self.py_db.process_internal_commands()
+                    self.py_db.process_internal_commands(('*',))
                 except:
                     pydev_log.info('Finishing debug communication...(2)')
                 self._py_db_command_thread_event.clear()
-                self._py_db_command_thread_event.wait(0.3)
+                self._py_db_command_thread_event.wait(TIMEOUT_SLOW)
         except:
             try:
                 pydev_log.debug(sys.exc_info()[0])
@@ -248,7 +251,7 @@ class CheckAliveThread(PyDBDaemonThread):
         PyDBDaemonThread.__init__(self, py_db)
         self.name = 'pydevd.CheckAliveThread'
         self.daemon = False
-        self._wait_event = threading.Event()
+        self._wait_event = ThreadingEvent()
 
     @overrides(PyDBDaemonThread._on_run)
     def _on_run(self):
@@ -265,7 +268,7 @@ class CheckAliveThread(PyDBDaemonThread):
 
         try:
             while not self._kill_received:
-                self._wait_event.wait(0.3)
+                self._wait_event.wait(TIMEOUT_SLOW)
                 if can_exit():
                     break
 
@@ -532,12 +535,13 @@ class PyDB(object):
         self._fsnotify_thread = None
         self.created_pydb_daemon_threads = {}
         self._waiting_for_connection_thread = None
-        self._on_configuration_done_event = threading.Event()
+        self._on_configuration_done_event = ThreadingEvent()
         self.check_alive_thread = None
         self.py_db_command_thread = None
         self.quitting = None
         self.cmd_factory = NetCommandFactory()
         self._cmd_queue = defaultdict(_queue.Queue)  # Key is thread id or '*', value is Queue
+        self._thread_events = defaultdict(ThreadingEvent)  # Key is thread id or '*', value is Event
         self.suspended_frames_manager = SuspendedFramesManager()
         self._files_filtering = FilesFiltering()
         self.timeout_tracker = TimeoutTracker(self)
@@ -587,14 +591,14 @@ class PyDB(object):
         self._main_lock = thread.allocate_lock()
         self._lock_running_thread_ids = thread.allocate_lock()
         self._lock_create_fs_notify = thread.allocate_lock()
-        self._py_db_command_thread_event = threading.Event()
+        self._py_db_command_thread_event = ThreadingEvent()
         if set_as_global:
             CustomFramesContainer._py_db_command_thread_event = self._py_db_command_thread_event
 
         self.pydb_disposed = False
         self._wait_for_threads_to_finish_called = False
         self._wait_for_threads_to_finish_called_lock = thread.allocate_lock()
-        self._wait_for_threads_to_finish_called_event = threading.Event()
+        self._wait_for_threads_to_finish_called_event = ThreadingEvent()
 
         self.terminate_requested = False
         self._disposed_lock = thread.allocate_lock()
@@ -673,7 +677,7 @@ class PyDB(object):
 
         self._local_thread_trace_func = threading.local()
 
-        self._server_socket_ready_event = threading.Event()
+        self._server_socket_ready_event = ThreadingEvent()
         self._server_socket_name = None
 
         # Bind many locals to the debugger because upon teardown those names may become None
@@ -843,7 +847,7 @@ class PyDB(object):
             # busy wait until we receive run command
             self.process_internal_commands()
             self._py_db_command_thread_event.clear()
-            self._py_db_command_thread_event.wait(0.1)
+            self._py_db_command_thread_event.wait(TIMEOUT_FAST)
 
     def on_initialize(self):
         '''
@@ -889,7 +893,7 @@ class PyDB(object):
 
             self.process_internal_commands()
             self._py_db_command_thread_event.clear()
-            self._py_db_command_thread_event.wait(1 / 15.)
+            self._py_db_command_thread_event.wait(TIMEOUT_FAST)
 
     def add_fake_frame(self, thread_id, frame_id, frame):
         self.suspended_frames_manager.add_fake_frame(thread_id, frame_id, frame)
@@ -1534,12 +1538,12 @@ class PyDB(object):
                     pass
                 self._server_socket = None
 
-    def get_internal_queue(self, thread_id):
+    def get_internal_queue_and_event(self, thread_id) -> Tuple[_queue.Queue, ThreadingEvent]:
         """ returns internal command queue for a given thread.
         if new queue is created, notify the RDB about it """
         if thread_id.startswith('__frame__'):
             thread_id = thread_id[thread_id.rfind('|') + 1:]
-        return self._cmd_queue[thread_id]
+        return self._cmd_queue[thread_id], self._thread_events[thread_id]
 
     def post_method_as_internal_command(self, thread_id, method, *args, **kwargs):
         if thread_id == '*':
@@ -1547,14 +1551,15 @@ class PyDB(object):
         else:
             internal_cmd = InternalThreadCommand(thread_id, method, *args, **kwargs)
         self.post_internal_command(internal_cmd, thread_id)
-        if thread_id == '*':
-            # Notify so that the command is handled as soon as possible.
-            self._py_db_command_thread_event.set()
 
     def post_internal_command(self, int_cmd, thread_id):
         """ if thread_id is *, post to the '*' queue"""
-        queue = self.get_internal_queue(thread_id)
+        queue, event = self.get_internal_queue_and_event(thread_id)
         queue.put(int_cmd)
+        if thread_id == '*':
+            self._py_db_command_thread_event.set()
+        else:
+            event.set()
 
     def enable_output_redirection(self, redirect_stdout, redirect_stderr):
         global _global_redirect_stdout_to_server
@@ -1696,6 +1701,7 @@ class PyDB(object):
             was_notified = additional_info.pydev_notify_kill
             if not was_notified:
                 additional_info.pydev_notify_kill = True
+            remove_additional_info(additional_info)
 
         self.writer.add_command(self.cmd_factory.make_thread_killed_message(thread_id))
 
@@ -1709,7 +1715,7 @@ class PyDB(object):
                     # (so, clear the cache related to that).
                     self._running_thread_ids = {}
 
-    def process_internal_commands(self):
+    def process_internal_commands(self, process_thread_ids: Optional[tuple]=None):
         '''
         This function processes internal commands.
         '''
@@ -1763,17 +1769,18 @@ class PyDB(object):
             if len(program_threads_alive) == 0 and ready_to_run:
                 dispose = True
             else:
-                # Actually process the commands now (make sure we don't have a lock for _lock_running_thread_ids
-                # acquired at this point as it could lead to a deadlock if some command evaluated tried to
-                # create a thread and wait for it -- which would try to notify about it getting that lock).
                 curr_thread_id = get_current_thread_id(threadingCurrentThread())
-                if ready_to_run:
-                    process_thread_ids = (curr_thread_id, '*')
-                else:
-                    process_thread_ids = ('*',)
+                if process_thread_ids is None:
+                    # Actually process the commands now (make sure we don't have a lock for _lock_running_thread_ids
+                    # acquired at this point as it could lead to a deadlock if some command evaluated tried to
+                    # create a thread and wait for it -- which would try to notify about it getting that lock).
+                    if ready_to_run:
+                        process_thread_ids = (curr_thread_id, '*')
+                    else:
+                        process_thread_ids = ('*',)
 
                 for thread_id in process_thread_ids:
-                    queue = self.get_internal_queue(thread_id)
+                    queue, _event = self.get_internal_queue_and_event(thread_id)
 
                     # some commands must be processed by the thread itself... if that's the case,
                     # we will re-add the commands to the queue after executing.
@@ -1782,11 +1789,15 @@ class PyDB(object):
                     try:
                         while True:
                             internal_cmd = queue.get(False)
-                            if internal_cmd.can_be_executed_by(curr_thread_id):
-                                cmds_to_execute.append(internal_cmd)
-                            else:
-                                pydev_log.verbose("NOT processing internal command: %s ", internal_cmd)
-                                cmds_to_add_back.append(internal_cmd)
+                            try:
+                                if internal_cmd.can_be_executed_by(curr_thread_id):
+                                    cmds_to_execute.append(internal_cmd)
+                                else:
+                                    pydev_log.verbose("NOT processing internal command: %s ", internal_cmd)
+                                    cmds_to_add_back.append(internal_cmd)
+                            except:
+                                pydev_log.exception()
+                                raise
 
                     except _queue.Empty:  # @UndefinedVariable
                         # this is how we exit
@@ -2034,7 +2045,9 @@ class PyDB(object):
         """
         if USE_CUSTOM_SYS_CURRENT_FRAMES_MAP:
             constructed_tid_to_last_frame[thread.ident] = sys._getframe()
-        self.process_internal_commands()
+
+        # Only process from all threads, not for current one (we'll do that later on in this method).
+        self.process_internal_commands(('*',))
 
         thread_id = get_current_thread_id(thread)
 
@@ -2116,30 +2129,68 @@ class PyDB(object):
 
     def _do_wait_suspend(self, thread, frame, event, arg, trace_suspend_type, from_this_thread, frames_tracker):
         info = thread.additional_info
-        info.step_in_initial_location = None
-        keep_suspended = False
+        try:
+            info.is_in_wait_loop = True
+            info.update_stepping_info()
+            info.step_in_initial_location = None
+            keep_suspended = False
 
-        with self._main_lock:  # Use lock to check if suspended state changed
-            activate_gui = info.pydev_state == STATE_SUSPEND and not self.pydb_disposed
-
-        in_main_thread = is_current_thread_main_thread()
-        if activate_gui and in_main_thread:
-            # before every stop check if matplotlib modules were imported inside script code
-            # or some GUI event loop needs to be activated
-            self._activate_gui_if_needed()
-
-        while True:
             with self._main_lock:  # Use lock to check if suspended state changed
-                if info.pydev_state != STATE_SUSPEND or (self.pydb_disposed and not self.terminate_requested):
-                    # Note: we can't exit here if terminate was requested while a breakpoint was hit.
-                    break
+                activate_gui = info.pydev_state == STATE_SUSPEND and not self.pydb_disposed
 
-            if in_main_thread and self.gui_in_use:
-                # call input hooks if only GUI is in use
-                self._call_input_hook()
+            in_main_thread = is_current_thread_main_thread()
+            if activate_gui and in_main_thread:
+                # before every stop check if matplotlib modules were imported inside script code
+                # or some GUI event loop needs to be activated
+                self._activate_gui_if_needed()
 
-            self.process_internal_commands()
-            time.sleep(0.01)
+            # self.process_internal_commands(): processes for all the threads
+            # and updates running threads. This was called once in `do_wait_suspend`
+            # At this point it's just processing for this thread.
+            # Note that clients may not post an actual event (for instance, it
+            # could just set the internal state and signal the event instead
+            # of posting a command to the queue). In any case, if an item is
+            # put in the queue, the event must be set too.
+            curr_thread_id = get_current_thread_id(threadingCurrentThread())
+            queue, notify_event = self.get_internal_queue_and_event(curr_thread_id)
+
+            wait_timeout = TIMEOUT_SLOW
+            while True:
+                with self._main_lock:  # Use lock to check if suspended state changed
+                    if info.pydev_state != STATE_SUSPEND or (self.pydb_disposed and not self.terminate_requested):
+                        # Note: we can't exit here if terminate was requested while a breakpoint was hit.
+                        break
+
+                if in_main_thread and self.gui_in_use:
+                    wait_timeout = TIMEOUT_FAST
+                    # call input hooks if only GUI is in use
+                    self._call_input_hook()
+
+                # No longer process commands for '*' at this point, just the
+                # ones related to this thread.
+                try:
+                    internal_cmd = queue.get(False)
+                except _queue.Empty:
+                    pass
+                else:
+                    if internal_cmd.can_be_executed_by(curr_thread_id):
+                        pydev_log.verbose("processing internal command: %s", internal_cmd)
+                        try:
+                            internal_cmd.do_it(self)
+                        except:
+                            pydev_log.exception('Error processing internal command.')
+                    else:
+                        # This shouldn't really happen...
+                        pydev_log.verbose("NOT processing internal command: %s ", internal_cmd)
+                        queue.put(internal_cmd)
+                        wait_timeout = TIMEOUT_FAST
+
+                notify_event.wait(wait_timeout)
+                notify_event.clear()
+
+        finally:
+            info.is_in_wait_loop = False
+            info.update_stepping_info()
 
         self.cancel_async_evaluation(get_current_thread_id(thread), str(id(frame)))
 
@@ -2245,6 +2296,7 @@ class PyDB(object):
                 # print('Removing created frame: %s' % (frame_id,))
                 self.writer.add_command(self.cmd_factory.make_thread_killed_message(frame_id))
 
+        info.update_stepping_info()
         return keep_suspended
 
     def do_stop_on_unhandled_exception(self, thread, frame, frames_byid, arg):
@@ -2445,14 +2497,12 @@ class PyDB(object):
     def patch_threads(self):
         if PYDEVD_USE_SYS_MONITORING:
             pydevd_sys_monitoring.start_monitoring(all_threads=True)
-            from _pydev_bundle.pydev_monkey import patch_thread_modules
-            patch_thread_modules()
-            return
-        try:
-            # not available in jython!
-            threading.settrace(self.trace_dispatch)  # for all future threads
-        except:
-            pass
+        else:
+            try:
+                # not available in jython!
+                threading.settrace(self.trace_dispatch)  # for all future threads
+            except:
+                pass
 
         from _pydev_bundle.pydev_monkey import patch_thread_modules
         patch_thread_modules()
@@ -3047,6 +3097,7 @@ def _locked_settrace(
             additional_info.pydev_step_cmd = CMD_STEP_OVER
             additional_info.pydev_step_stop = stop_at_frame
             additional_info.suspend_type = PYTHON_SUSPEND
+            additional_info.update_stepping_info()
             if PYDEVD_USE_SYS_MONITORING:
                 pydevd_sys_monitoring.update_monitor_events(suspend_requested=True)
                 py_db.set_trace_for_frame_and_parents(t.ident, stop_at_frame)

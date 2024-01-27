@@ -926,6 +926,7 @@ class PyDevdAPI(object):
             info = set_additional_thread_info(main_thread)
             info.pydev_original_step_cmd = CMD_STOP_ON_START
             info.pydev_step_cmd = CMD_STEP_INTO_MY_CODE
+            info.update_stepping_info()
             if PYDEVD_USE_SYS_MONITORING:
                 pydevd_sys_monitoring.update_monitor_events(suspend_requested=True)
                 pydevd_sys_monitoring.restart_events()
