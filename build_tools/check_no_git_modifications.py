@@ -25,6 +25,21 @@ expected_differences = set(line.strip() for line in r'''
 +  "_pydevd_frame_eval\\\\pydevd_frame_evaluator.pyx",
 -  "_pydevd_bundle/pydevd_cython.pxd",
 +  "_pydevd_bundle\\\\pydevd_cython.pxd",
+
+--- a/_pydevd_sys_monitoring/_pydevd_sys_monitoring_cython.c
++++ b/_pydevd_sys_monitoring/_pydevd_sys_monitoring_cython.c
+-  "_pydevd_sys_monitoring\\\\\\\\_pydevd_sys_monitoring_cython.pyx",
++  "_pydevd_sys_monitoring/_pydevd_sys_monitoring_cython.pyx",
+-  ".\\\\\\\\_pydevd_bundle\\\\\\\\pydevd_cython.pxd",
++  "./_pydevd_bundle/pydevd_cython.pxd",
+-static const char __pyx_k_pydevd_sys_monitoring__pydevd_s[] = "_pydevd_sys_monitoring\\\\_pydevd_sys_monitoring_cython.pyx";
++static const char __pyx_k_pydevd_sys_monitoring__pydevd_s[] = "_pydevd_sys_monitoring/_pydevd_sys_monitoring_cython.pyx";
+
+-  "_pydevd_sys_monitoring\\\\_pydevd_sys_monitoring_cython.pyx",
+-  ".\\\\\\\\_pydevd_bundle\\\\pydevd_cython.pxd",
+-static const char __pyx_k_pydevd_sys_monitoring__pydevd_s[] = "_pydevd_sys_monitoring\\_pydevd_sys_monitoring_cython.pyx";
+-  ".\\\\\\\\_pydevd_bundle\\\\\\\\pydevd_cython.pxd",
+-  ".\\\\_pydevd_bundle\\\\pydevd_cython.pxd",
 '''.splitlines() if line.strip())
 
 
