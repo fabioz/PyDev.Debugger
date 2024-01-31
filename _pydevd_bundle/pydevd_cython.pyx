@@ -5,7 +5,7 @@ from __future__ import print_function
 # DO NOT edit manually!
 # DO NOT edit manually!
 from _pydevd_bundle.pydevd_constants import (STATE_RUN, PYTHON_SUSPEND, SUPPORT_GEVENT, ForkSafeLock,
-    _current_frames, STATE_SUSPEND)
+    _current_frames, STATE_SUSPEND, get_global_debugger, get_thread_id)
 from _pydev_bundle import pydev_log
 from _pydev_bundle._pydev_saved_modules import threading
 import weakref
@@ -193,7 +193,7 @@ cdef class PyDBAdditionalThreadInfo:
 # ELSE
 #     def update_stepping_info(self):
 # ENDIF
-        update_stepping_info(self)
+        _update_stepping_info(self)
 
     def __str__(self):
         return 'State:%s Stop:%s Cmd: %s Kill:%s' % (
@@ -250,9 +250,9 @@ _update_infos_lock = ForkSafeLock()
 
 
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
-cpdef update_stepping_info(PyDBAdditionalThreadInfo info=None):
+cdef _update_stepping_info(PyDBAdditionalThreadInfo info):
 # ELSE
-# def update_stepping_info(info=None):
+# def _update_stepping_info(info):
 # ENDIF
     global _infos_stepping
     global _all_infos
@@ -270,6 +270,14 @@ cpdef update_stepping_info(PyDBAdditionalThreadInfo info=None):
             if info._is_stepping():
                 new_stepping.add(info)
         _infos_stepping = new_stepping
+
+    py_db = get_global_debugger()
+    if py_db is not None and not py_db.pydb_disposed:
+        thread = info.weak_thread()
+        if thread is not None:
+            thread_id = get_thread_id(thread)
+            _queue, event = py_db.get_internal_queue_and_event(thread_id)
+            event.set()
 
 
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
@@ -1273,6 +1281,7 @@ cdef class PyDBFrame:
                             info.pydev_original_step_cmd = -1
                             info.pydev_step_cmd = -1
                             info.pydev_state = 1
+                            info.update_stepping_info()
 
                 # if we are quitting, let's stop the tracing
                 if py_db.quitting:

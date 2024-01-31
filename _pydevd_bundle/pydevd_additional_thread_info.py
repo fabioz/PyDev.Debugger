@@ -6,23 +6,22 @@ if USE_CYTHON_FLAG in ENV_TRUE_LOWER_VALUES:
     # We must import the cython version if forcing cython
     from _pydevd_bundle.pydevd_cython_wrapper import (
         PyDBAdditionalThreadInfo, set_additional_thread_info, _set_additional_thread_info_lock,  # @UnusedImport
-        any_thread_stepping, update_stepping_info, remove_additional_info)  # @UnusedImport
+        any_thread_stepping, remove_additional_info)  # @UnusedImport
 
 elif USE_CYTHON_FLAG in ENV_FALSE_LOWER_VALUES:
     # Use the regular version if not forcing cython
     from _pydevd_bundle.pydevd_additional_thread_info_regular import (
         PyDBAdditionalThreadInfo, set_additional_thread_info, _set_additional_thread_info_lock,  # @UnusedImport @Reimport
-        any_thread_stepping, update_stepping_info, remove_additional_info)  # @UnusedImport @Reimport
+        any_thread_stepping, remove_additional_info)  # @UnusedImport @Reimport
 
 else:
     # Regular: use fallback if not found (message is already given elsewhere).
     try:
         from _pydevd_bundle.pydevd_cython_wrapper import (
             PyDBAdditionalThreadInfo, set_additional_thread_info, _set_additional_thread_info_lock,
-            any_thread_stepping, update_stepping_info, remove_additional_info)
+            any_thread_stepping, remove_additional_info)
     except ImportError:
-        import traceback;traceback.print_exc()
         from _pydevd_bundle.pydevd_additional_thread_info_regular import (
             PyDBAdditionalThreadInfo, set_additional_thread_info, _set_additional_thread_info_lock,  # @UnusedImport
-            any_thread_stepping, update_stepping_info, remove_additional_info)  # @UnusedImport
+            any_thread_stepping, remove_additional_info)  # @UnusedImport
 

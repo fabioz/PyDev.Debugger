@@ -28,9 +28,9 @@ from _pydevd_bundle.pydevd_utils import get_clsname_for_code
 
 # IFDEF CYTHON
 # import cython
-# from _pydevd_bundle.pydevd_cython cimport set_additional_thread_info, any_thread_stepping, PyDBAdditionalThreadInfo, update_stepping_info
+# from _pydevd_bundle.pydevd_cython cimport set_additional_thread_info, any_thread_stepping, PyDBAdditionalThreadInfo
 # ELSE
-from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info, any_thread_stepping, PyDBAdditionalThreadInfo, update_stepping_info
+from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info, any_thread_stepping, PyDBAdditionalThreadInfo
 # ENDIF
 
 try:
@@ -1095,7 +1095,7 @@ def _stop_on_return(py_db, thread_info, info, step_cmd, frame, retval):
         info.pydev_original_step_cmd = -1
         info.pydev_step_cmd = -1
         info.pydev_state = STATE_RUN
-        update_stepping_info(info)
+        info.update_stepping_info()
 
 
 # IFDEF CYTHON

@@ -1492,19 +1492,6 @@ struct __pyx_obj___pyx_scope_struct____Pyx_CFunc_object__lParenobject__comma_obj
 struct __pyx_obj___pyx_scope_struct____Pyx_CFunc_object__lParenobject__comma_int__rParen_to_py_4code_4line;
 struct __pyx_obj___pyx_scope_struct____Pyx_CFunc_object__lParenobject__comma_int__comma_int__rParen_to_py_4code_11from_offset_9to_offset;
 struct __pyx_obj___pyx_scope_struct____Pyx_CFunc_object__lParenobject__comma_object__comma_object__rParen_to_py_4code_11instruction_6retval;
-struct __pyx_opt_args_14_pydevd_bundle_13pydevd_cython_update_stepping_info;
-
-/* "_pydevd_bundle/pydevd_cython.pxd":40
- * cpdef set_additional_thread_info(thread)
- * 
- * cpdef update_stepping_info(PyDBAdditionalThreadInfo info=*)             # <<<<<<<<<<<<<<
- * cpdef add_additional_info(PyDBAdditionalThreadInfo info)
- * cpdef remove_additional_info(PyDBAdditionalThreadInfo info)
- */
-struct __pyx_opt_args_14_pydevd_bundle_13pydevd_cython_update_stepping_info {
-  int __pyx_n;
-  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo *info;
-};
 struct __pyx_opt_args_29_pydevd_sys_monitoring_cython__getframe;
 struct __pyx_opt_args_29_pydevd_sys_monitoring_cython__get_code_line_info;
 struct __pyx_opt_args_29_pydevd_sys_monitoring_cython_start_monitoring;
@@ -2621,7 +2608,6 @@ static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 
 /* Module declarations from "_pydevd_bundle.pydevd_cython" */
 static PyObject *(*__pyx_f_14_pydevd_bundle_13pydevd_cython_set_additional_thread_info)(PyObject *, int __pyx_skip_dispatch); /*proto*/
-static PyObject *(*__pyx_f_14_pydevd_bundle_13pydevd_cython_update_stepping_info)(int __pyx_skip_dispatch, struct __pyx_opt_args_14_pydevd_bundle_13pydevd_cython_update_stepping_info *__pyx_optional_args); /*proto*/
 static int (*__pyx_f_14_pydevd_bundle_13pydevd_cython_any_thread_stepping)(int __pyx_skip_dispatch); /*proto*/
 
 /* Module declarations from "_pydevd_sys_monitoring_cython" */
@@ -20482,7 +20468,6 @@ static PyObject *__pyx_f_29_pydevd_sys_monitoring_cython__stop_on_return(PyObjec
   PyObject *__pyx_t_7 = NULL;
   PyObject *(*__pyx_t_8)(PyObject *);
   int __pyx_t_9;
-  struct __pyx_opt_args_14_pydevd_bundle_13pydevd_cython_update_stepping_info __pyx_t_10;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -20945,7 +20930,7 @@ static PyObject *__pyx_f_29_pydevd_sys_monitoring_cython__stop_on_return(PyObjec
  *         info.pydev_original_step_cmd = -1
  *         info.pydev_step_cmd = -1             # <<<<<<<<<<<<<<
  *         info.pydev_state = STATE_RUN
- *         update_stepping_info(info)
+ *         info.update_stepping_info()
  */
     __pyx_v_info->pydev_step_cmd = -1;
 
@@ -20953,7 +20938,7 @@ static PyObject *__pyx_f_29_pydevd_sys_monitoring_cython__stop_on_return(PyObjec
  *         info.pydev_original_step_cmd = -1
  *         info.pydev_step_cmd = -1
  *         info.pydev_state = STATE_RUN             # <<<<<<<<<<<<<<
- *         update_stepping_info(info)
+ *         info.update_stepping_info()
  * 
  */
     __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_STATE_RUN); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1103, __pyx_L1_error)
@@ -20965,13 +20950,11 @@ static PyObject *__pyx_f_29_pydevd_sys_monitoring_cython__stop_on_return(PyObjec
     /* "_pydevd_sys_monitoring_cython.pyx":1104
  *         info.pydev_step_cmd = -1
  *         info.pydev_state = STATE_RUN
- *         update_stepping_info(info)             # <<<<<<<<<<<<<<
+ *         info.update_stepping_info()             # <<<<<<<<<<<<<<
  * 
  * 
  */
-    __pyx_t_10.__pyx_n = 1;
-    __pyx_t_10.info = __pyx_v_info;
-    __pyx_t_3 = __pyx_f_14_pydevd_bundle_13pydevd_cython_update_stepping_info(0, &__pyx_t_10); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1104, __pyx_L1_error)
+    __pyx_t_3 = ((struct __pyx_vtabstruct_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo *)__pyx_v_info->__pyx_vtab)->update_stepping_info(__pyx_v_info, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1104, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
@@ -33981,7 +33964,6 @@ static int __Pyx_modinit_function_import_code(void) {
   __pyx_t_1 = PyImport_ImportModule("_pydevd_bundle.pydevd_cython"); if (!__pyx_t_1) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   if (__Pyx_ImportFunction_3_0_8(__pyx_t_1, "set_additional_thread_info", (void (**)(void))&__pyx_f_14_pydevd_bundle_13pydevd_cython_set_additional_thread_info, "PyObject *(PyObject *, int __pyx_skip_dispatch)") < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  if (__Pyx_ImportFunction_3_0_8(__pyx_t_1, "update_stepping_info", (void (**)(void))&__pyx_f_14_pydevd_bundle_13pydevd_cython_update_stepping_info, "PyObject *(int __pyx_skip_dispatch, struct __pyx_opt_args_14_pydevd_bundle_13pydevd_cython_update_stepping_info *__pyx_optional_args)") < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   if (__Pyx_ImportFunction_3_0_8(__pyx_t_1, "any_thread_stepping", (void (**)(void))&__pyx_f_14_pydevd_bundle_13pydevd_cython_any_thread_stepping, "int (int __pyx_skip_dispatch)") < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_RefNannyFinishContext();

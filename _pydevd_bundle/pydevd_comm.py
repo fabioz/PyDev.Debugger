@@ -67,8 +67,7 @@ import linecache
 import os
 
 from _pydev_bundle.pydev_imports import _queue
-from _pydev_bundle._pydev_saved_modules import time
-from _pydev_bundle._pydev_saved_modules import threading
+from _pydev_bundle._pydev_saved_modules import time, ThreadingEvent
 from _pydev_bundle._pydev_saved_modules import socket as socket_module
 from _pydevd_bundle.pydevd_constants import (DebugInfoHolder, IS_WINDOWS, IS_JYTHON, IS_WASM,
     IS_PY36_OR_GREATER, STATE_RUN, ASYNC_EVAL_TIMEOUT_SEC,
@@ -1828,7 +1827,7 @@ class AbstractGetValueAsyncThread(PyDBDaemonThread):
         self.frame_accessor = frame_accessor
         self.seq = seq
         self.var_objs = var_objects
-        self.cancel_event = threading.Event()
+        self.cancel_event = ThreadingEvent()
 
     def send_result(self, xml):
         raise NotImplementedError()

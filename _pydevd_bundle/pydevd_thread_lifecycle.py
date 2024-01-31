@@ -1,5 +1,5 @@
 from _pydevd_bundle import pydevd_utils
-from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info, update_stepping_info
+from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydevd_bundle.pydevd_comm_constants import CMD_STEP_INTO, CMD_THREAD_SUSPEND
 from _pydevd_bundle.pydevd_constants import PYTHON_SUSPEND, STATE_SUSPEND, get_thread_id, STATE_RUN, \
     PYDEVD_USE_SYS_MONITORING
@@ -43,7 +43,7 @@ def mark_thread_suspended(thread, stop_reason: int, original_step_cmd: int=-1):
 
     # Mark as suspended as the last thing.
     info.pydev_state = STATE_SUSPEND
-    update_stepping_info(info)
+    info.update_stepping_info()
     return info
 
 
@@ -53,7 +53,7 @@ def internal_run_thread(thread, set_additional_thread_info):
     info.pydev_step_cmd = -1
     info.pydev_step_stop = None
     info.pydev_state = STATE_RUN
-    update_stepping_info(info)
+    info.update_stepping_info()
 
 
 def resume_threads(thread_id, except_thread=None):

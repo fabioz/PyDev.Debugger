@@ -1516,19 +1516,6 @@ struct __pyx_obj_18_pydevd_frame_eval_22pydevd_frame_evaluator_ThreadInfo;
 struct __pyx_obj_18_pydevd_frame_eval_22pydevd_frame_evaluator_FuncCodeInfo;
 struct __pyx_obj_18_pydevd_frame_eval_22pydevd_frame_evaluator__CodeLineInfo;
 struct __pyx_obj_18_pydevd_frame_eval_22pydevd_frame_evaluator__CacheValue;
-struct __pyx_opt_args_14_pydevd_bundle_13pydevd_cython_update_stepping_info;
-
-/* "_pydevd_bundle/pydevd_cython.pxd":40
- * cpdef set_additional_thread_info(thread)
- * 
- * cpdef update_stepping_info(PyDBAdditionalThreadInfo info=*)             # <<<<<<<<<<<<<<
- * cpdef add_additional_info(PyDBAdditionalThreadInfo info)
- * cpdef remove_additional_info(PyDBAdditionalThreadInfo info)
- */
-struct __pyx_opt_args_14_pydevd_bundle_13pydevd_cython_update_stepping_info {
-  int __pyx_n;
-  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo *info;
-};
 
 /* "_pydevd_bundle/pydevd_cython.pxd":1
  * cdef class PyDBAdditionalThreadInfo:             # <<<<<<<<<<<<<<

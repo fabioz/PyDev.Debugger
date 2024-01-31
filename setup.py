@@ -73,6 +73,7 @@ args = dict(
         '_pydevd_bundle._debug_adapter',
         '_pydevd_bundle.pydevd_concurrency_analyser',
         '_pydevd_frame_eval',
+        '_pydevd_sys_monitoring',
         '_pydevd_frame_eval.vendored',
         '_pydevd_frame_eval.vendored.bytecode',
         'pydev_ipython',

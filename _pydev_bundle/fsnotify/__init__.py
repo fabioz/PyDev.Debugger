@@ -37,10 +37,9 @@ Sample usage to track changes in a thread.
 
 Note: changes are only reported for files (added/modified/deleted), not directories.
 '''
-import threading
 import sys
 from os.path import basename
-from _pydev_bundle import pydev_log
+from _pydev_bundle import pydev_log, _pydev_saved_modules
 from os import scandir
 
 try:
@@ -205,7 +204,7 @@ class Watcher(object):
             Note: if passed it'll override the `accepted_file_extensions`.
         '''
         self._path_watchers = set()
-        self._disposed = threading.Event()
+        self._disposed = _pydev_saved_modules.ThreadingEvent()
 
         if accept_directory is None:
             accept_directory = lambda dir_path: basename(dir_path) not in self.ignored_dirs

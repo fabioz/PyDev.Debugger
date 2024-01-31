@@ -37,7 +37,6 @@ cdef class PyDBAdditionalThreadInfo:
 
 cpdef set_additional_thread_info(thread)
 
-cpdef update_stepping_info(PyDBAdditionalThreadInfo info=*)
 cpdef add_additional_info(PyDBAdditionalThreadInfo info)
 cpdef remove_additional_info(PyDBAdditionalThreadInfo info)
 cpdef bint any_thread_stepping()
