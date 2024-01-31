@@ -407,7 +407,7 @@ def protect_libraries_from_patching():
 if USE_LIB_COPY:
     protect_libraries_from_patching()
 
-from _pydev_bundle._pydev_saved_modules import thread, threading
+from _pydev_bundle._pydev_saved_modules import thread, ThreadingLock, ThreadingRLock
 
 _fork_safe_locks = []
 
@@ -415,9 +415,9 @@ if IS_JYTHON:
 
     def ForkSafeLock(rlock=False):
         if rlock:
-            return threading.RLock()
+            return ThreadingRLock()
         else:
-            return threading.Lock()
+            return ThreadingLock()
 
 else:
 
@@ -460,9 +460,9 @@ else:
 
         def _init(self):
             if self._rlock:
-                self._lock = threading.RLock()
+                self._lock = ThreadingRLock()
             else:
-                self._lock = thread.allocate_lock()
+                self._lock = ThreadingLock()
 
             self.acquire = self._lock.acquire
             self.release = self._lock.release

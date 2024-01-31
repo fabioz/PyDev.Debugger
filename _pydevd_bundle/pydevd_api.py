@@ -2,7 +2,7 @@ import sys
 import bisect
 import types
 
-from _pydev_bundle._pydev_saved_modules import threading
+from _pydev_bundle._pydev_saved_modules import threading_current_thread
 from _pydevd_bundle import pydevd_utils, pydevd_source_mapping
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydevd_bundle.pydevd_comm import (InternalGetThreadStack, internal_get_completions,
@@ -206,7 +206,7 @@ class PyDevdAPI(object):
         # If it's already suspended, get it right away.
         internal_get_thread_stack = InternalGetThreadStack(
             seq, thread_id, py_db, set_additional_thread_info, fmt=fmt, timeout=timeout, start_frame=start_frame, levels=levels)
-        if internal_get_thread_stack.can_be_executed_by(get_current_thread_id(threading.current_thread())):
+        if internal_get_thread_stack.can_be_executed_by(get_current_thread_id(threading_current_thread())):
             internal_get_thread_stack.do_it(py_db)
         else:
             py_db.post_internal_command(internal_get_thread_stack, '*')

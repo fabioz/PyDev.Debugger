@@ -1,7 +1,7 @@
 import time
 
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
-from _pydev_bundle._pydev_saved_modules import threading
+from _pydev_bundle._pydev_saved_modules import threading_current_thread, ThreadingThread
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle.pydevd_constants import GlobalDebuggerHolder
 from _pydevd_bundle.pydevd_constants import get_thread_id
@@ -14,8 +14,6 @@ import sys
 file_system_encoding = getfilesystemencoding()
 
 from urllib.parse import quote
-
-threadingCurrentThread = threading.current_thread
 
 DONT_TRACE_THREADING = ['threading.py', 'pydevd.py']
 INNER_METHODS = ['_stop']
@@ -119,18 +117,18 @@ class ThreadingLogger:
         self_obj = None
         if "self" in frame.f_locals:
             self_obj = frame.f_locals["self"]
-            if isinstance(self_obj, threading.Thread) or self_obj.__class__ == ObjectWrapper:
+            if isinstance(self_obj, ThreadingThread) or self_obj.__class__ == ObjectWrapper:
                 write_log = True
         if hasattr(frame, "f_back") and frame.f_back is not None:
             back = frame.f_back
             if hasattr(back, "f_back") and back.f_back is not None:
                 back = back.f_back
                 if "self" in back.f_locals:
-                    if isinstance(back.f_locals["self"], threading.Thread):
+                    if isinstance(back.f_locals["self"], ThreadingThread):
                         write_log = True
         try:
             if write_log:
-                t = threadingCurrentThread()
+                t = threading_current_thread()
                 back = frame.f_back
                 if not back:
                     return
@@ -138,7 +136,7 @@ class ThreadingLogger:
                 event_time = cur_time() - self.start_time
                 method_name = frame.f_code.co_name
 
-                if isinstance(self_obj, threading.Thread):
+                if isinstance(self_obj, ThreadingThread):
                     if not hasattr(self_obj, "_pydev_run_patched"):
                         wrap_attr(self_obj, "run")
                     if (method_name in THREAD_METHODS) and (back_base not in DONT_TRACE_THREADING or \
@@ -175,7 +173,7 @@ class ThreadingLogger:
                         if hasattr(back, "f_back") and back.f_back is not None:
                             back = back.f_back
                         if "self" in back.f_locals:
-                            if isinstance(back.f_locals["self"], threading.Thread):
+                            if isinstance(back.f_locals["self"], ThreadingThread):
                                 my_self_obj = frame.f_back.f_back.f_locals["self"]
                                 my_back = frame.f_back.f_back
                                 my_thread_id = get_thread_id(my_self_obj)

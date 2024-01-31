@@ -1,7 +1,7 @@
 from _pydevd_bundle.pydevd_constants import (STATE_RUN, PYTHON_SUSPEND, SUPPORT_GEVENT, ForkSafeLock,
     _current_frames, STATE_SUSPEND, get_global_debugger, get_thread_id)
 from _pydev_bundle import pydev_log
-from _pydev_bundle._pydev_saved_modules import threading
+from _pydev_bundle._pydev_saved_modules import threading_active
 import weakref
 
 version = 11
@@ -133,7 +133,7 @@ class PyDBAdditionalThreadInfo(object):
             pydev_log.critical('thread._ident is None in _get_related_thread!')
             return None
 
-        if threading._active.get(thread._ident) is not thread:
+        if threading_active.get(thread._ident) is not thread:
             return None
 
         return thread

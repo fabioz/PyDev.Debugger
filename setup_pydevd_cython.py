@@ -231,18 +231,20 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython, 
 
 extension_folder, target_pydevd_name, target_frame_eval, force_cython = process_args()
 
+FORCE_BUILD_ALL = os.environ.get('PYDEVD_FORCE_BUILD_ALL', '').lower() in ('true', '1')
+
 extension_name = "pydevd_cython"
 if target_pydevd_name is None:
     target_pydevd_name = extension_name
 build_extension("_pydevd_bundle", extension_name, target_pydevd_name, force_cython, extension_folder, True)
 
-if IS_PY36_OR_GREATER and not IS_PY311_ONWARDS:
+if IS_PY36_OR_GREATER and not IS_PY311_ONWARDS or FORCE_BUILD_ALL:
     extension_name = "pydevd_frame_evaluator"
     if target_frame_eval is None:
         target_frame_eval = extension_name
     build_extension("_pydevd_frame_eval", extension_name, target_frame_eval, force_cython, extension_folder, True, template=True)
 
-if IS_PY312_ONWARDS:
+if IS_PY312_ONWARDS or FORCE_BUILD_ALL:
     extension_name = "_pydevd_sys_monitoring_cython"
     if target_frame_eval is None:
         target_frame_eval = extension_name

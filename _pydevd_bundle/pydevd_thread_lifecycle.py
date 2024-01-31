@@ -3,15 +3,14 @@ from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_i
 from _pydevd_bundle.pydevd_comm_constants import CMD_STEP_INTO, CMD_THREAD_SUSPEND
 from _pydevd_bundle.pydevd_constants import PYTHON_SUSPEND, STATE_SUSPEND, get_thread_id, STATE_RUN, \
     PYDEVD_USE_SYS_MONITORING
-from _pydev_bundle._pydev_saved_modules import threading
+from _pydev_bundle._pydev_saved_modules import threading_enumerate
 from _pydev_bundle import pydev_log
-import sys
 from _pydevd_sys_monitoring import pydevd_sys_monitoring
 
 
 def pydevd_find_thread_by_id(thread_id):
     try:
-        threads = threading.enumerate()
+        threads = threading_enumerate()
         for i in threads:
             tid = get_thread_id(i)
             if thread_id == tid or thread_id.endswith('|' + tid):

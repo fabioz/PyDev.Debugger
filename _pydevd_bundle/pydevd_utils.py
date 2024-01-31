@@ -1,8 +1,8 @@
 from __future__ import nested_scopes
 import traceback
-import warnings
 from _pydev_bundle import pydev_log
-from _pydev_bundle._pydev_saved_modules import thread, threading
+from _pydev_bundle._pydev_saved_modules import (thread, threading_current_thread,
+    threading_main_thread, threading, ThreadingMainThread, threading_enumerate)
 from _pydev_bundle import _pydev_saved_modules
 import signal
 import os
@@ -35,17 +35,17 @@ def save_main_module(file, module_name):
 
 def is_current_thread_main_thread():
     if hasattr(threading, 'main_thread'):
-        return threading.current_thread() is threading.main_thread()
+        return threading_current_thread() is threading_main_thread()
     else:
-        return isinstance(threading.current_thread(), threading._MainThread)
+        return isinstance(threading_current_thread(), ThreadingMainThread)
 
 
 def get_main_thread():
     if hasattr(threading, 'main_thread'):
-        return threading.main_thread()
+        return threading_main_thread()
     else:
-        for t in threading.enumerate():
-            if isinstance(t, threading._MainThread):
+        for t in threading_enumerate():
+            if isinstance(t, ThreadingMainThread):
                 return t
     return None
 
@@ -151,11 +151,11 @@ def dump_threads(stream=None, show_pydevd_threads=True):
         stream = sys.stderr
     thread_id_to_name_and_is_pydevd_thread = {}
     try:
-        threading_enumerate = _pydev_saved_modules.pydevd_saved_threading_enumerate
-        if threading_enumerate is None:
-            threading_enumerate = threading.enumerate
+        enumerate_threads = _pydev_saved_modules.pydevd_saved_threading_enumerate
+        if enumerate_threads is None:
+            enumerate_threads = threading_enumerate
 
-        for t in threading_enumerate():
+        for t in enumerate_threads():
             is_pydevd_thread = getattr(t, 'is_pydev_daemon_thread', False)
             thread_id_to_name_and_is_pydevd_thread[t.ident] = (
                 '%s  (daemon: %s, pydevd thread: %s)' % (t.name, t.daemon, is_pydevd_thread),

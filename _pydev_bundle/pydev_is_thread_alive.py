@@ -1,9 +1,9 @@
-from _pydev_bundle._pydev_saved_modules import threading
+from _pydev_bundle._pydev_saved_modules import ThreadingThread
 
 # Hack for https://www.brainwy.com/tracker/PyDev/363 (i.e.: calling is_alive() can throw AssertionError under some
 # circumstances).
 # It is required to debug threads started by start_new_thread in Python 3.4
-_temp = threading.Thread()
+_temp = ThreadingThread
 if hasattr(_temp, '_is_stopped'):  # Python 3.x has this
 
     def is_thread_alive(t):

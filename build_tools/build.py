@@ -153,6 +153,7 @@ def build():
         sys.executable, os.path.join(os.path.dirname(__file__), '..', 'setup_pydevd_cython.py'), 'build_ext', '--inplace',
     ] + additional_args
     print('Calling args: %s' % (args,))
+    env['PYDEVD_FORCE_BUILD_ALL'] = '1'
     subprocess.check_call(args, env=env,)
 
 

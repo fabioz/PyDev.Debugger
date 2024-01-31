@@ -7,7 +7,7 @@ from __future__ import print_function
 from _pydevd_bundle.pydevd_constants import (STATE_RUN, PYTHON_SUSPEND, SUPPORT_GEVENT, ForkSafeLock,
     _current_frames, STATE_SUSPEND, get_global_debugger, get_thread_id)
 from _pydev_bundle import pydev_log
-from _pydev_bundle._pydev_saved_modules import threading
+from _pydev_bundle._pydev_saved_modules import threading_active
 import weakref
 
 version = 11
@@ -139,7 +139,7 @@ cdef class PyDBAdditionalThreadInfo:
             pydev_log.critical('thread._ident is None in _get_related_thread!')
             return None
 
-        if threading._active.get(thread._ident) is not thread:
+        if threading_active.get(thread._ident) is not thread:
             return None
 
         return thread
@@ -1554,7 +1554,7 @@ def handle_exception(py_db, thread, frame, arg, str exception_type):
     return stopped
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_bundle.pydev_log import exception as pydev_log_exception
-from _pydev_bundle._pydev_saved_modules import threading
+from _pydev_bundle._pydev_saved_modules import ThreadingThread
 from _pydevd_bundle.pydevd_constants import (get_current_thread_id, NO_FTRACE,
     USE_CUSTOM_SYS_CURRENT_FRAMES_MAP, ForkSafeLock, PYDEVD_USE_SYS_MONITORING)
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
@@ -1660,7 +1660,7 @@ def fix_top_level_trace_and_get_trace_func(py_db, frame):
                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
                 t = f_unhandled.f_locals.get('self')
                 force_only_unhandled_tracer = True
-                if t is not None and isinstance(t, threading.Thread):
+                if t is not None and isinstance(t, ThreadingThread):
                     thread = t
                     break
 

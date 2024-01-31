@@ -1,7 +1,7 @@
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_import_class
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
-from _pydev_bundle._pydev_saved_modules import threading
+from _pydev_bundle._pydev_saved_modules import ThreadingLock
 
 
 class ExceptionBreakpoint(object):
@@ -56,7 +56,7 @@ class LineBreakpoint(object):
         self.suspend_policy = suspend_policy
         self.hit_condition = hit_condition
         self._hit_count = 0
-        self._hit_condition_lock = threading.Lock()
+        self._hit_condition_lock = ThreadingLock()
         self.is_logpoint = is_logpoint
 
     @property
@@ -86,7 +86,7 @@ class FunctionBreakpoint(object):
         self.suspend_policy = suspend_policy
         self.hit_condition = hit_condition
         self._hit_count = 0
-        self._hit_condition_lock = threading.Lock()
+        self._hit_condition_lock = ThreadingLock()
         self.is_logpoint = is_logpoint
 
     @property

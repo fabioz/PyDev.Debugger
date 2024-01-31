@@ -2,7 +2,7 @@
 import os
 import re
 import sys
-from _pydev_bundle._pydev_saved_modules import threading
+from _pydev_bundle._pydev_saved_modules import ThreadingLocal, threading_current_thread, ThreadingThread, threading
 from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_JYTHON, get_current_thread_id, \
     sorted_dict_repr, set_global_debugger, DebugInfoHolder, PYDEVD_USE_SYS_MONITORING
 from _pydev_bundle import pydev_log
@@ -22,7 +22,7 @@ except ImportError:
 
 pydev_src_dir = os.path.dirname(os.path.dirname(__file__))
 
-_arg_patch = threading.local()
+_arg_patch = ThreadingLocal()
 
 
 @contextmanager
@@ -1099,10 +1099,10 @@ class _NewThreadStartupWithTrace:
             # to make sure that we use the current thread bound to the original function and not use
             # threading.current_thread() unless we're sure it's a dummy thread.
             t = getattr(self.original_func, '__self__', getattr(self.original_func, 'im_self', None))
-            if not isinstance(t, threading.Thread):
+            if not isinstance(t, ThreadingThread):
                 # This is not a threading.Thread but a Dummy thread (so, get it as a dummy thread using
                 # currentThread).
-                t = threading.current_thread()
+                t = threading_current_thread()
 
             if not getattr(t, 'is_pydev_daemon_thread', False):
                 thread_id = get_current_thread_id(t)

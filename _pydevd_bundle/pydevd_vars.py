@@ -13,7 +13,7 @@ from _pydevd_bundle.pydevd_comm_constants import CMD_SET_BREAK
 
 import sys  # @Reimport
 
-from _pydev_bundle._pydev_saved_modules import threading
+from _pydev_bundle._pydev_saved_modules import threading_current_thread
 from _pydevd_bundle import pydevd_save_locals, pydevd_timeout, pydevd_constants
 from _pydev_bundle.pydev_imports import Exec, execfile
 from _pydevd_bundle.pydevd_utils import to_string
@@ -38,7 +38,7 @@ def iter_frames(frame):
 
 def dump_frames(thread_id):
     sys.stdout.write('dumping frames\n')
-    if thread_id != get_current_thread_id(threading.current_thread()):
+    if thread_id != get_current_thread_id(threading_current_thread()):
         raise VariableError("find_frame: must execute on same thread")
 
     frame = get_frame()
@@ -62,7 +62,7 @@ def getVariable(dbg, thread_id, frame_id, scope, locator):
            not the frame (as we don't care about the frame in this case).
     """
     if scope == 'BY_ID':
-        if thread_id != get_current_thread_id(threading.current_thread()):
+        if thread_id != get_current_thread_id(threading_current_thread()):
             raise VariableError("getVariable: must execute on same thread")
 
         try:
@@ -359,7 +359,7 @@ def _evaluate_with_timeouts(original_func):
             pydev_log.critical('_evaluate_with_timeouts called without py_db!')
             return original_func(py_db, frame, expression, is_exec)
         warn_evaluation_timeout = pydevd_constants.PYDEVD_WARN_EVALUATION_TIMEOUT
-        curr_thread = threading.current_thread()
+        curr_thread = threading_current_thread()
 
         def on_warn_evaluation_timeout():
             py_db.writer.add_command(py_db.cmd_factory.make_evaluation_timeout_msg(

@@ -210,13 +210,13 @@ class CommandCompiler:
 __all__ = ["InteractiveInterpreter", "InteractiveConsole", "interact",
            "compile_command"]
 
-from _pydev_bundle._pydev_saved_modules import threading
+from _pydev_bundle._pydev_saved_modules import ThreadingThread
 
 
-class _EvalAwaitInNewEventLoop(threading.Thread):
+class _EvalAwaitInNewEventLoop(ThreadingThread):
 
     def __init__(self, compiled, updated_globals, updated_locals):
-        threading.Thread.__init__(self)
+        ThreadingThread.__init__(self)
         self.daemon = True
         self._compiled = compiled
         self._updated_globals = updated_globals

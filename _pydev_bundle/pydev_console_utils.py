@@ -545,7 +545,7 @@ class BaseInterpreterInterface:
             try:
                 # Try to import the packages needed to attach the debugger
                 import pydevd
-                from _pydev_bundle._pydev_saved_modules import threading
+                from _pydev_bundle._pydev_saved_modules import threading_current_thread
             except:
                 # This happens on Jython embedded in host eclipse
                 traceback.print_exc()
@@ -553,7 +553,7 @@ class BaseInterpreterInterface:
 
             from _pydevd_bundle.pydevd_constants import set_thread_id
             from _pydev_bundle import pydev_localhost
-            set_thread_id(threading.current_thread(), "console_main")
+            set_thread_id(threading_current_thread(), "console_main")
 
             VIRTUAL_FRAME_ID = "1"  # matches PyStackFrameConsole.java
             VIRTUAL_CONSOLE_ID = "console_main"  # matches PyThreadConsole.java
