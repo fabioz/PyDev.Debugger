@@ -246,9 +246,7 @@ if IS_PY36_OR_GREATER and not IS_PY311_ONWARDS or FORCE_BUILD_ALL:
 
 if IS_PY312_ONWARDS or FORCE_BUILD_ALL:
     extension_name = "_pydevd_sys_monitoring_cython"
-    if target_frame_eval is None:
-        target_frame_eval = extension_name
-    build_extension("_pydevd_sys_monitoring", extension_name, target_frame_eval, force_cython, extension_folder, True)
+    build_extension("_pydevd_sys_monitoring", extension_name, extension_name, force_cython, extension_folder, True)
 
 if extension_folder:
     os.chdir(extension_folder)
