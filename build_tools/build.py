@@ -98,7 +98,7 @@ def build():
 
     os.chdir(root_dir)
 
-    env = None
+    env = os.environ.copy()
     if sys.platform == 'win32':
         # "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
         # set MSSdk=1
@@ -106,7 +106,6 @@ def build():
         # set VS100COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 9.0\Common7\Tools
 
         if 'GITHUB_ACTION' not in os.environ:
-            env = os.environ.copy()
             if sys.version_info[:2] in ((3, 6), (3, 7), (3, 8), (3, 9), (3, 10), (3, 11), (3, 12)):
                 FORCE_PYDEVD_VC_VARS = os.environ.get('FORCE_PYDEVD_VC_VARS')
                 if FORCE_PYDEVD_VC_VARS:
