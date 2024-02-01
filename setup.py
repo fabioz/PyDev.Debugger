@@ -176,7 +176,7 @@ try:
         ]
 
     py_version = sys.version_info[:2]
-    if (3, 6) <= py_version <= (3, 11):
+    if (3, 6) <= py_version <= (3, 10):
         ext_modules.append(
             Extension(
                 '_pydevd_frame_eval.pydevd_frame_evaluator',
@@ -185,6 +185,8 @@ try:
                 **kwargs
             )
         )
+
+    # Note: 3.11 does not have frame eval implemented (nor sys.monitoring)
 
     if py_version >= (3, 12):
         ext_modules.append(
