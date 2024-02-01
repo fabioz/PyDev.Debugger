@@ -5,7 +5,7 @@ __version_info__ in pydevd.py
 
 Create tag:
 -----------
-git tag pydev_debugger_3_0_1 -a -m "PyDev.Debugger 3.0.1"
+git tag pydev_debugger_3_0_2 -a -m "PyDev.Debugger 3.0.2"
 git push --tags
 
 
@@ -24,20 +24,6 @@ Old release process (locally):
 
 Create conda envs
 =====================
-
-conda create -y -f -n py36_64 python=3.6 cython numpy nose ipython pip
-activate py36_64
-pip install "django>=1.9"
-pip install -U "setuptools>=0.9"
-pip install -U "pip>=1.4" "wheel>=0.21" twine
-deactivate
-
-conda create -y -f -n py37_64 python=3.7 cython numpy nose ipython pip
-activate py37_64
-pip install "django>=1.9"
-pip install -U "setuptools>=0.9"
-pip install -U "pip>=1.4" "wheel>=0.21" twine
-deactivate
 
 conda create -y -f -n py38_64 python=3.8 cython numpy nose ipython pip
 activate py38_64
@@ -77,14 +63,6 @@ pip install -U "pip>=1.4" "wheel>=0.21" twine
 deactivate
 
 ### UPDATE CYTHON
-
-activate py36_64
-pip install cython==3.0.8
-deactivate
-
-activate py37_64
-pip install cython==3.0.8
-deactivate
 
 activate py38_64
 pip install cython==3.0.8
@@ -138,16 +116,6 @@ python build_tools\build_binaries_windows.py
 
 rm dist/pydevd*
 deactivate
-
-activate py36_64
-python setup.py sdist bdist_wheel
-deactivate
-dir dist
-
-activate py37_64
-python setup.py sdist bdist_wheel
-deactivate
-dir dist
 
 activate py38_64
 python setup.py sdist bdist_wheel
