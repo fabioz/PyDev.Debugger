@@ -56,7 +56,7 @@ jobs:
             python: "3.11.0"
             os: ubuntu-20.04
             PYDEVD_USE_CYTHON: YES
-          - name: "ubuntu-py312-cython"
+          - name: "ubuntu-py312-cython-checkbin"
             python: "3.12.0"
             os: ubuntu-20.04
             PYDEVD_USE_CYTHON: YES
