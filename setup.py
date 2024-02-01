@@ -164,10 +164,7 @@ try:
     if extra_compile_args:
         kwargs['extra_compile_args'] = extra_compile_args
 
-    args_with_binaries = args.copy()
-    args_with_binaries.update(dict(
-        distclass=BinaryDistribution,
-        ext_modules=[
+    ext_modules = [
             # In this setup, don't even try to compile with cython, just go with the .c file which should've
             # been properly generated from a tested version.
             Extension(
@@ -177,6 +174,32 @@ try:
                 **kwargs
             )
         ]
+
+    py_version = sys.version_info[:2]
+    if (3, 6) <= py_version <= (3, 11):
+        ext_modules.append(
+            Extension(
+                '_pydevd_frame_eval.pydevd_frame_evaluator',
+                ["_pydevd_frame_eval/pydevd_frame_evaluator.c", ],
+                define_macros=[('Py_BUILD_CORE_MODULE', '1')],
+                **kwargs
+            )
+        )
+
+    if py_version >= (3, 12):
+        ext_modules.append(
+            Extension(
+                '_pydevd_sys_monitoring._pydevd_sys_monitoring_cython',
+                ["_pydevd_sys_monitoring/_pydevd_sys_monitoring_cython.c", ],
+                define_macros=[('Py_BUILD_CORE_MODULE', '1')],
+                **kwargs
+            )
+        )
+
+    args_with_binaries = args.copy()
+    args_with_binaries.update(dict(
+        distclass=BinaryDistribution,
+        ext_modules=ext_modules
     ))
     setup(**args_with_binaries)
 except:
