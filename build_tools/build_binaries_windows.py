@@ -16,8 +16,6 @@ import sys
 miniconda_envs = os.getenv('MINICONDA_ENVS', r'D:\bin\miniconda\envs')
 
 python_installations = [
-    r'%s\py36_64\python.exe' % miniconda_envs,
-    r'%s\py37_64\python.exe' % miniconda_envs,
     r'%s\py38_64\python.exe' % miniconda_envs,
     r'%s\py39_64\python.exe' % miniconda_envs,
     r'%s\py310_64\python.exe' % miniconda_envs,
