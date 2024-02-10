@@ -16,7 +16,7 @@ class ProtocolMessage(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -35,7 +35,7 @@ class ProtocolMessage(BaseSchema):
     def __init__(self, type, seq=-1, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string type: Message type.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = type
         self.seq = seq
@@ -64,7 +64,7 @@ class Request(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -97,7 +97,7 @@ class Request(BaseSchema):
         """
         :param string type: 
         :param string command: The command to execute.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] arguments: Object containing arguments for the command.
         """
         self.type = 'request'
@@ -134,7 +134,7 @@ class Event(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -167,7 +167,7 @@ class Event(BaseSchema):
         """
         :param string type: 
         :param string event: Type of event.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Event-specific information.
         """
         self.type = 'event'
@@ -204,7 +204,7 @@ class Response(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -218,7 +218,7 @@ class Response(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -226,12 +226,14 @@ class Response(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -244,7 +246,7 @@ class Response(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -256,14 +258,14 @@ class Response(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -302,7 +304,7 @@ class Response(BaseSchema):
 @register
 class ErrorResponse(BaseSchema):
     """
-    On error (whenever 'success' is false), the body can provide more details.
+    On error (whenever `success` is false), the body can provide more details.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -310,7 +312,7 @@ class ErrorResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -324,7 +326,7 @@ class ErrorResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -332,12 +334,14 @@ class ErrorResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -345,7 +349,7 @@ class ErrorResponse(BaseSchema):
             "properties": {
                 "error": {
                     "$ref": "#/definitions/Message",
-                    "description": "An optional, structured error message."
+                    "description": "A structured error message."
                 }
             }
         }
@@ -359,13 +363,13 @@ class ErrorResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param ErrorResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -407,33 +411,32 @@ class ErrorResponse(BaseSchema):
 @register
 class CancelRequest(BaseSchema):
     """
-    The 'cancel' request is used by the frontend in two situations:
+    The `cancel` request is used by the client in two situations:
     
     - to indicate that it is no longer interested in the result produced by a specific request issued
     earlier
     
-    - to cancel a progress sequence. Clients should only call this request if the capability
-    'supportsCancelRequest' is true.
+    - to cancel a progress sequence.
+    
+    Clients should only call this request if the corresponding capability `supportsCancelRequest` is
+    true.
     
     This request has a hint characteristic: a debug adapter can only be expected to make a 'best effort'
-    in honouring this request but there are no guarantees.
+    in honoring this request but there are no guarantees.
     
-    The 'cancel' request may return an error if it could not cancel an operation but a frontend should
+    The `cancel` request may return an error if it could not cancel an operation but a client should
     refrain from presenting this error to end users.
     
-    A frontend client should only call this request if the capability 'supportsCancelRequest' is true.
+    The request that got cancelled still needs to send a response back. This can either be a normal
+    result (`success` attribute true) or an error response (`success` attribute false and the `message`
+    set to `cancelled`).
     
-    The request that got canceled still needs to send a response back. This can either be a normal
-    result ('success' attribute true)
+    Returning partial results from a cancelled request is possible but please note that a client has no
+    generic way for detecting that a response is partial or not.
     
-    or an error response ('success' attribute false and the 'message' set to 'cancelled').
+    The progress that got cancelled still needs to send a `progressEnd` event back.
     
-    Returning partial results from a cancelled request is possible but please note that a frontend
-    client has no generic way for detecting that a response is partial or not.
-    
-    The progress that got cancelled still needs to send a 'progressEnd' event back.
-    
-    A client should not assume that progress just got cancelled after sending the 'cancel' request.
+    A client should not assume that progress just got cancelled after sending the `cancel` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -441,7 +444,7 @@ class CancelRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -467,7 +470,7 @@ class CancelRequest(BaseSchema):
         """
         :param string type: 
         :param string command: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         :param CancelArguments arguments: 
         """
         self.type = 'request'
@@ -499,7 +502,7 @@ class CancelRequest(BaseSchema):
 @register
 class CancelArguments(BaseSchema):
     """
-    Arguments for 'cancel' request.
+    Arguments for `cancel` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -507,11 +510,11 @@ class CancelArguments(BaseSchema):
     __props__ = {
         "requestId": {
             "type": "integer",
-            "description": "The ID (attribute 'seq') of the request to cancel. If missing no request is cancelled.\nBoth a 'requestId' and a 'progressId' can be specified in one request."
+            "description": "The ID (attribute `seq`) of the request to cancel. If missing no request is cancelled.\nBoth a `requestId` and a `progressId` can be specified in one request."
         },
         "progressId": {
             "type": "string",
-            "description": "The ID (attribute 'progressId') of the progress to cancel. If missing no progress is cancelled.\nBoth a 'requestId' and a 'progressId' can be specified in one request."
+            "description": "The ID (attribute `progressId`) of the progress to cancel. If missing no progress is cancelled.\nBoth a `requestId` and a `progressId` can be specified in one request."
         }
     }
     __refs__ = set()
@@ -520,10 +523,10 @@ class CancelArguments(BaseSchema):
 
     def __init__(self, requestId=None, progressId=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param integer requestId: The ID (attribute 'seq') of the request to cancel. If missing no request is cancelled.
-        Both a 'requestId' and a 'progressId' can be specified in one request.
-        :param string progressId: The ID (attribute 'progressId') of the progress to cancel. If missing no progress is cancelled.
-        Both a 'requestId' and a 'progressId' can be specified in one request.
+        :param integer requestId: The ID (attribute `seq`) of the request to cancel. If missing no request is cancelled.
+        Both a `requestId` and a `progressId` can be specified in one request.
+        :param string progressId: The ID (attribute `progressId`) of the progress to cancel. If missing no progress is cancelled.
+        Both a `requestId` and a `progressId` can be specified in one request.
         """
         self.requestId = requestId
         self.progressId = progressId
@@ -547,7 +550,7 @@ class CancelArguments(BaseSchema):
 @register
 class CancelResponse(BaseSchema):
     """
-    Response to 'cancel' request. This is just an acknowledgement, so no body field is required.
+    Response to `cancel` request. This is just an acknowledgement, so no body field is required.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -555,7 +558,7 @@ class CancelResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -569,7 +572,7 @@ class CancelResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -577,12 +580,14 @@ class CancelResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -595,7 +600,7 @@ class CancelResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -607,14 +612,14 @@ class CancelResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -654,26 +659,26 @@ class CancelResponse(BaseSchema):
 class InitializedEvent(BaseSchema):
     """
     This event indicates that the debug adapter is ready to accept configuration requests (e.g.
-    SetBreakpointsRequest, SetExceptionBreakpointsRequest).
+    `setBreakpoints`, `setExceptionBreakpoints`).
     
     A debug adapter is expected to send this event when it is ready to accept configuration requests
-    (but not before the 'initialize' request has finished).
+    (but not before the `initialize` request has finished).
     
     The sequence of events/requests is as follows:
     
-    - adapters sends 'initialized' event (after the 'initialize' request has returned)
+    - adapters sends `initialized` event (after the `initialize` request has returned)
     
-    - frontend sends zero or more 'setBreakpoints' requests
+    - client sends zero or more `setBreakpoints` requests
     
-    - frontend sends one 'setFunctionBreakpoints' request (if capability 'supportsFunctionBreakpoints'
-    is true)
+    - client sends one `setFunctionBreakpoints` request (if corresponding capability
+    `supportsFunctionBreakpoints` is true)
     
-    - frontend sends a 'setExceptionBreakpoints' request if one or more 'exceptionBreakpointFilters'
-    have been defined (or if 'supportsConfigurationDoneRequest' is not defined or false)
+    - client sends a `setExceptionBreakpoints` request if one or more `exceptionBreakpointFilters` have
+    been defined (or if `supportsConfigurationDoneRequest` is not true)
     
-    - frontend sends other future configuration requests
+    - client sends other future configuration requests
     
-    - frontend sends one 'configurationDone' request to indicate the end of the configuration.
+    - client sends one `configurationDone` request to indicate the end of the configuration.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -681,7 +686,7 @@ class InitializedEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -716,7 +721,7 @@ class InitializedEvent(BaseSchema):
         """
         :param string type: 
         :param string event: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Event-specific information.
         """
         self.type = 'event'
@@ -748,7 +753,7 @@ class StoppedEvent(BaseSchema):
     """
     The event indicates that the execution of the debuggee has stopped due to some condition.
     
-    This can be caused by a break point previously set, a stepping request has completed, by executing a
+    This can be caused by a breakpoint previously set, a stepping request has completed, by executing a
     debugger statement etc.
 
     Note: automatically generated code. Do not edit manually.
@@ -757,7 +762,7 @@ class StoppedEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -776,7 +781,7 @@ class StoppedEvent(BaseSchema):
             "properties": {
                 "reason": {
                     "type": "string",
-                    "description": "The reason for the event.\nFor backward compatibility this string is shown in the UI if the 'description' attribute is missing (but it must not be translated).",
+                    "description": "The reason for the event.\nFor backward compatibility this string is shown in the UI if the `description` attribute is missing (but it must not be translated).",
                     "_enum": [
                         "step",
                         "breakpoint",
@@ -791,7 +796,7 @@ class StoppedEvent(BaseSchema):
                 },
                 "description": {
                     "type": "string",
-                    "description": "The full reason for the event, e.g. 'Paused on exception'. This string is shown in the UI as is and must be translated."
+                    "description": "The full reason for the event, e.g. 'Paused on exception'. This string is shown in the UI as is and can be translated."
                 },
                 "threadId": {
                     "type": "integer",
@@ -799,22 +804,22 @@ class StoppedEvent(BaseSchema):
                 },
                 "preserveFocusHint": {
                     "type": "boolean",
-                    "description": "A value of true hints to the frontend that this event should not change the focus."
+                    "description": "A value of True hints to the client that this event should not change the focus."
                 },
                 "text": {
                     "type": "string",
-                    "description": "Additional information. E.g. if reason is 'exception', text contains the exception name. This string is shown in the UI."
+                    "description": "Additional information. E.g. if reason is `exception`, text contains the exception name. This string is shown in the UI."
                 },
                 "allThreadsStopped": {
                     "type": "boolean",
-                    "description": "If 'allThreadsStopped' is true, a debug adapter can announce that all threads have stopped.\n- The client should use this information to enable that all threads can be expanded to access their stacktraces.\n- If the attribute is missing or false, only the thread with the given threadId can be expanded."
+                    "description": "If `allThreadsStopped` is True, a debug adapter can announce that all threads have stopped.\n- The client should use this information to enable that all threads can be expanded to access their stacktraces.\n- If the attribute is missing or false, only the thread with the given `threadId` can be expanded."
                 },
                 "hitBreakpointIds": {
                     "type": "array",
                     "items": {
                         "type": "integer"
                     },
-                    "description": "Ids of the breakpoints that triggered the event. In most cases there will be only a single breakpoint but here are some examples for multiple breakpoints:\n- Different types of breakpoints map to the same location.\n- Multiple source breakpoints get collapsed to the same instruction by the compiler/runtime.\n- Multiple function breakpoints with different function names map to the same location."
+                    "description": "Ids of the breakpoints that triggered the event. In most cases there is only a single breakpoint but here are some examples for multiple breakpoints:\n- Different types of breakpoints map to the same location.\n- Multiple source breakpoints get collapsed to the same instruction by the compiler/runtime.\n- Multiple function breakpoints with different function names map to the same location."
                 }
             },
             "required": [
@@ -831,7 +836,7 @@ class StoppedEvent(BaseSchema):
         :param string type: 
         :param string event: 
         :param StoppedEventBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'event'
         self.event = 'stopped'
@@ -865,9 +870,9 @@ class ContinuedEvent(BaseSchema):
     The event indicates that the execution of the debuggee has continued.
     
     Please note: a debug adapter is not expected to send this event in response to a request that
-    implies that execution continues, e.g. 'launch' or 'continue'.
+    implies that execution continues, e.g. `launch` or `continue`.
     
-    It is only necessary to send a 'continued' event if there was no previous request that implied this.
+    It is only necessary to send a `continued` event if there was no previous request that implied this.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -875,7 +880,7 @@ class ContinuedEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -898,7 +903,7 @@ class ContinuedEvent(BaseSchema):
                 },
                 "allThreadsContinued": {
                     "type": "boolean",
-                    "description": "If 'allThreadsContinued' is true, a debug adapter can announce that all threads have continued."
+                    "description": "If `allThreadsContinued` is True, a debug adapter can announce that all threads have continued."
                 }
             },
             "required": [
@@ -915,7 +920,7 @@ class ContinuedEvent(BaseSchema):
         :param string type: 
         :param string event: 
         :param ContinuedEventBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'event'
         self.event = 'continued'
@@ -954,7 +959,7 @@ class ExitedEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -990,7 +995,7 @@ class ExitedEvent(BaseSchema):
         :param string type: 
         :param string event: 
         :param ExitedEventBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'event'
         self.event = 'exited'
@@ -1030,7 +1035,7 @@ class TerminatedEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -1057,7 +1062,7 @@ class TerminatedEvent(BaseSchema):
                         "object",
                         "string"
                     ],
-                    "description": "A debug adapter may set 'restart' to true (or to an arbitrary object) to request that the front end restarts the session.\nThe value is not interpreted by the client and passed unmodified as an attribute '__restart' to the 'launch' and 'attach' requests."
+                    "description": "A debug adapter may set `restart` to True (or to an arbitrary object) to request that the client restarts the session.\nThe value is not interpreted by the client and passed unmodified as an attribute `__restart` to the `launch` and `attach` requests."
                 }
             }
         }
@@ -1070,7 +1075,7 @@ class TerminatedEvent(BaseSchema):
         """
         :param string type: 
         :param string event: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         :param TerminatedEventBody body: 
         """
         self.type = 'event'
@@ -1111,7 +1116,7 @@ class ThreadEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -1156,7 +1161,7 @@ class ThreadEvent(BaseSchema):
         :param string type: 
         :param string event: 
         :param ThreadEventBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'event'
         self.event = 'thread'
@@ -1195,7 +1200,7 @@ class OutputEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -1214,7 +1219,7 @@ class OutputEvent(BaseSchema):
             "properties": {
                 "category": {
                     "type": "string",
-                    "description": "The output category. If not specified or if the category is not understand by the client, 'console' is assumed.",
+                    "description": "The output category. If not specified or if the category is not understood by the client, `console` is assumed.",
                     "_enum": [
                         "console",
                         "important",
@@ -1224,7 +1229,7 @@ class OutputEvent(BaseSchema):
                     ],
                     "enumDescriptions": [
                         "Show the output in the client's default message UI, e.g. a 'debug console'. This category should only be used for informational output from the debugger (as opposed to the debuggee).",
-                        "A hint for the client to show the ouput in the client's UI for important and highly visible information, e.g. as a popup notification. This category should only be used for important messages from the debugger (as opposed to the debuggee). Since this category value is a hint, clients might ignore the hint and assume the 'console' category.",
+                        "A hint for the client to show the output in the client's UI for important and highly visible information, e.g. as a popup notification. This category should only be used for important messages from the debugger (as opposed to the debuggee). Since this category value is a hint, clients might ignore the hint and assume the `console` category.",
                         "Show the output as normal program output from the debuggee.",
                         "Show the output as error program output from the debuggee.",
                         "Send the output to telemetry instead of showing it to the user."
@@ -1243,26 +1248,26 @@ class OutputEvent(BaseSchema):
                         "end"
                     ],
                     "enumDescriptions": [
-                        "Start a new group in expanded mode. Subsequent output events are members of the group and should be shown indented.\nThe 'output' attribute becomes the name of the group and is not indented.",
-                        "Start a new group in collapsed mode. Subsequent output events are members of the group and should be shown indented (as soon as the group is expanded).\nThe 'output' attribute becomes the name of the group and is not indented.",
-                        "End the current group and decreases the indentation of subsequent output events.\nA non empty 'output' attribute is shown as the unindented end of the group."
+                        "Start a new group in expanded mode. Subsequent output events are members of the group and should be shown indented.\nThe `output` attribute becomes the name of the group and is not indented.",
+                        "Start a new group in collapsed mode. Subsequent output events are members of the group and should be shown indented (as soon as the group is expanded).\nThe `output` attribute becomes the name of the group and is not indented.",
+                        "End the current group and decrease the indentation of subsequent output events.\nA non-empty `output` attribute is shown as the unindented end of the group."
                     ]
                 },
                 "variablesReference": {
                     "type": "integer",
-                    "description": "If an attribute 'variablesReference' exists and its value is > 0, the output contains objects which can be retrieved by passing 'variablesReference' to the 'variables' request. The value should be less than or equal to 2147483647 (2^31-1)."
+                    "description": "If an attribute `variablesReference` exists and its value is > 0, the output contains objects which can be retrieved by passing `variablesReference` to the `variables` request as long as execution remains suspended. See 'Lifetime of Object References' in the Overview section for details."
                 },
                 "source": {
                     "$ref": "#/definitions/Source",
-                    "description": "An optional source location where the output was produced."
+                    "description": "The source location where the output was produced."
                 },
                 "line": {
                     "type": "integer",
-                    "description": "An optional source location line where the output was produced."
+                    "description": "The source location's line where the output was produced."
                 },
                 "column": {
                     "type": "integer",
-                    "description": "An optional source location column where the output was produced."
+                    "description": "The position in `line` where the output was produced. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based."
                 },
                 "data": {
                     "type": [
@@ -1274,7 +1279,7 @@ class OutputEvent(BaseSchema):
                         "object",
                         "string"
                     ],
-                    "description": "Optional data to report. For the 'telemetry' category the data will be sent to telemetry, for the other categories the data is shown in JSON format."
+                    "description": "Additional data to report. For the `telemetry` category the data is sent to telemetry, for the other categories the data is shown in JSON format."
                 }
             },
             "required": [
@@ -1291,7 +1296,7 @@ class OutputEvent(BaseSchema):
         :param string type: 
         :param string event: 
         :param OutputEventBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'event'
         self.event = 'output'
@@ -1330,7 +1335,7 @@ class BreakpointEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -1358,7 +1363,7 @@ class BreakpointEvent(BaseSchema):
                 },
                 "breakpoint": {
                     "$ref": "#/definitions/Breakpoint",
-                    "description": "The 'id' attribute is used to find the target breakpoint and the other attributes are used as the new values."
+                    "description": "The `id` attribute is used to find the target breakpoint, the other attributes are used as the new values."
                 }
             },
             "required": [
@@ -1376,7 +1381,7 @@ class BreakpointEvent(BaseSchema):
         :param string type: 
         :param string event: 
         :param BreakpointEventBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'event'
         self.event = 'breakpoint'
@@ -1415,7 +1420,7 @@ class ModuleEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -1443,7 +1448,7 @@ class ModuleEvent(BaseSchema):
                 },
                 "module": {
                     "$ref": "#/definitions/Module",
-                    "description": "The new, changed, or removed module. In case of 'removed' only the module id is used."
+                    "description": "The new, changed, or removed module. In case of `removed` only the module id is used."
                 }
             },
             "required": [
@@ -1461,7 +1466,7 @@ class ModuleEvent(BaseSchema):
         :param string type: 
         :param string event: 
         :param ModuleEventBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'event'
         self.event = 'module'
@@ -1501,7 +1506,7 @@ class LoadedSourceEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -1547,7 +1552,7 @@ class LoadedSourceEvent(BaseSchema):
         :param string type: 
         :param string event: 
         :param LoadedSourceEventBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'event'
         self.event = 'loadedSource'
@@ -1587,7 +1592,7 @@ class ProcessEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -1610,11 +1615,11 @@ class ProcessEvent(BaseSchema):
                 },
                 "systemProcessId": {
                     "type": "integer",
-                    "description": "The system process id of the debugged process. This property will be missing for non-system processes."
+                    "description": "The system process id of the debugged process. This property is missing for non-system processes."
                 },
                 "isLocalProcess": {
                     "type": "boolean",
-                    "description": "If true, the process is running on the same computer as the debug adapter."
+                    "description": "If True, the process is running on the same computer as the debug adapter."
                 },
                 "startMethod": {
                     "type": "string",
@@ -1649,7 +1654,7 @@ class ProcessEvent(BaseSchema):
         :param string type: 
         :param string event: 
         :param ProcessEventBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'event'
         self.event = 'process'
@@ -1682,11 +1687,11 @@ class CapabilitiesEvent(BaseSchema):
     """
     The event indicates that one or more capabilities have changed.
     
-    Since the capabilities are dependent on the frontend and its UI, it might not be possible to change
+    Since the capabilities are dependent on the client and its UI, it might not be possible to change
     that at random times (or too late).
     
-    Consequently this event has a hint characteristic: a frontend can only be expected to make a 'best
-    effort' in honouring individual capabilities but there are no guarantees.
+    Consequently this event has a hint characteristic: a client can only be expected to make a 'best
+    effort' in honoring individual capabilities but there are no guarantees.
     
     Only changed capabilities need to be included, all other capabilities keep their values.
 
@@ -1696,7 +1701,7 @@ class CapabilitiesEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -1732,7 +1737,7 @@ class CapabilitiesEvent(BaseSchema):
         :param string type: 
         :param string event: 
         :param CapabilitiesEventBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'event'
         self.event = 'capabilities'
@@ -1763,15 +1768,12 @@ class CapabilitiesEvent(BaseSchema):
 @register
 class ProgressStartEvent(BaseSchema):
     """
-    The event signals that a long running operation is about to start and
-    
-    provides additional information for the client to set up a corresponding progress and cancellation
-    UI.
+    The event signals that a long running operation is about to start and provides additional
+    information for the client to set up a corresponding progress and cancellation UI.
     
     The client is free to delay the showing of the UI in order to reduce flicker.
     
-    This event should only be sent if the client has passed the value true for the
-    'supportsProgressReporting' capability of the 'initialize' request.
+    This event should only be sent if the corresponding capability `supportsProgressReporting` is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -1779,7 +1781,7 @@ class ProgressStartEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -1798,27 +1800,27 @@ class ProgressStartEvent(BaseSchema):
             "properties": {
                 "progressId": {
                     "type": "string",
-                    "description": "An ID that must be used in subsequent 'progressUpdate' and 'progressEnd' events to make them refer to the same progress reporting.\nIDs must be unique within a debug session."
+                    "description": "An ID that can be used in subsequent `progressUpdate` and `progressEnd` events to make them refer to the same progress reporting.\nIDs must be unique within a debug session."
                 },
                 "title": {
                     "type": "string",
-                    "description": "Mandatory (short) title of the progress reporting. Shown in the UI to describe the long running operation."
+                    "description": "Short title of the progress reporting. Shown in the UI to describe the long running operation."
                 },
                 "requestId": {
                     "type": "integer",
-                    "description": "The request ID that this progress report is related to. If specified a debug adapter is expected to emit\nprogress events for the long running request until the request has been either completed or cancelled.\nIf the request ID is omitted, the progress report is assumed to be related to some general activity of the debug adapter."
+                    "description": "The request ID that this progress report is related to. If specified a debug adapter is expected to emit progress events for the long running request until the request has been either completed or cancelled.\nIf the request ID is omitted, the progress report is assumed to be related to some general activity of the debug adapter."
                 },
                 "cancellable": {
                     "type": "boolean",
-                    "description": "If true, the request that reports progress may be canceled with a 'cancel' request.\nSo this property basically controls whether the client should use UX that supports cancellation.\nClients that don't support cancellation are allowed to ignore the setting."
+                    "description": "If True, the request that reports progress may be cancelled with a `cancel` request.\nSo this property basically controls whether the client should use UX that supports cancellation.\nClients that don't support cancellation are allowed to ignore the setting."
                 },
                 "message": {
                     "type": "string",
-                    "description": "Optional, more detailed progress message."
+                    "description": "More detailed progress message."
                 },
                 "percentage": {
                     "type": "number",
-                    "description": "Optional progress percentage to display (value range: 0 to 100). If omitted no percentage will be shown."
+                    "description": "Progress percentage to display (value range: 0 to 100). If omitted no percentage is shown."
                 }
             },
             "required": [
@@ -1836,7 +1838,7 @@ class ProgressStartEvent(BaseSchema):
         :param string type: 
         :param string event: 
         :param ProgressStartEventBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'event'
         self.event = 'progressStart'
@@ -1867,13 +1869,13 @@ class ProgressStartEvent(BaseSchema):
 @register
 class ProgressUpdateEvent(BaseSchema):
     """
-    The event signals that the progress reporting needs to updated with a new message and/or percentage.
+    The event signals that the progress reporting needs to be updated with a new message and/or
+    percentage.
     
     The client does not have to update the UI immediately, but the clients needs to keep track of the
     message and/or percentage values.
     
-    This event should only be sent if the client has passed the value true for the
-    'supportsProgressReporting' capability of the 'initialize' request.
+    This event should only be sent if the corresponding capability `supportsProgressReporting` is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -1881,7 +1883,7 @@ class ProgressUpdateEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -1900,15 +1902,15 @@ class ProgressUpdateEvent(BaseSchema):
             "properties": {
                 "progressId": {
                     "type": "string",
-                    "description": "The ID that was introduced in the initial 'progressStart' event."
+                    "description": "The ID that was introduced in the initial `progressStart` event."
                 },
                 "message": {
                     "type": "string",
-                    "description": "Optional, more detailed progress message. If omitted, the previous message (if any) is used."
+                    "description": "More detailed progress message. If omitted, the previous message (if any) is used."
                 },
                 "percentage": {
                     "type": "number",
-                    "description": "Optional progress percentage to display (value range: 0 to 100). If omitted no percentage will be shown."
+                    "description": "Progress percentage to display (value range: 0 to 100). If omitted no percentage is shown."
                 }
             },
             "required": [
@@ -1925,7 +1927,7 @@ class ProgressUpdateEvent(BaseSchema):
         :param string type: 
         :param string event: 
         :param ProgressUpdateEventBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'event'
         self.event = 'progressUpdate'
@@ -1956,10 +1958,9 @@ class ProgressUpdateEvent(BaseSchema):
 @register
 class ProgressEndEvent(BaseSchema):
     """
-    The event signals the end of the progress reporting with an optional final message.
+    The event signals the end of the progress reporting with a final message.
     
-    This event should only be sent if the client has passed the value true for the
-    'supportsProgressReporting' capability of the 'initialize' request.
+    This event should only be sent if the corresponding capability `supportsProgressReporting` is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -1967,7 +1968,7 @@ class ProgressEndEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -1986,11 +1987,11 @@ class ProgressEndEvent(BaseSchema):
             "properties": {
                 "progressId": {
                     "type": "string",
-                    "description": "The ID that was introduced in the initial 'ProgressStartEvent'."
+                    "description": "The ID that was introduced in the initial `ProgressStartEvent`."
                 },
                 "message": {
                     "type": "string",
-                    "description": "Optional, more detailed progress message. If omitted, the previous message (if any) is used."
+                    "description": "More detailed progress message. If omitted, the previous message (if any) is used."
                 }
             },
             "required": [
@@ -2007,7 +2008,7 @@ class ProgressEndEvent(BaseSchema):
         :param string type: 
         :param string event: 
         :param ProgressEndEventBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'event'
         self.event = 'progressEnd'
@@ -2045,8 +2046,7 @@ class InvalidatedEvent(BaseSchema):
     because in that case the client refetches the new state anyway. But the event can be used for
     example to refresh the UI after rendering formatting has changed in the debug adapter.
     
-    This event should only be sent if the debug adapter has received a value true for the
-    'supportsInvalidatedEvent' capability of the 'initialize' request.
+    This event should only be sent if the corresponding capability `supportsInvalidatedEvent` is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -2054,7 +2054,7 @@ class InvalidatedEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -2073,7 +2073,7 @@ class InvalidatedEvent(BaseSchema):
             "properties": {
                 "areas": {
                     "type": "array",
-                    "description": "Optional set of logical areas that got invalidated. This property has a hint characteristic: a client can only be expected to make a 'best effort' in honouring the areas but there are no guarantees. If this property is missing, empty, or if values are not understand the client should assume a single value 'all'.",
+                    "description": "Set of logical areas that got invalidated. This property has a hint characteristic: a client can only be expected to make a 'best effort' in honoring the areas but there are no guarantees. If this property is missing, empty, or if values are not understood, the client should assume a single value `all`.",
                     "items": {
                         "$ref": "#/definitions/InvalidatedAreas"
                     }
@@ -2084,7 +2084,7 @@ class InvalidatedEvent(BaseSchema):
                 },
                 "stackFrameId": {
                     "type": "integer",
-                    "description": "If specified, the client only needs to refetch data related to this stack frame (and the 'threadId' is ignored)."
+                    "description": "If specified, the client only needs to refetch data related to this stack frame (and the `threadId` is ignored)."
                 }
             }
         }
@@ -2098,7 +2098,7 @@ class InvalidatedEvent(BaseSchema):
         :param string type: 
         :param string event: 
         :param InvalidatedEventBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'event'
         self.event = 'invalidated'
@@ -2129,9 +2129,8 @@ class InvalidatedEvent(BaseSchema):
 @register
 class MemoryEvent(BaseSchema):
     """
-    This event indicates that some memory range has been updated. It should only be sent if the debug
-    adapter has received a value true for the `supportsMemoryEvent` capability of the `initialize`
-    request.
+    This event indicates that some memory range has been updated. It should only be sent if the
+    corresponding capability `supportsMemoryEvent` is true.
     
     Clients typically react to the event by re-issuing a `readMemory` request if they show the memory
     identified by the `memoryReference` and if the updated memory range overlaps the displayed range.
@@ -2139,8 +2138,8 @@ class MemoryEvent(BaseSchema):
     should not assume that they are part of a single continuous address range and might overlap.
     
     Debug adapters can use this event to indicate that the contents of a memory range has changed due to
-    some other DAP request like `setVariable` or `setExpression`. Debug adapters are not expected to
-    emit this event for each and every memory change of a running program, because that information is
+    some other request like `setVariable` or `setExpression`. Debug adapters are not expected to emit
+    this event for each and every memory change of a running program, because that information is
     typically not available from debuggers and it would flood clients with too many events.
 
     Note: automatically generated code. Do not edit manually.
@@ -2149,7 +2148,7 @@ class MemoryEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -2195,7 +2194,7 @@ class MemoryEvent(BaseSchema):
         :param string type: 
         :param string event: 
         :param MemoryEventBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'event'
         self.event = 'memory'
@@ -2226,12 +2225,23 @@ class MemoryEvent(BaseSchema):
 @register
 class RunInTerminalRequest(BaseSchema):
     """
-    This optional request is sent from the debug adapter to the client to run a command in a terminal.
+    This request is sent from the debug adapter to the client to run a command in a terminal.
     
     This is typically used to launch the debuggee in a terminal provided by the client.
     
-    This request should only be called if the client has passed the value true for the
-    'supportsRunInTerminalRequest' capability of the 'initialize' request.
+    This request should only be called if the corresponding client capability
+    `supportsRunInTerminalRequest` is true.
+    
+    Client implementations of `runInTerminal` are free to run the command however they choose including
+    issuing the command to a command line interpreter (aka 'shell'). Argument strings passed to the
+    `runInTerminal` request must arrive verbatim in the command to be run. As a consequence, clients
+    which use a shell are responsible for escaping any special shell characters in the argument strings
+    to prevent them from being interpreted (and modified) by the shell.
+    
+    Some users may wish to take advantage of shell processing in the argument strings. For clients which
+    implement `runInTerminal` using an intermediary shell, the `argsCanBeInterpretedByShell` property
+    can be set to true. In this case the client is requested not to escape any special shell characters
+    in the argument strings.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -2239,7 +2249,7 @@ class RunInTerminalRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -2266,7 +2276,7 @@ class RunInTerminalRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param RunInTerminalRequestArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'runInTerminal'
@@ -2296,7 +2306,7 @@ class RunInTerminalRequest(BaseSchema):
 @register
 class RunInTerminalRequestArguments(BaseSchema):
     """
-    Arguments for 'runInTerminal' request.
+    Arguments for `runInTerminal` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -2308,11 +2318,11 @@ class RunInTerminalRequestArguments(BaseSchema):
                 "integrated",
                 "external"
             ],
-            "description": "What kind of terminal to launch."
+            "description": "What kind of terminal to launch. Defaults to `integrated` if not specified."
         },
         "title": {
             "type": "string",
-            "description": "Optional title of the terminal."
+            "description": "Title of the terminal."
         },
         "cwd": {
             "type": "string",
@@ -2333,21 +2343,26 @@ class RunInTerminalRequestArguments(BaseSchema):
                     "string",
                     "null"
                 ],
-                "description": "Proper values must be strings. A value of 'null' removes the variable from the environment."
+                "description": "A string is a proper value for an environment variable. The value `null` removes the variable from the environment."
             }
+        },
+        "argsCanBeInterpretedByShell": {
+            "type": "boolean",
+            "description": "This property should only be set if the corresponding capability `supportsArgsCanBeInterpretedByShell` is True. If the client uses an intermediary shell to launch the application, then the client must not attempt to escape characters with special meanings for the shell. The user is fully responsible for escaping as needed and that arguments using special characters may not be portable across shells."
         }
     }
     __refs__ = set(['env'])
 
     __slots__ = list(__props__.keys()) + ['kwargs']
 
-    def __init__(self, cwd, args, kind=None, title=None, env=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+    def __init__(self, cwd, args, kind=None, title=None, env=None, argsCanBeInterpretedByShell=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string cwd: Working directory for the command. For non-empty, valid paths this typically results in execution of a change directory command.
         :param array args: List of arguments. The first argument is the command to run.
-        :param string kind: What kind of terminal to launch.
-        :param string title: Optional title of the terminal.
+        :param string kind: What kind of terminal to launch. Defaults to `integrated` if not specified.
+        :param string title: Title of the terminal.
         :param RunInTerminalRequestArgumentsEnv env: Environment key-value pairs that are added to or removed from the default environment.
+        :param boolean argsCanBeInterpretedByShell: This property should only be set if the corresponding capability `supportsArgsCanBeInterpretedByShell` is true. If the client uses an intermediary shell to launch the application, then the client must not attempt to escape characters with special meanings for the shell. The user is fully responsible for escaping as needed and that arguments using special characters may not be portable across shells.
         """
         self.cwd = cwd
         self.args = args
@@ -2357,6 +2372,7 @@ class RunInTerminalRequestArguments(BaseSchema):
             self.env = RunInTerminalRequestArgumentsEnv()
         else:
             self.env = RunInTerminalRequestArgumentsEnv(update_ids_from_dap=update_ids_from_dap, **env) if env.__class__ !=  RunInTerminalRequestArgumentsEnv else env
+        self.argsCanBeInterpretedByShell = argsCanBeInterpretedByShell
         self.kwargs = kwargs
 
 
@@ -2368,6 +2384,7 @@ class RunInTerminalRequestArguments(BaseSchema):
         kind = self.kind
         title = self.title
         env = self.env
+        argsCanBeInterpretedByShell = self.argsCanBeInterpretedByShell
         dct = {
             'cwd': cwd,
             'args': args,
@@ -2378,6 +2395,8 @@ class RunInTerminalRequestArguments(BaseSchema):
             dct['title'] = title
         if env is not None:
             dct['env'] = env.to_dict(update_ids_to_dap=update_ids_to_dap)
+        if argsCanBeInterpretedByShell is not None:
+            dct['argsCanBeInterpretedByShell'] = argsCanBeInterpretedByShell
         dct.update(self.kwargs)
         return dct
 
@@ -2386,7 +2405,7 @@ class RunInTerminalRequestArguments(BaseSchema):
 @register
 class RunInTerminalResponse(BaseSchema):
     """
-    Response to 'runInTerminal' request.
+    Response to `runInTerminal` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -2394,7 +2413,7 @@ class RunInTerminalResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -2408,7 +2427,7 @@ class RunInTerminalResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -2416,12 +2435,14 @@ class RunInTerminalResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -2447,13 +2468,13 @@ class RunInTerminalResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param RunInTerminalResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -2491,22 +2512,20 @@ class RunInTerminalResponse(BaseSchema):
         return dct
 
 
-@register_request('initialize')
+@register_request('startDebugging')
 @register
-class InitializeRequest(BaseSchema):
+class StartDebuggingRequest(BaseSchema):
     """
-    The 'initialize' request is sent as the first request from the client to the debug adapter
+    This request is sent from the debug adapter to the client to start a new debug session of the same
+    type as the caller.
     
-    in order to configure it with client capabilities and to retrieve capabilities from the debug
-    adapter.
+    This request should only be sent if the corresponding client capability
+    `supportsStartDebuggingRequest` is true.
     
-    Until the debug adapter has responded to with an 'initialize' response, the client must not send any
-    additional requests or events to the debug adapter.
-    
-    In addition the debug adapter is not allowed to send any requests or events to the client until it
-    has responded with an 'initialize' response.
-    
-    The 'initialize' request may only be sent once.
+    A client implementation of `startDebugging` should start a new debug session (of the same type as
+    the caller) in the same way that the caller's session was started. If the client supports
+    hierarchical debug sessions, the newly created session can be treated as a child of the caller
+    session.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -2514,7 +2533,241 @@ class InitializeRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "request"
+            ]
+        },
+        "command": {
+            "type": "string",
+            "enum": [
+                "startDebugging"
+            ]
+        },
+        "arguments": {
+            "type": "StartDebuggingRequestArguments"
+        }
+    }
+    __refs__ = set(['arguments'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, arguments, seq=-1, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param string command: 
+        :param StartDebuggingRequestArguments arguments: 
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        """
+        self.type = 'request'
+        self.command = 'startDebugging'
+        if arguments is None:
+            self.arguments = StartDebuggingRequestArguments()
+        else:
+            self.arguments = StartDebuggingRequestArguments(update_ids_from_dap=update_ids_from_dap, **arguments) if arguments.__class__ !=  StartDebuggingRequestArguments else arguments
+        self.seq = seq
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        command = self.command
+        arguments = self.arguments
+        seq = self.seq
+        dct = {
+            'type': type,
+            'command': command,
+            'arguments': arguments.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'seq': seq,
+        }
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class StartDebuggingRequestArguments(BaseSchema):
+    """
+    Arguments for `startDebugging` request.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "configuration": {
+            "type": "object",
+            "additionalProperties": True,
+            "description": "Arguments passed to the new debug session. The arguments must only contain properties understood by the `launch` or `attach` requests of the debug adapter and they must not contain any client-specific properties (e.g. `type`) or client-specific features (e.g. substitutable 'variables')."
+        },
+        "request": {
+            "type": "string",
+            "enum": [
+                "launch",
+                "attach"
+            ],
+            "description": "Indicates whether the new debug session should be started with a `launch` or `attach` request."
+        }
+    }
+    __refs__ = set(['configuration'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, configuration, request, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param StartDebuggingRequestArgumentsConfiguration configuration: Arguments passed to the new debug session. The arguments must only contain properties understood by the `launch` or `attach` requests of the debug adapter and they must not contain any client-specific properties (e.g. `type`) or client-specific features (e.g. substitutable 'variables').
+        :param string request: Indicates whether the new debug session should be started with a `launch` or `attach` request.
+        """
+        if configuration is None:
+            self.configuration = StartDebuggingRequestArgumentsConfiguration()
+        else:
+            self.configuration = StartDebuggingRequestArgumentsConfiguration(update_ids_from_dap=update_ids_from_dap, **configuration) if configuration.__class__ !=  StartDebuggingRequestArgumentsConfiguration else configuration
+        self.request = request
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        configuration = self.configuration
+        request = self.request
+        dct = {
+            'configuration': configuration.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'request': request,
+        }
+        dct.update(self.kwargs)
+        return dct
+
+
+@register_response('startDebugging')
+@register
+class StartDebuggingResponse(BaseSchema):
+    """
+    Response to `startDebugging` request. This is just an acknowledgement, so no body field is required.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "response"
+            ]
+        },
+        "request_seq": {
+            "type": "integer",
+            "description": "Sequence number of the corresponding request."
+        },
+        "success": {
+            "type": "boolean",
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
+        },
+        "command": {
+            "type": "string",
+            "description": "The command requested."
+        },
+        "message": {
+            "type": "string",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
+            "_enum": [
+                "cancelled",
+                "notStopped"
+            ],
+            "enumDescriptions": [
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
+            ]
+        },
+        "body": {
+            "type": [
+                "array",
+                "boolean",
+                "integer",
+                "null",
+                "number",
+                "object",
+                "string"
+            ],
+            "description": "Contains request result if success is True and error details if success is false."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, request_seq, success, command, seq=-1, message=None, body=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param integer request_seq: Sequence number of the corresponding request.
+        :param boolean success: Outcome of the request.
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
+        :param string command: The command requested.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
+        Some predefined values exist.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
+        """
+        self.type = 'response'
+        self.request_seq = request_seq
+        self.success = success
+        self.command = command
+        self.seq = seq
+        self.message = message
+        self.body = body
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        request_seq = self.request_seq
+        success = self.success
+        command = self.command
+        seq = self.seq
+        message = self.message
+        body = self.body
+        dct = {
+            'type': type,
+            'request_seq': request_seq,
+            'success': success,
+            'command': command,
+            'seq': seq,
+        }
+        if message is not None:
+            dct['message'] = message
+        if body is not None:
+            dct['body'] = body
+        dct.update(self.kwargs)
+        return dct
+
+
+@register_request('initialize')
+@register
+class InitializeRequest(BaseSchema):
+    """
+    The `initialize` request is sent as the first request from the client to the debug adapter in order
+    to configure it with client capabilities and to retrieve capabilities from the debug adapter.
+    
+    Until the debug adapter has responded with an `initialize` response, the client must not send any
+    additional requests or events to the debug adapter.
+    
+    In addition the debug adapter is not allowed to send any requests or events to the client until it
+    has responded with an `initialize` response.
+    
+    The `initialize` request may only be sent once.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -2541,7 +2794,7 @@ class InitializeRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param InitializeRequestArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'initialize'
@@ -2571,7 +2824,7 @@ class InitializeRequest(BaseSchema):
 @register
 class InitializeRequestArguments(BaseSchema):
     """
-    Arguments for 'initialize' request.
+    Arguments for `initialize` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -2579,11 +2832,11 @@ class InitializeRequestArguments(BaseSchema):
     __props__ = {
         "clientID": {
             "type": "string",
-            "description": "The ID of the (frontend) client using this adapter."
+            "description": "The ID of the client using this adapter."
         },
         "clientName": {
             "type": "string",
-            "description": "The human readable name of the (frontend) client using this adapter."
+            "description": "The human-readable name of the client using this adapter."
         },
         "adapterID": {
             "type": "string",
@@ -2591,15 +2844,15 @@ class InitializeRequestArguments(BaseSchema):
         },
         "locale": {
             "type": "string",
-            "description": "The ISO-639 locale of the (frontend) client using this adapter, e.g. en-US or de-CH."
+            "description": "The ISO-639 locale of the client using this adapter, e.g. en-US or de-CH."
         },
         "linesStartAt1": {
             "type": "boolean",
-            "description": "If true all line numbers are 1-based (default)."
+            "description": "If True all line numbers are 1-based (default)."
         },
         "columnsStartAt1": {
             "type": "boolean",
-            "description": "If true all column numbers are 1-based (default)."
+            "description": "If True all column numbers are 1-based (default)."
         },
         "pathFormat": {
             "type": "string",
@@ -2607,11 +2860,11 @@ class InitializeRequestArguments(BaseSchema):
                 "path",
                 "uri"
             ],
-            "description": "Determines in what format paths are specified. The default is 'path', which is the native format."
+            "description": "Determines in what format paths are specified. The default is `path`, which is the native format."
         },
         "supportsVariableType": {
             "type": "boolean",
-            "description": "Client supports the optional type attribute for variables."
+            "description": "Client supports the `type` attribute for variables."
         },
         "supportsVariablePaging": {
             "type": "boolean",
@@ -2619,7 +2872,7 @@ class InitializeRequestArguments(BaseSchema):
         },
         "supportsRunInTerminalRequest": {
             "type": "boolean",
-            "description": "Client supports the runInTerminal request."
+            "description": "Client supports the `runInTerminal` request."
         },
         "supportsMemoryReferences": {
             "type": "boolean",
@@ -2631,33 +2884,43 @@ class InitializeRequestArguments(BaseSchema):
         },
         "supportsInvalidatedEvent": {
             "type": "boolean",
-            "description": "Client supports the invalidated event."
+            "description": "Client supports the `invalidated` event."
         },
         "supportsMemoryEvent": {
             "type": "boolean",
-            "description": "Client supports the memory event."
+            "description": "Client supports the `memory` event."
+        },
+        "supportsArgsCanBeInterpretedByShell": {
+            "type": "boolean",
+            "description": "Client supports the `argsCanBeInterpretedByShell` attribute on the `runInTerminal` request."
+        },
+        "supportsStartDebuggingRequest": {
+            "type": "boolean",
+            "description": "Client supports the `startDebugging` request."
         }
     }
     __refs__ = set()
 
     __slots__ = list(__props__.keys()) + ['kwargs']
 
-    def __init__(self, adapterID, clientID=None, clientName=None, locale=None, linesStartAt1=None, columnsStartAt1=None, pathFormat=None, supportsVariableType=None, supportsVariablePaging=None, supportsRunInTerminalRequest=None, supportsMemoryReferences=None, supportsProgressReporting=None, supportsInvalidatedEvent=None, supportsMemoryEvent=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+    def __init__(self, adapterID, clientID=None, clientName=None, locale=None, linesStartAt1=None, columnsStartAt1=None, pathFormat=None, supportsVariableType=None, supportsVariablePaging=None, supportsRunInTerminalRequest=None, supportsMemoryReferences=None, supportsProgressReporting=None, supportsInvalidatedEvent=None, supportsMemoryEvent=None, supportsArgsCanBeInterpretedByShell=None, supportsStartDebuggingRequest=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string adapterID: The ID of the debug adapter.
-        :param string clientID: The ID of the (frontend) client using this adapter.
-        :param string clientName: The human readable name of the (frontend) client using this adapter.
-        :param string locale: The ISO-639 locale of the (frontend) client using this adapter, e.g. en-US or de-CH.
+        :param string clientID: The ID of the client using this adapter.
+        :param string clientName: The human-readable name of the client using this adapter.
+        :param string locale: The ISO-639 locale of the client using this adapter, e.g. en-US or de-CH.
         :param boolean linesStartAt1: If true all line numbers are 1-based (default).
         :param boolean columnsStartAt1: If true all column numbers are 1-based (default).
-        :param string pathFormat: Determines in what format paths are specified. The default is 'path', which is the native format.
-        :param boolean supportsVariableType: Client supports the optional type attribute for variables.
+        :param string pathFormat: Determines in what format paths are specified. The default is `path`, which is the native format.
+        :param boolean supportsVariableType: Client supports the `type` attribute for variables.
         :param boolean supportsVariablePaging: Client supports the paging of variables.
-        :param boolean supportsRunInTerminalRequest: Client supports the runInTerminal request.
+        :param boolean supportsRunInTerminalRequest: Client supports the `runInTerminal` request.
         :param boolean supportsMemoryReferences: Client supports memory references.
         :param boolean supportsProgressReporting: Client supports progress reporting.
-        :param boolean supportsInvalidatedEvent: Client supports the invalidated event.
-        :param boolean supportsMemoryEvent: Client supports the memory event.
+        :param boolean supportsInvalidatedEvent: Client supports the `invalidated` event.
+        :param boolean supportsMemoryEvent: Client supports the `memory` event.
+        :param boolean supportsArgsCanBeInterpretedByShell: Client supports the `argsCanBeInterpretedByShell` attribute on the `runInTerminal` request.
+        :param boolean supportsStartDebuggingRequest: Client supports the `startDebugging` request.
         """
         self.adapterID = adapterID
         self.clientID = clientID
@@ -2673,6 +2936,8 @@ class InitializeRequestArguments(BaseSchema):
         self.supportsProgressReporting = supportsProgressReporting
         self.supportsInvalidatedEvent = supportsInvalidatedEvent
         self.supportsMemoryEvent = supportsMemoryEvent
+        self.supportsArgsCanBeInterpretedByShell = supportsArgsCanBeInterpretedByShell
+        self.supportsStartDebuggingRequest = supportsStartDebuggingRequest
         self.kwargs = kwargs
 
 
@@ -2691,6 +2956,8 @@ class InitializeRequestArguments(BaseSchema):
         supportsProgressReporting = self.supportsProgressReporting
         supportsInvalidatedEvent = self.supportsInvalidatedEvent
         supportsMemoryEvent = self.supportsMemoryEvent
+        supportsArgsCanBeInterpretedByShell = self.supportsArgsCanBeInterpretedByShell
+        supportsStartDebuggingRequest = self.supportsStartDebuggingRequest
         dct = {
             'adapterID': adapterID,
         }
@@ -2720,6 +2987,10 @@ class InitializeRequestArguments(BaseSchema):
             dct['supportsInvalidatedEvent'] = supportsInvalidatedEvent
         if supportsMemoryEvent is not None:
             dct['supportsMemoryEvent'] = supportsMemoryEvent
+        if supportsArgsCanBeInterpretedByShell is not None:
+            dct['supportsArgsCanBeInterpretedByShell'] = supportsArgsCanBeInterpretedByShell
+        if supportsStartDebuggingRequest is not None:
+            dct['supportsStartDebuggingRequest'] = supportsStartDebuggingRequest
         dct.update(self.kwargs)
         return dct
 
@@ -2728,7 +2999,7 @@ class InitializeRequestArguments(BaseSchema):
 @register
 class InitializeResponse(BaseSchema):
     """
-    Response to 'initialize' request.
+    Response to `initialize` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -2736,7 +3007,7 @@ class InitializeResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -2750,7 +3021,7 @@ class InitializeResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -2758,12 +3029,14 @@ class InitializeResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -2780,12 +3053,12 @@ class InitializeResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         :param Capabilities body: The capabilities of this debug adapter.
         """
@@ -2829,12 +3102,13 @@ class InitializeResponse(BaseSchema):
 @register
 class ConfigurationDoneRequest(BaseSchema):
     """
-    This optional request indicates that the client has finished initialization of the debug adapter.
+    This request indicates that the client has finished initialization of the debug adapter.
     
     So it is the last request in the sequence of configuration requests (which was started by the
-    'initialized' event).
+    `initialized` event).
     
-    Clients should only call this request if the capability 'supportsConfigurationDoneRequest' is true.
+    Clients should only call this request if the corresponding capability
+    `supportsConfigurationDoneRequest` is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -2842,7 +3116,7 @@ class ConfigurationDoneRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -2868,7 +3142,7 @@ class ConfigurationDoneRequest(BaseSchema):
         """
         :param string type: 
         :param string command: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         :param ConfigurationDoneArguments arguments: 
         """
         self.type = 'request'
@@ -2900,7 +3174,7 @@ class ConfigurationDoneRequest(BaseSchema):
 @register
 class ConfigurationDoneArguments(BaseSchema):
     """
-    Arguments for 'configurationDone' request.
+    Arguments for `configurationDone` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -2929,7 +3203,7 @@ class ConfigurationDoneArguments(BaseSchema):
 @register
 class ConfigurationDoneResponse(BaseSchema):
     """
-    Response to 'configurationDone' request. This is just an acknowledgement, so no body field is
+    Response to `configurationDone` request. This is just an acknowledgement, so no body field is
     required.
 
     Note: automatically generated code. Do not edit manually.
@@ -2938,7 +3212,7 @@ class ConfigurationDoneResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -2952,7 +3226,7 @@ class ConfigurationDoneResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -2960,12 +3234,14 @@ class ConfigurationDoneResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -2978,7 +3254,7 @@ class ConfigurationDoneResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -2990,14 +3266,14 @@ class ConfigurationDoneResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -3037,7 +3313,7 @@ class ConfigurationDoneResponse(BaseSchema):
 class LaunchRequest(BaseSchema):
     """
     This launch request is sent from the client to the debug adapter to start the debuggee with or
-    without debugging (if 'noDebug' is true).
+    without debugging (if `noDebug` is true).
     
     Since launching is debugger/runtime specific, the arguments for this request are not part of this
     specification.
@@ -3048,7 +3324,7 @@ class LaunchRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -3075,7 +3351,7 @@ class LaunchRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param LaunchRequestArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'launch'
@@ -3105,7 +3381,7 @@ class LaunchRequest(BaseSchema):
 @register
 class LaunchRequestArguments(BaseSchema):
     """
-    Arguments for 'launch' request. Additional attributes are implementation specific.
+    Arguments for `launch` request. Additional attributes are implementation specific.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -3113,7 +3389,7 @@ class LaunchRequestArguments(BaseSchema):
     __props__ = {
         "noDebug": {
             "type": "boolean",
-            "description": "If noDebug is true the launch request should launch the program without enabling debugging."
+            "description": "If True, the launch request should launch the program without enabling debugging."
         },
         "__restart": {
             "type": [
@@ -3125,7 +3401,7 @@ class LaunchRequestArguments(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Optional data from the previous, restarted session.\nThe data is sent as the 'restart' attribute of the 'terminated' event.\nThe client should leave the data intact."
+            "description": "Arbitrary data from the previous, restarted session.\nThe data is sent as the `restart` attribute of the `terminated` event.\nThe client should leave the data intact."
         }
     }
     __refs__ = set()
@@ -3134,9 +3410,9 @@ class LaunchRequestArguments(BaseSchema):
 
     def __init__(self, noDebug=None, __restart=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param boolean noDebug: If noDebug is true the launch request should launch the program without enabling debugging.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] __restart: Optional data from the previous, restarted session.
-        The data is sent as the 'restart' attribute of the 'terminated' event.
+        :param boolean noDebug: If true, the launch request should launch the program without enabling debugging.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] __restart: Arbitrary data from the previous, restarted session.
+        The data is sent as the `restart` attribute of the `terminated` event.
         The client should leave the data intact.
         """
         self.noDebug = noDebug
@@ -3161,7 +3437,7 @@ class LaunchRequestArguments(BaseSchema):
 @register
 class LaunchResponse(BaseSchema):
     """
-    Response to 'launch' request. This is just an acknowledgement, so no body field is required.
+    Response to `launch` request. This is just an acknowledgement, so no body field is required.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -3169,7 +3445,7 @@ class LaunchResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -3183,7 +3459,7 @@ class LaunchResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -3191,12 +3467,14 @@ class LaunchResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -3209,7 +3487,7 @@ class LaunchResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -3221,14 +3499,14 @@ class LaunchResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -3267,7 +3545,7 @@ class LaunchResponse(BaseSchema):
 @register
 class AttachRequest(BaseSchema):
     """
-    The attach request is sent from the client to the debug adapter to attach to a debuggee that is
+    The `attach` request is sent from the client to the debug adapter to attach to a debuggee that is
     already running.
     
     Since attaching is debugger/runtime specific, the arguments for this request are not part of this
@@ -3279,7 +3557,7 @@ class AttachRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -3306,7 +3584,7 @@ class AttachRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param AttachRequestArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'attach'
@@ -3336,7 +3614,7 @@ class AttachRequest(BaseSchema):
 @register
 class AttachRequestArguments(BaseSchema):
     """
-    Arguments for 'attach' request. Additional attributes are implementation specific.
+    Arguments for `attach` request. Additional attributes are implementation specific.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -3352,7 +3630,7 @@ class AttachRequestArguments(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Optional data from the previous, restarted session.\nThe data is sent as the 'restart' attribute of the 'terminated' event.\nThe client should leave the data intact."
+            "description": "Arbitrary data from the previous, restarted session.\nThe data is sent as the `restart` attribute of the `terminated` event.\nThe client should leave the data intact."
         }
     }
     __refs__ = set()
@@ -3361,8 +3639,8 @@ class AttachRequestArguments(BaseSchema):
 
     def __init__(self, __restart=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] __restart: Optional data from the previous, restarted session.
-        The data is sent as the 'restart' attribute of the 'terminated' event.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] __restart: Arbitrary data from the previous, restarted session.
+        The data is sent as the `restart` attribute of the `terminated` event.
         The client should leave the data intact.
         """
         self.__restart = __restart
@@ -3383,7 +3661,7 @@ class AttachRequestArguments(BaseSchema):
 @register
 class AttachResponse(BaseSchema):
     """
-    Response to 'attach' request. This is just an acknowledgement, so no body field is required.
+    Response to `attach` request. This is just an acknowledgement, so no body field is required.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -3391,7 +3669,7 @@ class AttachResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -3405,7 +3683,7 @@ class AttachResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -3413,12 +3691,14 @@ class AttachResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -3431,7 +3711,7 @@ class AttachResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -3443,14 +3723,14 @@ class AttachResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -3489,10 +3769,10 @@ class AttachResponse(BaseSchema):
 @register
 class RestartRequest(BaseSchema):
     """
-    Restarts a debug session. Clients should only call this request if the capability
-    'supportsRestartRequest' is true.
+    Restarts a debug session. Clients should only call this request if the corresponding capability
+    `supportsRestartRequest` is true.
     
-    If the capability is missing or has the value false, a typical client will emulate 'restart' by
+    If the capability is missing or has the value false, a typical client emulates `restart` by
     terminating the debug adapter first and then launching it anew.
 
     Note: automatically generated code. Do not edit manually.
@@ -3501,7 +3781,7 @@ class RestartRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -3527,7 +3807,7 @@ class RestartRequest(BaseSchema):
         """
         :param string type: 
         :param string command: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         :param RestartArguments arguments: 
         """
         self.type = 'request'
@@ -3559,7 +3839,7 @@ class RestartRequest(BaseSchema):
 @register
 class RestartArguments(BaseSchema):
     """
-    Arguments for 'restart' request.
+    Arguments for `restart` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -3574,7 +3854,7 @@ class RestartArguments(BaseSchema):
                     "$ref": "#/definitions/AttachRequestArguments"
                 }
             ],
-            "description": "The latest version of the 'launch' or 'attach' configuration."
+            "description": "The latest version of the `launch` or `attach` configuration."
         }
     }
     __refs__ = set()
@@ -3583,7 +3863,7 @@ class RestartArguments(BaseSchema):
 
     def __init__(self, arguments=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param TypeNA arguments: The latest version of the 'launch' or 'attach' configuration.
+        :param TypeNA arguments: The latest version of the `launch` or `attach` configuration.
         """
         self.arguments = arguments
         self.kwargs = kwargs
@@ -3603,7 +3883,7 @@ class RestartArguments(BaseSchema):
 @register
 class RestartResponse(BaseSchema):
     """
-    Response to 'restart' request. This is just an acknowledgement, so no body field is required.
+    Response to `restart` request. This is just an acknowledgement, so no body field is required.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -3611,7 +3891,7 @@ class RestartResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -3625,7 +3905,7 @@ class RestartResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -3633,12 +3913,14 @@ class RestartResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -3651,7 +3933,7 @@ class RestartResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -3663,14 +3945,14 @@ class RestartResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -3709,18 +3991,16 @@ class RestartResponse(BaseSchema):
 @register
 class DisconnectRequest(BaseSchema):
     """
-    The 'disconnect' request is sent from the client to the debug adapter in order to stop debugging.
+    The `disconnect` request asks the debug adapter to disconnect from the debuggee (thus ending the
+    debug session) and then to shut down itself (the debug adapter).
     
-    It asks the debug adapter to disconnect from the debuggee and to terminate the debug adapter.
+    In addition, the debug adapter must terminate the debuggee if it was started with the `launch`
+    request. If an `attach` request was used to connect to the debuggee, then the debug adapter must not
+    terminate the debuggee.
     
-    If the debuggee has been started with the 'launch' request, the 'disconnect' request terminates the
-    debuggee.
-    
-    If the 'attach' request was used to connect to the debuggee, 'disconnect' does not terminate the
-    debuggee.
-    
-    This behavior can be controlled with the 'terminateDebuggee' argument (if supported by the debug
-    adapter).
+    This implicit behavior of when to terminate the debuggee can be overridden with the
+    `terminateDebuggee` argument (which is only supported by a debug adapter if the corresponding
+    capability `supportTerminateDebuggee` is true).
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -3728,7 +4008,7 @@ class DisconnectRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -3754,7 +4034,7 @@ class DisconnectRequest(BaseSchema):
         """
         :param string type: 
         :param string command: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         :param DisconnectArguments arguments: 
         """
         self.type = 'request'
@@ -3786,7 +4066,7 @@ class DisconnectRequest(BaseSchema):
 @register
 class DisconnectArguments(BaseSchema):
     """
-    Arguments for 'disconnect' request.
+    Arguments for `disconnect` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -3794,15 +4074,15 @@ class DisconnectArguments(BaseSchema):
     __props__ = {
         "restart": {
             "type": "boolean",
-            "description": "A value of true indicates that this 'disconnect' request is part of a restart sequence."
+            "description": "A value of True indicates that this `disconnect` request is part of a restart sequence."
         },
         "terminateDebuggee": {
             "type": "boolean",
-            "description": "Indicates whether the debuggee should be terminated when the debugger is disconnected.\nIf unspecified, the debug adapter is free to do whatever it thinks is best.\nThe attribute is only honored by a debug adapter if the capability 'supportTerminateDebuggee' is true."
+            "description": "Indicates whether the debuggee should be terminated when the debugger is disconnected.\nIf unspecified, the debug adapter is free to do whatever it thinks is best.\nThe attribute is only honored by a debug adapter if the corresponding capability `supportTerminateDebuggee` is True."
         },
         "suspendDebuggee": {
             "type": "boolean",
-            "description": "Indicates whether the debuggee should stay suspended when the debugger is disconnected.\nIf unspecified, the debuggee should resume execution.\nThe attribute is only honored by a debug adapter if the capability 'supportSuspendDebuggee' is true."
+            "description": "Indicates whether the debuggee should stay suspended when the debugger is disconnected.\nIf unspecified, the debuggee should resume execution.\nThe attribute is only honored by a debug adapter if the corresponding capability `supportSuspendDebuggee` is True."
         }
     }
     __refs__ = set()
@@ -3811,13 +4091,13 @@ class DisconnectArguments(BaseSchema):
 
     def __init__(self, restart=None, terminateDebuggee=None, suspendDebuggee=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param boolean restart: A value of true indicates that this 'disconnect' request is part of a restart sequence.
+        :param boolean restart: A value of true indicates that this `disconnect` request is part of a restart sequence.
         :param boolean terminateDebuggee: Indicates whether the debuggee should be terminated when the debugger is disconnected.
         If unspecified, the debug adapter is free to do whatever it thinks is best.
-        The attribute is only honored by a debug adapter if the capability 'supportTerminateDebuggee' is true.
+        The attribute is only honored by a debug adapter if the corresponding capability `supportTerminateDebuggee` is true.
         :param boolean suspendDebuggee: Indicates whether the debuggee should stay suspended when the debugger is disconnected.
         If unspecified, the debuggee should resume execution.
-        The attribute is only honored by a debug adapter if the capability 'supportSuspendDebuggee' is true.
+        The attribute is only honored by a debug adapter if the corresponding capability `supportSuspendDebuggee` is true.
         """
         self.restart = restart
         self.terminateDebuggee = terminateDebuggee
@@ -3845,7 +4125,7 @@ class DisconnectArguments(BaseSchema):
 @register
 class DisconnectResponse(BaseSchema):
     """
-    Response to 'disconnect' request. This is just an acknowledgement, so no body field is required.
+    Response to `disconnect` request. This is just an acknowledgement, so no body field is required.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -3853,7 +4133,7 @@ class DisconnectResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -3867,7 +4147,7 @@ class DisconnectResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -3875,12 +4155,14 @@ class DisconnectResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -3893,7 +4175,7 @@ class DisconnectResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -3905,14 +4187,14 @@ class DisconnectResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -3951,10 +4233,20 @@ class DisconnectResponse(BaseSchema):
 @register
 class TerminateRequest(BaseSchema):
     """
-    The 'terminate' request is sent from the client to the debug adapter in order to give the debuggee a
-    chance for terminating itself.
+    The `terminate` request is sent from the client to the debug adapter in order to shut down the
+    debuggee gracefully. Clients should only call this request if the capability
+    `supportsTerminateRequest` is true.
     
-    Clients should only call this request if the capability 'supportsTerminateRequest' is true.
+    Typically a debug adapter implements `terminate` by sending a software signal which the debuggee
+    intercepts in order to clean things up properly before terminating itself.
+    
+    Please note that this request does not directly affect the state of the debug session: if the
+    debuggee decides to veto the graceful shutdown for any reason by not terminating itself, then the
+    debug session just continues.
+    
+    Clients can surface the `terminate` request as an explicit command or they can integrate it into a
+    two stage Stop command that first sends `terminate` to request a graceful shutdown, and if that
+    fails uses `disconnect` for a forceful shutdown.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -3962,7 +4254,7 @@ class TerminateRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -3988,7 +4280,7 @@ class TerminateRequest(BaseSchema):
         """
         :param string type: 
         :param string command: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         :param TerminateArguments arguments: 
         """
         self.type = 'request'
@@ -4020,7 +4312,7 @@ class TerminateRequest(BaseSchema):
 @register
 class TerminateArguments(BaseSchema):
     """
-    Arguments for 'terminate' request.
+    Arguments for `terminate` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -4028,7 +4320,7 @@ class TerminateArguments(BaseSchema):
     __props__ = {
         "restart": {
             "type": "boolean",
-            "description": "A value of true indicates that this 'terminate' request is part of a restart sequence."
+            "description": "A value of True indicates that this `terminate` request is part of a restart sequence."
         }
     }
     __refs__ = set()
@@ -4037,7 +4329,7 @@ class TerminateArguments(BaseSchema):
 
     def __init__(self, restart=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param boolean restart: A value of true indicates that this 'terminate' request is part of a restart sequence.
+        :param boolean restart: A value of true indicates that this `terminate` request is part of a restart sequence.
         """
         self.restart = restart
         self.kwargs = kwargs
@@ -4057,7 +4349,7 @@ class TerminateArguments(BaseSchema):
 @register
 class TerminateResponse(BaseSchema):
     """
-    Response to 'terminate' request. This is just an acknowledgement, so no body field is required.
+    Response to `terminate` request. This is just an acknowledgement, so no body field is required.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -4065,7 +4357,7 @@ class TerminateResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -4079,7 +4371,7 @@ class TerminateResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -4087,12 +4379,14 @@ class TerminateResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -4105,7 +4399,7 @@ class TerminateResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -4117,14 +4411,14 @@ class TerminateResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -4163,11 +4457,11 @@ class TerminateResponse(BaseSchema):
 @register
 class BreakpointLocationsRequest(BaseSchema):
     """
-    The 'breakpointLocations' request returns all possible locations for source breakpoints in a given
+    The `breakpointLocations` request returns all possible locations for source breakpoints in a given
     range.
     
-    Clients should only call this request if the capability 'supportsBreakpointLocationsRequest' is
-    true.
+    Clients should only call this request if the corresponding capability
+    `supportsBreakpointLocationsRequest` is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -4175,7 +4469,7 @@ class BreakpointLocationsRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -4201,7 +4495,7 @@ class BreakpointLocationsRequest(BaseSchema):
         """
         :param string type: 
         :param string command: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         :param BreakpointLocationsArguments arguments: 
         """
         self.type = 'request'
@@ -4233,14 +4527,14 @@ class BreakpointLocationsRequest(BaseSchema):
 @register
 class BreakpointLocationsArguments(BaseSchema):
     """
-    Arguments for 'breakpointLocations' request.
+    Arguments for `breakpointLocations` request.
 
     Note: automatically generated code. Do not edit manually.
     """
 
     __props__ = {
         "source": {
-            "description": "The source location of the breakpoints; either 'source.path' or 'source.reference' must be specified.",
+            "description": "The source location of the breakpoints; either `source.path` or `source.sourceReference` must be specified.",
             "type": "Source"
         },
         "line": {
@@ -4249,15 +4543,15 @@ class BreakpointLocationsArguments(BaseSchema):
         },
         "column": {
             "type": "integer",
-            "description": "Optional start column of range to search possible breakpoint locations in. If no start column is given, the first column in the start line is assumed."
+            "description": "Start position within `line` to search possible breakpoint locations in. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based. If no column is given, the first position in the start line is assumed."
         },
         "endLine": {
             "type": "integer",
-            "description": "Optional end line of range to search possible breakpoint locations in. If no end line is given, then the end line is assumed to be the start line."
+            "description": "End line of range to search possible breakpoint locations in. If no end line is given, then the end line is assumed to be the start line."
         },
         "endColumn": {
             "type": "integer",
-            "description": "Optional end column of range to search possible breakpoint locations in. If no end column is given, then it is assumed to be in the last column of the end line."
+            "description": "End position within `endLine` to search possible breakpoint locations in. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based. If no end column is given, the last position in the end line is assumed."
         }
     }
     __refs__ = set(['source'])
@@ -4266,11 +4560,11 @@ class BreakpointLocationsArguments(BaseSchema):
 
     def __init__(self, source, line, column=None, endLine=None, endColumn=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param Source source: The source location of the breakpoints; either 'source.path' or 'source.reference' must be specified.
+        :param Source source: The source location of the breakpoints; either `source.path` or `source.sourceReference` must be specified.
         :param integer line: Start line of range to search possible breakpoint locations in. If only the line is specified, the request returns all possible locations in that line.
-        :param integer column: Optional start column of range to search possible breakpoint locations in. If no start column is given, the first column in the start line is assumed.
-        :param integer endLine: Optional end line of range to search possible breakpoint locations in. If no end line is given, then the end line is assumed to be the start line.
-        :param integer endColumn: Optional end column of range to search possible breakpoint locations in. If no end column is given, then it is assumed to be in the last column of the end line.
+        :param integer column: Start position within `line` to search possible breakpoint locations in. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based. If no column is given, the first position in the start line is assumed.
+        :param integer endLine: End line of range to search possible breakpoint locations in. If no end line is given, then the end line is assumed to be the start line.
+        :param integer endColumn: End position within `endLine` to search possible breakpoint locations in. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based. If no end column is given, the last position in the end line is assumed.
         """
         if source is None:
             self.source = Source()
@@ -4307,7 +4601,7 @@ class BreakpointLocationsArguments(BaseSchema):
 @register
 class BreakpointLocationsResponse(BaseSchema):
     """
-    Response to 'breakpointLocations' request.
+    Response to `breakpointLocations` request.
     
     Contains possible locations for source breakpoints.
 
@@ -4317,7 +4611,7 @@ class BreakpointLocationsResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -4331,7 +4625,7 @@ class BreakpointLocationsResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -4339,12 +4633,14 @@ class BreakpointLocationsResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -4372,13 +4668,13 @@ class BreakpointLocationsResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param BreakpointLocationsResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -4424,7 +4720,7 @@ class SetBreakpointsRequest(BaseSchema):
     
     To clear all breakpoint for a source, specify an empty array.
     
-    When a breakpoint is hit, a 'stopped' event (with reason 'breakpoint') is generated.
+    When a breakpoint is hit, a `stopped` event (with reason `breakpoint`) is generated.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -4432,7 +4728,7 @@ class SetBreakpointsRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -4459,7 +4755,7 @@ class SetBreakpointsRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param SetBreakpointsArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'setBreakpoints'
@@ -4489,14 +4785,14 @@ class SetBreakpointsRequest(BaseSchema):
 @register
 class SetBreakpointsArguments(BaseSchema):
     """
-    Arguments for 'setBreakpoints' request.
+    Arguments for `setBreakpoints` request.
 
     Note: automatically generated code. Do not edit manually.
     """
 
     __props__ = {
         "source": {
-            "description": "The source location of the breakpoints; either 'source.path' or 'source.reference' must be specified.",
+            "description": "The source location of the breakpoints; either `source.path` or `source.sourceReference` must be specified.",
             "type": "Source"
         },
         "breakpoints": {
@@ -4515,7 +4811,7 @@ class SetBreakpointsArguments(BaseSchema):
         },
         "sourceModified": {
             "type": "boolean",
-            "description": "A value of true indicates that the underlying source has been modified which results in new breakpoint locations."
+            "description": "A value of True indicates that the underlying source has been modified which results in new breakpoint locations."
         }
     }
     __refs__ = set(['source'])
@@ -4524,7 +4820,7 @@ class SetBreakpointsArguments(BaseSchema):
 
     def __init__(self, source, breakpoints=None, lines=None, sourceModified=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param Source source: The source location of the breakpoints; either 'source.path' or 'source.reference' must be specified.
+        :param Source source: The source location of the breakpoints; either `source.path` or `source.sourceReference` must be specified.
         :param array breakpoints: The code locations of the breakpoints.
         :param array lines: Deprecated: The code locations of the breakpoints.
         :param boolean sourceModified: A value of true indicates that the underlying source has been modified which results in new breakpoint locations.
@@ -4568,15 +4864,15 @@ class SetBreakpointsArguments(BaseSchema):
 @register
 class SetBreakpointsResponse(BaseSchema):
     """
-    Response to 'setBreakpoints' request.
+    Response to `setBreakpoints` request.
     
     Returned is information about each breakpoint created by this request.
     
     This includes the actual code location and whether the breakpoint could be verified.
     
-    The breakpoints returned are in the same order as the elements of the 'breakpoints'
+    The breakpoints returned are in the same order as the elements of the `breakpoints`
     
-    (or the deprecated 'lines') array in the arguments.
+    (or the deprecated `lines`) array in the arguments.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -4584,7 +4880,7 @@ class SetBreakpointsResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -4598,7 +4894,7 @@ class SetBreakpointsResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -4606,12 +4902,14 @@ class SetBreakpointsResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -4622,7 +4920,7 @@ class SetBreakpointsResponse(BaseSchema):
                     "items": {
                         "$ref": "#/definitions/Breakpoint"
                     },
-                    "description": "Information about the breakpoints.\nThe array elements are in the same order as the elements of the 'breakpoints' (or the deprecated 'lines') array in the arguments."
+                    "description": "Information about the breakpoints.\nThe array elements are in the same order as the elements of the `breakpoints` (or the deprecated `lines`) array in the arguments."
                 }
             },
             "required": [
@@ -4639,13 +4937,13 @@ class SetBreakpointsResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param SetBreakpointsResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -4691,10 +4989,11 @@ class SetFunctionBreakpointsRequest(BaseSchema):
     
     To clear all function breakpoints, specify an empty array.
     
-    When a function breakpoint is hit, a 'stopped' event (with reason 'function breakpoint') is
+    When a function breakpoint is hit, a `stopped` event (with reason `function breakpoint`) is
     generated.
     
-    Clients should only call this request if the capability 'supportsFunctionBreakpoints' is true.
+    Clients should only call this request if the corresponding capability `supportsFunctionBreakpoints`
+    is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -4702,7 +5001,7 @@ class SetFunctionBreakpointsRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -4729,7 +5028,7 @@ class SetFunctionBreakpointsRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param SetFunctionBreakpointsArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'setFunctionBreakpoints'
@@ -4759,7 +5058,7 @@ class SetFunctionBreakpointsRequest(BaseSchema):
 @register
 class SetFunctionBreakpointsArguments(BaseSchema):
     """
-    Arguments for 'setFunctionBreakpoints' request.
+    Arguments for `setFunctionBreakpoints` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -4803,7 +5102,7 @@ class SetFunctionBreakpointsArguments(BaseSchema):
 @register
 class SetFunctionBreakpointsResponse(BaseSchema):
     """
-    Response to 'setFunctionBreakpoints' request.
+    Response to `setFunctionBreakpoints` request.
     
     Returned is information about each breakpoint created by this request.
 
@@ -4813,7 +5112,7 @@ class SetFunctionBreakpointsResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -4827,7 +5126,7 @@ class SetFunctionBreakpointsResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -4835,12 +5134,14 @@ class SetFunctionBreakpointsResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -4851,7 +5152,7 @@ class SetFunctionBreakpointsResponse(BaseSchema):
                     "items": {
                         "$ref": "#/definitions/Breakpoint"
                     },
-                    "description": "Information about the breakpoints. The array elements correspond to the elements of the 'breakpoints' array."
+                    "description": "Information about the breakpoints. The array elements correspond to the elements of the `breakpoints` array."
                 }
             },
             "required": [
@@ -4868,13 +5169,13 @@ class SetFunctionBreakpointsResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param SetFunctionBreakpointsResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -4916,12 +5217,12 @@ class SetFunctionBreakpointsResponse(BaseSchema):
 @register
 class SetExceptionBreakpointsRequest(BaseSchema):
     """
-    The request configures the debuggers response to thrown exceptions.
+    The request configures the debugger's response to thrown exceptions.
     
-    If an exception is configured to break, a 'stopped' event is fired (with reason 'exception').
+    If an exception is configured to break, a `stopped` event is fired (with reason `exception`).
     
-    Clients should only call this request if the capability 'exceptionBreakpointFilters' returns one or
-    more filters.
+    Clients should only call this request if the corresponding capability `exceptionBreakpointFilters`
+    returns one or more filters.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -4929,7 +5230,7 @@ class SetExceptionBreakpointsRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -4956,7 +5257,7 @@ class SetExceptionBreakpointsRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param SetExceptionBreakpointsArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'setExceptionBreakpoints'
@@ -4986,7 +5287,7 @@ class SetExceptionBreakpointsRequest(BaseSchema):
 @register
 class SetExceptionBreakpointsArguments(BaseSchema):
     """
-    Arguments for 'setExceptionBreakpoints' request.
+    Arguments for `setExceptionBreakpoints` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -4997,21 +5298,21 @@ class SetExceptionBreakpointsArguments(BaseSchema):
             "items": {
                 "type": "string"
             },
-            "description": "Set of exception filters specified by their ID. The set of all possible exception filters is defined by the 'exceptionBreakpointFilters' capability. The 'filter' and 'filterOptions' sets are additive."
+            "description": "Set of exception filters specified by their ID. The set of all possible exception filters is defined by the `exceptionBreakpointFilters` capability. The `filter` and `filterOptions` sets are additive."
         },
         "filterOptions": {
             "type": "array",
             "items": {
                 "$ref": "#/definitions/ExceptionFilterOptions"
             },
-            "description": "Set of exception filters and their options. The set of all possible exception filters is defined by the 'exceptionBreakpointFilters' capability. This attribute is only honored by a debug adapter if the capability 'supportsExceptionFilterOptions' is true. The 'filter' and 'filterOptions' sets are additive."
+            "description": "Set of exception filters and their options. The set of all possible exception filters is defined by the `exceptionBreakpointFilters` capability. This attribute is only honored by a debug adapter if the corresponding capability `supportsExceptionFilterOptions` is True. The `filter` and `filterOptions` sets are additive."
         },
         "exceptionOptions": {
             "type": "array",
             "items": {
                 "$ref": "#/definitions/ExceptionOptions"
             },
-            "description": "Configuration options for selected exceptions.\nThe attribute is only honored by a debug adapter if the capability 'supportsExceptionOptions' is true."
+            "description": "Configuration options for selected exceptions.\nThe attribute is only honored by a debug adapter if the corresponding capability `supportsExceptionOptions` is True."
         }
     }
     __refs__ = set()
@@ -5020,10 +5321,10 @@ class SetExceptionBreakpointsArguments(BaseSchema):
 
     def __init__(self, filters, filterOptions=None, exceptionOptions=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param array filters: Set of exception filters specified by their ID. The set of all possible exception filters is defined by the 'exceptionBreakpointFilters' capability. The 'filter' and 'filterOptions' sets are additive.
-        :param array filterOptions: Set of exception filters and their options. The set of all possible exception filters is defined by the 'exceptionBreakpointFilters' capability. This attribute is only honored by a debug adapter if the capability 'supportsExceptionFilterOptions' is true. The 'filter' and 'filterOptions' sets are additive.
+        :param array filters: Set of exception filters specified by their ID. The set of all possible exception filters is defined by the `exceptionBreakpointFilters` capability. The `filter` and `filterOptions` sets are additive.
+        :param array filterOptions: Set of exception filters and their options. The set of all possible exception filters is defined by the `exceptionBreakpointFilters` capability. This attribute is only honored by a debug adapter if the corresponding capability `supportsExceptionFilterOptions` is true. The `filter` and `filterOptions` sets are additive.
         :param array exceptionOptions: Configuration options for selected exceptions.
-        The attribute is only honored by a debug adapter if the capability 'supportsExceptionOptions' is true.
+        The attribute is only honored by a debug adapter if the corresponding capability `supportsExceptionOptions` is true.
         """
         self.filters = filters
         self.filterOptions = filterOptions
@@ -5062,22 +5363,21 @@ class SetExceptionBreakpointsArguments(BaseSchema):
 @register
 class SetExceptionBreakpointsResponse(BaseSchema):
     """
-    Response to 'setExceptionBreakpoints' request.
+    Response to `setExceptionBreakpoints` request.
     
-    The response contains an array of Breakpoint objects with information about each exception
-    breakpoint or filter. The Breakpoint objects are in the same order as the elements of the 'filters',
-    'filterOptions', 'exceptionOptions' arrays given as arguments. If both 'filters' and 'filterOptions'
-    are given, the returned array must start with 'filters' information first, followed by
-    'filterOptions' information.
+    The response contains an array of `Breakpoint` objects with information about each exception
+    breakpoint or filter. The `Breakpoint` objects are in the same order as the elements of the
+    `filters`, `filterOptions`, `exceptionOptions` arrays given as arguments. If both `filters` and
+    `filterOptions` are given, the returned array must start with `filters` information first, followed
+    by `filterOptions` information.
     
-    The mandatory 'verified' property of a Breakpoint object signals whether the exception breakpoint or
-    filter could be successfully created and whether the optional condition or hit count expressions are
-    valid. In case of an error the 'message' property explains the problem. An optional 'id' property
-    can be used to introduce a unique ID for the exception breakpoint or filter so that it can be
-    updated subsequently by sending breakpoint events.
+    The `verified` property of a `Breakpoint` object signals whether the exception breakpoint or filter
+    could be successfully created and whether the condition is valid. In case of an error the `message`
+    property explains the problem. The `id` property can be used to introduce a unique ID for the
+    exception breakpoint or filter so that it can be updated subsequently by sending breakpoint events.
     
-    For backward compatibility both the 'breakpoints' array and the enclosing 'body' are optional. If
-    these elements are missing a client will not be able to show problems for individual exception
+    For backward compatibility both the `breakpoints` array and the enclosing `body` are optional. If
+    these elements are missing a client is not able to show problems for individual exception
     breakpoints or filters.
 
     Note: automatically generated code. Do not edit manually.
@@ -5086,7 +5386,7 @@ class SetExceptionBreakpointsResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -5100,7 +5400,7 @@ class SetExceptionBreakpointsResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -5108,12 +5408,14 @@ class SetExceptionBreakpointsResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -5124,7 +5426,7 @@ class SetExceptionBreakpointsResponse(BaseSchema):
                     "items": {
                         "$ref": "#/definitions/Breakpoint"
                     },
-                    "description": "Information about the exception breakpoints or filters.\nThe breakpoints returned are in the same order as the elements of the 'filters', 'filterOptions', 'exceptionOptions' arrays in the arguments. If both 'filters' and 'filterOptions' are given, the returned array must start with 'filters' information first, followed by 'filterOptions' information."
+                    "description": "Information about the exception breakpoints or filters.\nThe breakpoints returned are in the same order as the elements of the `filters`, `filterOptions`, `exceptionOptions` arrays in the arguments. If both `filters` and `filterOptions` are given, the returned array must start with `filters` information first, followed by `filterOptions` information."
                 }
             }
         }
@@ -5138,12 +5440,12 @@ class SetExceptionBreakpointsResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         :param SetExceptionBreakpointsResponseBody body: 
         """
@@ -5189,7 +5491,8 @@ class DataBreakpointInfoRequest(BaseSchema):
     """
     Obtains information on a possible data breakpoint that could be set on an expression or variable.
     
-    Clients should only call this request if the capability 'supportsDataBreakpoints' is true.
+    Clients should only call this request if the corresponding capability `supportsDataBreakpoints` is
+    true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -5197,7 +5500,7 @@ class DataBreakpointInfoRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -5224,7 +5527,7 @@ class DataBreakpointInfoRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param DataBreakpointInfoArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'dataBreakpointInfo'
@@ -5254,7 +5557,7 @@ class DataBreakpointInfoRequest(BaseSchema):
 @register
 class DataBreakpointInfoArguments(BaseSchema):
     """
-    Arguments for 'dataBreakpointInfo' request.
+    Arguments for `dataBreakpointInfo` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -5262,27 +5565,34 @@ class DataBreakpointInfoArguments(BaseSchema):
     __props__ = {
         "variablesReference": {
             "type": "integer",
-            "description": "Reference to the Variable container if the data breakpoint is requested for a child of the container."
+            "description": "Reference to the variable container if the data breakpoint is requested for a child of the container. The `variablesReference` must have been obtained in the current suspended state. See 'Lifetime of Object References' in the Overview section for details."
         },
         "name": {
             "type": "string",
-            "description": "The name of the Variable's child to obtain data breakpoint information for.\nIf variablesReference isn't provided, this can be an expression."
+            "description": "The name of the variable's child to obtain data breakpoint information for.\nIf `variablesReference` isn't specified, this can be an expression."
+        },
+        "frameId": {
+            "type": "integer",
+            "description": "When `name` is an expression, evaluate it in the scope of this stack frame. If not specified, the expression is evaluated in the global scope. When `variablesReference` is specified, this property has no effect."
         }
     }
     __refs__ = set()
 
     __slots__ = list(__props__.keys()) + ['kwargs']
 
-    def __init__(self, name, variablesReference=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+    def __init__(self, name, variablesReference=None, frameId=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param string name: The name of the Variable's child to obtain data breakpoint information for.
-        If variablesReference isn't provided, this can be an expression.
-        :param integer variablesReference: Reference to the Variable container if the data breakpoint is requested for a child of the container.
+        :param string name: The name of the variable's child to obtain data breakpoint information for.
+        If `variablesReference` isn't specified, this can be an expression.
+        :param integer variablesReference: Reference to the variable container if the data breakpoint is requested for a child of the container. The `variablesReference` must have been obtained in the current suspended state. See 'Lifetime of Object References' in the Overview section for details.
+        :param integer frameId: When `name` is an expression, evaluate it in the scope of this stack frame. If not specified, the expression is evaluated in the global scope. When `variablesReference` is specified, this property has no effect.
         """
         self.name = name
         self.variablesReference = variablesReference
+        self.frameId = frameId
         if update_ids_from_dap:
             self.variablesReference = self._translate_id_from_dap(self.variablesReference)
+            self.frameId = self._translate_id_from_dap(self.frameId)
         self.kwargs = kwargs
     
     
@@ -5290,19 +5600,26 @@ class DataBreakpointInfoArguments(BaseSchema):
     def update_dict_ids_from_dap(cls, dct):
         if 'variablesReference' in dct:
             dct['variablesReference'] = cls._translate_id_from_dap(dct['variablesReference'])
+        if 'frameId' in dct:
+            dct['frameId'] = cls._translate_id_from_dap(dct['frameId'])
         return dct
 
     def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
         name = self.name
         variablesReference = self.variablesReference
+        frameId = self.frameId
         if update_ids_to_dap:
             if variablesReference is not None:
                 variablesReference = self._translate_id_to_dap(variablesReference)
+            if frameId is not None:
+                frameId = self._translate_id_to_dap(frameId)
         dct = {
             'name': name,
         }
         if variablesReference is not None:
             dct['variablesReference'] = variablesReference
+        if frameId is not None:
+            dct['frameId'] = frameId
         dct.update(self.kwargs)
         return dct    
     
@@ -5310,6 +5627,8 @@ class DataBreakpointInfoArguments(BaseSchema):
     def update_dict_ids_to_dap(cls, dct):
         if 'variablesReference' in dct:
             dct['variablesReference'] = cls._translate_id_to_dap(dct['variablesReference'])
+        if 'frameId' in dct:
+            dct['frameId'] = cls._translate_id_to_dap(dct['frameId'])
         return dct
 
 
@@ -5317,7 +5636,7 @@ class DataBreakpointInfoArguments(BaseSchema):
 @register
 class DataBreakpointInfoResponse(BaseSchema):
     """
-    Response to 'dataBreakpointInfo' request.
+    Response to `dataBreakpointInfo` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -5325,7 +5644,7 @@ class DataBreakpointInfoResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -5339,7 +5658,7 @@ class DataBreakpointInfoResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -5347,12 +5666,14 @@ class DataBreakpointInfoResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -5363,7 +5684,7 @@ class DataBreakpointInfoResponse(BaseSchema):
                         "string",
                         "null"
                     ],
-                    "description": "An identifier for the data on which a data breakpoint can be registered with the setDataBreakpoints request or null if no data breakpoint is available."
+                    "description": "An identifier for the data on which a data breakpoint can be registered with the `setDataBreakpoints` request or null if no data breakpoint is available. If a `variablesReference` or `frameId` is passed, the `dataId` is valid in the current suspended state, otherwise it's valid indefinitely. See 'Lifetime of Object References' in the Overview section for details. Breakpoints set using the `dataId` in the `setDataBreakpoints` request may outlive the lifetime of the associated `dataId`."
                 },
                 "description": {
                     "type": "string",
@@ -5374,11 +5695,11 @@ class DataBreakpointInfoResponse(BaseSchema):
                     "items": {
                         "$ref": "#/definitions/DataBreakpointAccessType"
                     },
-                    "description": "Optional attribute listing the available access types for a potential data breakpoint. A UI frontend could surface this information."
+                    "description": "Attribute lists the available access types for a potential data breakpoint. A UI client could surface this information."
                 },
                 "canPersist": {
                     "type": "boolean",
-                    "description": "Optional attribute indicating that a potential data breakpoint could be persisted across sessions."
+                    "description": "Attribute indicates that a potential data breakpoint could be persisted across sessions."
                 }
             },
             "required": [
@@ -5396,13 +5717,13 @@ class DataBreakpointInfoResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param DataBreakpointInfoResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -5448,9 +5769,10 @@ class SetDataBreakpointsRequest(BaseSchema):
     
     To clear all data breakpoints, specify an empty array.
     
-    When a data breakpoint is hit, a 'stopped' event (with reason 'data breakpoint') is generated.
+    When a data breakpoint is hit, a `stopped` event (with reason `data breakpoint`) is generated.
     
-    Clients should only call this request if the capability 'supportsDataBreakpoints' is true.
+    Clients should only call this request if the corresponding capability `supportsDataBreakpoints` is
+    true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -5458,7 +5780,7 @@ class SetDataBreakpointsRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -5485,7 +5807,7 @@ class SetDataBreakpointsRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param SetDataBreakpointsArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'setDataBreakpoints'
@@ -5515,7 +5837,7 @@ class SetDataBreakpointsRequest(BaseSchema):
 @register
 class SetDataBreakpointsArguments(BaseSchema):
     """
-    Arguments for 'setDataBreakpoints' request.
+    Arguments for `setDataBreakpoints` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -5559,7 +5881,7 @@ class SetDataBreakpointsArguments(BaseSchema):
 @register
 class SetDataBreakpointsResponse(BaseSchema):
     """
-    Response to 'setDataBreakpoints' request.
+    Response to `setDataBreakpoints` request.
     
     Returned is information about each breakpoint created by this request.
 
@@ -5569,7 +5891,7 @@ class SetDataBreakpointsResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -5583,7 +5905,7 @@ class SetDataBreakpointsResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -5591,12 +5913,14 @@ class SetDataBreakpointsResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -5607,7 +5931,7 @@ class SetDataBreakpointsResponse(BaseSchema):
                     "items": {
                         "$ref": "#/definitions/Breakpoint"
                     },
-                    "description": "Information about the data breakpoints. The array elements correspond to the elements of the input argument 'breakpoints' array."
+                    "description": "Information about the data breakpoints. The array elements correspond to the elements of the input argument `breakpoints` array."
                 }
             },
             "required": [
@@ -5624,13 +5948,13 @@ class SetDataBreakpointsResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param SetDataBreakpointsResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -5673,14 +5997,15 @@ class SetDataBreakpointsResponse(BaseSchema):
 class SetInstructionBreakpointsRequest(BaseSchema):
     """
     Replaces all existing instruction breakpoints. Typically, instruction breakpoints would be set from
-    a diassembly window.
+    a disassembly window.
     
     To clear all instruction breakpoints, specify an empty array.
     
-    When an instruction breakpoint is hit, a 'stopped' event (with reason 'instruction breakpoint') is
+    When an instruction breakpoint is hit, a `stopped` event (with reason `instruction breakpoint`) is
     generated.
     
-    Clients should only call this request if the capability 'supportsInstructionBreakpoints' is true.
+    Clients should only call this request if the corresponding capability
+    `supportsInstructionBreakpoints` is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -5688,7 +6013,7 @@ class SetInstructionBreakpointsRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -5715,7 +6040,7 @@ class SetInstructionBreakpointsRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param SetInstructionBreakpointsArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'setInstructionBreakpoints'
@@ -5745,7 +6070,7 @@ class SetInstructionBreakpointsRequest(BaseSchema):
 @register
 class SetInstructionBreakpointsArguments(BaseSchema):
     """
-    Arguments for 'setInstructionBreakpoints' request
+    Arguments for `setInstructionBreakpoints` request
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -5789,7 +6114,7 @@ class SetInstructionBreakpointsArguments(BaseSchema):
 @register
 class SetInstructionBreakpointsResponse(BaseSchema):
     """
-    Response to 'setInstructionBreakpoints' request
+    Response to `setInstructionBreakpoints` request
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -5797,7 +6122,7 @@ class SetInstructionBreakpointsResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -5811,7 +6136,7 @@ class SetInstructionBreakpointsResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -5819,12 +6144,14 @@ class SetInstructionBreakpointsResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -5835,7 +6162,7 @@ class SetInstructionBreakpointsResponse(BaseSchema):
                     "items": {
                         "$ref": "#/definitions/Breakpoint"
                     },
-                    "description": "Information about the breakpoints. The array elements correspond to the elements of the 'breakpoints' array."
+                    "description": "Information about the breakpoints. The array elements correspond to the elements of the `breakpoints` array."
                 }
             },
             "required": [
@@ -5852,13 +6179,13 @@ class SetInstructionBreakpointsResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param SetInstructionBreakpointsResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -5901,9 +6228,9 @@ class SetInstructionBreakpointsResponse(BaseSchema):
 class ContinueRequest(BaseSchema):
     """
     The request resumes execution of all threads. If the debug adapter supports single thread execution
-    (see capability 'supportsSingleThreadExecutionRequests') setting the 'singleThread' argument to true
-    resumes only the specified thread. If not all threads were resumed, the 'allThreadsContinued'
-    attribute of the response must be set to false.
+    (see capability `supportsSingleThreadExecutionRequests`), setting the `singleThread` argument to
+    true resumes only the specified thread. If not all threads were resumed, the `allThreadsContinued`
+    attribute of the response should be set to false.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -5911,7 +6238,7 @@ class ContinueRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -5938,7 +6265,7 @@ class ContinueRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param ContinueArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'continue'
@@ -5968,7 +6295,7 @@ class ContinueRequest(BaseSchema):
 @register
 class ContinueArguments(BaseSchema):
     """
-    Arguments for 'continue' request.
+    Arguments for `continue` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -5976,11 +6303,11 @@ class ContinueArguments(BaseSchema):
     __props__ = {
         "threadId": {
             "type": "integer",
-            "description": "Specifies the active thread. If the debug adapter supports single thread execution (see 'supportsSingleThreadExecutionRequests') and the optional argument 'singleThread' is true, only the thread with this ID is resumed."
+            "description": "Specifies the active thread. If the debug adapter supports single thread execution (see `supportsSingleThreadExecutionRequests`) and the argument `singleThread` is True, only the thread with this ID is resumed."
         },
         "singleThread": {
             "type": "boolean",
-            "description": "If this optional flag is true, execution is resumed only for the thread with given 'threadId'."
+            "description": "If this flag is True, execution is resumed only for the thread with given `threadId`."
         }
     }
     __refs__ = set()
@@ -5989,8 +6316,8 @@ class ContinueArguments(BaseSchema):
 
     def __init__(self, threadId, singleThread=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param integer threadId: Specifies the active thread. If the debug adapter supports single thread execution (see 'supportsSingleThreadExecutionRequests') and the optional argument 'singleThread' is true, only the thread with this ID is resumed.
-        :param boolean singleThread: If this optional flag is true, execution is resumed only for the thread with given 'threadId'.
+        :param integer threadId: Specifies the active thread. If the debug adapter supports single thread execution (see `supportsSingleThreadExecutionRequests`) and the argument `singleThread` is true, only the thread with this ID is resumed.
+        :param boolean singleThread: If this flag is true, execution is resumed only for the thread with given `threadId`.
         """
         self.threadId = threadId
         self.singleThread = singleThread
@@ -6030,7 +6357,7 @@ class ContinueArguments(BaseSchema):
 @register
 class ContinueResponse(BaseSchema):
     """
-    Response to 'continue' request.
+    Response to `continue` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -6038,7 +6365,7 @@ class ContinueResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -6052,7 +6379,7 @@ class ContinueResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -6060,12 +6387,14 @@ class ContinueResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -6073,7 +6402,7 @@ class ContinueResponse(BaseSchema):
             "properties": {
                 "allThreadsContinued": {
                     "type": "boolean",
-                    "description": "The value true (or a missing property) signals to the client that all threads have been resumed. The value false must be returned if not all threads were resumed."
+                    "description": "The value True (or a missing property) signals to the client that all threads have been resumed. The value false indicates that not all threads were resumed."
                 }
             }
         }
@@ -6087,13 +6416,13 @@ class ContinueResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param ContinueResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -6139,10 +6468,10 @@ class NextRequest(BaseSchema):
     other threads to run freely by resuming them.
     
     If the debug adapter supports single thread execution (see capability
-    'supportsSingleThreadExecutionRequests') setting the 'singleThread' argument to true prevents other
+    `supportsSingleThreadExecutionRequests`), setting the `singleThread` argument to true prevents other
     suspended threads from resuming.
     
-    The debug adapter first sends the response and then a 'stopped' event (with reason 'step') after the
+    The debug adapter first sends the response and then a `stopped` event (with reason `step`) after the
     step has completed.
 
     Note: automatically generated code. Do not edit manually.
@@ -6151,7 +6480,7 @@ class NextRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -6178,7 +6507,7 @@ class NextRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param NextArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'next'
@@ -6208,7 +6537,7 @@ class NextRequest(BaseSchema):
 @register
 class NextArguments(BaseSchema):
     """
-    Arguments for 'next' request.
+    Arguments for `next` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -6220,10 +6549,10 @@ class NextArguments(BaseSchema):
         },
         "singleThread": {
             "type": "boolean",
-            "description": "If this optional flag is true, all other suspended threads are not resumed."
+            "description": "If this flag is True, all other suspended threads are not resumed."
         },
         "granularity": {
-            "description": "Optional granularity to step. If no granularity is specified, a granularity of 'statement' is assumed.",
+            "description": "Stepping granularity. If no granularity is specified, a granularity of `statement` is assumed.",
             "type": "SteppingGranularity"
         }
     }
@@ -6234,8 +6563,8 @@ class NextArguments(BaseSchema):
     def __init__(self, threadId, singleThread=None, granularity=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param integer threadId: Specifies the thread for which to resume execution for one step (of the given granularity).
-        :param boolean singleThread: If this optional flag is true, all other suspended threads are not resumed.
-        :param SteppingGranularity granularity: Optional granularity to step. If no granularity is specified, a granularity of 'statement' is assumed.
+        :param boolean singleThread: If this flag is true, all other suspended threads are not resumed.
+        :param SteppingGranularity granularity: Stepping granularity. If no granularity is specified, a granularity of `statement` is assumed.
         """
         self.threadId = threadId
         self.singleThread = singleThread
@@ -6281,7 +6610,7 @@ class NextArguments(BaseSchema):
 @register
 class NextResponse(BaseSchema):
     """
-    Response to 'next' request. This is just an acknowledgement, so no body field is required.
+    Response to `next` request. This is just an acknowledgement, so no body field is required.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -6289,7 +6618,7 @@ class NextResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -6303,7 +6632,7 @@ class NextResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -6311,12 +6640,14 @@ class NextResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -6329,7 +6660,7 @@ class NextResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -6341,14 +6672,14 @@ class NextResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -6391,19 +6722,19 @@ class StepInRequest(BaseSchema):
     run freely by resuming them.
     
     If the debug adapter supports single thread execution (see capability
-    'supportsSingleThreadExecutionRequests') setting the 'singleThread' argument to true prevents other
+    `supportsSingleThreadExecutionRequests`), setting the `singleThread` argument to true prevents other
     suspended threads from resuming.
     
-    If the request cannot step into a target, 'stepIn' behaves like the 'next' request.
+    If the request cannot step into a target, `stepIn` behaves like the `next` request.
     
-    The debug adapter first sends the response and then a 'stopped' event (with reason 'step') after the
+    The debug adapter first sends the response and then a `stopped` event (with reason `step`) after the
     step has completed.
     
     If there are multiple function/method calls (or other targets) on the source line,
     
-    the optional argument 'targetId' can be used to control into which target the 'stepIn' should occur.
+    the argument `targetId` can be used to control into which target the `stepIn` should occur.
     
-    The list of possible targets for a given source line can be retrieved via the 'stepInTargets'
+    The list of possible targets for a given source line can be retrieved via the `stepInTargets`
     request.
 
     Note: automatically generated code. Do not edit manually.
@@ -6412,7 +6743,7 @@ class StepInRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -6439,7 +6770,7 @@ class StepInRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param StepInArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'stepIn'
@@ -6469,7 +6800,7 @@ class StepInRequest(BaseSchema):
 @register
 class StepInArguments(BaseSchema):
     """
-    Arguments for 'stepIn' request.
+    Arguments for `stepIn` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -6481,14 +6812,14 @@ class StepInArguments(BaseSchema):
         },
         "singleThread": {
             "type": "boolean",
-            "description": "If this optional flag is true, all other suspended threads are not resumed."
+            "description": "If this flag is True, all other suspended threads are not resumed."
         },
         "targetId": {
             "type": "integer",
-            "description": "Optional id of the target to step into."
+            "description": "Id of the target to step into."
         },
         "granularity": {
-            "description": "Optional granularity to step. If no granularity is specified, a granularity of 'statement' is assumed.",
+            "description": "Stepping granularity. If no granularity is specified, a granularity of `statement` is assumed.",
             "type": "SteppingGranularity"
         }
     }
@@ -6499,9 +6830,9 @@ class StepInArguments(BaseSchema):
     def __init__(self, threadId, singleThread=None, targetId=None, granularity=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param integer threadId: Specifies the thread for which to resume execution for one step-into (of the given granularity).
-        :param boolean singleThread: If this optional flag is true, all other suspended threads are not resumed.
-        :param integer targetId: Optional id of the target to step into.
-        :param SteppingGranularity granularity: Optional granularity to step. If no granularity is specified, a granularity of 'statement' is assumed.
+        :param boolean singleThread: If this flag is true, all other suspended threads are not resumed.
+        :param integer targetId: Id of the target to step into.
+        :param SteppingGranularity granularity: Stepping granularity. If no granularity is specified, a granularity of `statement` is assumed.
         """
         self.threadId = threadId
         self.singleThread = singleThread
@@ -6551,7 +6882,7 @@ class StepInArguments(BaseSchema):
 @register
 class StepInResponse(BaseSchema):
     """
-    Response to 'stepIn' request. This is just an acknowledgement, so no body field is required.
+    Response to `stepIn` request. This is just an acknowledgement, so no body field is required.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -6559,7 +6890,7 @@ class StepInResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -6573,7 +6904,7 @@ class StepInResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -6581,12 +6912,14 @@ class StepInResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -6599,7 +6932,7 @@ class StepInResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -6611,14 +6944,14 @@ class StepInResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -6661,10 +6994,10 @@ class StepOutRequest(BaseSchema):
     other threads to run freely by resuming them.
     
     If the debug adapter supports single thread execution (see capability
-    'supportsSingleThreadExecutionRequests') setting the 'singleThread' argument to true prevents other
+    `supportsSingleThreadExecutionRequests`), setting the `singleThread` argument to true prevents other
     suspended threads from resuming.
     
-    The debug adapter first sends the response and then a 'stopped' event (with reason 'step') after the
+    The debug adapter first sends the response and then a `stopped` event (with reason `step`) after the
     step has completed.
 
     Note: automatically generated code. Do not edit manually.
@@ -6673,7 +7006,7 @@ class StepOutRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -6700,7 +7033,7 @@ class StepOutRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param StepOutArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'stepOut'
@@ -6730,7 +7063,7 @@ class StepOutRequest(BaseSchema):
 @register
 class StepOutArguments(BaseSchema):
     """
-    Arguments for 'stepOut' request.
+    Arguments for `stepOut` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -6742,10 +7075,10 @@ class StepOutArguments(BaseSchema):
         },
         "singleThread": {
             "type": "boolean",
-            "description": "If this optional flag is true, all other suspended threads are not resumed."
+            "description": "If this flag is True, all other suspended threads are not resumed."
         },
         "granularity": {
-            "description": "Optional granularity to step. If no granularity is specified, a granularity of 'statement' is assumed.",
+            "description": "Stepping granularity. If no granularity is specified, a granularity of `statement` is assumed.",
             "type": "SteppingGranularity"
         }
     }
@@ -6756,8 +7089,8 @@ class StepOutArguments(BaseSchema):
     def __init__(self, threadId, singleThread=None, granularity=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param integer threadId: Specifies the thread for which to resume execution for one step-out (of the given granularity).
-        :param boolean singleThread: If this optional flag is true, all other suspended threads are not resumed.
-        :param SteppingGranularity granularity: Optional granularity to step. If no granularity is specified, a granularity of 'statement' is assumed.
+        :param boolean singleThread: If this flag is true, all other suspended threads are not resumed.
+        :param SteppingGranularity granularity: Stepping granularity. If no granularity is specified, a granularity of `statement` is assumed.
         """
         self.threadId = threadId
         self.singleThread = singleThread
@@ -6803,7 +7136,7 @@ class StepOutArguments(BaseSchema):
 @register
 class StepOutResponse(BaseSchema):
     """
-    Response to 'stepOut' request. This is just an acknowledgement, so no body field is required.
+    Response to `stepOut` request. This is just an acknowledgement, so no body field is required.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -6811,7 +7144,7 @@ class StepOutResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -6825,7 +7158,7 @@ class StepOutResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -6833,12 +7166,14 @@ class StepOutResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -6851,7 +7186,7 @@ class StepOutResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -6863,14 +7198,14 @@ class StepOutResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -6913,13 +7248,13 @@ class StepBackRequest(BaseSchema):
     allows all other threads to run backward freely by resuming them.
     
     If the debug adapter supports single thread execution (see capability
-    'supportsSingleThreadExecutionRequests') setting the 'singleThread' argument to true prevents other
+    `supportsSingleThreadExecutionRequests`), setting the `singleThread` argument to true prevents other
     suspended threads from resuming.
     
-    The debug adapter first sends the response and then a 'stopped' event (with reason 'step') after the
+    The debug adapter first sends the response and then a `stopped` event (with reason `step`) after the
     step has completed.
     
-    Clients should only call this request if the capability 'supportsStepBack' is true.
+    Clients should only call this request if the corresponding capability `supportsStepBack` is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -6927,7 +7262,7 @@ class StepBackRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -6954,7 +7289,7 @@ class StepBackRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param StepBackArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'stepBack'
@@ -6984,7 +7319,7 @@ class StepBackRequest(BaseSchema):
 @register
 class StepBackArguments(BaseSchema):
     """
-    Arguments for 'stepBack' request.
+    Arguments for `stepBack` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -6996,10 +7331,10 @@ class StepBackArguments(BaseSchema):
         },
         "singleThread": {
             "type": "boolean",
-            "description": "If this optional flag is true, all other suspended threads are not resumed."
+            "description": "If this flag is True, all other suspended threads are not resumed."
         },
         "granularity": {
-            "description": "Optional granularity to step. If no granularity is specified, a granularity of 'statement' is assumed.",
+            "description": "Stepping granularity to step. If no granularity is specified, a granularity of `statement` is assumed.",
             "type": "SteppingGranularity"
         }
     }
@@ -7010,8 +7345,8 @@ class StepBackArguments(BaseSchema):
     def __init__(self, threadId, singleThread=None, granularity=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param integer threadId: Specifies the thread for which to resume execution for one step backwards (of the given granularity).
-        :param boolean singleThread: If this optional flag is true, all other suspended threads are not resumed.
-        :param SteppingGranularity granularity: Optional granularity to step. If no granularity is specified, a granularity of 'statement' is assumed.
+        :param boolean singleThread: If this flag is true, all other suspended threads are not resumed.
+        :param SteppingGranularity granularity: Stepping granularity to step. If no granularity is specified, a granularity of `statement` is assumed.
         """
         self.threadId = threadId
         self.singleThread = singleThread
@@ -7057,7 +7392,7 @@ class StepBackArguments(BaseSchema):
 @register
 class StepBackResponse(BaseSchema):
     """
-    Response to 'stepBack' request. This is just an acknowledgement, so no body field is required.
+    Response to `stepBack` request. This is just an acknowledgement, so no body field is required.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -7065,7 +7400,7 @@ class StepBackResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -7079,7 +7414,7 @@ class StepBackResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -7087,12 +7422,14 @@ class StepBackResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -7105,7 +7442,7 @@ class StepBackResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -7117,14 +7454,14 @@ class StepBackResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -7164,11 +7501,11 @@ class StepBackResponse(BaseSchema):
 class ReverseContinueRequest(BaseSchema):
     """
     The request resumes backward execution of all threads. If the debug adapter supports single thread
-    execution (see capability 'supportsSingleThreadExecutionRequests') setting the 'singleThread'
+    execution (see capability `supportsSingleThreadExecutionRequests`), setting the `singleThread`
     argument to true resumes only the specified thread. If not all threads were resumed, the
-    'allThreadsContinued' attribute of the response must be set to false.
+    `allThreadsContinued` attribute of the response should be set to false.
     
-    Clients should only call this request if the capability 'supportsStepBack' is true.
+    Clients should only call this request if the corresponding capability `supportsStepBack` is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -7176,7 +7513,7 @@ class ReverseContinueRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -7203,7 +7540,7 @@ class ReverseContinueRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param ReverseContinueArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'reverseContinue'
@@ -7233,7 +7570,7 @@ class ReverseContinueRequest(BaseSchema):
 @register
 class ReverseContinueArguments(BaseSchema):
     """
-    Arguments for 'reverseContinue' request.
+    Arguments for `reverseContinue` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -7241,11 +7578,11 @@ class ReverseContinueArguments(BaseSchema):
     __props__ = {
         "threadId": {
             "type": "integer",
-            "description": "Specifies the active thread. If the debug adapter supports single thread execution (see 'supportsSingleThreadExecutionRequests') and the optional argument 'singleThread' is true, only the thread with this ID is resumed."
+            "description": "Specifies the active thread. If the debug adapter supports single thread execution (see `supportsSingleThreadExecutionRequests`) and the `singleThread` argument is True, only the thread with this ID is resumed."
         },
         "singleThread": {
             "type": "boolean",
-            "description": "If this optional flag is true, backward execution is resumed only for the thread with given 'threadId'."
+            "description": "If this flag is True, backward execution is resumed only for the thread with given `threadId`."
         }
     }
     __refs__ = set()
@@ -7254,8 +7591,8 @@ class ReverseContinueArguments(BaseSchema):
 
     def __init__(self, threadId, singleThread=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param integer threadId: Specifies the active thread. If the debug adapter supports single thread execution (see 'supportsSingleThreadExecutionRequests') and the optional argument 'singleThread' is true, only the thread with this ID is resumed.
-        :param boolean singleThread: If this optional flag is true, backward execution is resumed only for the thread with given 'threadId'.
+        :param integer threadId: Specifies the active thread. If the debug adapter supports single thread execution (see `supportsSingleThreadExecutionRequests`) and the `singleThread` argument is true, only the thread with this ID is resumed.
+        :param boolean singleThread: If this flag is true, backward execution is resumed only for the thread with given `threadId`.
         """
         self.threadId = threadId
         self.singleThread = singleThread
@@ -7295,7 +7632,7 @@ class ReverseContinueArguments(BaseSchema):
 @register
 class ReverseContinueResponse(BaseSchema):
     """
-    Response to 'reverseContinue' request. This is just an acknowledgement, so no body field is
+    Response to `reverseContinue` request. This is just an acknowledgement, so no body field is
     required.
 
     Note: automatically generated code. Do not edit manually.
@@ -7304,7 +7641,7 @@ class ReverseContinueResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -7318,7 +7655,7 @@ class ReverseContinueResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -7326,12 +7663,14 @@ class ReverseContinueResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -7344,7 +7683,7 @@ class ReverseContinueResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -7356,14 +7695,14 @@ class ReverseContinueResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -7402,12 +7741,13 @@ class ReverseContinueResponse(BaseSchema):
 @register
 class RestartFrameRequest(BaseSchema):
     """
-    The request restarts execution of the specified stackframe.
+    The request restarts execution of the specified stack frame.
     
-    The debug adapter first sends the response and then a 'stopped' event (with reason 'restart') after
+    The debug adapter first sends the response and then a `stopped` event (with reason `restart`) after
     the restart has completed.
     
-    Clients should only call this request if the capability 'supportsRestartFrame' is true.
+    Clients should only call this request if the corresponding capability `supportsRestartFrame` is
+    true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -7415,7 +7755,7 @@ class RestartFrameRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -7442,7 +7782,7 @@ class RestartFrameRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param RestartFrameArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'restartFrame'
@@ -7472,7 +7812,7 @@ class RestartFrameRequest(BaseSchema):
 @register
 class RestartFrameArguments(BaseSchema):
     """
-    Arguments for 'restartFrame' request.
+    Arguments for `restartFrame` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -7480,7 +7820,7 @@ class RestartFrameArguments(BaseSchema):
     __props__ = {
         "frameId": {
             "type": "integer",
-            "description": "Restart this stackframe."
+            "description": "Restart the stack frame identified by `frameId`. The `frameId` must have been obtained in the current suspended state. See 'Lifetime of Object References' in the Overview section for details."
         }
     }
     __refs__ = set()
@@ -7489,7 +7829,7 @@ class RestartFrameArguments(BaseSchema):
 
     def __init__(self, frameId, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param integer frameId: Restart this stackframe.
+        :param integer frameId: Restart the stack frame identified by `frameId`. The `frameId` must have been obtained in the current suspended state. See 'Lifetime of Object References' in the Overview section for details.
         """
         self.frameId = frameId
         if update_ids_from_dap:
@@ -7525,7 +7865,7 @@ class RestartFrameArguments(BaseSchema):
 @register
 class RestartFrameResponse(BaseSchema):
     """
-    Response to 'restartFrame' request. This is just an acknowledgement, so no body field is required.
+    Response to `restartFrame` request. This is just an acknowledgement, so no body field is required.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -7533,7 +7873,7 @@ class RestartFrameResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -7547,7 +7887,7 @@ class RestartFrameResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -7555,12 +7895,14 @@ class RestartFrameResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -7573,7 +7915,7 @@ class RestartFrameResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -7585,14 +7927,14 @@ class RestartFrameResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -7633,14 +7975,14 @@ class GotoRequest(BaseSchema):
     """
     The request sets the location where the debuggee will continue to run.
     
-    This makes it possible to skip the execution of code or to executed code again.
+    This makes it possible to skip the execution of code or to execute code again.
     
     The code between the current location and the goto target is not executed but skipped.
     
-    The debug adapter first sends the response and then a 'stopped' event with reason 'goto'.
+    The debug adapter first sends the response and then a `stopped` event with reason `goto`.
     
-    Clients should only call this request if the capability 'supportsGotoTargetsRequest' is true
-    (because only then goto targets exist that can be passed as arguments).
+    Clients should only call this request if the corresponding capability `supportsGotoTargetsRequest`
+    is true (because only then goto targets exist that can be passed as arguments).
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -7648,7 +7990,7 @@ class GotoRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -7675,7 +8017,7 @@ class GotoRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param GotoArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'goto'
@@ -7705,7 +8047,7 @@ class GotoRequest(BaseSchema):
 @register
 class GotoArguments(BaseSchema):
     """
-    Arguments for 'goto' request.
+    Arguments for `goto` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -7766,7 +8108,7 @@ class GotoArguments(BaseSchema):
 @register
 class GotoResponse(BaseSchema):
     """
-    Response to 'goto' request. This is just an acknowledgement, so no body field is required.
+    Response to `goto` request. This is just an acknowledgement, so no body field is required.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -7774,7 +8116,7 @@ class GotoResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -7788,7 +8130,7 @@ class GotoResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -7796,12 +8138,14 @@ class GotoResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -7814,7 +8158,7 @@ class GotoResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -7826,14 +8170,14 @@ class GotoResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -7874,7 +8218,7 @@ class PauseRequest(BaseSchema):
     """
     The request suspends the debuggee.
     
-    The debug adapter first sends the response and then a 'stopped' event (with reason 'pause') after
+    The debug adapter first sends the response and then a `stopped` event (with reason `pause`) after
     the thread has been paused successfully.
 
     Note: automatically generated code. Do not edit manually.
@@ -7883,7 +8227,7 @@ class PauseRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -7910,7 +8254,7 @@ class PauseRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param PauseArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'pause'
@@ -7940,7 +8284,7 @@ class PauseRequest(BaseSchema):
 @register
 class PauseArguments(BaseSchema):
     """
-    Arguments for 'pause' request.
+    Arguments for `pause` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -7993,7 +8337,7 @@ class PauseArguments(BaseSchema):
 @register
 class PauseResponse(BaseSchema):
     """
-    Response to 'pause' request. This is just an acknowledgement, so no body field is required.
+    Response to `pause` request. This is just an acknowledgement, so no body field is required.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -8001,7 +8345,7 @@ class PauseResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -8015,7 +8359,7 @@ class PauseResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -8023,12 +8367,14 @@ class PauseResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -8041,7 +8387,7 @@ class PauseResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -8053,14 +8399,14 @@ class PauseResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -8102,12 +8448,12 @@ class StackTraceRequest(BaseSchema):
     The request returns a stacktrace from the current execution state of a given thread.
     
     A client can request all stack frames by omitting the startFrame and levels arguments. For
-    performance conscious clients and if the debug adapter's 'supportsDelayedStackTraceLoading'
-    capability is true, stack frames can be retrieved in a piecemeal way with the startFrame and levels
-    arguments. The response of the stackTrace request may contain a totalFrames property that hints at
-    the total number of frames in the stack. If a client needs this total number upfront, it can issue a
-    request for a single (first) frame and depending on the value of totalFrames decide how to proceed.
-    In any case a client should be prepared to receive less frames than requested, which is an
+    performance-conscious clients and if the corresponding capability `supportsDelayedStackTraceLoading`
+    is true, stack frames can be retrieved in a piecemeal way with the `startFrame` and `levels`
+    arguments. The response of the `stackTrace` request may contain a `totalFrames` property that hints
+    at the total number of frames in the stack. If a client needs this total number upfront, it can
+    issue a request for a single (first) frame and depending on the value of `totalFrames` decide how to
+    proceed. In any case a client should be prepared to receive fewer frames than requested, which is an
     indication that the end of the stack has been reached.
 
     Note: automatically generated code. Do not edit manually.
@@ -8116,7 +8462,7 @@ class StackTraceRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -8143,7 +8489,7 @@ class StackTraceRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param StackTraceArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'stackTrace'
@@ -8173,7 +8519,7 @@ class StackTraceRequest(BaseSchema):
 @register
 class StackTraceArguments(BaseSchema):
     """
-    Arguments for 'stackTrace' request.
+    Arguments for `stackTrace` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -8192,7 +8538,7 @@ class StackTraceArguments(BaseSchema):
             "description": "The maximum number of frames to return. If levels is not specified or 0, all frames are returned."
         },
         "format": {
-            "description": "Specifies details on how to format the stack frames.\nThe attribute is only honored by a debug adapter if the capability 'supportsValueFormattingOptions' is true.",
+            "description": "Specifies details on how to format the stack frames.\nThe attribute is only honored by a debug adapter if the corresponding capability `supportsValueFormattingOptions` is True.",
             "type": "StackFrameFormat"
         }
     }
@@ -8206,7 +8552,7 @@ class StackTraceArguments(BaseSchema):
         :param integer startFrame: The index of the first frame to return; if omitted frames start at 0.
         :param integer levels: The maximum number of frames to return. If levels is not specified or 0, all frames are returned.
         :param StackFrameFormat format: Specifies details on how to format the stack frames.
-        The attribute is only honored by a debug adapter if the capability 'supportsValueFormattingOptions' is true.
+        The attribute is only honored by a debug adapter if the corresponding capability `supportsValueFormattingOptions` is true.
         """
         self.threadId = threadId
         self.startFrame = startFrame
@@ -8257,7 +8603,7 @@ class StackTraceArguments(BaseSchema):
 @register
 class StackTraceResponse(BaseSchema):
     """
-    Response to 'stackTrace' request.
+    Response to `stackTrace` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -8265,7 +8611,7 @@ class StackTraceResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -8279,7 +8625,7 @@ class StackTraceResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -8287,12 +8633,14 @@ class StackTraceResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -8303,11 +8651,11 @@ class StackTraceResponse(BaseSchema):
                     "items": {
                         "$ref": "#/definitions/StackFrame"
                     },
-                    "description": "The frames of the stackframe. If the array has length zero, there are no stackframes available.\nThis means that there is no location information available."
+                    "description": "The frames of the stack frame. If the array has length zero, there are no stack frames available.\nThis means that there is no location information available."
                 },
                 "totalFrames": {
                     "type": "integer",
-                    "description": "The total number of frames available in the stack. If omitted or if totalFrames is larger than the available frames, a client is expected to request frames until a request returns less frames than requested (which indicates the end of the stack). Returning monotonically increasing totalFrames values for subsequent requests can be used to enforce paging in the client."
+                    "description": "The total number of frames available in the stack. If omitted or if `totalFrames` is larger than the available frames, a client is expected to request frames until a request returns less frames than requested (which indicates the end of the stack). Returning monotonically increasing `totalFrames` values for subsequent requests can be used to enforce paging in the client."
                 }
             },
             "required": [
@@ -8324,13 +8672,13 @@ class StackTraceResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param StackTraceResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -8372,7 +8720,7 @@ class StackTraceResponse(BaseSchema):
 @register
 class ScopesRequest(BaseSchema):
     """
-    The request returns the variable scopes for a given stackframe ID.
+    The request returns the variable scopes for a given stack frame ID.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -8380,7 +8728,7 @@ class ScopesRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -8407,7 +8755,7 @@ class ScopesRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param ScopesArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'scopes'
@@ -8437,7 +8785,7 @@ class ScopesRequest(BaseSchema):
 @register
 class ScopesArguments(BaseSchema):
     """
-    Arguments for 'scopes' request.
+    Arguments for `scopes` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -8445,7 +8793,7 @@ class ScopesArguments(BaseSchema):
     __props__ = {
         "frameId": {
             "type": "integer",
-            "description": "Retrieve the scopes for this stackframe."
+            "description": "Retrieve the scopes for the stack frame identified by `frameId`. The `frameId` must have been obtained in the current suspended state. See 'Lifetime of Object References' in the Overview section for details."
         }
     }
     __refs__ = set()
@@ -8454,7 +8802,7 @@ class ScopesArguments(BaseSchema):
 
     def __init__(self, frameId, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param integer frameId: Retrieve the scopes for this stackframe.
+        :param integer frameId: Retrieve the scopes for the stack frame identified by `frameId`. The `frameId` must have been obtained in the current suspended state. See 'Lifetime of Object References' in the Overview section for details.
         """
         self.frameId = frameId
         if update_ids_from_dap:
@@ -8490,7 +8838,7 @@ class ScopesArguments(BaseSchema):
 @register
 class ScopesResponse(BaseSchema):
     """
-    Response to 'scopes' request.
+    Response to `scopes` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -8498,7 +8846,7 @@ class ScopesResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -8512,7 +8860,7 @@ class ScopesResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -8520,12 +8868,14 @@ class ScopesResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -8536,7 +8886,7 @@ class ScopesResponse(BaseSchema):
                     "items": {
                         "$ref": "#/definitions/Scope"
                     },
-                    "description": "The scopes of the stackframe. If the array has length zero, there are no scopes available."
+                    "description": "The scopes of the stack frame. If the array has length zero, there are no scopes available."
                 }
             },
             "required": [
@@ -8553,13 +8903,13 @@ class ScopesResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param ScopesResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -8603,7 +8953,7 @@ class VariablesRequest(BaseSchema):
     """
     Retrieves all child variables for the given variable reference.
     
-    An optional filter can be used to limit the fetched children to either named or indexed children.
+    A filter can be used to limit the fetched children to either named or indexed children.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -8611,7 +8961,7 @@ class VariablesRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -8638,7 +8988,7 @@ class VariablesRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param VariablesArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'variables'
@@ -8668,7 +9018,7 @@ class VariablesRequest(BaseSchema):
 @register
 class VariablesArguments(BaseSchema):
     """
-    Arguments for 'variables' request.
+    Arguments for `variables` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -8676,7 +9026,7 @@ class VariablesArguments(BaseSchema):
     __props__ = {
         "variablesReference": {
             "type": "integer",
-            "description": "The Variable reference."
+            "description": "The variable for which to retrieve its children. The `variablesReference` must have been obtained in the current suspended state. See 'Lifetime of Object References' in the Overview section for details."
         },
         "filter": {
             "type": "string",
@@ -8684,18 +9034,18 @@ class VariablesArguments(BaseSchema):
                 "indexed",
                 "named"
             ],
-            "description": "Optional filter to limit the child variables to either named or indexed. If omitted, both types are fetched."
+            "description": "Filter to limit the child variables to either named or indexed. If omitted, both types are fetched."
         },
         "start": {
             "type": "integer",
-            "description": "The index of the first variable to return; if omitted children start at 0."
+            "description": "The index of the first variable to return; if omitted children start at 0.\nThe attribute is only honored by a debug adapter if the corresponding capability `supportsVariablePaging` is True."
         },
         "count": {
             "type": "integer",
-            "description": "The number of variables to return. If count is missing or 0, all variables are returned."
+            "description": "The number of variables to return. If count is missing or 0, all variables are returned.\nThe attribute is only honored by a debug adapter if the corresponding capability `supportsVariablePaging` is True."
         },
         "format": {
-            "description": "Specifies details on how to format the Variable values.\nThe attribute is only honored by a debug adapter if the capability 'supportsValueFormattingOptions' is true.",
+            "description": "Specifies details on how to format the Variable values.\nThe attribute is only honored by a debug adapter if the corresponding capability `supportsValueFormattingOptions` is True.",
             "type": "ValueFormat"
         }
     }
@@ -8705,12 +9055,14 @@ class VariablesArguments(BaseSchema):
 
     def __init__(self, variablesReference, filter=None, start=None, count=None, format=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param integer variablesReference: The Variable reference.
-        :param string filter: Optional filter to limit the child variables to either named or indexed. If omitted, both types are fetched.
+        :param integer variablesReference: The variable for which to retrieve its children. The `variablesReference` must have been obtained in the current suspended state. See 'Lifetime of Object References' in the Overview section for details.
+        :param string filter: Filter to limit the child variables to either named or indexed. If omitted, both types are fetched.
         :param integer start: The index of the first variable to return; if omitted children start at 0.
+        The attribute is only honored by a debug adapter if the corresponding capability `supportsVariablePaging` is true.
         :param integer count: The number of variables to return. If count is missing or 0, all variables are returned.
+        The attribute is only honored by a debug adapter if the corresponding capability `supportsVariablePaging` is true.
         :param ValueFormat format: Specifies details on how to format the Variable values.
-        The attribute is only honored by a debug adapter if the capability 'supportsValueFormattingOptions' is true.
+        The attribute is only honored by a debug adapter if the corresponding capability `supportsValueFormattingOptions` is true.
         """
         self.variablesReference = variablesReference
         self.filter = filter
@@ -8765,7 +9117,7 @@ class VariablesArguments(BaseSchema):
 @register
 class VariablesResponse(BaseSchema):
     """
-    Response to 'variables' request.
+    Response to `variables` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -8773,7 +9125,7 @@ class VariablesResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -8787,7 +9139,7 @@ class VariablesResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -8795,12 +9147,14 @@ class VariablesResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -8828,13 +9182,13 @@ class VariablesResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param VariablesResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -8877,10 +9231,10 @@ class VariablesResponse(BaseSchema):
 class SetVariableRequest(BaseSchema):
     """
     Set the variable with the given name in the variable container to a new value. Clients should only
-    call this request if the capability 'supportsSetVariable' is true.
+    call this request if the corresponding capability `supportsSetVariable` is true.
     
-    If a debug adapter implements both setVariable and setExpression, a client will only use
-    setExpression if the variable has an evaluateName property.
+    If a debug adapter implements both `setVariable` and `setExpression`, a client will only use
+    `setExpression` if the variable has an `evaluateName` property.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -8888,7 +9242,7 @@ class SetVariableRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -8915,7 +9269,7 @@ class SetVariableRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param SetVariableArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'setVariable'
@@ -8945,7 +9299,7 @@ class SetVariableRequest(BaseSchema):
 @register
 class SetVariableArguments(BaseSchema):
     """
-    Arguments for 'setVariable' request.
+    Arguments for `setVariable` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -8953,7 +9307,7 @@ class SetVariableArguments(BaseSchema):
     __props__ = {
         "variablesReference": {
             "type": "integer",
-            "description": "The reference of the variable container."
+            "description": "The reference of the variable container. The `variablesReference` must have been obtained in the current suspended state. See 'Lifetime of Object References' in the Overview section for details."
         },
         "name": {
             "type": "string",
@@ -8974,7 +9328,7 @@ class SetVariableArguments(BaseSchema):
 
     def __init__(self, variablesReference, name, value, format=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param integer variablesReference: The reference of the variable container.
+        :param integer variablesReference: The reference of the variable container. The `variablesReference` must have been obtained in the current suspended state. See 'Lifetime of Object References' in the Overview section for details.
         :param string name: The name of the variable in the container.
         :param string value: The value of the variable.
         :param ValueFormat format: Specifies details on how to format the response value.
@@ -9026,7 +9380,7 @@ class SetVariableArguments(BaseSchema):
 @register
 class SetVariableResponse(BaseSchema):
     """
-    Response to 'setVariable' request.
+    Response to `setVariable` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -9034,7 +9388,7 @@ class SetVariableResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -9048,7 +9402,7 @@ class SetVariableResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -9056,12 +9410,14 @@ class SetVariableResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -9077,15 +9433,19 @@ class SetVariableResponse(BaseSchema):
                 },
                 "variablesReference": {
                     "type": "integer",
-                    "description": "If variablesReference is > 0, the new value is structured and its children can be retrieved by passing variablesReference to the VariablesRequest.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+                    "description": "If `variablesReference` is > 0, the new value is structured and its children can be retrieved by passing `variablesReference` to the `variables` request as long as execution remains suspended. See 'Lifetime of Object References' in the Overview section for details."
                 },
                 "namedVariables": {
                     "type": "integer",
-                    "description": "The number of named child variables.\nThe client can use this optional information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+                    "description": "The number of named child variables.\nThe client can use this information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
                 },
                 "indexedVariables": {
                     "type": "integer",
-                    "description": "The number of indexed child variables.\nThe client can use this optional information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+                    "description": "The number of indexed child variables.\nThe client can use this information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+                },
+                "memoryReference": {
+                    "type": "string",
+                    "description": "A memory reference to a location appropriate for this result.\nFor pointer type eval results, this is generally a reference to the memory address contained in the pointer.\nThis attribute may be returned by a debug adapter if corresponding capability `supportsMemoryReferences` is True."
                 }
             },
             "required": [
@@ -9102,13 +9462,13 @@ class SetVariableResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param SetVariableResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -9158,7 +9518,7 @@ class SourceRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -9185,7 +9545,7 @@ class SourceRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param SourceArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'source'
@@ -9215,19 +9575,19 @@ class SourceRequest(BaseSchema):
 @register
 class SourceArguments(BaseSchema):
     """
-    Arguments for 'source' request.
+    Arguments for `source` request.
 
     Note: automatically generated code. Do not edit manually.
     """
 
     __props__ = {
         "source": {
-            "description": "Specifies the source content to load. Either source.path or source.sourceReference must be specified.",
+            "description": "Specifies the source content to load. Either `source.path` or `source.sourceReference` must be specified.",
             "type": "Source"
         },
         "sourceReference": {
             "type": "integer",
-            "description": "The reference to the source. This is the same as source.sourceReference.\nThis is provided for backward compatibility since old backends do not understand the 'source' attribute."
+            "description": "The reference to the source. This is the same as `source.sourceReference`.\nThis is provided for backward compatibility since old clients do not understand the `source` attribute."
         }
     }
     __refs__ = set(['source'])
@@ -9236,9 +9596,9 @@ class SourceArguments(BaseSchema):
 
     def __init__(self, sourceReference, source=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param integer sourceReference: The reference to the source. This is the same as source.sourceReference.
-        This is provided for backward compatibility since old backends do not understand the 'source' attribute.
-        :param Source source: Specifies the source content to load. Either source.path or source.sourceReference must be specified.
+        :param integer sourceReference: The reference to the source. This is the same as `source.sourceReference`.
+        This is provided for backward compatibility since old clients do not understand the `source` attribute.
+        :param Source source: Specifies the source content to load. Either `source.path` or `source.sourceReference` must be specified.
         """
         self.sourceReference = sourceReference
         if source is None:
@@ -9264,7 +9624,7 @@ class SourceArguments(BaseSchema):
 @register
 class SourceResponse(BaseSchema):
     """
-    Response to 'source' request.
+    Response to `source` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -9272,7 +9632,7 @@ class SourceResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -9286,7 +9646,7 @@ class SourceResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -9294,12 +9654,14 @@ class SourceResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -9311,7 +9673,7 @@ class SourceResponse(BaseSchema):
                 },
                 "mimeType": {
                     "type": "string",
-                    "description": "Optional content type (mime type) of the source."
+                    "description": "Content type (MIME type) of the source."
                 }
             },
             "required": [
@@ -9328,13 +9690,13 @@ class SourceResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param SourceResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -9384,7 +9746,7 @@ class ThreadsRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -9419,7 +9781,7 @@ class ThreadsRequest(BaseSchema):
         """
         :param string type: 
         :param string command: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] arguments: Object containing arguments for the command.
         """
         self.type = 'request'
@@ -9449,7 +9811,7 @@ class ThreadsRequest(BaseSchema):
 @register
 class ThreadsResponse(BaseSchema):
     """
-    Response to 'threads' request.
+    Response to `threads` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -9457,7 +9819,7 @@ class ThreadsResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -9471,7 +9833,7 @@ class ThreadsResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -9479,12 +9841,14 @@ class ThreadsResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -9512,13 +9876,13 @@ class ThreadsResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param ThreadsResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -9562,7 +9926,8 @@ class TerminateThreadsRequest(BaseSchema):
     """
     The request terminates the threads with the given ids.
     
-    Clients should only call this request if the capability 'supportsTerminateThreadsRequest' is true.
+    Clients should only call this request if the corresponding capability
+    `supportsTerminateThreadsRequest` is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -9570,7 +9935,7 @@ class TerminateThreadsRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -9597,7 +9962,7 @@ class TerminateThreadsRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param TerminateThreadsArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'terminateThreads'
@@ -9627,7 +9992,7 @@ class TerminateThreadsRequest(BaseSchema):
 @register
 class TerminateThreadsArguments(BaseSchema):
     """
-    Arguments for 'terminateThreads' request.
+    Arguments for `terminateThreads` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -9669,8 +10034,7 @@ class TerminateThreadsArguments(BaseSchema):
 @register
 class TerminateThreadsResponse(BaseSchema):
     """
-    Response to 'terminateThreads' request. This is just an acknowledgement, so no body field is
-    required.
+    Response to `terminateThreads` request. This is just an acknowledgement, no body field is required.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -9678,7 +10042,7 @@ class TerminateThreadsResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -9692,7 +10056,7 @@ class TerminateThreadsResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -9700,12 +10064,14 @@ class TerminateThreadsResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -9718,7 +10084,7 @@ class TerminateThreadsResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -9730,14 +10096,14 @@ class TerminateThreadsResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -9779,7 +10145,8 @@ class ModulesRequest(BaseSchema):
     Modules can be retrieved from the debug adapter with this request which can either return all
     modules or a range of modules to support paging.
     
-    Clients should only call this request if the capability 'supportsModulesRequest' is true.
+    Clients should only call this request if the corresponding capability `supportsModulesRequest` is
+    true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -9787,7 +10154,7 @@ class ModulesRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -9813,7 +10180,7 @@ class ModulesRequest(BaseSchema):
         """
         :param string type: 
         :param string command: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         :param ModulesArguments arguments: 
         """
         self.type = 'request'
@@ -9845,7 +10212,7 @@ class ModulesRequest(BaseSchema):
 @register
 class ModulesArguments(BaseSchema):
     """
-    Arguments for 'modules' request.
+    Arguments for `modules` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -9857,7 +10224,7 @@ class ModulesArguments(BaseSchema):
         },
         "moduleCount": {
             "type": "integer",
-            "description": "The number of modules to return. If moduleCount is not specified or 0, all modules are returned."
+            "description": "The number of modules to return. If `moduleCount` is not specified or 0, all modules are returned."
         }
     }
     __refs__ = set()
@@ -9867,7 +10234,7 @@ class ModulesArguments(BaseSchema):
     def __init__(self, startModule=None, moduleCount=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param integer startModule: The index of the first module to return; if omitted modules start at 0.
-        :param integer moduleCount: The number of modules to return. If moduleCount is not specified or 0, all modules are returned.
+        :param integer moduleCount: The number of modules to return. If `moduleCount` is not specified or 0, all modules are returned.
         """
         self.startModule = startModule
         self.moduleCount = moduleCount
@@ -9891,7 +10258,7 @@ class ModulesArguments(BaseSchema):
 @register
 class ModulesResponse(BaseSchema):
     """
-    Response to 'modules' request.
+    Response to `modules` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -9899,7 +10266,7 @@ class ModulesResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -9913,7 +10280,7 @@ class ModulesResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -9921,12 +10288,14 @@ class ModulesResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -9958,13 +10327,13 @@ class ModulesResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param ModulesResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -10008,7 +10377,8 @@ class LoadedSourcesRequest(BaseSchema):
     """
     Retrieves the set of all sources currently loaded by the debugged process.
     
-    Clients should only call this request if the capability 'supportsLoadedSourcesRequest' is true.
+    Clients should only call this request if the corresponding capability `supportsLoadedSourcesRequest`
+    is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -10016,7 +10386,7 @@ class LoadedSourcesRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -10042,7 +10412,7 @@ class LoadedSourcesRequest(BaseSchema):
         """
         :param string type: 
         :param string command: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         :param LoadedSourcesArguments arguments: 
         """
         self.type = 'request'
@@ -10074,7 +10444,7 @@ class LoadedSourcesRequest(BaseSchema):
 @register
 class LoadedSourcesArguments(BaseSchema):
     """
-    Arguments for 'loadedSources' request.
+    Arguments for `loadedSources` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -10103,7 +10473,7 @@ class LoadedSourcesArguments(BaseSchema):
 @register
 class LoadedSourcesResponse(BaseSchema):
     """
-    Response to 'loadedSources' request.
+    Response to `loadedSources` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -10111,7 +10481,7 @@ class LoadedSourcesResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -10125,7 +10495,7 @@ class LoadedSourcesResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -10133,12 +10503,14 @@ class LoadedSourcesResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -10166,13 +10538,13 @@ class LoadedSourcesResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param LoadedSourcesResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -10214,7 +10586,7 @@ class LoadedSourcesResponse(BaseSchema):
 @register
 class EvaluateRequest(BaseSchema):
     """
-    Evaluates the given expression in the context of the top most stack frame.
+    Evaluates the given expression in the context of the topmost stack frame.
     
     The expression has access to any variables and arguments that are in scope.
 
@@ -10224,7 +10596,7 @@ class EvaluateRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -10251,7 +10623,7 @@ class EvaluateRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param EvaluateArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'evaluate'
@@ -10281,7 +10653,7 @@ class EvaluateRequest(BaseSchema):
 @register
 class EvaluateArguments(BaseSchema):
     """
-    Arguments for 'evaluate' request.
+    Arguments for `evaluate` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -10301,18 +10673,20 @@ class EvaluateArguments(BaseSchema):
                 "watch",
                 "repl",
                 "hover",
-                "clipboard"
+                "clipboard",
+                "variables"
             ],
             "enumDescriptions": [
-                "evaluate is run in a watch.",
-                "evaluate is run from REPL console.",
-                "evaluate is run from a data hover.",
-                "evaluate is run to generate the value that will be stored in the clipboard.\nThe attribute is only honored by a debug adapter if the capability 'supportsClipboardContext' is true."
+                "evaluate is called from a watch view context.",
+                "evaluate is called from a REPL context.",
+                "evaluate is called to generate the debug hover contents.\nThis value should only be used if the corresponding capability `supportsEvaluateForHovers` is True.",
+                "evaluate is called to generate clipboard contents.\nThis value should only be used if the corresponding capability `supportsClipboardContext` is True.",
+                "evaluate is called from a variables view context."
             ],
-            "description": "The context in which the evaluate request is run."
+            "description": "The context in which the evaluate request is used."
         },
         "format": {
-            "description": "Specifies details on how to format the Evaluate result.\nThe attribute is only honored by a debug adapter if the capability 'supportsValueFormattingOptions' is true.",
+            "description": "Specifies details on how to format the result.\nThe attribute is only honored by a debug adapter if the corresponding capability `supportsValueFormattingOptions` is True.",
             "type": "ValueFormat"
         }
     }
@@ -10324,9 +10698,9 @@ class EvaluateArguments(BaseSchema):
         """
         :param string expression: The expression to evaluate.
         :param integer frameId: Evaluate the expression in the scope of this stack frame. If not specified, the expression is evaluated in the global scope.
-        :param string context: The context in which the evaluate request is run.
-        :param ValueFormat format: Specifies details on how to format the Evaluate result.
-        The attribute is only honored by a debug adapter if the capability 'supportsValueFormattingOptions' is true.
+        :param string context: The context in which the evaluate request is used.
+        :param ValueFormat format: Specifies details on how to format the result.
+        The attribute is only honored by a debug adapter if the corresponding capability `supportsValueFormattingOptions` is true.
         """
         self.expression = expression
         self.frameId = frameId
@@ -10377,7 +10751,7 @@ class EvaluateArguments(BaseSchema):
 @register
 class EvaluateResponse(BaseSchema):
     """
-    Response to 'evaluate' request.
+    Response to `evaluate` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -10385,7 +10759,7 @@ class EvaluateResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -10399,7 +10773,7 @@ class EvaluateResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -10407,12 +10781,14 @@ class EvaluateResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -10424,27 +10800,27 @@ class EvaluateResponse(BaseSchema):
                 },
                 "type": {
                     "type": "string",
-                    "description": "The optional type of the evaluate result.\nThis attribute should only be returned by a debug adapter if the client has passed the value true for the 'supportsVariableType' capability of the 'initialize' request."
+                    "description": "The type of the evaluate result.\nThis attribute should only be returned by a debug adapter if the corresponding capability `supportsVariableType` is True."
                 },
                 "presentationHint": {
                     "$ref": "#/definitions/VariablePresentationHint",
-                    "description": "Properties of a evaluate result that can be used to determine how to render the result in the UI."
+                    "description": "Properties of an evaluate result that can be used to determine how to render the result in the UI."
                 },
                 "variablesReference": {
                     "type": "integer",
-                    "description": "If variablesReference is > 0, the evaluate result is structured and its children can be retrieved by passing variablesReference to the VariablesRequest.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+                    "description": "If `variablesReference` is > 0, the evaluate result is structured and its children can be retrieved by passing `variablesReference` to the `variables` request as long as execution remains suspended. See 'Lifetime of Object References' in the Overview section for details."
                 },
                 "namedVariables": {
                     "type": "integer",
-                    "description": "The number of named child variables.\nThe client can use this optional information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+                    "description": "The number of named child variables.\nThe client can use this information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
                 },
                 "indexedVariables": {
                     "type": "integer",
-                    "description": "The number of indexed child variables.\nThe client can use this optional information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+                    "description": "The number of indexed child variables.\nThe client can use this information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
                 },
                 "memoryReference": {
                     "type": "string",
-                    "description": "Optional memory reference to a location appropriate for this result.\nFor pointer type eval results, this is generally a reference to the memory address contained in the pointer.\nThis attribute should be returned by a debug adapter if the client has passed the value true for the 'supportsMemoryReferences' capability of the 'initialize' request."
+                    "description": "A memory reference to a location appropriate for this result.\nFor pointer type eval results, this is generally a reference to the memory address contained in the pointer.\nThis attribute may be returned by a debug adapter if corresponding capability `supportsMemoryReferences` is True."
                 }
             },
             "required": [
@@ -10462,13 +10838,13 @@ class EvaluateResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param EvaluateResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -10510,15 +10886,16 @@ class EvaluateResponse(BaseSchema):
 @register
 class SetExpressionRequest(BaseSchema):
     """
-    Evaluates the given 'value' expression and assigns it to the 'expression' which must be a modifiable
+    Evaluates the given `value` expression and assigns it to the `expression` which must be a modifiable
     l-value.
     
     The expressions have access to any variables and arguments that are in scope of the specified frame.
     
-    Clients should only call this request if the capability 'supportsSetExpression' is true.
+    Clients should only call this request if the corresponding capability `supportsSetExpression` is
+    true.
     
-    If a debug adapter implements both setExpression and setVariable, a client will only use
-    setExpression if the variable has an evaluateName property.
+    If a debug adapter implements both `setExpression` and `setVariable`, a client uses `setExpression`
+    if the variable has an `evaluateName` property.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -10526,7 +10903,7 @@ class SetExpressionRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -10553,7 +10930,7 @@ class SetExpressionRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param SetExpressionArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'setExpression'
@@ -10583,7 +10960,7 @@ class SetExpressionRequest(BaseSchema):
 @register
 class SetExpressionArguments(BaseSchema):
     """
-    Arguments for 'setExpression' request.
+    Arguments for `setExpression` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -10665,7 +11042,7 @@ class SetExpressionArguments(BaseSchema):
 @register
 class SetExpressionResponse(BaseSchema):
     """
-    Response to 'setExpression' request.
+    Response to `setExpression` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -10673,7 +11050,7 @@ class SetExpressionResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -10687,7 +11064,7 @@ class SetExpressionResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -10695,12 +11072,14 @@ class SetExpressionResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -10712,7 +11091,7 @@ class SetExpressionResponse(BaseSchema):
                 },
                 "type": {
                     "type": "string",
-                    "description": "The optional type of the value.\nThis attribute should only be returned by a debug adapter if the client has passed the value true for the 'supportsVariableType' capability of the 'initialize' request."
+                    "description": "The type of the value.\nThis attribute should only be returned by a debug adapter if the corresponding capability `supportsVariableType` is True."
                 },
                 "presentationHint": {
                     "$ref": "#/definitions/VariablePresentationHint",
@@ -10720,15 +11099,19 @@ class SetExpressionResponse(BaseSchema):
                 },
                 "variablesReference": {
                     "type": "integer",
-                    "description": "If variablesReference is > 0, the value is structured and its children can be retrieved by passing variablesReference to the VariablesRequest.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+                    "description": "If `variablesReference` is > 0, the evaluate result is structured and its children can be retrieved by passing `variablesReference` to the `variables` request as long as execution remains suspended. See 'Lifetime of Object References' in the Overview section for details."
                 },
                 "namedVariables": {
                     "type": "integer",
-                    "description": "The number of named child variables.\nThe client can use this optional information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+                    "description": "The number of named child variables.\nThe client can use this information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
                 },
                 "indexedVariables": {
                     "type": "integer",
-                    "description": "The number of indexed child variables.\nThe client can use this optional information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+                    "description": "The number of indexed child variables.\nThe client can use this information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+                },
+                "memoryReference": {
+                    "type": "string",
+                    "description": "A memory reference to a location appropriate for this result.\nFor pointer type eval results, this is generally a reference to the memory address contained in the pointer.\nThis attribute may be returned by a debug adapter if corresponding capability `supportsMemoryReferences` is True."
                 }
             },
             "required": [
@@ -10745,13 +11128,13 @@ class SetExpressionResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param SetExpressionResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -10793,14 +11176,12 @@ class SetExpressionResponse(BaseSchema):
 @register
 class StepInTargetsRequest(BaseSchema):
     """
-    This request retrieves the possible stepIn targets for the specified stack frame.
+    This request retrieves the possible step-in targets for the specified stack frame.
     
-    These targets can be used in the 'stepIn' request.
+    These targets can be used in the `stepIn` request.
     
-    The StepInTargets may only be called if the 'supportsStepInTargetsRequest' capability exists and is
-    true.
-    
-    Clients should only call this request if the capability 'supportsStepInTargetsRequest' is true.
+    Clients should only call this request if the corresponding capability `supportsStepInTargetsRequest`
+    is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -10808,7 +11189,7 @@ class StepInTargetsRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -10835,7 +11216,7 @@ class StepInTargetsRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param StepInTargetsArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'stepInTargets'
@@ -10865,7 +11246,7 @@ class StepInTargetsRequest(BaseSchema):
 @register
 class StepInTargetsArguments(BaseSchema):
     """
-    Arguments for 'stepInTargets' request.
+    Arguments for `stepInTargets` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -10873,7 +11254,7 @@ class StepInTargetsArguments(BaseSchema):
     __props__ = {
         "frameId": {
             "type": "integer",
-            "description": "The stack frame for which to retrieve the possible stepIn targets."
+            "description": "The stack frame for which to retrieve the possible step-in targets."
         }
     }
     __refs__ = set()
@@ -10882,7 +11263,7 @@ class StepInTargetsArguments(BaseSchema):
 
     def __init__(self, frameId, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param integer frameId: The stack frame for which to retrieve the possible stepIn targets.
+        :param integer frameId: The stack frame for which to retrieve the possible step-in targets.
         """
         self.frameId = frameId
         if update_ids_from_dap:
@@ -10918,7 +11299,7 @@ class StepInTargetsArguments(BaseSchema):
 @register
 class StepInTargetsResponse(BaseSchema):
     """
-    Response to 'stepInTargets' request.
+    Response to `stepInTargets` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -10926,7 +11307,7 @@ class StepInTargetsResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -10940,7 +11321,7 @@ class StepInTargetsResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -10948,12 +11329,14 @@ class StepInTargetsResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -10964,7 +11347,7 @@ class StepInTargetsResponse(BaseSchema):
                     "items": {
                         "$ref": "#/definitions/StepInTarget"
                     },
-                    "description": "The possible stepIn targets of the specified source location."
+                    "description": "The possible step-in targets of the specified source location."
                 }
             },
             "required": [
@@ -10981,13 +11364,13 @@ class StepInTargetsResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param StepInTargetsResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -11031,9 +11414,10 @@ class GotoTargetsRequest(BaseSchema):
     """
     This request retrieves the possible goto targets for the specified source location.
     
-    These targets can be used in the 'goto' request.
+    These targets can be used in the `goto` request.
     
-    Clients should only call this request if the capability 'supportsGotoTargetsRequest' is true.
+    Clients should only call this request if the corresponding capability `supportsGotoTargetsRequest`
+    is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -11041,7 +11425,7 @@ class GotoTargetsRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -11068,7 +11452,7 @@ class GotoTargetsRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param GotoTargetsArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'gotoTargets'
@@ -11098,7 +11482,7 @@ class GotoTargetsRequest(BaseSchema):
 @register
 class GotoTargetsArguments(BaseSchema):
     """
-    Arguments for 'gotoTargets' request.
+    Arguments for `gotoTargets` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -11114,7 +11498,7 @@ class GotoTargetsArguments(BaseSchema):
         },
         "column": {
             "type": "integer",
-            "description": "An optional column location for which the goto targets are determined."
+            "description": "The position within `line` for which the goto targets are determined. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based."
         }
     }
     __refs__ = set(['source'])
@@ -11125,7 +11509,7 @@ class GotoTargetsArguments(BaseSchema):
         """
         :param Source source: The source location for which the goto targets are determined.
         :param integer line: The line location for which the goto targets are determined.
-        :param integer column: An optional column location for which the goto targets are determined.
+        :param integer column: The position within `line` for which the goto targets are determined. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based.
         """
         if source is None:
             self.source = Source()
@@ -11154,7 +11538,7 @@ class GotoTargetsArguments(BaseSchema):
 @register
 class GotoTargetsResponse(BaseSchema):
     """
-    Response to 'gotoTargets' request.
+    Response to `gotoTargets` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -11162,7 +11546,7 @@ class GotoTargetsResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -11176,7 +11560,7 @@ class GotoTargetsResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -11184,12 +11568,14 @@ class GotoTargetsResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -11217,13 +11603,13 @@ class GotoTargetsResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param GotoTargetsResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -11267,7 +11653,8 @@ class CompletionsRequest(BaseSchema):
     """
     Returns a list of possible completions for a given caret position and text.
     
-    Clients should only call this request if the capability 'supportsCompletionsRequest' is true.
+    Clients should only call this request if the corresponding capability `supportsCompletionsRequest`
+    is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -11275,7 +11662,7 @@ class CompletionsRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -11302,7 +11689,7 @@ class CompletionsRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param CompletionsArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'completions'
@@ -11332,7 +11719,7 @@ class CompletionsRequest(BaseSchema):
 @register
 class CompletionsArguments(BaseSchema):
     """
-    Arguments for 'completions' request.
+    Arguments for `completions` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -11344,15 +11731,15 @@ class CompletionsArguments(BaseSchema):
         },
         "text": {
             "type": "string",
-            "description": "One or more source lines. Typically this is the text a user has typed into the debug console before he asked for completion."
+            "description": "One or more source lines. Typically this is the text users have typed into the debug console before they asked for completion."
         },
         "column": {
             "type": "integer",
-            "description": "The character position for which to determine the completion proposals."
+            "description": "The position within `text` for which to determine the completion proposals. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based."
         },
         "line": {
             "type": "integer",
-            "description": "An optional line for which to determine the completion proposals. If missing the first line of the text is assumed."
+            "description": "A line for which to determine the completion proposals. If missing the first line of the text is assumed."
         }
     }
     __refs__ = set()
@@ -11361,10 +11748,10 @@ class CompletionsArguments(BaseSchema):
 
     def __init__(self, text, column, frameId=None, line=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param string text: One or more source lines. Typically this is the text a user has typed into the debug console before he asked for completion.
-        :param integer column: The character position for which to determine the completion proposals.
+        :param string text: One or more source lines. Typically this is the text users have typed into the debug console before they asked for completion.
+        :param integer column: The position within `text` for which to determine the completion proposals. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based.
         :param integer frameId: Returns completions in the scope of this stack frame. If not specified, the completions are returned for the global scope.
-        :param integer line: An optional line for which to determine the completion proposals. If missing the first line of the text is assumed.
+        :param integer line: A line for which to determine the completion proposals. If missing the first line of the text is assumed.
         """
         self.text = text
         self.column = column
@@ -11411,7 +11798,7 @@ class CompletionsArguments(BaseSchema):
 @register
 class CompletionsResponse(BaseSchema):
     """
-    Response to 'completions' request.
+    Response to `completions` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -11419,7 +11806,7 @@ class CompletionsResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -11433,7 +11820,7 @@ class CompletionsResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -11441,12 +11828,14 @@ class CompletionsResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -11474,13 +11863,13 @@ class CompletionsResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param CompletionsResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -11524,7 +11913,8 @@ class ExceptionInfoRequest(BaseSchema):
     """
     Retrieves the details of the exception that caused this event to be raised.
     
-    Clients should only call this request if the capability 'supportsExceptionInfoRequest' is true.
+    Clients should only call this request if the corresponding capability `supportsExceptionInfoRequest`
+    is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -11532,7 +11922,7 @@ class ExceptionInfoRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -11559,7 +11949,7 @@ class ExceptionInfoRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param ExceptionInfoArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'exceptionInfo'
@@ -11589,7 +11979,7 @@ class ExceptionInfoRequest(BaseSchema):
 @register
 class ExceptionInfoArguments(BaseSchema):
     """
-    Arguments for 'exceptionInfo' request.
+    Arguments for `exceptionInfo` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -11642,7 +12032,7 @@ class ExceptionInfoArguments(BaseSchema):
 @register
 class ExceptionInfoResponse(BaseSchema):
     """
-    Response to 'exceptionInfo' request.
+    Response to `exceptionInfo` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -11650,7 +12040,7 @@ class ExceptionInfoResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -11664,7 +12054,7 @@ class ExceptionInfoResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -11672,12 +12062,14 @@ class ExceptionInfoResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -11689,7 +12081,7 @@ class ExceptionInfoResponse(BaseSchema):
                 },
                 "description": {
                     "type": "string",
-                    "description": "Descriptive text for the exception provided by the debug adapter."
+                    "description": "Descriptive text for the exception."
                 },
                 "breakMode": {
                     "$ref": "#/definitions/ExceptionBreakMode",
@@ -11715,13 +12107,13 @@ class ExceptionInfoResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param ExceptionInfoResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -11765,7 +12157,8 @@ class ReadMemoryRequest(BaseSchema):
     """
     Reads bytes from memory at the provided location.
     
-    Clients should only call this request if the capability 'supportsReadMemoryRequest' is true.
+    Clients should only call this request if the corresponding capability `supportsReadMemoryRequest` is
+    true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -11773,7 +12166,7 @@ class ReadMemoryRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -11800,7 +12193,7 @@ class ReadMemoryRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param ReadMemoryArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'readMemory'
@@ -11830,7 +12223,7 @@ class ReadMemoryRequest(BaseSchema):
 @register
 class ReadMemoryArguments(BaseSchema):
     """
-    Arguments for 'readMemory' request.
+    Arguments for `readMemory` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -11842,7 +12235,7 @@ class ReadMemoryArguments(BaseSchema):
         },
         "offset": {
             "type": "integer",
-            "description": "Optional offset (in bytes) to be applied to the reference location before reading data. Can be negative."
+            "description": "Offset (in bytes) to be applied to the reference location before reading data. Can be negative."
         },
         "count": {
             "type": "integer",
@@ -11857,7 +12250,7 @@ class ReadMemoryArguments(BaseSchema):
         """
         :param string memoryReference: Memory reference to the base location from which data should be read.
         :param integer count: Number of bytes to read at the specified location and offset.
-        :param integer offset: Optional offset (in bytes) to be applied to the reference location before reading data. Can be negative.
+        :param integer offset: Offset (in bytes) to be applied to the reference location before reading data. Can be negative.
         """
         self.memoryReference = memoryReference
         self.count = count
@@ -11883,7 +12276,7 @@ class ReadMemoryArguments(BaseSchema):
 @register
 class ReadMemoryResponse(BaseSchema):
     """
-    Response to 'readMemory' request.
+    Response to `readMemory` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -11891,7 +12284,7 @@ class ReadMemoryResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -11905,7 +12298,7 @@ class ReadMemoryResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -11913,12 +12306,14 @@ class ReadMemoryResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -11926,15 +12321,15 @@ class ReadMemoryResponse(BaseSchema):
             "properties": {
                 "address": {
                     "type": "string",
-                    "description": "The address of the first byte of data returned.\nTreated as a hex value if prefixed with '0x', or as a decimal value otherwise."
+                    "description": "The address of the first byte of data returned.\nTreated as a hex value if prefixed with `0x`, or as a decimal value otherwise."
                 },
                 "unreadableBytes": {
                     "type": "integer",
-                    "description": "The number of unreadable bytes encountered after the last successfully read byte.\nThis can be used to determine the number of bytes that must be skipped before a subsequent 'readMemory' request will succeed."
+                    "description": "The number of unreadable bytes encountered after the last successfully read byte.\nThis can be used to determine the number of bytes that should be skipped before a subsequent `readMemory` request succeeds."
                 },
                 "data": {
                     "type": "string",
-                    "description": "The bytes read from memory, encoded using base64."
+                    "description": "The bytes read from memory, encoded using base64. If the decoded length of `data` is less than the requested `count` in the original `readMemory` request, and `unreadableBytes` is zero or omitted, then the client should assume it's reached the end of readable memory."
                 }
             },
             "required": [
@@ -11951,12 +12346,12 @@ class ReadMemoryResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         :param ReadMemoryResponseBody body: 
         """
@@ -12002,7 +12397,8 @@ class WriteMemoryRequest(BaseSchema):
     """
     Writes bytes to memory at the provided location.
     
-    Clients should only call this request if the capability 'supportsWriteMemoryRequest' is true.
+    Clients should only call this request if the corresponding capability `supportsWriteMemoryRequest`
+    is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -12010,7 +12406,7 @@ class WriteMemoryRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -12037,7 +12433,7 @@ class WriteMemoryRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param WriteMemoryArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'writeMemory'
@@ -12067,7 +12463,7 @@ class WriteMemoryRequest(BaseSchema):
 @register
 class WriteMemoryArguments(BaseSchema):
     """
-    Arguments for 'writeMemory' request.
+    Arguments for `writeMemory` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -12079,11 +12475,11 @@ class WriteMemoryArguments(BaseSchema):
         },
         "offset": {
             "type": "integer",
-            "description": "Optional offset (in bytes) to be applied to the reference location before writing data. Can be negative."
+            "description": "Offset (in bytes) to be applied to the reference location before writing data. Can be negative."
         },
         "allowPartial": {
             "type": "boolean",
-            "description": "Optional property to control partial writes. If true, the debug adapter should attempt to write memory even if the entire memory region is not writable. In such a case the debug adapter should stop after hitting the first byte of memory that cannot be written and return the number of bytes written in the response via the 'offset' and 'bytesWritten' properties.\nIf false or missing, a debug adapter should attempt to verify the region is writable before writing, and fail the response if it is not."
+            "description": "Property to control partial writes. If True, the debug adapter should attempt to write memory even if the entire memory region is not writable. In such a case the debug adapter should stop after hitting the first byte of memory that cannot be written and return the number of bytes written in the response via the `offset` and `bytesWritten` properties.\nIf false or missing, a debug adapter should attempt to verify the region is writable before writing, and fail the response if it is not."
         },
         "data": {
             "type": "string",
@@ -12098,8 +12494,8 @@ class WriteMemoryArguments(BaseSchema):
         """
         :param string memoryReference: Memory reference to the base location to which data should be written.
         :param string data: Bytes to write, encoded using base64.
-        :param integer offset: Optional offset (in bytes) to be applied to the reference location before writing data. Can be negative.
-        :param boolean allowPartial: Optional property to control partial writes. If true, the debug adapter should attempt to write memory even if the entire memory region is not writable. In such a case the debug adapter should stop after hitting the first byte of memory that cannot be written and return the number of bytes written in the response via the 'offset' and 'bytesWritten' properties.
+        :param integer offset: Offset (in bytes) to be applied to the reference location before writing data. Can be negative.
+        :param boolean allowPartial: Property to control partial writes. If true, the debug adapter should attempt to write memory even if the entire memory region is not writable. In such a case the debug adapter should stop after hitting the first byte of memory that cannot be written and return the number of bytes written in the response via the `offset` and `bytesWritten` properties.
         If false or missing, a debug adapter should attempt to verify the region is writable before writing, and fail the response if it is not.
         """
         self.memoryReference = memoryReference
@@ -12130,7 +12526,7 @@ class WriteMemoryArguments(BaseSchema):
 @register
 class WriteMemoryResponse(BaseSchema):
     """
-    Response to 'writeMemory' request.
+    Response to `writeMemory` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -12138,7 +12534,7 @@ class WriteMemoryResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -12152,7 +12548,7 @@ class WriteMemoryResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -12160,12 +12556,14 @@ class WriteMemoryResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -12173,11 +12571,11 @@ class WriteMemoryResponse(BaseSchema):
             "properties": {
                 "offset": {
                     "type": "integer",
-                    "description": "Optional property that should be returned when 'allowPartial' is true to indicate the offset of the first byte of data successfully written. Can be negative."
+                    "description": "Property that should be returned when `allowPartial` is True to indicate the offset of the first byte of data successfully written. Can be negative."
                 },
                 "bytesWritten": {
                     "type": "integer",
-                    "description": "Optional property that should be returned when 'allowPartial' is true to indicate the number of bytes starting from address that were successfully written."
+                    "description": "Property that should be returned when `allowPartial` is True to indicate the number of bytes starting from address that were successfully written."
                 }
             }
         }
@@ -12191,12 +12589,12 @@ class WriteMemoryResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         :param WriteMemoryResponseBody body: 
         """
@@ -12242,7 +12640,8 @@ class DisassembleRequest(BaseSchema):
     """
     Disassembles code stored at the provided location.
     
-    Clients should only call this request if the capability 'supportsDisassembleRequest' is true.
+    Clients should only call this request if the corresponding capability `supportsDisassembleRequest`
+    is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -12250,7 +12649,7 @@ class DisassembleRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -12277,7 +12676,7 @@ class DisassembleRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param DisassembleArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'disassemble'
@@ -12307,7 +12706,7 @@ class DisassembleRequest(BaseSchema):
 @register
 class DisassembleArguments(BaseSchema):
     """
-    Arguments for 'disassemble' request.
+    Arguments for `disassemble` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -12319,11 +12718,11 @@ class DisassembleArguments(BaseSchema):
         },
         "offset": {
             "type": "integer",
-            "description": "Optional offset (in bytes) to be applied to the reference location before disassembling. Can be negative."
+            "description": "Offset (in bytes) to be applied to the reference location before disassembling. Can be negative."
         },
         "instructionOffset": {
             "type": "integer",
-            "description": "Optional offset (in instructions) to be applied after the byte offset (if any) before disassembling. Can be negative."
+            "description": "Offset (in instructions) to be applied after the byte offset (if any) before disassembling. Can be negative."
         },
         "instructionCount": {
             "type": "integer",
@@ -12331,7 +12730,7 @@ class DisassembleArguments(BaseSchema):
         },
         "resolveSymbols": {
             "type": "boolean",
-            "description": "If true, the adapter should attempt to resolve memory addresses and other values to symbolic names."
+            "description": "If True, the adapter should attempt to resolve memory addresses and other values to symbolic names."
         }
     }
     __refs__ = set()
@@ -12343,8 +12742,8 @@ class DisassembleArguments(BaseSchema):
         :param string memoryReference: Memory reference to the base location containing the instructions to disassemble.
         :param integer instructionCount: Number of instructions to disassemble starting at the specified location and offset.
         An adapter must return exactly this number of instructions - any unavailable instructions should be replaced with an implementation-defined 'invalid instruction' value.
-        :param integer offset: Optional offset (in bytes) to be applied to the reference location before disassembling. Can be negative.
-        :param integer instructionOffset: Optional offset (in instructions) to be applied after the byte offset (if any) before disassembling. Can be negative.
+        :param integer offset: Offset (in bytes) to be applied to the reference location before disassembling. Can be negative.
+        :param integer instructionOffset: Offset (in instructions) to be applied after the byte offset (if any) before disassembling. Can be negative.
         :param boolean resolveSymbols: If true, the adapter should attempt to resolve memory addresses and other values to symbolic names.
         """
         self.memoryReference = memoryReference
@@ -12379,7 +12778,7 @@ class DisassembleArguments(BaseSchema):
 @register
 class DisassembleResponse(BaseSchema):
     """
-    Response to 'disassemble' request.
+    Response to `disassemble` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -12387,7 +12786,7 @@ class DisassembleResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -12401,7 +12800,7 @@ class DisassembleResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -12409,12 +12808,14 @@ class DisassembleResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -12442,12 +12843,12 @@ class DisassembleResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         :param DisassembleResponseBody body: 
         """
@@ -12498,7 +12899,7 @@ class Capabilities(BaseSchema):
     __props__ = {
         "supportsConfigurationDoneRequest": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'configurationDone' request."
+            "description": "The debug adapter supports the `configurationDone` request."
         },
         "supportsFunctionBreakpoints": {
             "type": "boolean",
@@ -12514,18 +12915,18 @@ class Capabilities(BaseSchema):
         },
         "supportsEvaluateForHovers": {
             "type": "boolean",
-            "description": "The debug adapter supports a (side effect free) evaluate request for data hovers."
+            "description": "The debug adapter supports a (side effect free) `evaluate` request for data hovers."
         },
         "exceptionBreakpointFilters": {
             "type": "array",
             "items": {
                 "$ref": "#/definitions/ExceptionBreakpointsFilter"
             },
-            "description": "Available exception filter options for the 'setExceptionBreakpoints' request."
+            "description": "Available exception filter options for the `setExceptionBreakpoints` request."
         },
         "supportsStepBack": {
             "type": "boolean",
-            "description": "The debug adapter supports stepping back via the 'stepBack' and 'reverseContinue' requests."
+            "description": "The debug adapter supports stepping back via the `stepBack` and `reverseContinue` requests."
         },
         "supportsSetVariable": {
             "type": "boolean",
@@ -12537,26 +12938,26 @@ class Capabilities(BaseSchema):
         },
         "supportsGotoTargetsRequest": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'gotoTargets' request."
+            "description": "The debug adapter supports the `gotoTargets` request."
         },
         "supportsStepInTargetsRequest": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'stepInTargets' request."
+            "description": "The debug adapter supports the `stepInTargets` request."
         },
         "supportsCompletionsRequest": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'completions' request."
+            "description": "The debug adapter supports the `completions` request."
         },
         "completionTriggerCharacters": {
             "type": "array",
             "items": {
                 "type": "string"
             },
-            "description": "The set of characters that should trigger completion in a REPL. If not specified, the UI should assume the '.' character."
+            "description": "The set of characters that should trigger completion in a REPL. If not specified, the UI should assume the `.` character."
         },
         "supportsModulesRequest": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'modules' request."
+            "description": "The debug adapter supports the `modules` request."
         },
         "additionalModuleColumns": {
             "type": "array",
@@ -12574,51 +12975,51 @@ class Capabilities(BaseSchema):
         },
         "supportsRestartRequest": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'restart' request. In this case a client should not implement 'restart' by terminating and relaunching the adapter but by calling the RestartRequest."
+            "description": "The debug adapter supports the `restart` request. In this case a client should not implement `restart` by terminating and relaunching the adapter but by calling the `restart` request."
         },
         "supportsExceptionOptions": {
             "type": "boolean",
-            "description": "The debug adapter supports 'exceptionOptions' on the setExceptionBreakpoints request."
+            "description": "The debug adapter supports `exceptionOptions` on the `setExceptionBreakpoints` request."
         },
         "supportsValueFormattingOptions": {
             "type": "boolean",
-            "description": "The debug adapter supports a 'format' attribute on the stackTraceRequest, variablesRequest, and evaluateRequest."
+            "description": "The debug adapter supports a `format` attribute on the `stackTrace`, `variables`, and `evaluate` requests."
         },
         "supportsExceptionInfoRequest": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'exceptionInfo' request."
+            "description": "The debug adapter supports the `exceptionInfo` request."
         },
         "supportTerminateDebuggee": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'terminateDebuggee' attribute on the 'disconnect' request."
+            "description": "The debug adapter supports the `terminateDebuggee` attribute on the `disconnect` request."
         },
         "supportSuspendDebuggee": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'suspendDebuggee' attribute on the 'disconnect' request."
+            "description": "The debug adapter supports the `suspendDebuggee` attribute on the `disconnect` request."
         },
         "supportsDelayedStackTraceLoading": {
             "type": "boolean",
-            "description": "The debug adapter supports the delayed loading of parts of the stack, which requires that both the 'startFrame' and 'levels' arguments and an optional 'totalFrames' result of the 'StackTrace' request are supported."
+            "description": "The debug adapter supports the delayed loading of parts of the stack, which requires that both the `startFrame` and `levels` arguments and the `totalFrames` result of the `stackTrace` request are supported."
         },
         "supportsLoadedSourcesRequest": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'loadedSources' request."
+            "description": "The debug adapter supports the `loadedSources` request."
         },
         "supportsLogPoints": {
             "type": "boolean",
-            "description": "The debug adapter supports logpoints by interpreting the 'logMessage' attribute of the SourceBreakpoint."
+            "description": "The debug adapter supports log points by interpreting the `logMessage` attribute of the `SourceBreakpoint`."
         },
         "supportsTerminateThreadsRequest": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'terminateThreads' request."
+            "description": "The debug adapter supports the `terminateThreads` request."
         },
         "supportsSetExpression": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'setExpression' request."
+            "description": "The debug adapter supports the `setExpression` request."
         },
         "supportsTerminateRequest": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'terminate' request."
+            "description": "The debug adapter supports the `terminate` request."
         },
         "supportsDataBreakpoints": {
             "type": "boolean",
@@ -12626,31 +13027,31 @@ class Capabilities(BaseSchema):
         },
         "supportsReadMemoryRequest": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'readMemory' request."
+            "description": "The debug adapter supports the `readMemory` request."
         },
         "supportsWriteMemoryRequest": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'writeMemory' request."
+            "description": "The debug adapter supports the `writeMemory` request."
         },
         "supportsDisassembleRequest": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'disassemble' request."
+            "description": "The debug adapter supports the `disassemble` request."
         },
         "supportsCancelRequest": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'cancel' request."
+            "description": "The debug adapter supports the `cancel` request."
         },
         "supportsBreakpointLocationsRequest": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'breakpointLocations' request."
+            "description": "The debug adapter supports the `breakpointLocations` request."
         },
         "supportsClipboardContext": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'clipboard' context value in the 'evaluate' request."
+            "description": "The debug adapter supports the `clipboard` context value in the `evaluate` request."
         },
         "supportsSteppingGranularity": {
             "type": "boolean",
-            "description": "The debug adapter supports stepping granularities (argument 'granularity') for the stepping requests."
+            "description": "The debug adapter supports stepping granularities (argument `granularity`) for the stepping requests."
         },
         "supportsInstructionBreakpoints": {
             "type": "boolean",
@@ -12658,11 +13059,11 @@ class Capabilities(BaseSchema):
         },
         "supportsExceptionFilterOptions": {
             "type": "boolean",
-            "description": "The debug adapter supports 'filterOptions' as an argument on the 'setExceptionBreakpoints' request."
+            "description": "The debug adapter supports `filterOptions` as an argument on the `setExceptionBreakpoints` request."
         },
         "supportsSingleThreadExecutionRequests": {
             "type": "boolean",
-            "description": "The debug adapter supports the 'singleThread' property on the execution requests ('continue', 'next', 'stepIn', 'stepOut', 'reverseContinue', 'stepBack')."
+            "description": "The debug adapter supports the `singleThread` property on the execution requests (`continue`, `next`, `stepIn`, `stepOut`, `reverseContinue`, `stepBack`)."
         }
     }
     __refs__ = set()
@@ -12671,45 +13072,45 @@ class Capabilities(BaseSchema):
 
     def __init__(self, supportsConfigurationDoneRequest=None, supportsFunctionBreakpoints=None, supportsConditionalBreakpoints=None, supportsHitConditionalBreakpoints=None, supportsEvaluateForHovers=None, exceptionBreakpointFilters=None, supportsStepBack=None, supportsSetVariable=None, supportsRestartFrame=None, supportsGotoTargetsRequest=None, supportsStepInTargetsRequest=None, supportsCompletionsRequest=None, completionTriggerCharacters=None, supportsModulesRequest=None, additionalModuleColumns=None, supportedChecksumAlgorithms=None, supportsRestartRequest=None, supportsExceptionOptions=None, supportsValueFormattingOptions=None, supportsExceptionInfoRequest=None, supportTerminateDebuggee=None, supportSuspendDebuggee=None, supportsDelayedStackTraceLoading=None, supportsLoadedSourcesRequest=None, supportsLogPoints=None, supportsTerminateThreadsRequest=None, supportsSetExpression=None, supportsTerminateRequest=None, supportsDataBreakpoints=None, supportsReadMemoryRequest=None, supportsWriteMemoryRequest=None, supportsDisassembleRequest=None, supportsCancelRequest=None, supportsBreakpointLocationsRequest=None, supportsClipboardContext=None, supportsSteppingGranularity=None, supportsInstructionBreakpoints=None, supportsExceptionFilterOptions=None, supportsSingleThreadExecutionRequests=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param boolean supportsConfigurationDoneRequest: The debug adapter supports the 'configurationDone' request.
+        :param boolean supportsConfigurationDoneRequest: The debug adapter supports the `configurationDone` request.
         :param boolean supportsFunctionBreakpoints: The debug adapter supports function breakpoints.
         :param boolean supportsConditionalBreakpoints: The debug adapter supports conditional breakpoints.
         :param boolean supportsHitConditionalBreakpoints: The debug adapter supports breakpoints that break execution after a specified number of hits.
-        :param boolean supportsEvaluateForHovers: The debug adapter supports a (side effect free) evaluate request for data hovers.
-        :param array exceptionBreakpointFilters: Available exception filter options for the 'setExceptionBreakpoints' request.
-        :param boolean supportsStepBack: The debug adapter supports stepping back via the 'stepBack' and 'reverseContinue' requests.
+        :param boolean supportsEvaluateForHovers: The debug adapter supports a (side effect free) `evaluate` request for data hovers.
+        :param array exceptionBreakpointFilters: Available exception filter options for the `setExceptionBreakpoints` request.
+        :param boolean supportsStepBack: The debug adapter supports stepping back via the `stepBack` and `reverseContinue` requests.
         :param boolean supportsSetVariable: The debug adapter supports setting a variable to a value.
         :param boolean supportsRestartFrame: The debug adapter supports restarting a frame.
-        :param boolean supportsGotoTargetsRequest: The debug adapter supports the 'gotoTargets' request.
-        :param boolean supportsStepInTargetsRequest: The debug adapter supports the 'stepInTargets' request.
-        :param boolean supportsCompletionsRequest: The debug adapter supports the 'completions' request.
-        :param array completionTriggerCharacters: The set of characters that should trigger completion in a REPL. If not specified, the UI should assume the '.' character.
-        :param boolean supportsModulesRequest: The debug adapter supports the 'modules' request.
+        :param boolean supportsGotoTargetsRequest: The debug adapter supports the `gotoTargets` request.
+        :param boolean supportsStepInTargetsRequest: The debug adapter supports the `stepInTargets` request.
+        :param boolean supportsCompletionsRequest: The debug adapter supports the `completions` request.
+        :param array completionTriggerCharacters: The set of characters that should trigger completion in a REPL. If not specified, the UI should assume the `.` character.
+        :param boolean supportsModulesRequest: The debug adapter supports the `modules` request.
         :param array additionalModuleColumns: The set of additional module information exposed by the debug adapter.
         :param array supportedChecksumAlgorithms: Checksum algorithms supported by the debug adapter.
-        :param boolean supportsRestartRequest: The debug adapter supports the 'restart' request. In this case a client should not implement 'restart' by terminating and relaunching the adapter but by calling the RestartRequest.
-        :param boolean supportsExceptionOptions: The debug adapter supports 'exceptionOptions' on the setExceptionBreakpoints request.
-        :param boolean supportsValueFormattingOptions: The debug adapter supports a 'format' attribute on the stackTraceRequest, variablesRequest, and evaluateRequest.
-        :param boolean supportsExceptionInfoRequest: The debug adapter supports the 'exceptionInfo' request.
-        :param boolean supportTerminateDebuggee: The debug adapter supports the 'terminateDebuggee' attribute on the 'disconnect' request.
-        :param boolean supportSuspendDebuggee: The debug adapter supports the 'suspendDebuggee' attribute on the 'disconnect' request.
-        :param boolean supportsDelayedStackTraceLoading: The debug adapter supports the delayed loading of parts of the stack, which requires that both the 'startFrame' and 'levels' arguments and an optional 'totalFrames' result of the 'StackTrace' request are supported.
-        :param boolean supportsLoadedSourcesRequest: The debug adapter supports the 'loadedSources' request.
-        :param boolean supportsLogPoints: The debug adapter supports logpoints by interpreting the 'logMessage' attribute of the SourceBreakpoint.
-        :param boolean supportsTerminateThreadsRequest: The debug adapter supports the 'terminateThreads' request.
-        :param boolean supportsSetExpression: The debug adapter supports the 'setExpression' request.
-        :param boolean supportsTerminateRequest: The debug adapter supports the 'terminate' request.
+        :param boolean supportsRestartRequest: The debug adapter supports the `restart` request. In this case a client should not implement `restart` by terminating and relaunching the adapter but by calling the `restart` request.
+        :param boolean supportsExceptionOptions: The debug adapter supports `exceptionOptions` on the `setExceptionBreakpoints` request.
+        :param boolean supportsValueFormattingOptions: The debug adapter supports a `format` attribute on the `stackTrace`, `variables`, and `evaluate` requests.
+        :param boolean supportsExceptionInfoRequest: The debug adapter supports the `exceptionInfo` request.
+        :param boolean supportTerminateDebuggee: The debug adapter supports the `terminateDebuggee` attribute on the `disconnect` request.
+        :param boolean supportSuspendDebuggee: The debug adapter supports the `suspendDebuggee` attribute on the `disconnect` request.
+        :param boolean supportsDelayedStackTraceLoading: The debug adapter supports the delayed loading of parts of the stack, which requires that both the `startFrame` and `levels` arguments and the `totalFrames` result of the `stackTrace` request are supported.
+        :param boolean supportsLoadedSourcesRequest: The debug adapter supports the `loadedSources` request.
+        :param boolean supportsLogPoints: The debug adapter supports log points by interpreting the `logMessage` attribute of the `SourceBreakpoint`.
+        :param boolean supportsTerminateThreadsRequest: The debug adapter supports the `terminateThreads` request.
+        :param boolean supportsSetExpression: The debug adapter supports the `setExpression` request.
+        :param boolean supportsTerminateRequest: The debug adapter supports the `terminate` request.
         :param boolean supportsDataBreakpoints: The debug adapter supports data breakpoints.
-        :param boolean supportsReadMemoryRequest: The debug adapter supports the 'readMemory' request.
-        :param boolean supportsWriteMemoryRequest: The debug adapter supports the 'writeMemory' request.
-        :param boolean supportsDisassembleRequest: The debug adapter supports the 'disassemble' request.
-        :param boolean supportsCancelRequest: The debug adapter supports the 'cancel' request.
-        :param boolean supportsBreakpointLocationsRequest: The debug adapter supports the 'breakpointLocations' request.
-        :param boolean supportsClipboardContext: The debug adapter supports the 'clipboard' context value in the 'evaluate' request.
-        :param boolean supportsSteppingGranularity: The debug adapter supports stepping granularities (argument 'granularity') for the stepping requests.
+        :param boolean supportsReadMemoryRequest: The debug adapter supports the `readMemory` request.
+        :param boolean supportsWriteMemoryRequest: The debug adapter supports the `writeMemory` request.
+        :param boolean supportsDisassembleRequest: The debug adapter supports the `disassemble` request.
+        :param boolean supportsCancelRequest: The debug adapter supports the `cancel` request.
+        :param boolean supportsBreakpointLocationsRequest: The debug adapter supports the `breakpointLocations` request.
+        :param boolean supportsClipboardContext: The debug adapter supports the `clipboard` context value in the `evaluate` request.
+        :param boolean supportsSteppingGranularity: The debug adapter supports stepping granularities (argument `granularity`) for the stepping requests.
         :param boolean supportsInstructionBreakpoints: The debug adapter supports adding breakpoints based on instruction references.
-        :param boolean supportsExceptionFilterOptions: The debug adapter supports 'filterOptions' as an argument on the 'setExceptionBreakpoints' request.
-        :param boolean supportsSingleThreadExecutionRequests: The debug adapter supports the 'singleThread' property on the execution requests ('continue', 'next', 'stepIn', 'stepOut', 'reverseContinue', 'stepBack').
+        :param boolean supportsExceptionFilterOptions: The debug adapter supports `filterOptions` as an argument on the `setExceptionBreakpoints` request.
+        :param boolean supportsSingleThreadExecutionRequests: The debug adapter supports the `singleThread` property on the execution requests (`continue`, `next`, `stepIn`, `stepOut`, `reverseContinue`, `stepBack`).
         """
         self.supportsConfigurationDoneRequest = supportsConfigurationDoneRequest
         self.supportsFunctionBreakpoints = supportsFunctionBreakpoints
@@ -12897,8 +13298,8 @@ class Capabilities(BaseSchema):
 @register
 class ExceptionBreakpointsFilter(BaseSchema):
     """
-    An ExceptionBreakpointsFilter is shown in the UI as an filter option for configuring how exceptions
-    are dealt with.
+    An `ExceptionBreakpointsFilter` is shown in the UI as an filter option for configuring how
+    exceptions are dealt with.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -12906,19 +13307,19 @@ class ExceptionBreakpointsFilter(BaseSchema):
     __props__ = {
         "filter": {
             "type": "string",
-            "description": "The internal ID of the filter option. This value is passed to the 'setExceptionBreakpoints' request."
+            "description": "The internal ID of the filter option. This value is passed to the `setExceptionBreakpoints` request."
         },
         "label": {
             "type": "string",
-            "description": "The name of the filter option. This will be shown in the UI."
+            "description": "The name of the filter option. This is shown in the UI."
         },
         "description": {
             "type": "string",
-            "description": "An optional help text providing additional information about the exception filter. This string is typically shown as a hover and must be translated."
+            "description": "A help text providing additional information about the exception filter. This string is typically shown as a hover and can be translated."
         },
         "default": {
             "type": "boolean",
-            "description": "Initial value of the filter option. If not specified a value 'false' is assumed."
+            "description": "Initial value of the filter option. If not specified a value false is assumed."
         },
         "supportsCondition": {
             "type": "boolean",
@@ -12926,7 +13327,7 @@ class ExceptionBreakpointsFilter(BaseSchema):
         },
         "conditionDescription": {
             "type": "string",
-            "description": "An optional help text providing information about the condition. This string is shown as the placeholder text for a text box and must be translated."
+            "description": "A help text providing information about the condition. This string is shown as the placeholder text for a text box and can be translated."
         }
     }
     __refs__ = set()
@@ -12935,12 +13336,12 @@ class ExceptionBreakpointsFilter(BaseSchema):
 
     def __init__(self, filter, label, description=None, default=None, supportsCondition=None, conditionDescription=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param string filter: The internal ID of the filter option. This value is passed to the 'setExceptionBreakpoints' request.
-        :param string label: The name of the filter option. This will be shown in the UI.
-        :param string description: An optional help text providing additional information about the exception filter. This string is typically shown as a hover and must be translated.
-        :param boolean default: Initial value of the filter option. If not specified a value 'false' is assumed.
+        :param string filter: The internal ID of the filter option. This value is passed to the `setExceptionBreakpoints` request.
+        :param string label: The name of the filter option. This is shown in the UI.
+        :param string description: A help text providing additional information about the exception filter. This string is typically shown as a hover and can be translated.
+        :param boolean default: Initial value of the filter option. If not specified a value false is assumed.
         :param boolean supportsCondition: Controls whether a condition can be specified for this filter option. If false or missing, a condition can not be set.
-        :param string conditionDescription: An optional help text providing information about the condition. This string is shown as the placeholder text for a text box and must be translated.
+        :param string conditionDescription: A help text providing information about the condition. This string is shown as the placeholder text for a text box and can be translated.
         """
         self.filter = filter
         self.label = label
@@ -12985,35 +13386,35 @@ class Message(BaseSchema):
     __props__ = {
         "id": {
             "type": "integer",
-            "description": "Unique identifier for the message."
+            "description": "Unique (within a debug adapter implementation) identifier for the message. The purpose of these error IDs is to help extension authors that have the requirement that every user visible error message needs a corresponding error number, so that users or customer support can find information about the specific error more easily."
         },
         "format": {
             "type": "string",
-            "description": "A format string for the message. Embedded variables have the form '{name}'.\nIf variable name starts with an underscore character, the variable does not contain user data (PII) and can be safely used for telemetry purposes."
+            "description": "A format string for the message. Embedded variables have the form `{name}`.\nIf variable name starts with an underscore character, the variable does not contain user data (PII) and can be safely used for telemetry purposes."
         },
         "variables": {
             "type": "object",
             "description": "An object used as a dictionary for looking up the variables in the format string.",
             "additionalProperties": {
                 "type": "string",
-                "description": "Values must be strings."
+                "description": "All dictionary values must be strings."
             }
         },
         "sendTelemetry": {
             "type": "boolean",
-            "description": "If true send to telemetry."
+            "description": "If True send to telemetry."
         },
         "showUser": {
             "type": "boolean",
-            "description": "If true show user."
+            "description": "If True show user."
         },
         "url": {
             "type": "string",
-            "description": "An optional url where additional information about this message can be found."
+            "description": "A url where additional information about this message can be found."
         },
         "urlLabel": {
             "type": "string",
-            "description": "An optional label that is presented to the user as the UI for opening the url."
+            "description": "A label that is presented to the user as the UI for opening the url."
         }
     }
     __refs__ = set(['variables'])
@@ -13022,14 +13423,14 @@ class Message(BaseSchema):
 
     def __init__(self, id, format, variables=None, sendTelemetry=None, showUser=None, url=None, urlLabel=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param integer id: Unique identifier for the message.
-        :param string format: A format string for the message. Embedded variables have the form '{name}'.
+        :param integer id: Unique (within a debug adapter implementation) identifier for the message. The purpose of these error IDs is to help extension authors that have the requirement that every user visible error message needs a corresponding error number, so that users or customer support can find information about the specific error more easily.
+        :param string format: A format string for the message. Embedded variables have the form `{name}`.
         If variable name starts with an underscore character, the variable does not contain user data (PII) and can be safely used for telemetry purposes.
         :param MessageVariables variables: An object used as a dictionary for looking up the variables in the format string.
         :param boolean sendTelemetry: If true send to telemetry.
         :param boolean showUser: If true show user.
-        :param string url: An optional url where additional information about this message can be found.
-        :param string urlLabel: An optional label that is presented to the user as the UI for opening the url.
+        :param string url: A url where additional information about this message can be found.
+        :param string urlLabel: A label that is presented to the user as the UI for opening the url.
         """
         self.id = id
         self.format = format
@@ -13075,21 +13476,19 @@ class Module(BaseSchema):
     """
     A Module object represents a row in the modules view.
     
-    Two attributes are mandatory: an id identifies a module in the modules view and is used in a
-    ModuleEvent for identifying a module for adding, updating or deleting.
+    The `id` attribute identifies a module in the modules view and is used in a `module` event for
+    identifying a module for adding, updating or deleting.
     
-    The name is used to minimally render the module in the UI.
+    The `name` attribute is used to minimally render the module in the UI.
     
     
-    Additional attributes can be added to the module. They will show up in the module View if they have
-    a corresponding ColumnDescriptor.
+    Additional attributes can be added to the module. They show up in the module view if they have a
+    corresponding `ColumnDescriptor`.
     
     
     To avoid an unnecessary proliferation of additional attributes with similar semantics but different
-    names
-    
-    we recommend to re-use attributes from the 'recommended' list below first, and only introduce new
-    attributes if nothing appropriate could be found.
+    names, we recommend to re-use attributes from the 'recommended' list below first, and only introduce
+    new attributes if nothing appropriate could be found.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -13108,7 +13507,7 @@ class Module(BaseSchema):
         },
         "path": {
             "type": "string",
-            "description": "optional but recommended attributes.\nalways try to use these first before introducing additional attributes.\n\nLogical full path to the module. The exact definition is implementation defined, but usually this would be a full path to the on-disk file for the module."
+            "description": "Logical full path to the module. The exact definition is implementation defined, but usually this would be a full path to the on-disk file for the module."
         },
         "isOptimized": {
             "type": "boolean",
@@ -13124,7 +13523,7 @@ class Module(BaseSchema):
         },
         "symbolStatus": {
             "type": "string",
-            "description": "User understandable description of if symbols were found for the module (ex: 'Symbols Loaded', 'Symbols not found', etc."
+            "description": "User-understandable description of if symbols were found for the module (ex: 'Symbols Loaded', 'Symbols not found', etc.)"
         },
         "symbolFilePath": {
             "type": "string",
@@ -13132,7 +13531,7 @@ class Module(BaseSchema):
         },
         "dateTimeStamp": {
             "type": "string",
-            "description": "Module created or modified."
+            "description": "Module created or modified, encoded as a RFC 3339 timestamp."
         },
         "addressRange": {
             "type": "string",
@@ -13147,16 +13546,13 @@ class Module(BaseSchema):
         """
         :param ['integer', 'string'] id: Unique identifier for the module.
         :param string name: A name of the module.
-        :param string path: optional but recommended attributes.
-        always try to use these first before introducing additional attributes.
-        
-        Logical full path to the module. The exact definition is implementation defined, but usually this would be a full path to the on-disk file for the module.
+        :param string path: Logical full path to the module. The exact definition is implementation defined, but usually this would be a full path to the on-disk file for the module.
         :param boolean isOptimized: True if the module is optimized.
         :param boolean isUserCode: True if the module is considered 'user code' by a debugger that supports 'Just My Code'.
         :param string version: Version of Module.
-        :param string symbolStatus: User understandable description of if symbols were found for the module (ex: 'Symbols Loaded', 'Symbols not found', etc.
+        :param string symbolStatus: User-understandable description of if symbols were found for the module (ex: 'Symbols Loaded', 'Symbols not found', etc.)
         :param string symbolFilePath: Logical full path to the symbol file. The exact definition is implementation defined.
-        :param string dateTimeStamp: Module created or modified.
+        :param string dateTimeStamp: Module created or modified, encoded as a RFC 3339 timestamp.
         :param string addressRange: Address range covered by this module.
         """
         self.id = id
@@ -13210,7 +13606,7 @@ class Module(BaseSchema):
 @register
 class ColumnDescriptor(BaseSchema):
     """
-    A ColumnDescriptor specifies what module attribute to show in a column of the ModulesView, how to
+    A `ColumnDescriptor` specifies what module attribute to show in a column of the modules view, how to
     format it,
     
     and what the column's label should be.
@@ -13241,7 +13637,7 @@ class ColumnDescriptor(BaseSchema):
                 "boolean",
                 "unixTimestampUTC"
             ],
-            "description": "Datatype of values in this column.  Defaults to 'string' if not specified."
+            "description": "Datatype of values in this column. Defaults to `string` if not specified."
         },
         "width": {
             "type": "integer",
@@ -13257,7 +13653,7 @@ class ColumnDescriptor(BaseSchema):
         :param string attributeName: Name of the attribute rendered in this column.
         :param string label: Header UI label of column.
         :param string format: Format to use for the rendered values in this column. TBD how the format strings looks like.
-        :param string type: Datatype of values in this column.  Defaults to 'string' if not specified.
+        :param string type: Datatype of values in this column. Defaults to `string` if not specified.
         :param integer width: Width of this column in characters (hint only).
         """
         self.attributeName = attributeName
@@ -13289,51 +13685,6 @@ class ColumnDescriptor(BaseSchema):
 
 
 @register
-class ModulesViewDescriptor(BaseSchema):
-    """
-    The ModulesViewDescriptor is the container for all declarative configuration options of a
-    ModuleView.
-    
-    For now it only specifies the columns to be shown in the modules view.
-
-    Note: automatically generated code. Do not edit manually.
-    """
-
-    __props__ = {
-        "columns": {
-            "type": "array",
-            "items": {
-                "$ref": "#/definitions/ColumnDescriptor"
-            }
-        }
-    }
-    __refs__ = set()
-
-    __slots__ = list(__props__.keys()) + ['kwargs']
-
-    def __init__(self, columns, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
-        """
-        :param array columns: 
-        """
-        self.columns = columns
-        if update_ids_from_dap and self.columns:
-            for o in self.columns:
-                ColumnDescriptor.update_dict_ids_from_dap(o)
-        self.kwargs = kwargs
-
-
-    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
-        columns = self.columns
-        if columns and hasattr(columns[0], "to_dict"):
-            columns = [x.to_dict() for x in columns]
-        dct = {
-            'columns': [ColumnDescriptor.update_dict_ids_to_dap(o) for o in columns] if (update_ids_to_dap and columns) else columns,
-        }
-        dct.update(self.kwargs)
-        return dct
-
-
-@register
 class Thread(BaseSchema):
     """
     A Thread
@@ -13348,7 +13699,7 @@ class Thread(BaseSchema):
         },
         "name": {
             "type": "string",
-            "description": "A name of the thread."
+            "description": "The name of the thread."
         }
     }
     __refs__ = set()
@@ -13358,7 +13709,7 @@ class Thread(BaseSchema):
     def __init__(self, id, name, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param integer id: Unique identifier for the thread.
-        :param string name: A name of the thread.
+        :param string name: The name of the thread.
         """
         self.id = id
         self.name = name
@@ -13396,9 +13747,9 @@ class Thread(BaseSchema):
 @register
 class Source(BaseSchema):
     """
-    A Source is a descriptor for source code.
+    A `Source` is a descriptor for source code.
     
-    It is returned from the debug adapter as part of a StackFrame and it is used by clients when
+    It is returned from the debug adapter as part of a `StackFrame` and it is used by clients when
     specifying breakpoints.
 
     Note: automatically generated code. Do not edit manually.
@@ -13411,15 +13762,15 @@ class Source(BaseSchema):
         },
         "path": {
             "type": "string",
-            "description": "The path of the source to be shown in the UI.\nIt is only used to locate and load the content of the source if no sourceReference is specified (or its value is 0)."
+            "description": "The path of the source to be shown in the UI.\nIt is only used to locate and load the content of the source if no `sourceReference` is specified (or its value is 0)."
         },
         "sourceReference": {
             "type": "integer",
-            "description": "If sourceReference > 0 the contents of the source must be retrieved through the SourceRequest (even if a path is specified).\nA sourceReference is only valid for a session, so it must not be used to persist a source.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+            "description": "If the value > 0 the contents of the source must be retrieved through the `source` request (even if a path is specified).\nSince a `sourceReference` is only valid for a session, it can not be used to persist a source.\nThe value should be less than or equal to 2147483647 (2^31-1)."
         },
         "presentationHint": {
             "type": "string",
-            "description": "An optional hint for how to present the source in the UI.\nA value of 'deemphasize' can be used to indicate that the source is not available or that it is skipped on stepping.",
+            "description": "A hint for how to present the source in the UI.\nA value of `deemphasize` can be used to indicate that the source is not available or that it is skipped on stepping.",
             "enum": [
                 "normal",
                 "emphasize",
@@ -13428,14 +13779,14 @@ class Source(BaseSchema):
         },
         "origin": {
             "type": "string",
-            "description": "The (optional) origin of this source: possible values 'internal module', 'inlined content from source map', etc."
+            "description": "The origin of this source. For example, 'internal module', 'inlined content from source map', etc."
         },
         "sources": {
             "type": "array",
             "items": {
                 "$ref": "#/definitions/Source"
             },
-            "description": "An optional list of sources that are related to this source. These may be the source that generated this source."
+            "description": "A list of sources that are related to this source. These may be the source that generated this source."
         },
         "adapterData": {
             "type": [
@@ -13447,7 +13798,7 @@ class Source(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Optional data that a debug adapter might want to loop through the client.\nThe client should leave the data intact and persist it across sessions. The client should not interpret the data."
+            "description": "Additional data that a debug adapter might want to loop through the client.\nThe client should leave the data intact and persist it across sessions. The client should not interpret the data."
         },
         "checksums": {
             "type": "array",
@@ -13466,15 +13817,15 @@ class Source(BaseSchema):
         :param string name: The short name of the source. Every source returned from the debug adapter has a name.
         When sending a source to the debug adapter this name is optional.
         :param string path: The path of the source to be shown in the UI.
-        It is only used to locate and load the content of the source if no sourceReference is specified (or its value is 0).
-        :param integer sourceReference: If sourceReference > 0 the contents of the source must be retrieved through the SourceRequest (even if a path is specified).
-        A sourceReference is only valid for a session, so it must not be used to persist a source.
+        It is only used to locate and load the content of the source if no `sourceReference` is specified (or its value is 0).
+        :param integer sourceReference: If the value > 0 the contents of the source must be retrieved through the `source` request (even if a path is specified).
+        Since a `sourceReference` is only valid for a session, it can not be used to persist a source.
         The value should be less than or equal to 2147483647 (2^31-1).
-        :param string presentationHint: An optional hint for how to present the source in the UI.
-        A value of 'deemphasize' can be used to indicate that the source is not available or that it is skipped on stepping.
-        :param string origin: The (optional) origin of this source: possible values 'internal module', 'inlined content from source map', etc.
-        :param array sources: An optional list of sources that are related to this source. These may be the source that generated this source.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] adapterData: Optional data that a debug adapter might want to loop through the client.
+        :param string presentationHint: A hint for how to present the source in the UI.
+        A value of `deemphasize` can be used to indicate that the source is not available or that it is skipped on stepping.
+        :param string origin: The origin of this source. For example, 'internal module', 'inlined content from source map', etc.
+        :param array sources: A list of sources that are related to this source. These may be the source that generated this source.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] adapterData: Additional data that a debug adapter might want to loop through the client.
         The client should leave the data intact and persist it across sessions. The client should not interpret the data.
         :param array checksums: The checksums associated with this file.
         """
@@ -13541,39 +13892,39 @@ class StackFrame(BaseSchema):
     __props__ = {
         "id": {
             "type": "integer",
-            "description": "An identifier for the stack frame. It must be unique across all threads.\nThis id can be used to retrieve the scopes of the frame with the 'scopesRequest' or to restart the execution of a stackframe."
+            "description": "An identifier for the stack frame. It must be unique across all threads.\nThis id can be used to retrieve the scopes of the frame with the `scopes` request or to restart the execution of a stack frame."
         },
         "name": {
             "type": "string",
             "description": "The name of the stack frame, typically a method name."
         },
         "source": {
-            "description": "The optional source of the frame.",
+            "description": "The source of the frame.",
             "type": "Source"
         },
         "line": {
             "type": "integer",
-            "description": "The line within the file of the frame. If source is null or doesn't exist, line is 0 and must be ignored."
+            "description": "The line within the source of the frame. If the source attribute is missing or doesn't exist, `line` is 0 and should be ignored by the client."
         },
         "column": {
             "type": "integer",
-            "description": "The column within the line. If source is null or doesn't exist, column is 0 and must be ignored."
+            "description": "Start position of the range covered by the stack frame. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based. If attribute `source` is missing or doesn't exist, `column` is 0 and should be ignored by the client."
         },
         "endLine": {
             "type": "integer",
-            "description": "An optional end line of the range covered by the stack frame."
+            "description": "The end line of the range covered by the stack frame."
         },
         "endColumn": {
             "type": "integer",
-            "description": "An optional end column of the range covered by the stack frame."
+            "description": "End position of the range covered by the stack frame. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based."
         },
         "canRestart": {
             "type": "boolean",
-            "description": "Indicates whether this frame can be restarted with the 'restart' request. Clients should only use this if the debug adapter supports the 'restart' request (capability 'supportsRestartRequest' is true)."
+            "description": "Indicates whether this frame can be restarted with the `restart` request. Clients should only use this if the debug adapter supports the `restart` request and the corresponding capability `supportsRestartRequest` is True. If a debug adapter has this capability, then `canRestart` defaults to `True` if the property is absent."
         },
         "instructionPointerReference": {
             "type": "string",
-            "description": "Optional memory reference for the current instruction pointer in this frame."
+            "description": "A memory reference for the current instruction pointer in this frame."
         },
         "moduleId": {
             "type": [
@@ -13589,7 +13940,7 @@ class StackFrame(BaseSchema):
                 "label",
                 "subtle"
             ],
-            "description": "An optional hint for how to present this frame in the UI.\nA value of 'label' can be used to indicate that the frame is an artificial frame that is used as a visual label or separator. A value of 'subtle' can be used to change the appearance of a frame in a 'subtle' way."
+            "description": "A hint for how to present this frame in the UI.\nA value of `label` can be used to indicate that the frame is an artificial frame that is used as a visual label or separator. A value of `subtle` can be used to change the appearance of a frame in a 'subtle' way."
         }
     }
     __refs__ = set(['source'])
@@ -13599,18 +13950,18 @@ class StackFrame(BaseSchema):
     def __init__(self, id, name, line, column, source=None, endLine=None, endColumn=None, canRestart=None, instructionPointerReference=None, moduleId=None, presentationHint=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param integer id: An identifier for the stack frame. It must be unique across all threads.
-        This id can be used to retrieve the scopes of the frame with the 'scopesRequest' or to restart the execution of a stackframe.
+        This id can be used to retrieve the scopes of the frame with the `scopes` request or to restart the execution of a stack frame.
         :param string name: The name of the stack frame, typically a method name.
-        :param integer line: The line within the file of the frame. If source is null or doesn't exist, line is 0 and must be ignored.
-        :param integer column: The column within the line. If source is null or doesn't exist, column is 0 and must be ignored.
-        :param Source source: The optional source of the frame.
-        :param integer endLine: An optional end line of the range covered by the stack frame.
-        :param integer endColumn: An optional end column of the range covered by the stack frame.
-        :param boolean canRestart: Indicates whether this frame can be restarted with the 'restart' request. Clients should only use this if the debug adapter supports the 'restart' request (capability 'supportsRestartRequest' is true).
-        :param string instructionPointerReference: Optional memory reference for the current instruction pointer in this frame.
+        :param integer line: The line within the source of the frame. If the source attribute is missing or doesn't exist, `line` is 0 and should be ignored by the client.
+        :param integer column: Start position of the range covered by the stack frame. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based. If attribute `source` is missing or doesn't exist, `column` is 0 and should be ignored by the client.
+        :param Source source: The source of the frame.
+        :param integer endLine: The end line of the range covered by the stack frame.
+        :param integer endColumn: End position of the range covered by the stack frame. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based.
+        :param boolean canRestart: Indicates whether this frame can be restarted with the `restart` request. Clients should only use this if the debug adapter supports the `restart` request and the corresponding capability `supportsRestartRequest` is true. If a debug adapter has this capability, then `canRestart` defaults to `true` if the property is absent.
+        :param string instructionPointerReference: A memory reference for the current instruction pointer in this frame.
         :param ['integer', 'string'] moduleId: The module associated with this frame, if any.
-        :param string presentationHint: An optional hint for how to present this frame in the UI.
-        A value of 'label' can be used to indicate that the frame is an artificial frame that is used as a visual label or separator. A value of 'subtle' can be used to change the appearance of a frame in a 'subtle' way.
+        :param string presentationHint: A hint for how to present this frame in the UI.
+        A value of `label` can be used to indicate that the frame is an artificial frame that is used as a visual label or separator. A value of `subtle` can be used to change the appearance of a frame in a 'subtle' way.
         """
         self.id = id
         self.name = name
@@ -13685,8 +14036,8 @@ class StackFrame(BaseSchema):
 @register
 class Scope(BaseSchema):
     """
-    A Scope is a named container for variables. Optionally a scope can map to a source or a range within
-    a source.
+    A `Scope` is a named container for variables. Optionally a scope can map to a source or a range
+    within a source.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -13698,7 +14049,7 @@ class Scope(BaseSchema):
         },
         "presentationHint": {
             "type": "string",
-            "description": "An optional hint for how to present this scope in the UI. If this attribute is missing, the scope is shown with a generic UI.",
+            "description": "A hint for how to present this scope in the UI. If this attribute is missing, the scope is shown with a generic UI.",
             "_enum": [
                 "arguments",
                 "locals",
@@ -13707,44 +14058,44 @@ class Scope(BaseSchema):
             "enumDescriptions": [
                 "Scope contains method arguments.",
                 "Scope contains local variables.",
-                "Scope contains registers. Only a single 'registers' scope should be returned from a 'scopes' request."
+                "Scope contains registers. Only a single `registers` scope should be returned from a `scopes` request."
             ]
         },
         "variablesReference": {
             "type": "integer",
-            "description": "The variables of this scope can be retrieved by passing the value of variablesReference to the VariablesRequest."
+            "description": "The variables of this scope can be retrieved by passing the value of `variablesReference` to the `variables` request as long as execution remains suspended. See 'Lifetime of Object References' in the Overview section for details."
         },
         "namedVariables": {
             "type": "integer",
-            "description": "The number of named variables in this scope.\nThe client can use this optional information to present the variables in a paged UI and fetch them in chunks."
+            "description": "The number of named variables in this scope.\nThe client can use this information to present the variables in a paged UI and fetch them in chunks."
         },
         "indexedVariables": {
             "type": "integer",
-            "description": "The number of indexed variables in this scope.\nThe client can use this optional information to present the variables in a paged UI and fetch them in chunks."
+            "description": "The number of indexed variables in this scope.\nThe client can use this information to present the variables in a paged UI and fetch them in chunks."
         },
         "expensive": {
             "type": "boolean",
-            "description": "If true, the number of variables in this scope is large or expensive to retrieve."
+            "description": "If True, the number of variables in this scope is large or expensive to retrieve."
         },
         "source": {
-            "description": "Optional source for this scope.",
+            "description": "The source for this scope.",
             "type": "Source"
         },
         "line": {
             "type": "integer",
-            "description": "Optional start line of the range covered by this scope."
+            "description": "The start line of the range covered by this scope."
         },
         "column": {
             "type": "integer",
-            "description": "Optional start column of the range covered by this scope."
+            "description": "Start position of the range covered by the scope. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based."
         },
         "endLine": {
             "type": "integer",
-            "description": "Optional end line of the range covered by this scope."
+            "description": "The end line of the range covered by this scope."
         },
         "endColumn": {
             "type": "integer",
-            "description": "Optional end column of the range covered by this scope."
+            "description": "End position of the range covered by the scope. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based."
         }
     }
     __refs__ = set(['source'])
@@ -13754,18 +14105,18 @@ class Scope(BaseSchema):
     def __init__(self, name, variablesReference, expensive, presentationHint=None, namedVariables=None, indexedVariables=None, source=None, line=None, column=None, endLine=None, endColumn=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string name: Name of the scope such as 'Arguments', 'Locals', or 'Registers'. This string is shown in the UI as is and can be translated.
-        :param integer variablesReference: The variables of this scope can be retrieved by passing the value of variablesReference to the VariablesRequest.
+        :param integer variablesReference: The variables of this scope can be retrieved by passing the value of `variablesReference` to the `variables` request as long as execution remains suspended. See 'Lifetime of Object References' in the Overview section for details.
         :param boolean expensive: If true, the number of variables in this scope is large or expensive to retrieve.
-        :param string presentationHint: An optional hint for how to present this scope in the UI. If this attribute is missing, the scope is shown with a generic UI.
+        :param string presentationHint: A hint for how to present this scope in the UI. If this attribute is missing, the scope is shown with a generic UI.
         :param integer namedVariables: The number of named variables in this scope.
-        The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
+        The client can use this information to present the variables in a paged UI and fetch them in chunks.
         :param integer indexedVariables: The number of indexed variables in this scope.
-        The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
-        :param Source source: Optional source for this scope.
-        :param integer line: Optional start line of the range covered by this scope.
-        :param integer column: Optional start column of the range covered by this scope.
-        :param integer endLine: Optional end line of the range covered by this scope.
-        :param integer endColumn: Optional end column of the range covered by this scope.
+        The client can use this information to present the variables in a paged UI and fetch them in chunks.
+        :param Source source: The source for this scope.
+        :param integer line: The start line of the range covered by this scope.
+        :param integer column: Start position of the range covered by the scope. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based.
+        :param integer endLine: The end line of the range covered by this scope.
+        :param integer endColumn: End position of the range covered by the scope. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based.
         """
         self.name = name
         self.variablesReference = variablesReference
@@ -13843,20 +14194,18 @@ class Variable(BaseSchema):
     """
     A Variable is a name/value pair.
     
-    Optionally a variable can have a 'type' that is shown if space permits or when hovering over the
-    variable's name.
+    The `type` attribute is shown if space permits or when hovering over the variable's name.
     
-    An optional 'kind' is used to render additional properties of the variable, e.g. different icons can
-    be used to indicate that a variable is public or private.
+    The `kind` attribute is used to render additional properties of the variable, e.g. different icons
+    can be used to indicate that a variable is public or private.
     
     If the value is structured (has children), a handle is provided to retrieve the children with the
-    VariablesRequest.
+    `variables` request.
     
-    If the number of named or indexed children is large, the numbers should be returned via the optional
-    'namedVariables' and 'indexedVariables' attributes.
+    If the number of named or indexed children is large, the numbers should be returned via the
+    `namedVariables` and `indexedVariables` attributes.
     
-    The client can use this optional information to present the children in a paged UI and fetch them in
-    chunks.
+    The client can use this information to present the children in a paged UI and fetch them in chunks.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -13868,11 +14217,11 @@ class Variable(BaseSchema):
         },
         "value": {
             "type": "string",
-            "description": "The variable's value. This can be a multi-line text, e.g. for a function the body of a function."
+            "description": "The variable's value.\nThis can be a multi-line text, e.g. for a function the body of a function.\nFor structured variables (which do not have a simple value), it is recommended to provide a one-line representation of the structured object. This helps to identify the structured object in the collapsed state when its children are not yet visible.\nAn empty string can be used if no value should be shown in the UI."
         },
         "type": {
             "type": "string",
-            "description": "The type of the variable's value. Typically shown in the UI when hovering over the value.\nThis attribute should only be returned by a debug adapter if the client has passed the value true for the 'supportsVariableType' capability of the 'initialize' request."
+            "description": "The type of the variable's value. Typically shown in the UI when hovering over the value.\nThis attribute should only be returned by a debug adapter if the corresponding capability `supportsVariableType` is True."
         },
         "presentationHint": {
             "description": "Properties of a variable that can be used to determine how to render the variable in the UI.",
@@ -13880,23 +14229,23 @@ class Variable(BaseSchema):
         },
         "evaluateName": {
             "type": "string",
-            "description": "Optional evaluatable name of this variable which can be passed to the 'EvaluateRequest' to fetch the variable's value."
+            "description": "The evaluatable name of this variable which can be passed to the `evaluate` request to fetch the variable's value."
         },
         "variablesReference": {
             "type": "integer",
-            "description": "If variablesReference is > 0, the variable is structured and its children can be retrieved by passing variablesReference to the VariablesRequest."
+            "description": "If `variablesReference` is > 0, the variable is structured and its children can be retrieved by passing `variablesReference` to the `variables` request as long as execution remains suspended. See 'Lifetime of Object References' in the Overview section for details."
         },
         "namedVariables": {
             "type": "integer",
-            "description": "The number of named child variables.\nThe client can use this optional information to present the children in a paged UI and fetch them in chunks."
+            "description": "The number of named child variables.\nThe client can use this information to present the children in a paged UI and fetch them in chunks."
         },
         "indexedVariables": {
             "type": "integer",
-            "description": "The number of indexed child variables.\nThe client can use this optional information to present the children in a paged UI and fetch them in chunks."
+            "description": "The number of indexed child variables.\nThe client can use this information to present the children in a paged UI and fetch them in chunks."
         },
         "memoryReference": {
             "type": "string",
-            "description": "Optional memory reference for the variable if the variable represents executable code, such as a function pointer.\nThis attribute is only required if the client has passed the value true for the 'supportsMemoryReferences' capability of the 'initialize' request."
+            "description": "A memory reference associated with this variable.\nFor pointer type variables, this is generally a reference to the memory address contained in the pointer.\nFor executable data, this reference may later be used in a `disassemble` request.\nThis attribute may be returned by a debug adapter if corresponding capability `supportsMemoryReferences` is True."
         }
     }
     __refs__ = set(['presentationHint'])
@@ -13906,18 +14255,23 @@ class Variable(BaseSchema):
     def __init__(self, name, value, variablesReference, type=None, presentationHint=None, evaluateName=None, namedVariables=None, indexedVariables=None, memoryReference=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string name: The variable's name.
-        :param string value: The variable's value. This can be a multi-line text, e.g. for a function the body of a function.
-        :param integer variablesReference: If variablesReference is > 0, the variable is structured and its children can be retrieved by passing variablesReference to the VariablesRequest.
+        :param string value: The variable's value.
+        This can be a multi-line text, e.g. for a function the body of a function.
+        For structured variables (which do not have a simple value), it is recommended to provide a one-line representation of the structured object. This helps to identify the structured object in the collapsed state when its children are not yet visible.
+        An empty string can be used if no value should be shown in the UI.
+        :param integer variablesReference: If `variablesReference` is > 0, the variable is structured and its children can be retrieved by passing `variablesReference` to the `variables` request as long as execution remains suspended. See 'Lifetime of Object References' in the Overview section for details.
         :param string type: The type of the variable's value. Typically shown in the UI when hovering over the value.
-        This attribute should only be returned by a debug adapter if the client has passed the value true for the 'supportsVariableType' capability of the 'initialize' request.
+        This attribute should only be returned by a debug adapter if the corresponding capability `supportsVariableType` is true.
         :param VariablePresentationHint presentationHint: Properties of a variable that can be used to determine how to render the variable in the UI.
-        :param string evaluateName: Optional evaluatable name of this variable which can be passed to the 'EvaluateRequest' to fetch the variable's value.
+        :param string evaluateName: The evaluatable name of this variable which can be passed to the `evaluate` request to fetch the variable's value.
         :param integer namedVariables: The number of named child variables.
-        The client can use this optional information to present the children in a paged UI and fetch them in chunks.
+        The client can use this information to present the children in a paged UI and fetch them in chunks.
         :param integer indexedVariables: The number of indexed child variables.
-        The client can use this optional information to present the children in a paged UI and fetch them in chunks.
-        :param string memoryReference: Optional memory reference for the variable if the variable represents executable code, such as a function pointer.
-        This attribute is only required if the client has passed the value true for the 'supportsMemoryReferences' capability of the 'initialize' request.
+        The client can use this information to present the children in a paged UI and fetch them in chunks.
+        :param string memoryReference: A memory reference associated with this variable.
+        For pointer type variables, this is generally a reference to the memory address contained in the pointer.
+        For executable data, this reference may later be used in a `disassemble` request.
+        This attribute may be returned by a debug adapter if corresponding capability `supportsMemoryReferences` is true.
         """
         self.name = name
         self.value = value
@@ -13985,8 +14339,7 @@ class Variable(BaseSchema):
 @register
 class VariablePresentationHint(BaseSchema):
     """
-    Optional properties of a variable that can be used to determine how to render the variable in the
-    UI.
+    Properties of a variable that can be used to determine how to render the variable in the UI.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -14018,8 +14371,8 @@ class VariablePresentationHint(BaseSchema):
                 "Indicates that the object is an inner class.",
                 "Indicates that the object is an interface.",
                 "Indicates that the object is the most derived class.",
-                "Indicates that the object is virtual, that means it is a synthetic object introducedby the\nadapter for rendering purposes, e.g. an index range for large arrays.",
-                "Deprecated: Indicates that a data breakpoint is registered for the object. The 'hasDataBreakpoint' attribute should generally be used instead."
+                "Indicates that the object is virtual, that means it is a synthetic object introduced by the adapter for rendering purposes, e.g. an index range for large arrays.",
+                "Deprecated: Indicates that a data breakpoint is registered for the object. The `hasDataBreakpoint` attribute should generally be used instead."
             ]
         },
         "attributes": {
@@ -14042,8 +14395,8 @@ class VariablePresentationHint(BaseSchema):
                     "Indicates that the object is a constant.",
                     "Indicates that the object is read only.",
                     "Indicates that the object is a raw string.",
-                    "Indicates that the object can have an Object ID created for it.",
-                    "Indicates that the object has an Object ID associated with it.",
+                    "Indicates that the object can have an Object ID created for it. This is a vestigial attribute that is used by some clients; 'Object ID's are not specified in the protocol.",
+                    "Indicates that the object has an Object ID associated with it. This is a vestigial attribute that is used by some clients; 'Object ID's are not specified in the protocol.",
                     "Indicates that the evaluation had side effects.",
                     "Indicates that the object has its value tracked by a data breakpoint."
                 ]
@@ -14059,21 +14412,29 @@ class VariablePresentationHint(BaseSchema):
                 "internal",
                 "final"
             ]
+        },
+        "lazy": {
+            "description": "If True, clients can present the variable with a UI that supports a specific gesture to trigger its evaluation.\nThis mechanism can be used for properties that require executing code when retrieving their value and where the code execution can be expensive and/or produce side-effects. A typical example are properties based on a getter function.\nPlease note that in addition to the `lazy` flag, the variable's `variablesReference` is expected to refer to a variable that will provide the value through another `variable` request.",
+            "type": "boolean"
         }
     }
     __refs__ = set()
 
     __slots__ = list(__props__.keys()) + ['kwargs']
 
-    def __init__(self, kind=None, attributes=None, visibility=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+    def __init__(self, kind=None, attributes=None, visibility=None, lazy=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string kind: The kind of variable. Before introducing additional values, try to use the listed values.
         :param array attributes: Set of attributes represented as an array of strings. Before introducing additional values, try to use the listed values.
         :param string visibility: Visibility of variable. Before introducing additional values, try to use the listed values.
+        :param boolean lazy: If true, clients can present the variable with a UI that supports a specific gesture to trigger its evaluation.
+        This mechanism can be used for properties that require executing code when retrieving their value and where the code execution can be expensive and/or produce side-effects. A typical example are properties based on a getter function.
+        Please note that in addition to the `lazy` flag, the variable's `variablesReference` is expected to refer to a variable that will provide the value through another `variable` request.
         """
         self.kind = kind
         self.attributes = attributes
         self.visibility = visibility
+        self.lazy = lazy
         self.kwargs = kwargs
 
 
@@ -14083,6 +14444,7 @@ class VariablePresentationHint(BaseSchema):
         if attributes and hasattr(attributes[0], "to_dict"):
             attributes = [x.to_dict() for x in attributes]
         visibility = self.visibility
+        lazy = self.lazy
         dct = {
         }
         if kind is not None:
@@ -14091,6 +14453,8 @@ class VariablePresentationHint(BaseSchema):
             dct['attributes'] = attributes
         if visibility is not None:
             dct['visibility'] = visibility
+        if lazy is not None:
+            dct['lazy'] = lazy
         dct.update(self.kwargs)
         return dct
 
@@ -14098,7 +14462,7 @@ class VariablePresentationHint(BaseSchema):
 @register
 class BreakpointLocation(BaseSchema):
     """
-    Properties of a breakpoint location returned from the 'breakpointLocations' request.
+    Properties of a breakpoint location returned from the `breakpointLocations` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -14110,15 +14474,15 @@ class BreakpointLocation(BaseSchema):
         },
         "column": {
             "type": "integer",
-            "description": "Optional start column of breakpoint location."
+            "description": "The start position of a breakpoint location. Position is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based."
         },
         "endLine": {
             "type": "integer",
-            "description": "Optional end line of breakpoint location if the location covers a range."
+            "description": "The end line of breakpoint location if the location covers a range."
         },
         "endColumn": {
             "type": "integer",
-            "description": "Optional end column of breakpoint location if the location covers a range."
+            "description": "The end position of a breakpoint location (if the location covers a range). Position is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based."
         }
     }
     __refs__ = set()
@@ -14128,9 +14492,9 @@ class BreakpointLocation(BaseSchema):
     def __init__(self, line, column=None, endLine=None, endColumn=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param integer line: Start line of breakpoint location.
-        :param integer column: Optional start column of breakpoint location.
-        :param integer endLine: Optional end line of breakpoint location if the location covers a range.
-        :param integer endColumn: Optional end column of breakpoint location if the location covers a range.
+        :param integer column: The start position of a breakpoint location. Position is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based.
+        :param integer endLine: The end line of breakpoint location if the location covers a range.
+        :param integer endColumn: The end position of a breakpoint location (if the location covers a range). Position is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based.
         """
         self.line = line
         self.column = column
@@ -14160,7 +14524,7 @@ class BreakpointLocation(BaseSchema):
 @register
 class SourceBreakpoint(BaseSchema):
     """
-    Properties of a breakpoint or logpoint passed to the setBreakpoints request.
+    Properties of a breakpoint or logpoint passed to the `setBreakpoints` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -14172,19 +14536,19 @@ class SourceBreakpoint(BaseSchema):
         },
         "column": {
             "type": "integer",
-            "description": "An optional source column of the breakpoint."
+            "description": "Start position within source line of the breakpoint or logpoint. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based."
         },
         "condition": {
             "type": "string",
-            "description": "An optional expression for conditional breakpoints.\nIt is only honored by a debug adapter if the capability 'supportsConditionalBreakpoints' is true."
+            "description": "The expression for conditional breakpoints.\nIt is only honored by a debug adapter if the corresponding capability `supportsConditionalBreakpoints` is True."
         },
         "hitCondition": {
             "type": "string",
-            "description": "An optional expression that controls how many hits of the breakpoint are ignored.\nThe backend is expected to interpret the expression as needed.\nThe attribute is only honored by a debug adapter if the capability 'supportsHitConditionalBreakpoints' is true."
+            "description": "The expression that controls how many hits of the breakpoint are ignored.\nThe debug adapter is expected to interpret the expression as needed.\nThe attribute is only honored by a debug adapter if the corresponding capability `supportsHitConditionalBreakpoints` is True.\nIf both this property and `condition` are specified, `hitCondition` should be evaluated only if the `condition` is met, and the debug adapter should stop only if both conditions are met."
         },
         "logMessage": {
             "type": "string",
-            "description": "If this attribute exists and is non-empty, the backend must not 'break' (stop)\nbut log the message instead. Expressions within {} are interpolated.\nThe attribute is only honored by a debug adapter if the capability 'supportsLogPoints' is true."
+            "description": "If this attribute exists and is non-empty, the debug adapter must not 'break' (stop)\nbut log the message instead. Expressions within `{}` are interpolated.\nThe attribute is only honored by a debug adapter if the corresponding capability `supportsLogPoints` is True.\nIf either `hitCondition` or `condition` is specified, then the message should only be logged if those conditions are met."
         }
     }
     __refs__ = set()
@@ -14194,15 +14558,17 @@ class SourceBreakpoint(BaseSchema):
     def __init__(self, line, column=None, condition=None, hitCondition=None, logMessage=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param integer line: The source line of the breakpoint or logpoint.
-        :param integer column: An optional source column of the breakpoint.
-        :param string condition: An optional expression for conditional breakpoints.
-        It is only honored by a debug adapter if the capability 'supportsConditionalBreakpoints' is true.
-        :param string hitCondition: An optional expression that controls how many hits of the breakpoint are ignored.
-        The backend is expected to interpret the expression as needed.
-        The attribute is only honored by a debug adapter if the capability 'supportsHitConditionalBreakpoints' is true.
-        :param string logMessage: If this attribute exists and is non-empty, the backend must not 'break' (stop)
-        but log the message instead. Expressions within {} are interpolated.
-        The attribute is only honored by a debug adapter if the capability 'supportsLogPoints' is true.
+        :param integer column: Start position within source line of the breakpoint or logpoint. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based.
+        :param string condition: The expression for conditional breakpoints.
+        It is only honored by a debug adapter if the corresponding capability `supportsConditionalBreakpoints` is true.
+        :param string hitCondition: The expression that controls how many hits of the breakpoint are ignored.
+        The debug adapter is expected to interpret the expression as needed.
+        The attribute is only honored by a debug adapter if the corresponding capability `supportsHitConditionalBreakpoints` is true.
+        If both this property and `condition` are specified, `hitCondition` should be evaluated only if the `condition` is met, and the debug adapter should stop only if both conditions are met.
+        :param string logMessage: If this attribute exists and is non-empty, the debug adapter must not 'break' (stop)
+        but log the message instead. Expressions within `{}` are interpolated.
+        The attribute is only honored by a debug adapter if the corresponding capability `supportsLogPoints` is true.
+        If either `hitCondition` or `condition` is specified, then the message should only be logged if those conditions are met.
         """
         self.line = line
         self.column = column
@@ -14236,7 +14602,7 @@ class SourceBreakpoint(BaseSchema):
 @register
 class FunctionBreakpoint(BaseSchema):
     """
-    Properties of a breakpoint passed to the setFunctionBreakpoints request.
+    Properties of a breakpoint passed to the `setFunctionBreakpoints` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -14248,11 +14614,11 @@ class FunctionBreakpoint(BaseSchema):
         },
         "condition": {
             "type": "string",
-            "description": "An optional expression for conditional breakpoints.\nIt is only honored by a debug adapter if the capability 'supportsConditionalBreakpoints' is true."
+            "description": "An expression for conditional breakpoints.\nIt is only honored by a debug adapter if the corresponding capability `supportsConditionalBreakpoints` is True."
         },
         "hitCondition": {
             "type": "string",
-            "description": "An optional expression that controls how many hits of the breakpoint are ignored.\nThe backend is expected to interpret the expression as needed.\nThe attribute is only honored by a debug adapter if the capability 'supportsHitConditionalBreakpoints' is true."
+            "description": "An expression that controls how many hits of the breakpoint are ignored.\nThe debug adapter is expected to interpret the expression as needed.\nThe attribute is only honored by a debug adapter if the corresponding capability `supportsHitConditionalBreakpoints` is True."
         }
     }
     __refs__ = set()
@@ -14262,11 +14628,11 @@ class FunctionBreakpoint(BaseSchema):
     def __init__(self, name, condition=None, hitCondition=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string name: The name of the function.
-        :param string condition: An optional expression for conditional breakpoints.
-        It is only honored by a debug adapter if the capability 'supportsConditionalBreakpoints' is true.
-        :param string hitCondition: An optional expression that controls how many hits of the breakpoint are ignored.
-        The backend is expected to interpret the expression as needed.
-        The attribute is only honored by a debug adapter if the capability 'supportsHitConditionalBreakpoints' is true.
+        :param string condition: An expression for conditional breakpoints.
+        It is only honored by a debug adapter if the corresponding capability `supportsConditionalBreakpoints` is true.
+        :param string hitCondition: An expression that controls how many hits of the breakpoint are ignored.
+        The debug adapter is expected to interpret the expression as needed.
+        The attribute is only honored by a debug adapter if the corresponding capability `supportsHitConditionalBreakpoints` is true.
         """
         self.name = name
         self.condition = condition
@@ -14326,7 +14692,7 @@ class DataBreakpointAccessType(BaseSchema):
 @register
 class DataBreakpoint(BaseSchema):
     """
-    Properties of a data breakpoint passed to the setDataBreakpoints request.
+    Properties of a data breakpoint passed to the `setDataBreakpoints` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -14334,7 +14700,7 @@ class DataBreakpoint(BaseSchema):
     __props__ = {
         "dataId": {
             "type": "string",
-            "description": "An id representing the data. This id is returned from the dataBreakpointInfo request."
+            "description": "An id representing the data. This id is returned from the `dataBreakpointInfo` request."
         },
         "accessType": {
             "description": "The access type of the data.",
@@ -14342,11 +14708,11 @@ class DataBreakpoint(BaseSchema):
         },
         "condition": {
             "type": "string",
-            "description": "An optional expression for conditional breakpoints."
+            "description": "An expression for conditional breakpoints."
         },
         "hitCondition": {
             "type": "string",
-            "description": "An optional expression that controls how many hits of the breakpoint are ignored.\nThe backend is expected to interpret the expression as needed."
+            "description": "An expression that controls how many hits of the breakpoint are ignored.\nThe debug adapter is expected to interpret the expression as needed."
         }
     }
     __refs__ = set(['accessType'])
@@ -14355,11 +14721,11 @@ class DataBreakpoint(BaseSchema):
 
     def __init__(self, dataId, accessType=None, condition=None, hitCondition=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param string dataId: An id representing the data. This id is returned from the dataBreakpointInfo request.
+        :param string dataId: An id representing the data. This id is returned from the `dataBreakpointInfo` request.
         :param DataBreakpointAccessType accessType: The access type of the data.
-        :param string condition: An optional expression for conditional breakpoints.
-        :param string hitCondition: An optional expression that controls how many hits of the breakpoint are ignored.
-        The backend is expected to interpret the expression as needed.
+        :param string condition: An expression for conditional breakpoints.
+        :param string hitCondition: An expression that controls how many hits of the breakpoint are ignored.
+        The debug adapter is expected to interpret the expression as needed.
         """
         self.dataId = dataId
         if accessType is not None:
@@ -14391,7 +14757,7 @@ class DataBreakpoint(BaseSchema):
 @register
 class InstructionBreakpoint(BaseSchema):
     """
-    Properties of a breakpoint passed to the setInstructionBreakpoints request
+    Properties of a breakpoint passed to the `setInstructionBreakpoints` request
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -14399,19 +14765,19 @@ class InstructionBreakpoint(BaseSchema):
     __props__ = {
         "instructionReference": {
             "type": "string",
-            "description": "The instruction reference of the breakpoint.\nThis should be a memory or instruction pointer reference from an EvaluateResponse, Variable, StackFrame, GotoTarget, or Breakpoint."
+            "description": "The instruction reference of the breakpoint.\nThis should be a memory or instruction pointer reference from an `EvaluateResponse`, `Variable`, `StackFrame`, `GotoTarget`, or `Breakpoint`."
         },
         "offset": {
             "type": "integer",
-            "description": "An optional offset from the instruction reference.\nThis can be negative."
+            "description": "The offset from the instruction reference in bytes.\nThis can be negative."
         },
         "condition": {
             "type": "string",
-            "description": "An optional expression for conditional breakpoints.\nIt is only honored by a debug adapter if the capability 'supportsConditionalBreakpoints' is true."
+            "description": "An expression for conditional breakpoints.\nIt is only honored by a debug adapter if the corresponding capability `supportsConditionalBreakpoints` is True."
         },
         "hitCondition": {
             "type": "string",
-            "description": "An optional expression that controls how many hits of the breakpoint are ignored.\nThe backend is expected to interpret the expression as needed.\nThe attribute is only honored by a debug adapter if the capability 'supportsHitConditionalBreakpoints' is true."
+            "description": "An expression that controls how many hits of the breakpoint are ignored.\nThe debug adapter is expected to interpret the expression as needed.\nThe attribute is only honored by a debug adapter if the corresponding capability `supportsHitConditionalBreakpoints` is True."
         }
     }
     __refs__ = set()
@@ -14421,14 +14787,14 @@ class InstructionBreakpoint(BaseSchema):
     def __init__(self, instructionReference, offset=None, condition=None, hitCondition=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string instructionReference: The instruction reference of the breakpoint.
-        This should be a memory or instruction pointer reference from an EvaluateResponse, Variable, StackFrame, GotoTarget, or Breakpoint.
-        :param integer offset: An optional offset from the instruction reference.
+        This should be a memory or instruction pointer reference from an `EvaluateResponse`, `Variable`, `StackFrame`, `GotoTarget`, or `Breakpoint`.
+        :param integer offset: The offset from the instruction reference in bytes.
         This can be negative.
-        :param string condition: An optional expression for conditional breakpoints.
-        It is only honored by a debug adapter if the capability 'supportsConditionalBreakpoints' is true.
-        :param string hitCondition: An optional expression that controls how many hits of the breakpoint are ignored.
-        The backend is expected to interpret the expression as needed.
-        The attribute is only honored by a debug adapter if the capability 'supportsHitConditionalBreakpoints' is true.
+        :param string condition: An expression for conditional breakpoints.
+        It is only honored by a debug adapter if the corresponding capability `supportsConditionalBreakpoints` is true.
+        :param string hitCondition: An expression that controls how many hits of the breakpoint are ignored.
+        The debug adapter is expected to interpret the expression as needed.
+        The attribute is only honored by a debug adapter if the corresponding capability `supportsHitConditionalBreakpoints` is true.
         """
         self.instructionReference = instructionReference
         self.offset = offset
@@ -14458,8 +14824,8 @@ class InstructionBreakpoint(BaseSchema):
 @register
 class Breakpoint(BaseSchema):
     """
-    Information about a Breakpoint created in setBreakpoints, setFunctionBreakpoints,
-    setInstructionBreakpoints, or setDataBreakpoints.
+    Information about a breakpoint created in `setBreakpoints`, `setFunctionBreakpoints`,
+    `setInstructionBreakpoints`, or `setDataBreakpoints` requests.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -14467,15 +14833,15 @@ class Breakpoint(BaseSchema):
     __props__ = {
         "id": {
             "type": "integer",
-            "description": "An optional identifier for the breakpoint. It is needed if breakpoint events are used to update or remove breakpoints."
+            "description": "The identifier for the breakpoint. It is needed if breakpoint events are used to update or remove breakpoints."
         },
         "verified": {
             "type": "boolean",
-            "description": "If true breakpoint could be set (but not necessarily at the desired location)."
+            "description": "If True, the breakpoint could be set (but not necessarily at the desired location)."
         },
         "message": {
             "type": "string",
-            "description": "An optional message about the state of the breakpoint.\nThis is shown to the user and can be used to explain why a breakpoint could not be verified."
+            "description": "A message about the state of the breakpoint.\nThis is shown to the user and can be used to explain why a breakpoint could not be verified."
         },
         "source": {
             "description": "The source where the breakpoint is located.",
@@ -14487,44 +14853,56 @@ class Breakpoint(BaseSchema):
         },
         "column": {
             "type": "integer",
-            "description": "An optional start column of the actual range covered by the breakpoint."
+            "description": "Start position of the source range covered by the breakpoint. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based."
         },
         "endLine": {
             "type": "integer",
-            "description": "An optional end line of the actual range covered by the breakpoint."
+            "description": "The end line of the actual range covered by the breakpoint."
         },
         "endColumn": {
             "type": "integer",
-            "description": "An optional end column of the actual range covered by the breakpoint.\nIf no end line is given, then the end column is assumed to be in the start line."
+            "description": "End position of the source range covered by the breakpoint. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based.\nIf no end line is given, then the end column is assumed to be in the start line."
         },
         "instructionReference": {
             "type": "string",
-            "description": "An optional memory reference to where the breakpoint is set."
+            "description": "A memory reference to where the breakpoint is set."
         },
         "offset": {
             "type": "integer",
-            "description": "An optional offset from the instruction reference.\nThis can be negative."
+            "description": "The offset from the instruction reference.\nThis can be negative."
+        },
+        "reason": {
+            "type": "string",
+            "description": "A machine-readable explanation of why a breakpoint may not be verified. If a breakpoint is verified or a specific reason is not known, the adapter should omit this property. Possible values include:\n\n- `pending`: Indicates a breakpoint might be verified in the future, but the adapter cannot verify it in the current state.\n - `failed`: Indicates a breakpoint was not able to be verified, and the adapter does not believe it can be verified without intervention.",
+            "enum": [
+                "pending",
+                "failed"
+            ]
         }
     }
     __refs__ = set(['source'])
 
     __slots__ = list(__props__.keys()) + ['kwargs']
 
-    def __init__(self, verified, id=None, message=None, source=None, line=None, column=None, endLine=None, endColumn=None, instructionReference=None, offset=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+    def __init__(self, verified, id=None, message=None, source=None, line=None, column=None, endLine=None, endColumn=None, instructionReference=None, offset=None, reason=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param boolean verified: If true breakpoint could be set (but not necessarily at the desired location).
-        :param integer id: An optional identifier for the breakpoint. It is needed if breakpoint events are used to update or remove breakpoints.
-        :param string message: An optional message about the state of the breakpoint.
+        :param boolean verified: If true, the breakpoint could be set (but not necessarily at the desired location).
+        :param integer id: The identifier for the breakpoint. It is needed if breakpoint events are used to update or remove breakpoints.
+        :param string message: A message about the state of the breakpoint.
         This is shown to the user and can be used to explain why a breakpoint could not be verified.
         :param Source source: The source where the breakpoint is located.
         :param integer line: The start line of the actual range covered by the breakpoint.
-        :param integer column: An optional start column of the actual range covered by the breakpoint.
-        :param integer endLine: An optional end line of the actual range covered by the breakpoint.
-        :param integer endColumn: An optional end column of the actual range covered by the breakpoint.
+        :param integer column: Start position of the source range covered by the breakpoint. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based.
+        :param integer endLine: The end line of the actual range covered by the breakpoint.
+        :param integer endColumn: End position of the source range covered by the breakpoint. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based.
         If no end line is given, then the end column is assumed to be in the start line.
-        :param string instructionReference: An optional memory reference to where the breakpoint is set.
-        :param integer offset: An optional offset from the instruction reference.
+        :param string instructionReference: A memory reference to where the breakpoint is set.
+        :param integer offset: The offset from the instruction reference.
         This can be negative.
+        :param string reason: A machine-readable explanation of why a breakpoint may not be verified. If a breakpoint is verified or a specific reason is not known, the adapter should omit this property. Possible values include:
+        
+        - `pending`: Indicates a breakpoint might be verified in the future, but the adapter cannot verify it in the current state.
+         - `failed`: Indicates a breakpoint was not able to be verified, and the adapter does not believe it can be verified without intervention.
         """
         self.verified = verified
         self.id = id
@@ -14539,6 +14917,7 @@ class Breakpoint(BaseSchema):
         self.endColumn = endColumn
         self.instructionReference = instructionReference
         self.offset = offset
+        self.reason = reason
         self.kwargs = kwargs
 
 
@@ -14553,6 +14932,7 @@ class Breakpoint(BaseSchema):
         endColumn = self.endColumn
         instructionReference = self.instructionReference
         offset = self.offset
+        reason = self.reason
         dct = {
             'verified': verified,
         }
@@ -14574,6 +14954,8 @@ class Breakpoint(BaseSchema):
             dct['instructionReference'] = instructionReference
         if offset is not None:
             dct['offset'] = offset
+        if reason is not None:
+            dct['reason'] = reason
         dct.update(self.kwargs)
         return dct
 
@@ -14581,7 +14963,7 @@ class Breakpoint(BaseSchema):
 @register
 class SteppingGranularity(BaseSchema):
     """
-    The granularity of one 'step' in the stepping requests 'next', 'stepIn', 'stepOut', and 'stepBack'.
+    The granularity of one 'step' in the stepping requests `next`, `stepIn`, `stepOut`, and `stepBack`.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -14615,8 +14997,8 @@ class SteppingGranularity(BaseSchema):
 @register
 class StepInTarget(BaseSchema):
     """
-    A StepInTarget can be used in the 'stepIn' request and determines into which single target the
-    stepIn request should step.
+    A `StepInTarget` can be used in the `stepIn` request and determines into which single target the
+    `stepIn` request should step.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -14624,34 +15006,70 @@ class StepInTarget(BaseSchema):
     __props__ = {
         "id": {
             "type": "integer",
-            "description": "Unique identifier for a stepIn target."
+            "description": "Unique identifier for a step-in target."
         },
         "label": {
             "type": "string",
-            "description": "The name of the stepIn target (shown in the UI)."
+            "description": "The name of the step-in target (shown in the UI)."
+        },
+        "line": {
+            "type": "integer",
+            "description": "The line of the step-in target."
+        },
+        "column": {
+            "type": "integer",
+            "description": "Start position of the range covered by the step in target. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based."
+        },
+        "endLine": {
+            "type": "integer",
+            "description": "The end line of the range covered by the step-in target."
+        },
+        "endColumn": {
+            "type": "integer",
+            "description": "End position of the range covered by the step in target. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based."
         }
     }
     __refs__ = set()
 
     __slots__ = list(__props__.keys()) + ['kwargs']
 
-    def __init__(self, id, label, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+    def __init__(self, id, label, line=None, column=None, endLine=None, endColumn=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param integer id: Unique identifier for a stepIn target.
-        :param string label: The name of the stepIn target (shown in the UI).
+        :param integer id: Unique identifier for a step-in target.
+        :param string label: The name of the step-in target (shown in the UI).
+        :param integer line: The line of the step-in target.
+        :param integer column: Start position of the range covered by the step in target. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based.
+        :param integer endLine: The end line of the range covered by the step-in target.
+        :param integer endColumn: End position of the range covered by the step in target. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based.
         """
         self.id = id
         self.label = label
+        self.line = line
+        self.column = column
+        self.endLine = endLine
+        self.endColumn = endColumn
         self.kwargs = kwargs
 
 
     def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
         id = self.id  # noqa (assign to builtin)
         label = self.label
+        line = self.line
+        column = self.column
+        endLine = self.endLine
+        endColumn = self.endColumn
         dct = {
             'id': id,
             'label': label,
         }
+        if line is not None:
+            dct['line'] = line
+        if column is not None:
+            dct['column'] = column
+        if endLine is not None:
+            dct['endLine'] = endLine
+        if endColumn is not None:
+            dct['endColumn'] = endColumn
         dct.update(self.kwargs)
         return dct
 
@@ -14659,9 +15077,9 @@ class StepInTarget(BaseSchema):
 @register
 class GotoTarget(BaseSchema):
     """
-    A GotoTarget describes a code location that can be used as a target in the 'goto' request.
+    A `GotoTarget` describes a code location that can be used as a target in the `goto` request.
     
-    The possible goto targets can be determined via the 'gotoTargets' request.
+    The possible goto targets can be determined via the `gotoTargets` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -14669,7 +15087,7 @@ class GotoTarget(BaseSchema):
     __props__ = {
         "id": {
             "type": "integer",
-            "description": "Unique identifier for a goto target. This is used in the goto request."
+            "description": "Unique identifier for a goto target. This is used in the `goto` request."
         },
         "label": {
             "type": "string",
@@ -14681,19 +15099,19 @@ class GotoTarget(BaseSchema):
         },
         "column": {
             "type": "integer",
-            "description": "An optional column of the goto target."
+            "description": "The column of the goto target."
         },
         "endLine": {
             "type": "integer",
-            "description": "An optional end line of the range covered by the goto target."
+            "description": "The end line of the range covered by the goto target."
         },
         "endColumn": {
             "type": "integer",
-            "description": "An optional end column of the range covered by the goto target."
+            "description": "The end column of the range covered by the goto target."
         },
         "instructionPointerReference": {
             "type": "string",
-            "description": "Optional memory reference for the instruction pointer value represented by this target."
+            "description": "A memory reference for the instruction pointer value represented by this target."
         }
     }
     __refs__ = set()
@@ -14702,13 +15120,13 @@ class GotoTarget(BaseSchema):
 
     def __init__(self, id, label, line, column=None, endLine=None, endColumn=None, instructionPointerReference=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param integer id: Unique identifier for a goto target. This is used in the goto request.
+        :param integer id: Unique identifier for a goto target. This is used in the `goto` request.
         :param string label: The name of the goto target (shown in the UI).
         :param integer line: The line of the goto target.
-        :param integer column: An optional column of the goto target.
-        :param integer endLine: An optional end line of the range covered by the goto target.
-        :param integer endColumn: An optional end column of the range covered by the goto target.
-        :param string instructionPointerReference: Optional memory reference for the instruction pointer value represented by this target.
+        :param integer column: The column of the goto target.
+        :param integer endLine: The end line of the range covered by the goto target.
+        :param integer endColumn: The end column of the range covered by the goto target.
+        :param string instructionPointerReference: A memory reference for the instruction pointer value represented by this target.
         """
         self.id = id
         self.label = label
@@ -14748,7 +15166,7 @@ class GotoTarget(BaseSchema):
 @register
 class CompletionItem(BaseSchema):
     """
-    CompletionItems are the suggestions returned from the CompletionsRequest.
+    `CompletionItems` are the suggestions returned from the `completions` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -14760,11 +15178,15 @@ class CompletionItem(BaseSchema):
         },
         "text": {
             "type": "string",
-            "description": "If text is not falsy then it is inserted instead of the label."
+            "description": "If text is returned and not an empty string, then it is inserted instead of the label."
         },
         "sortText": {
             "type": "string",
-            "description": "A string that should be used when comparing this item with other items. When `falsy` the label is used."
+            "description": "A string that should be used when comparing this item with other items. If not returned or an empty string, the `label` is used instead."
+        },
+        "detail": {
+            "type": "string",
+            "description": "A human-readable string with additional information about this item, like type or symbol information."
         },
         "type": {
             "description": "The item's type. Typically the client uses this information to render the item in the UI with an icon.",
@@ -14772,45 +15194,41 @@ class CompletionItem(BaseSchema):
         },
         "start": {
             "type": "integer",
-            "description": "This value determines the location (in the CompletionsRequest's 'text' attribute) where the completion text is added.\nIf missing the text is added at the location specified by the CompletionsRequest's 'column' attribute."
+            "description": "Start position (within the `text` attribute of the `completions` request) where the completion text is added. The position is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based. If the start position is omitted the text is added at the location specified by the `column` attribute of the `completions` request."
         },
         "length": {
             "type": "integer",
-            "description": "This value determines how many characters are overwritten by the completion text.\nIf missing the value 0 is assumed which results in the completion text being inserted."
+            "description": "Length determines how many characters are overwritten by the completion text and it is measured in UTF-16 code units. If missing the value 0 is assumed which results in the completion text being inserted."
         },
         "selectionStart": {
             "type": "integer",
-            "description": "Determines the start of the new selection after the text has been inserted (or replaced).\nThe start position must in the range 0 and length of the completion text.\nIf omitted the selection starts at the end of the completion text."
+            "description": "Determines the start of the new selection after the text has been inserted (or replaced). `selectionStart` is measured in UTF-16 code units and must be in the range 0 and length of the completion text. If omitted the selection starts at the end of the completion text."
         },
         "selectionLength": {
             "type": "integer",
-            "description": "Determines the length of the new selection after the text has been inserted (or replaced).\nThe selection can not extend beyond the bounds of the completion text.\nIf omitted the length is assumed to be 0."
+            "description": "Determines the length of the new selection after the text has been inserted (or replaced) and it is measured in UTF-16 code units. The selection can not extend beyond the bounds of the completion text. If omitted the length is assumed to be 0."
         }
     }
     __refs__ = set(['type'])
 
     __slots__ = list(__props__.keys()) + ['kwargs']
 
-    def __init__(self, label, text=None, sortText=None, type=None, start=None, length=None, selectionStart=None, selectionLength=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+    def __init__(self, label, text=None, sortText=None, detail=None, type=None, start=None, length=None, selectionStart=None, selectionLength=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string label: The label of this completion item. By default this is also the text that is inserted when selecting this completion.
-        :param string text: If text is not falsy then it is inserted instead of the label.
-        :param string sortText: A string that should be used when comparing this item with other items. When `falsy` the label is used.
+        :param string text: If text is returned and not an empty string, then it is inserted instead of the label.
+        :param string sortText: A string that should be used when comparing this item with other items. If not returned or an empty string, the `label` is used instead.
+        :param string detail: A human-readable string with additional information about this item, like type or symbol information.
         :param CompletionItemType type: The item's type. Typically the client uses this information to render the item in the UI with an icon.
-        :param integer start: This value determines the location (in the CompletionsRequest's 'text' attribute) where the completion text is added.
-        If missing the text is added at the location specified by the CompletionsRequest's 'column' attribute.
-        :param integer length: This value determines how many characters are overwritten by the completion text.
-        If missing the value 0 is assumed which results in the completion text being inserted.
-        :param integer selectionStart: Determines the start of the new selection after the text has been inserted (or replaced).
-        The start position must in the range 0 and length of the completion text.
-        If omitted the selection starts at the end of the completion text.
-        :param integer selectionLength: Determines the length of the new selection after the text has been inserted (or replaced).
-        The selection can not extend beyond the bounds of the completion text.
-        If omitted the length is assumed to be 0.
+        :param integer start: Start position (within the `text` attribute of the `completions` request) where the completion text is added. The position is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based. If the start position is omitted the text is added at the location specified by the `column` attribute of the `completions` request.
+        :param integer length: Length determines how many characters are overwritten by the completion text and it is measured in UTF-16 code units. If missing the value 0 is assumed which results in the completion text being inserted.
+        :param integer selectionStart: Determines the start of the new selection after the text has been inserted (or replaced). `selectionStart` is measured in UTF-16 code units and must be in the range 0 and length of the completion text. If omitted the selection starts at the end of the completion text.
+        :param integer selectionLength: Determines the length of the new selection after the text has been inserted (or replaced) and it is measured in UTF-16 code units. The selection can not extend beyond the bounds of the completion text. If omitted the length is assumed to be 0.
         """
         self.label = label
         self.text = text
         self.sortText = sortText
+        self.detail = detail
         if type is not None:
             assert type in CompletionItemType.VALID_VALUES
         self.type = type
@@ -14825,6 +15243,7 @@ class CompletionItem(BaseSchema):
         label = self.label
         text = self.text
         sortText = self.sortText
+        detail = self.detail
         type = self.type  # noqa (assign to builtin)
         start = self.start
         length = self.length
@@ -14837,6 +15256,8 @@ class CompletionItem(BaseSchema):
             dct['text'] = text
         if sortText is not None:
             dct['sortText'] = sortText
+        if detail is not None:
+            dct['detail'] = detail
         if type is not None:
             dct['type'] = type
         if start is not None:
@@ -14952,7 +15373,7 @@ class Checksum(BaseSchema):
         },
         "checksum": {
             "type": "string",
-            "description": "Value of the checksum."
+            "description": "Value of the checksum, encoded as a hexadecimal value."
         }
     }
     __refs__ = set(['algorithm'])
@@ -14962,7 +15383,7 @@ class Checksum(BaseSchema):
     def __init__(self, algorithm, checksum, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param ChecksumAlgorithm algorithm: The algorithm used to calculate this checksum.
-        :param string checksum: Value of the checksum.
+        :param string checksum: Value of the checksum, encoded as a hexadecimal value.
         """
         if algorithm is not None:
             assert algorithm in ChecksumAlgorithm.VALID_VALUES
@@ -15120,8 +15541,8 @@ class StackFrameFormat(BaseSchema):
 @register
 class ExceptionFilterOptions(BaseSchema):
     """
-    An ExceptionFilterOptions is used to specify an exception filter together with a condition for the
-    setExceptionsFilter request.
+    An `ExceptionFilterOptions` is used to specify an exception filter together with a condition for the
+    `setExceptionBreakpoints` request.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -15129,11 +15550,11 @@ class ExceptionFilterOptions(BaseSchema):
     __props__ = {
         "filterId": {
             "type": "string",
-            "description": "ID of an exception filter returned by the 'exceptionBreakpointFilters' capability."
+            "description": "ID of an exception filter returned by the `exceptionBreakpointFilters` capability."
         },
         "condition": {
             "type": "string",
-            "description": "An optional expression for conditional exceptions.\nThe exception will break into the debugger if the result of the condition is true."
+            "description": "An expression for conditional exceptions.\nThe exception breaks into the debugger if the result of the condition is True."
         }
     }
     __refs__ = set()
@@ -15142,9 +15563,9 @@ class ExceptionFilterOptions(BaseSchema):
 
     def __init__(self, filterId, condition=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param string filterId: ID of an exception filter returned by the 'exceptionBreakpointFilters' capability.
-        :param string condition: An optional expression for conditional exceptions.
-        The exception will break into the debugger if the result of the condition is true.
+        :param string filterId: ID of an exception filter returned by the `exceptionBreakpointFilters` capability.
+        :param string condition: An expression for conditional exceptions.
+        The exception breaks into the debugger if the result of the condition is true.
         """
         self.filterId = filterId
         self.condition = condition
@@ -15166,7 +15587,7 @@ class ExceptionFilterOptions(BaseSchema):
 @register
 class ExceptionOptions(BaseSchema):
     """
-    An ExceptionOptions assigns configuration options to a set of exceptions.
+    An `ExceptionOptions` assigns configuration options to a set of exceptions.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -15177,7 +15598,7 @@ class ExceptionOptions(BaseSchema):
             "items": {
                 "$ref": "#/definitions/ExceptionPathSegment"
             },
-            "description": "A path that selects a single or multiple exceptions in a tree. If 'path' is missing, the whole tree is selected.\nBy convention the first segment of the path is a category that is used to group exceptions in the UI."
+            "description": "A path that selects a single or multiple exceptions in a tree. If `path` is missing, the whole tree is selected.\nBy convention the first segment of the path is a category that is used to group exceptions in the UI."
         },
         "breakMode": {
             "description": "Condition when a thrown exception should result in a break.",
@@ -15191,7 +15612,7 @@ class ExceptionOptions(BaseSchema):
     def __init__(self, breakMode, path=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param ExceptionBreakMode breakMode: Condition when a thrown exception should result in a break.
-        :param array path: A path that selects a single or multiple exceptions in a tree. If 'path' is missing, the whole tree is selected.
+        :param array path: A path that selects a single or multiple exceptions in a tree. If `path` is missing, the whole tree is selected.
         By convention the first segment of the path is a category that is used to group exceptions in the UI.
         """
         if breakMode is not None:
@@ -15264,13 +15685,11 @@ class ExceptionBreakMode(BaseSchema):
 @register
 class ExceptionPathSegment(BaseSchema):
     """
-    An ExceptionPathSegment represents a segment in a path that is used to match leafs or nodes in a
+    An `ExceptionPathSegment` represents a segment in a path that is used to match leafs or nodes in a
     tree of exceptions.
     
-    If a segment consists of more than one name, it matches the names provided if 'negate' is false or
-    missing or
-    
-    it matches anything except the names provided if 'negate' is true.
+    If a segment consists of more than one name, it matches the names provided if `negate` is false or
+    missing, or it matches anything except the names provided if `negate` is true.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -15285,7 +15704,7 @@ class ExceptionPathSegment(BaseSchema):
             "items": {
                 "type": "string"
             },
-            "description": "Depending on the value of 'negate' the names that should match or not match."
+            "description": "Depending on the value of `negate` the names that should match or not match."
         }
     }
     __refs__ = set()
@@ -15294,7 +15713,7 @@ class ExceptionPathSegment(BaseSchema):
 
     def __init__(self, names, negate=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param array names: Depending on the value of 'negate' the names that should match or not match.
+        :param array names: Depending on the value of `negate` the names that should match or not match.
         :param boolean negate: If false or missing this segment matches the names provided, otherwise it matches anything except the names provided.
         """
         self.names = names
@@ -15339,7 +15758,7 @@ class ExceptionDetails(BaseSchema):
         },
         "evaluateName": {
             "type": "string",
-            "description": "Optional expression that can be evaluated in the current scope to obtain the exception object."
+            "description": "An expression that can be evaluated in the current scope to obtain the exception object."
         },
         "stackTrace": {
             "type": "string",
@@ -15362,7 +15781,7 @@ class ExceptionDetails(BaseSchema):
         :param string message: Message contained in the exception.
         :param string typeName: Short type name of the exception object.
         :param string fullTypeName: Fully-qualified type name of the exception object.
-        :param string evaluateName: Optional expression that can be evaluated in the current scope to obtain the exception object.
+        :param string evaluateName: An expression that can be evaluated in the current scope to obtain the exception object.
         :param string stackTrace: Stack trace at the time the exception was thrown.
         :param array innerException: Details of the exception contained by this exception, if any.
         """
@@ -15416,11 +15835,11 @@ class DisassembledInstruction(BaseSchema):
     __props__ = {
         "address": {
             "type": "string",
-            "description": "The address of the instruction. Treated as a hex value if prefixed with '0x', or as a decimal value otherwise."
+            "description": "The address of the instruction. Treated as a hex value if prefixed with `0x`, or as a decimal value otherwise."
         },
         "instructionBytes": {
             "type": "string",
-            "description": "Optional raw bytes representing the instruction and its operands, in an implementation-defined format."
+            "description": "Raw bytes representing the instruction and its operands, in an implementation-defined format."
         },
         "instruction": {
             "type": "string",
@@ -15449,17 +15868,25 @@ class DisassembledInstruction(BaseSchema):
         "endColumn": {
             "type": "integer",
             "description": "The end column of the range that corresponds to this instruction, if any."
+        },
+        "presentationHint": {
+            "type": "string",
+            "description": "A hint for how to present the instruction in the UI.\n\nA value of `invalid` may be used to indicate this instruction is 'filler' and cannot be reached by the program. For example, unreadable memory addresses may be presented is 'invalid.'",
+            "enum": [
+                "normal",
+                "invalid"
+            ]
         }
     }
     __refs__ = set(['location'])
 
     __slots__ = list(__props__.keys()) + ['kwargs']
 
-    def __init__(self, address, instruction, instructionBytes=None, symbol=None, location=None, line=None, column=None, endLine=None, endColumn=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+    def __init__(self, address, instruction, instructionBytes=None, symbol=None, location=None, line=None, column=None, endLine=None, endColumn=None, presentationHint=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param string address: The address of the instruction. Treated as a hex value if prefixed with '0x', or as a decimal value otherwise.
+        :param string address: The address of the instruction. Treated as a hex value if prefixed with `0x`, or as a decimal value otherwise.
         :param string instruction: Text representing the instruction and its operands, in an implementation-defined format.
-        :param string instructionBytes: Optional raw bytes representing the instruction and its operands, in an implementation-defined format.
+        :param string instructionBytes: Raw bytes representing the instruction and its operands, in an implementation-defined format.
         :param string symbol: Name of the symbol that corresponds with the location of this instruction, if any.
         :param Source location: Source location that corresponds to this instruction, if any.
         Should always be set (if available) on the first instruction returned,
@@ -15468,6 +15895,9 @@ class DisassembledInstruction(BaseSchema):
         :param integer column: The column within the line that corresponds to this instruction, if any.
         :param integer endLine: The end line of the range that corresponds to this instruction, if any.
         :param integer endColumn: The end column of the range that corresponds to this instruction, if any.
+        :param string presentationHint: A hint for how to present the instruction in the UI.
+        
+        A value of `invalid` may be used to indicate this instruction is 'filler' and cannot be reached by the program. For example, unreadable memory addresses may be presented is 'invalid.'
         """
         self.address = address
         self.instruction = instruction
@@ -15481,6 +15911,7 @@ class DisassembledInstruction(BaseSchema):
         self.column = column
         self.endLine = endLine
         self.endColumn = endColumn
+        self.presentationHint = presentationHint
         self.kwargs = kwargs
 
 
@@ -15494,6 +15925,7 @@ class DisassembledInstruction(BaseSchema):
         column = self.column
         endLine = self.endLine
         endColumn = self.endColumn
+        presentationHint = self.presentationHint
         dct = {
             'address': address,
             'instruction': instruction,
@@ -15512,6 +15944,8 @@ class DisassembledInstruction(BaseSchema):
             dct['endLine'] = endLine
         if endColumn is not None:
             dct['endColumn'] = endColumn
+        if presentationHint is not None:
+            dct['presentationHint'] = presentationHint
         dct.update(self.kwargs)
         return dct
 
@@ -15519,7 +15953,7 @@ class DisassembledInstruction(BaseSchema):
 @register
 class InvalidatedAreas(BaseSchema):
     """
-    Logical areas that can be invalidated by the 'invalidated' event.
+    Logical areas that can be invalidated by the `invalidated` event.
 
     Note: automatically generated code. Do not edit manually.
     """
@@ -15556,7 +15990,7 @@ class SetDebuggerPropertyRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -15583,7 +16017,7 @@ class SetDebuggerPropertyRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param SetDebuggerPropertyArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'setDebuggerProperty'
@@ -15653,7 +16087,7 @@ class SetDebuggerPropertyArguments(BaseSchema):
             "type": [
                 "boolean"
             ],
-            "description": "If false then a notification is generated for each thread event. If true a single event is gnenerated, and all threads follow that behavior."
+            "description": "If false then a notification is generated for each thread event. If True a single event is gnenerated, and all threads follow that behavior."
         }
     }
     __refs__ = set()
@@ -15716,7 +16150,7 @@ class SetDebuggerPropertyResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -15730,7 +16164,7 @@ class SetDebuggerPropertyResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -15738,12 +16172,14 @@ class SetDebuggerPropertyResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -15756,7 +16192,7 @@ class SetDebuggerPropertyResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -15768,14 +16204,14 @@ class SetDebuggerPropertyResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -15822,7 +16258,7 @@ class PydevdInputRequestedEvent(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -15857,7 +16293,7 @@ class PydevdInputRequestedEvent(BaseSchema):
         """
         :param string type: 
         :param string event: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Event-specific information.
         """
         self.type = 'event'
@@ -15907,7 +16343,7 @@ class SetPydevdSourceMapRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -15934,7 +16370,7 @@ class SetPydevdSourceMapRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param SetPydevdSourceMapArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'setPydevdSourceMap'
@@ -16029,7 +16465,7 @@ class SetPydevdSourceMapResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -16043,7 +16479,7 @@ class SetPydevdSourceMapResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -16051,12 +16487,14 @@ class SetPydevdSourceMapResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -16069,7 +16507,7 @@ class SetPydevdSourceMapResponse(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Contains request result if success is true and optional error details if success is false."
+            "description": "Contains request result if success is True and error details if success is false."
         }
     }
     __refs__ = set()
@@ -16081,14 +16519,14 @@ class SetPydevdSourceMapResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and error details if success is false.
         """
         self.type = 'response'
         self.request_seq = request_seq
@@ -16197,7 +16635,7 @@ class PydevdSystemInfoRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -16223,7 +16661,7 @@ class PydevdSystemInfoRequest(BaseSchema):
         """
         :param string type: 
         :param string command: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         :param PydevdSystemInfoArguments arguments: 
         """
         self.type = 'request'
@@ -16292,7 +16730,7 @@ class PydevdSystemInfoResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -16306,7 +16744,7 @@ class PydevdSystemInfoResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -16314,12 +16752,14 @@ class PydevdSystemInfoResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -16359,13 +16799,13 @@ class PydevdSystemInfoResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param PydevdSystemInfoResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -16661,7 +17101,7 @@ class PydevdAuthorizeRequest(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -16688,7 +17128,7 @@ class PydevdAuthorizeRequest(BaseSchema):
         :param string type: 
         :param string command: 
         :param PydevdAuthorizeArguments arguments: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
         """
         self.type = 'request'
         self.command = 'pydevdAuthorize'
@@ -16763,7 +17203,7 @@ class PydevdAuthorizeResponse(BaseSchema):
     __props__ = {
         "seq": {
             "type": "integer",
-            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
         },
         "type": {
             "type": "string",
@@ -16777,7 +17217,7 @@ class PydevdAuthorizeResponse(BaseSchema):
         },
         "success": {
             "type": "boolean",
-            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
         },
         "command": {
             "type": "string",
@@ -16785,12 +17225,14 @@ class PydevdAuthorizeResponse(BaseSchema):
         },
         "message": {
             "type": "string",
-            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
             "_enum": [
-                "cancelled"
+                "cancelled",
+                "notStopped"
             ],
             "enumDescriptions": [
-                "request was cancelled."
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
             ]
         },
         "body": {
@@ -16815,13 +17257,13 @@ class PydevdAuthorizeResponse(BaseSchema):
         :param string type: 
         :param integer request_seq: Sequence number of the corresponding request.
         :param boolean success: Outcome of the request.
-        If true, the request was successful and the 'body' attribute may contain the result of the request.
-        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
         :param string command: The command requested.
         :param PydevdAuthorizeResponseBody body: 
-        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
-        :param string message: Contains the raw error in short form if 'success' is false.
-        This raw error might be interpreted by the frontend and is not shown in the UI.
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
         Some predefined values exist.
         """
         self.type = 'response'
@@ -16869,7 +17311,7 @@ class ErrorResponseBody(BaseSchema):
 
     __props__ = {
         "error": {
-            "description": "An optional, structured error message.",
+            "description": "A structured error message.",
             "type": "Message"
         }
     }
@@ -16879,7 +17321,7 @@ class ErrorResponseBody(BaseSchema):
 
     def __init__(self, error=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param Message error: An optional, structured error message.
+        :param Message error: A structured error message.
         """
         if error is None:
             self.error = Message()
@@ -16909,7 +17351,7 @@ class StoppedEventBody(BaseSchema):
     __props__ = {
         "reason": {
             "type": "string",
-            "description": "The reason for the event.\nFor backward compatibility this string is shown in the UI if the 'description' attribute is missing (but it must not be translated).",
+            "description": "The reason for the event.\nFor backward compatibility this string is shown in the UI if the `description` attribute is missing (but it must not be translated).",
             "_enum": [
                 "step",
                 "breakpoint",
@@ -16924,7 +17366,7 @@ class StoppedEventBody(BaseSchema):
         },
         "description": {
             "type": "string",
-            "description": "The full reason for the event, e.g. 'Paused on exception'. This string is shown in the UI as is and must be translated."
+            "description": "The full reason for the event, e.g. 'Paused on exception'. This string is shown in the UI as is and can be translated."
         },
         "threadId": {
             "type": "integer",
@@ -16932,22 +17374,22 @@ class StoppedEventBody(BaseSchema):
         },
         "preserveFocusHint": {
             "type": "boolean",
-            "description": "A value of true hints to the frontend that this event should not change the focus."
+            "description": "A value of True hints to the client that this event should not change the focus."
         },
         "text": {
             "type": "string",
-            "description": "Additional information. E.g. if reason is 'exception', text contains the exception name. This string is shown in the UI."
+            "description": "Additional information. E.g. if reason is `exception`, text contains the exception name. This string is shown in the UI."
         },
         "allThreadsStopped": {
             "type": "boolean",
-            "description": "If 'allThreadsStopped' is true, a debug adapter can announce that all threads have stopped.\n- The client should use this information to enable that all threads can be expanded to access their stacktraces.\n- If the attribute is missing or false, only the thread with the given threadId can be expanded."
+            "description": "If `allThreadsStopped` is True, a debug adapter can announce that all threads have stopped.\n- The client should use this information to enable that all threads can be expanded to access their stacktraces.\n- If the attribute is missing or false, only the thread with the given `threadId` can be expanded."
         },
         "hitBreakpointIds": {
             "type": "array",
             "items": {
                 "type": "integer"
             },
-            "description": "Ids of the breakpoints that triggered the event. In most cases there will be only a single breakpoint but here are some examples for multiple breakpoints:\n- Different types of breakpoints map to the same location.\n- Multiple source breakpoints get collapsed to the same instruction by the compiler/runtime.\n- Multiple function breakpoints with different function names map to the same location."
+            "description": "Ids of the breakpoints that triggered the event. In most cases there is only a single breakpoint but here are some examples for multiple breakpoints:\n- Different types of breakpoints map to the same location.\n- Multiple source breakpoints get collapsed to the same instruction by the compiler/runtime.\n- Multiple function breakpoints with different function names map to the same location."
         }
     }
     __refs__ = set()
@@ -16957,15 +17399,15 @@ class StoppedEventBody(BaseSchema):
     def __init__(self, reason, description=None, threadId=None, preserveFocusHint=None, text=None, allThreadsStopped=None, hitBreakpointIds=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string reason: The reason for the event.
-        For backward compatibility this string is shown in the UI if the 'description' attribute is missing (but it must not be translated).
-        :param string description: The full reason for the event, e.g. 'Paused on exception'. This string is shown in the UI as is and must be translated.
+        For backward compatibility this string is shown in the UI if the `description` attribute is missing (but it must not be translated).
+        :param string description: The full reason for the event, e.g. 'Paused on exception'. This string is shown in the UI as is and can be translated.
         :param integer threadId: The thread which was stopped.
-        :param boolean preserveFocusHint: A value of true hints to the frontend that this event should not change the focus.
-        :param string text: Additional information. E.g. if reason is 'exception', text contains the exception name. This string is shown in the UI.
-        :param boolean allThreadsStopped: If 'allThreadsStopped' is true, a debug adapter can announce that all threads have stopped.
+        :param boolean preserveFocusHint: A value of true hints to the client that this event should not change the focus.
+        :param string text: Additional information. E.g. if reason is `exception`, text contains the exception name. This string is shown in the UI.
+        :param boolean allThreadsStopped: If `allThreadsStopped` is true, a debug adapter can announce that all threads have stopped.
         - The client should use this information to enable that all threads can be expanded to access their stacktraces.
-        - If the attribute is missing or false, only the thread with the given threadId can be expanded.
-        :param array hitBreakpointIds: Ids of the breakpoints that triggered the event. In most cases there will be only a single breakpoint but here are some examples for multiple breakpoints:
+        - If the attribute is missing or false, only the thread with the given `threadId` can be expanded.
+        :param array hitBreakpointIds: Ids of the breakpoints that triggered the event. In most cases there is only a single breakpoint but here are some examples for multiple breakpoints:
         - Different types of breakpoints map to the same location.
         - Multiple source breakpoints get collapsed to the same instruction by the compiler/runtime.
         - Multiple function breakpoints with different function names map to the same location.
@@ -17041,7 +17483,7 @@ class ContinuedEventBody(BaseSchema):
         },
         "allThreadsContinued": {
             "type": "boolean",
-            "description": "If 'allThreadsContinued' is true, a debug adapter can announce that all threads have continued."
+            "description": "If `allThreadsContinued` is True, a debug adapter can announce that all threads have continued."
         }
     }
     __refs__ = set()
@@ -17051,7 +17493,7 @@ class ContinuedEventBody(BaseSchema):
     def __init__(self, threadId, allThreadsContinued=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param integer threadId: The thread which was continued.
-        :param boolean allThreadsContinued: If 'allThreadsContinued' is true, a debug adapter can announce that all threads have continued.
+        :param boolean allThreadsContinued: If `allThreadsContinued` is true, a debug adapter can announce that all threads have continued.
         """
         self.threadId = threadId
         self.allThreadsContinued = allThreadsContinued
@@ -17141,7 +17583,7 @@ class TerminatedEventBody(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "A debug adapter may set 'restart' to true (or to an arbitrary object) to request that the front end restarts the session.\nThe value is not interpreted by the client and passed unmodified as an attribute '__restart' to the 'launch' and 'attach' requests."
+            "description": "A debug adapter may set `restart` to True (or to an arbitrary object) to request that the client restarts the session.\nThe value is not interpreted by the client and passed unmodified as an attribute `__restart` to the `launch` and `attach` requests."
         }
     }
     __refs__ = set()
@@ -17150,8 +17592,8 @@ class TerminatedEventBody(BaseSchema):
 
     def __init__(self, restart=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] restart: A debug adapter may set 'restart' to true (or to an arbitrary object) to request that the front end restarts the session.
-        The value is not interpreted by the client and passed unmodified as an attribute '__restart' to the 'launch' and 'attach' requests.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] restart: A debug adapter may set `restart` to true (or to an arbitrary object) to request that the client restarts the session.
+        The value is not interpreted by the client and passed unmodified as an attribute `__restart` to the `launch` and `attach` requests.
         """
         self.restart = restart
         self.kwargs = kwargs
@@ -17242,7 +17684,7 @@ class OutputEventBody(BaseSchema):
     __props__ = {
         "category": {
             "type": "string",
-            "description": "The output category. If not specified or if the category is not understand by the client, 'console' is assumed.",
+            "description": "The output category. If not specified or if the category is not understood by the client, `console` is assumed.",
             "_enum": [
                 "console",
                 "important",
@@ -17252,7 +17694,7 @@ class OutputEventBody(BaseSchema):
             ],
             "enumDescriptions": [
                 "Show the output in the client's default message UI, e.g. a 'debug console'. This category should only be used for informational output from the debugger (as opposed to the debuggee).",
-                "A hint for the client to show the ouput in the client's UI for important and highly visible information, e.g. as a popup notification. This category should only be used for important messages from the debugger (as opposed to the debuggee). Since this category value is a hint, clients might ignore the hint and assume the 'console' category.",
+                "A hint for the client to show the output in the client's UI for important and highly visible information, e.g. as a popup notification. This category should only be used for important messages from the debugger (as opposed to the debuggee). Since this category value is a hint, clients might ignore the hint and assume the `console` category.",
                 "Show the output as normal program output from the debuggee.",
                 "Show the output as error program output from the debuggee.",
                 "Send the output to telemetry instead of showing it to the user."
@@ -17271,26 +17713,26 @@ class OutputEventBody(BaseSchema):
                 "end"
             ],
             "enumDescriptions": [
-                "Start a new group in expanded mode. Subsequent output events are members of the group and should be shown indented.\nThe 'output' attribute becomes the name of the group and is not indented.",
-                "Start a new group in collapsed mode. Subsequent output events are members of the group and should be shown indented (as soon as the group is expanded).\nThe 'output' attribute becomes the name of the group and is not indented.",
-                "End the current group and decreases the indentation of subsequent output events.\nA non empty 'output' attribute is shown as the unindented end of the group."
+                "Start a new group in expanded mode. Subsequent output events are members of the group and should be shown indented.\nThe `output` attribute becomes the name of the group and is not indented.",
+                "Start a new group in collapsed mode. Subsequent output events are members of the group and should be shown indented (as soon as the group is expanded).\nThe `output` attribute becomes the name of the group and is not indented.",
+                "End the current group and decrease the indentation of subsequent output events.\nA non-empty `output` attribute is shown as the unindented end of the group."
             ]
         },
         "variablesReference": {
             "type": "integer",
-            "description": "If an attribute 'variablesReference' exists and its value is > 0, the output contains objects which can be retrieved by passing 'variablesReference' to the 'variables' request. The value should be less than or equal to 2147483647 (2^31-1)."
+            "description": "If an attribute `variablesReference` exists and its value is > 0, the output contains objects which can be retrieved by passing `variablesReference` to the `variables` request as long as execution remains suspended. See 'Lifetime of Object References' in the Overview section for details."
         },
         "source": {
-            "description": "An optional source location where the output was produced.",
+            "description": "The source location where the output was produced.",
             "type": "Source"
         },
         "line": {
             "type": "integer",
-            "description": "An optional source location line where the output was produced."
+            "description": "The source location's line where the output was produced."
         },
         "column": {
             "type": "integer",
-            "description": "An optional source location column where the output was produced."
+            "description": "The position in `line` where the output was produced. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based."
         },
         "data": {
             "type": [
@@ -17302,7 +17744,7 @@ class OutputEventBody(BaseSchema):
                 "object",
                 "string"
             ],
-            "description": "Optional data to report. For the 'telemetry' category the data will be sent to telemetry, for the other categories the data is shown in JSON format."
+            "description": "Additional data to report. For the `telemetry` category the data is sent to telemetry, for the other categories the data is shown in JSON format."
         }
     }
     __refs__ = set(['source'])
@@ -17312,13 +17754,13 @@ class OutputEventBody(BaseSchema):
     def __init__(self, output, category=None, group=None, variablesReference=None, source=None, line=None, column=None, data=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string output: The output to report.
-        :param string category: The output category. If not specified or if the category is not understand by the client, 'console' is assumed.
+        :param string category: The output category. If not specified or if the category is not understood by the client, `console` is assumed.
         :param string group: Support for keeping an output log organized by grouping related messages.
-        :param integer variablesReference: If an attribute 'variablesReference' exists and its value is > 0, the output contains objects which can be retrieved by passing 'variablesReference' to the 'variables' request. The value should be less than or equal to 2147483647 (2^31-1).
-        :param Source source: An optional source location where the output was produced.
-        :param integer line: An optional source location line where the output was produced.
-        :param integer column: An optional source location column where the output was produced.
-        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] data: Optional data to report. For the 'telemetry' category the data will be sent to telemetry, for the other categories the data is shown in JSON format.
+        :param integer variablesReference: If an attribute `variablesReference` exists and its value is > 0, the output contains objects which can be retrieved by passing `variablesReference` to the `variables` request as long as execution remains suspended. See 'Lifetime of Object References' in the Overview section for details.
+        :param Source source: The source location where the output was produced.
+        :param integer line: The source location's line where the output was produced.
+        :param integer column: The position in `line` where the output was produced. It is measured in UTF-16 code units and the client capability `columnsStartAt1` determines whether it is 0- or 1-based.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] data: Additional data to report. For the `telemetry` category the data is sent to telemetry, for the other categories the data is shown in JSON format.
         """
         self.output = output
         self.category = category
@@ -17400,7 +17842,7 @@ class BreakpointEventBody(BaseSchema):
             ]
         },
         "breakpoint": {
-            "description": "The 'id' attribute is used to find the target breakpoint and the other attributes are used as the new values.",
+            "description": "The `id` attribute is used to find the target breakpoint, the other attributes are used as the new values.",
             "type": "Breakpoint"
         }
     }
@@ -17411,7 +17853,7 @@ class BreakpointEventBody(BaseSchema):
     def __init__(self, reason, breakpoint, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string reason: The reason for the event.
-        :param Breakpoint breakpoint: The 'id' attribute is used to find the target breakpoint and the other attributes are used as the new values.
+        :param Breakpoint breakpoint: The `id` attribute is used to find the target breakpoint, the other attributes are used as the new values.
         """
         self.reason = reason
         if breakpoint is None:
@@ -17451,7 +17893,7 @@ class ModuleEventBody(BaseSchema):
             ]
         },
         "module": {
-            "description": "The new, changed, or removed module. In case of 'removed' only the module id is used.",
+            "description": "The new, changed, or removed module. In case of `removed` only the module id is used.",
             "type": "Module"
         }
     }
@@ -17462,7 +17904,7 @@ class ModuleEventBody(BaseSchema):
     def __init__(self, reason, module, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string reason: The reason for the event.
-        :param Module module: The new, changed, or removed module. In case of 'removed' only the module id is used.
+        :param Module module: The new, changed, or removed module. In case of `removed` only the module id is used.
         """
         self.reason = reason
         if module is None:
@@ -17549,11 +17991,11 @@ class ProcessEventBody(BaseSchema):
         },
         "systemProcessId": {
             "type": "integer",
-            "description": "The system process id of the debugged process. This property will be missing for non-system processes."
+            "description": "The system process id of the debugged process. This property is missing for non-system processes."
         },
         "isLocalProcess": {
             "type": "boolean",
-            "description": "If true, the process is running on the same computer as the debug adapter."
+            "description": "If True, the process is running on the same computer as the debug adapter."
         },
         "startMethod": {
             "type": "string",
@@ -17581,7 +18023,7 @@ class ProcessEventBody(BaseSchema):
     def __init__(self, name, systemProcessId=None, isLocalProcess=None, startMethod=None, pointerSize=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string name: The logical name of the process. This is usually the full path to process's executable file. Example: /home/example/myproj/program.js.
-        :param integer systemProcessId: The system process id of the debugged process. This property will be missing for non-system processes.
+        :param integer systemProcessId: The system process id of the debugged process. This property is missing for non-system processes.
         :param boolean isLocalProcess: If true, the process is running on the same computer as the debug adapter.
         :param string startMethod: Describes how the debug engine started debugging this process.
         :param integer pointerSize: The size of a pointer or address for this process, in bits. This value may be used by clients when formatting addresses for display.
@@ -17664,27 +18106,27 @@ class ProgressStartEventBody(BaseSchema):
     __props__ = {
         "progressId": {
             "type": "string",
-            "description": "An ID that must be used in subsequent 'progressUpdate' and 'progressEnd' events to make them refer to the same progress reporting.\nIDs must be unique within a debug session."
+            "description": "An ID that can be used in subsequent `progressUpdate` and `progressEnd` events to make them refer to the same progress reporting.\nIDs must be unique within a debug session."
         },
         "title": {
             "type": "string",
-            "description": "Mandatory (short) title of the progress reporting. Shown in the UI to describe the long running operation."
+            "description": "Short title of the progress reporting. Shown in the UI to describe the long running operation."
         },
         "requestId": {
             "type": "integer",
-            "description": "The request ID that this progress report is related to. If specified a debug adapter is expected to emit\nprogress events for the long running request until the request has been either completed or cancelled.\nIf the request ID is omitted, the progress report is assumed to be related to some general activity of the debug adapter."
+            "description": "The request ID that this progress report is related to. If specified a debug adapter is expected to emit progress events for the long running request until the request has been either completed or cancelled.\nIf the request ID is omitted, the progress report is assumed to be related to some general activity of the debug adapter."
         },
         "cancellable": {
             "type": "boolean",
-            "description": "If true, the request that reports progress may be canceled with a 'cancel' request.\nSo this property basically controls whether the client should use UX that supports cancellation.\nClients that don't support cancellation are allowed to ignore the setting."
+            "description": "If True, the request that reports progress may be cancelled with a `cancel` request.\nSo this property basically controls whether the client should use UX that supports cancellation.\nClients that don't support cancellation are allowed to ignore the setting."
         },
         "message": {
             "type": "string",
-            "description": "Optional, more detailed progress message."
+            "description": "More detailed progress message."
         },
         "percentage": {
             "type": "number",
-            "description": "Optional progress percentage to display (value range: 0 to 100). If omitted no percentage will be shown."
+            "description": "Progress percentage to display (value range: 0 to 100). If omitted no percentage is shown."
         }
     }
     __refs__ = set()
@@ -17693,17 +18135,16 @@ class ProgressStartEventBody(BaseSchema):
 
     def __init__(self, progressId, title, requestId=None, cancellable=None, message=None, percentage=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param string progressId: An ID that must be used in subsequent 'progressUpdate' and 'progressEnd' events to make them refer to the same progress reporting.
+        :param string progressId: An ID that can be used in subsequent `progressUpdate` and `progressEnd` events to make them refer to the same progress reporting.
         IDs must be unique within a debug session.
-        :param string title: Mandatory (short) title of the progress reporting. Shown in the UI to describe the long running operation.
-        :param integer requestId: The request ID that this progress report is related to. If specified a debug adapter is expected to emit
-        progress events for the long running request until the request has been either completed or cancelled.
+        :param string title: Short title of the progress reporting. Shown in the UI to describe the long running operation.
+        :param integer requestId: The request ID that this progress report is related to. If specified a debug adapter is expected to emit progress events for the long running request until the request has been either completed or cancelled.
         If the request ID is omitted, the progress report is assumed to be related to some general activity of the debug adapter.
-        :param boolean cancellable: If true, the request that reports progress may be canceled with a 'cancel' request.
+        :param boolean cancellable: If true, the request that reports progress may be cancelled with a `cancel` request.
         So this property basically controls whether the client should use UX that supports cancellation.
         Clients that don't support cancellation are allowed to ignore the setting.
-        :param string message: Optional, more detailed progress message.
-        :param number percentage: Optional progress percentage to display (value range: 0 to 100). If omitted no percentage will be shown.
+        :param string message: More detailed progress message.
+        :param number percentage: Progress percentage to display (value range: 0 to 100). If omitted no percentage is shown.
         """
         self.progressId = progressId
         self.title = title
@@ -17748,15 +18189,15 @@ class ProgressUpdateEventBody(BaseSchema):
     __props__ = {
         "progressId": {
             "type": "string",
-            "description": "The ID that was introduced in the initial 'progressStart' event."
+            "description": "The ID that was introduced in the initial `progressStart` event."
         },
         "message": {
             "type": "string",
-            "description": "Optional, more detailed progress message. If omitted, the previous message (if any) is used."
+            "description": "More detailed progress message. If omitted, the previous message (if any) is used."
         },
         "percentage": {
             "type": "number",
-            "description": "Optional progress percentage to display (value range: 0 to 100). If omitted no percentage will be shown."
+            "description": "Progress percentage to display (value range: 0 to 100). If omitted no percentage is shown."
         }
     }
     __refs__ = set()
@@ -17765,9 +18206,9 @@ class ProgressUpdateEventBody(BaseSchema):
 
     def __init__(self, progressId, message=None, percentage=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param string progressId: The ID that was introduced in the initial 'progressStart' event.
-        :param string message: Optional, more detailed progress message. If omitted, the previous message (if any) is used.
-        :param number percentage: Optional progress percentage to display (value range: 0 to 100). If omitted no percentage will be shown.
+        :param string progressId: The ID that was introduced in the initial `progressStart` event.
+        :param string message: More detailed progress message. If omitted, the previous message (if any) is used.
+        :param number percentage: Progress percentage to display (value range: 0 to 100). If omitted no percentage is shown.
         """
         self.progressId = progressId
         self.message = message
@@ -17801,11 +18242,11 @@ class ProgressEndEventBody(BaseSchema):
     __props__ = {
         "progressId": {
             "type": "string",
-            "description": "The ID that was introduced in the initial 'ProgressStartEvent'."
+            "description": "The ID that was introduced in the initial `ProgressStartEvent`."
         },
         "message": {
             "type": "string",
-            "description": "Optional, more detailed progress message. If omitted, the previous message (if any) is used."
+            "description": "More detailed progress message. If omitted, the previous message (if any) is used."
         }
     }
     __refs__ = set()
@@ -17814,8 +18255,8 @@ class ProgressEndEventBody(BaseSchema):
 
     def __init__(self, progressId, message=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param string progressId: The ID that was introduced in the initial 'ProgressStartEvent'.
-        :param string message: Optional, more detailed progress message. If omitted, the previous message (if any) is used.
+        :param string progressId: The ID that was introduced in the initial `ProgressStartEvent`.
+        :param string message: More detailed progress message. If omitted, the previous message (if any) is used.
         """
         self.progressId = progressId
         self.message = message
@@ -17845,7 +18286,7 @@ class InvalidatedEventBody(BaseSchema):
     __props__ = {
         "areas": {
             "type": "array",
-            "description": "Optional set of logical areas that got invalidated. This property has a hint characteristic: a client can only be expected to make a 'best effort' in honouring the areas but there are no guarantees. If this property is missing, empty, or if values are not understand the client should assume a single value 'all'.",
+            "description": "Set of logical areas that got invalidated. This property has a hint characteristic: a client can only be expected to make a 'best effort' in honoring the areas but there are no guarantees. If this property is missing, empty, or if values are not understood, the client should assume a single value `all`.",
             "items": {
                 "$ref": "#/definitions/InvalidatedAreas"
             }
@@ -17856,7 +18297,7 @@ class InvalidatedEventBody(BaseSchema):
         },
         "stackFrameId": {
             "type": "integer",
-            "description": "If specified, the client only needs to refetch data related to this stack frame (and the 'threadId' is ignored)."
+            "description": "If specified, the client only needs to refetch data related to this stack frame (and the `threadId` is ignored)."
         }
     }
     __refs__ = set()
@@ -17865,9 +18306,9 @@ class InvalidatedEventBody(BaseSchema):
 
     def __init__(self, areas=None, threadId=None, stackFrameId=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param array areas: Optional set of logical areas that got invalidated. This property has a hint characteristic: a client can only be expected to make a 'best effort' in honouring the areas but there are no guarantees. If this property is missing, empty, or if values are not understand the client should assume a single value 'all'.
+        :param array areas: Set of logical areas that got invalidated. This property has a hint characteristic: a client can only be expected to make a 'best effort' in honoring the areas but there are no guarantees. If this property is missing, empty, or if values are not understood, the client should assume a single value `all`.
         :param integer threadId: If specified, the client only needs to refetch data related to this thread.
-        :param integer stackFrameId: If specified, the client only needs to refetch data related to this stack frame (and the 'threadId' is ignored).
+        :param integer stackFrameId: If specified, the client only needs to refetch data related to this stack frame (and the `threadId` is ignored).
         """
         self.areas = areas
         if update_ids_from_dap and self.areas:
@@ -18038,6 +18479,34 @@ class RunInTerminalResponseBody(BaseSchema):
 
 
 @register
+class StartDebuggingRequestArgumentsConfiguration(BaseSchema):
+    """
+    "configuration" of StartDebuggingRequestArguments
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {}
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+    
+        """
+    
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        dct = {
+        }
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
 class BreakpointLocationsResponseBody(BaseSchema):
     """
     "body" of BreakpointLocationsResponse
@@ -18094,7 +18563,7 @@ class SetBreakpointsResponseBody(BaseSchema):
             "items": {
                 "$ref": "#/definitions/Breakpoint"
             },
-            "description": "Information about the breakpoints.\nThe array elements are in the same order as the elements of the 'breakpoints' (or the deprecated 'lines') array in the arguments."
+            "description": "Information about the breakpoints.\nThe array elements are in the same order as the elements of the `breakpoints` (or the deprecated `lines`) array in the arguments."
         }
     }
     __refs__ = set()
@@ -18104,7 +18573,7 @@ class SetBreakpointsResponseBody(BaseSchema):
     def __init__(self, breakpoints, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param array breakpoints: Information about the breakpoints.
-        The array elements are in the same order as the elements of the 'breakpoints' (or the deprecated 'lines') array in the arguments.
+        The array elements are in the same order as the elements of the `breakpoints` (or the deprecated `lines`) array in the arguments.
         """
         self.breakpoints = breakpoints
         if update_ids_from_dap and self.breakpoints:
@@ -18138,7 +18607,7 @@ class SetFunctionBreakpointsResponseBody(BaseSchema):
             "items": {
                 "$ref": "#/definitions/Breakpoint"
             },
-            "description": "Information about the breakpoints. The array elements correspond to the elements of the 'breakpoints' array."
+            "description": "Information about the breakpoints. The array elements correspond to the elements of the `breakpoints` array."
         }
     }
     __refs__ = set()
@@ -18147,7 +18616,7 @@ class SetFunctionBreakpointsResponseBody(BaseSchema):
 
     def __init__(self, breakpoints, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param array breakpoints: Information about the breakpoints. The array elements correspond to the elements of the 'breakpoints' array.
+        :param array breakpoints: Information about the breakpoints. The array elements correspond to the elements of the `breakpoints` array.
         """
         self.breakpoints = breakpoints
         if update_ids_from_dap and self.breakpoints:
@@ -18181,7 +18650,7 @@ class SetExceptionBreakpointsResponseBody(BaseSchema):
             "items": {
                 "$ref": "#/definitions/Breakpoint"
             },
-            "description": "Information about the exception breakpoints or filters.\nThe breakpoints returned are in the same order as the elements of the 'filters', 'filterOptions', 'exceptionOptions' arrays in the arguments. If both 'filters' and 'filterOptions' are given, the returned array must start with 'filters' information first, followed by 'filterOptions' information."
+            "description": "Information about the exception breakpoints or filters.\nThe breakpoints returned are in the same order as the elements of the `filters`, `filterOptions`, `exceptionOptions` arrays in the arguments. If both `filters` and `filterOptions` are given, the returned array must start with `filters` information first, followed by `filterOptions` information."
         }
     }
     __refs__ = set()
@@ -18191,7 +18660,7 @@ class SetExceptionBreakpointsResponseBody(BaseSchema):
     def __init__(self, breakpoints=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param array breakpoints: Information about the exception breakpoints or filters.
-        The breakpoints returned are in the same order as the elements of the 'filters', 'filterOptions', 'exceptionOptions' arrays in the arguments. If both 'filters' and 'filterOptions' are given, the returned array must start with 'filters' information first, followed by 'filterOptions' information.
+        The breakpoints returned are in the same order as the elements of the `filters`, `filterOptions`, `exceptionOptions` arrays in the arguments. If both `filters` and `filterOptions` are given, the returned array must start with `filters` information first, followed by `filterOptions` information.
         """
         self.breakpoints = breakpoints
         if update_ids_from_dap and self.breakpoints:
@@ -18226,7 +18695,7 @@ class DataBreakpointInfoResponseBody(BaseSchema):
                 "string",
                 "null"
             ],
-            "description": "An identifier for the data on which a data breakpoint can be registered with the setDataBreakpoints request or null if no data breakpoint is available."
+            "description": "An identifier for the data on which a data breakpoint can be registered with the `setDataBreakpoints` request or null if no data breakpoint is available. If a `variablesReference` or `frameId` is passed, the `dataId` is valid in the current suspended state, otherwise it's valid indefinitely. See 'Lifetime of Object References' in the Overview section for details. Breakpoints set using the `dataId` in the `setDataBreakpoints` request may outlive the lifetime of the associated `dataId`."
         },
         "description": {
             "type": "string",
@@ -18237,11 +18706,11 @@ class DataBreakpointInfoResponseBody(BaseSchema):
             "items": {
                 "$ref": "#/definitions/DataBreakpointAccessType"
             },
-            "description": "Optional attribute listing the available access types for a potential data breakpoint. A UI frontend could surface this information."
+            "description": "Attribute lists the available access types for a potential data breakpoint. A UI client could surface this information."
         },
         "canPersist": {
             "type": "boolean",
-            "description": "Optional attribute indicating that a potential data breakpoint could be persisted across sessions."
+            "description": "Attribute indicates that a potential data breakpoint could be persisted across sessions."
         }
     }
     __refs__ = set()
@@ -18250,10 +18719,10 @@ class DataBreakpointInfoResponseBody(BaseSchema):
 
     def __init__(self, dataId, description, accessTypes=None, canPersist=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param ['string', 'null'] dataId: An identifier for the data on which a data breakpoint can be registered with the setDataBreakpoints request or null if no data breakpoint is available.
+        :param ['string', 'null'] dataId: An identifier for the data on which a data breakpoint can be registered with the `setDataBreakpoints` request or null if no data breakpoint is available. If a `variablesReference` or `frameId` is passed, the `dataId` is valid in the current suspended state, otherwise it's valid indefinitely. See 'Lifetime of Object References' in the Overview section for details. Breakpoints set using the `dataId` in the `setDataBreakpoints` request may outlive the lifetime of the associated `dataId`.
         :param string description: UI string that describes on what data the breakpoint is set on or why a data breakpoint is not available.
-        :param array accessTypes: Optional attribute listing the available access types for a potential data breakpoint. A UI frontend could surface this information.
-        :param boolean canPersist: Optional attribute indicating that a potential data breakpoint could be persisted across sessions.
+        :param array accessTypes: Attribute lists the available access types for a potential data breakpoint. A UI client could surface this information.
+        :param boolean canPersist: Attribute indicates that a potential data breakpoint could be persisted across sessions.
         """
         self.dataId = dataId
         self.description = description
@@ -18298,7 +18767,7 @@ class SetDataBreakpointsResponseBody(BaseSchema):
             "items": {
                 "$ref": "#/definitions/Breakpoint"
             },
-            "description": "Information about the data breakpoints. The array elements correspond to the elements of the input argument 'breakpoints' array."
+            "description": "Information about the data breakpoints. The array elements correspond to the elements of the input argument `breakpoints` array."
         }
     }
     __refs__ = set()
@@ -18307,7 +18776,7 @@ class SetDataBreakpointsResponseBody(BaseSchema):
 
     def __init__(self, breakpoints, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param array breakpoints: Information about the data breakpoints. The array elements correspond to the elements of the input argument 'breakpoints' array.
+        :param array breakpoints: Information about the data breakpoints. The array elements correspond to the elements of the input argument `breakpoints` array.
         """
         self.breakpoints = breakpoints
         if update_ids_from_dap and self.breakpoints:
@@ -18341,7 +18810,7 @@ class SetInstructionBreakpointsResponseBody(BaseSchema):
             "items": {
                 "$ref": "#/definitions/Breakpoint"
             },
-            "description": "Information about the breakpoints. The array elements correspond to the elements of the 'breakpoints' array."
+            "description": "Information about the breakpoints. The array elements correspond to the elements of the `breakpoints` array."
         }
     }
     __refs__ = set()
@@ -18350,7 +18819,7 @@ class SetInstructionBreakpointsResponseBody(BaseSchema):
 
     def __init__(self, breakpoints, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param array breakpoints: Information about the breakpoints. The array elements correspond to the elements of the 'breakpoints' array.
+        :param array breakpoints: Information about the breakpoints. The array elements correspond to the elements of the `breakpoints` array.
         """
         self.breakpoints = breakpoints
         if update_ids_from_dap and self.breakpoints:
@@ -18381,7 +18850,7 @@ class ContinueResponseBody(BaseSchema):
     __props__ = {
         "allThreadsContinued": {
             "type": "boolean",
-            "description": "The value true (or a missing property) signals to the client that all threads have been resumed. The value false must be returned if not all threads were resumed."
+            "description": "The value True (or a missing property) signals to the client that all threads have been resumed. The value false indicates that not all threads were resumed."
         }
     }
     __refs__ = set()
@@ -18390,7 +18859,7 @@ class ContinueResponseBody(BaseSchema):
 
     def __init__(self, allThreadsContinued=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param boolean allThreadsContinued: The value true (or a missing property) signals to the client that all threads have been resumed. The value false must be returned if not all threads were resumed.
+        :param boolean allThreadsContinued: The value true (or a missing property) signals to the client that all threads have been resumed. The value false indicates that not all threads were resumed.
         """
         self.allThreadsContinued = allThreadsContinued
         self.kwargs = kwargs
@@ -18420,11 +18889,11 @@ class StackTraceResponseBody(BaseSchema):
             "items": {
                 "$ref": "#/definitions/StackFrame"
             },
-            "description": "The frames of the stackframe. If the array has length zero, there are no stackframes available.\nThis means that there is no location information available."
+            "description": "The frames of the stack frame. If the array has length zero, there are no stack frames available.\nThis means that there is no location information available."
         },
         "totalFrames": {
             "type": "integer",
-            "description": "The total number of frames available in the stack. If omitted or if totalFrames is larger than the available frames, a client is expected to request frames until a request returns less frames than requested (which indicates the end of the stack). Returning monotonically increasing totalFrames values for subsequent requests can be used to enforce paging in the client."
+            "description": "The total number of frames available in the stack. If omitted or if `totalFrames` is larger than the available frames, a client is expected to request frames until a request returns less frames than requested (which indicates the end of the stack). Returning monotonically increasing `totalFrames` values for subsequent requests can be used to enforce paging in the client."
         }
     }
     __refs__ = set()
@@ -18433,9 +18902,9 @@ class StackTraceResponseBody(BaseSchema):
 
     def __init__(self, stackFrames, totalFrames=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param array stackFrames: The frames of the stackframe. If the array has length zero, there are no stackframes available.
+        :param array stackFrames: The frames of the stack frame. If the array has length zero, there are no stack frames available.
         This means that there is no location information available.
-        :param integer totalFrames: The total number of frames available in the stack. If omitted or if totalFrames is larger than the available frames, a client is expected to request frames until a request returns less frames than requested (which indicates the end of the stack). Returning monotonically increasing totalFrames values for subsequent requests can be used to enforce paging in the client.
+        :param integer totalFrames: The total number of frames available in the stack. If omitted or if `totalFrames` is larger than the available frames, a client is expected to request frames until a request returns less frames than requested (which indicates the end of the stack). Returning monotonically increasing `totalFrames` values for subsequent requests can be used to enforce paging in the client.
         """
         self.stackFrames = stackFrames
         if update_ids_from_dap and self.stackFrames:
@@ -18473,7 +18942,7 @@ class ScopesResponseBody(BaseSchema):
             "items": {
                 "$ref": "#/definitions/Scope"
             },
-            "description": "The scopes of the stackframe. If the array has length zero, there are no scopes available."
+            "description": "The scopes of the stack frame. If the array has length zero, there are no scopes available."
         }
     }
     __refs__ = set()
@@ -18482,7 +18951,7 @@ class ScopesResponseBody(BaseSchema):
 
     def __init__(self, scopes, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param array scopes: The scopes of the stackframe. If the array has length zero, there are no scopes available.
+        :param array scopes: The scopes of the stack frame. If the array has length zero, there are no scopes available.
         """
         self.scopes = scopes
         if update_ids_from_dap and self.scopes:
@@ -18564,39 +19033,46 @@ class SetVariableResponseBody(BaseSchema):
         },
         "variablesReference": {
             "type": "integer",
-            "description": "If variablesReference is > 0, the new value is structured and its children can be retrieved by passing variablesReference to the VariablesRequest.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+            "description": "If `variablesReference` is > 0, the new value is structured and its children can be retrieved by passing `variablesReference` to the `variables` request as long as execution remains suspended. See 'Lifetime of Object References' in the Overview section for details."
         },
         "namedVariables": {
             "type": "integer",
-            "description": "The number of named child variables.\nThe client can use this optional information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+            "description": "The number of named child variables.\nThe client can use this information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
         },
         "indexedVariables": {
             "type": "integer",
-            "description": "The number of indexed child variables.\nThe client can use this optional information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+            "description": "The number of indexed child variables.\nThe client can use this information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+        },
+        "memoryReference": {
+            "type": "string",
+            "description": "A memory reference to a location appropriate for this result.\nFor pointer type eval results, this is generally a reference to the memory address contained in the pointer.\nThis attribute may be returned by a debug adapter if corresponding capability `supportsMemoryReferences` is True."
         }
     }
     __refs__ = set()
 
     __slots__ = list(__props__.keys()) + ['kwargs']
 
-    def __init__(self, value, type=None, variablesReference=None, namedVariables=None, indexedVariables=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+    def __init__(self, value, type=None, variablesReference=None, namedVariables=None, indexedVariables=None, memoryReference=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string value: The new value of the variable.
         :param string type: The type of the new value. Typically shown in the UI when hovering over the value.
-        :param integer variablesReference: If variablesReference is > 0, the new value is structured and its children can be retrieved by passing variablesReference to the VariablesRequest.
-        The value should be less than or equal to 2147483647 (2^31-1).
+        :param integer variablesReference: If `variablesReference` is > 0, the new value is structured and its children can be retrieved by passing `variablesReference` to the `variables` request as long as execution remains suspended. See 'Lifetime of Object References' in the Overview section for details.
         :param integer namedVariables: The number of named child variables.
-        The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
+        The client can use this information to present the variables in a paged UI and fetch them in chunks.
         The value should be less than or equal to 2147483647 (2^31-1).
         :param integer indexedVariables: The number of indexed child variables.
-        The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
+        The client can use this information to present the variables in a paged UI and fetch them in chunks.
         The value should be less than or equal to 2147483647 (2^31-1).
+        :param string memoryReference: A memory reference to a location appropriate for this result.
+        For pointer type eval results, this is generally a reference to the memory address contained in the pointer.
+        This attribute may be returned by a debug adapter if corresponding capability `supportsMemoryReferences` is true.
         """
         self.value = value
         self.type = type
         self.variablesReference = variablesReference
         self.namedVariables = namedVariables
         self.indexedVariables = indexedVariables
+        self.memoryReference = memoryReference
         if update_ids_from_dap:
             self.variablesReference = self._translate_id_from_dap(self.variablesReference)
         self.kwargs = kwargs
@@ -18614,6 +19090,7 @@ class SetVariableResponseBody(BaseSchema):
         variablesReference = self.variablesReference
         namedVariables = self.namedVariables
         indexedVariables = self.indexedVariables
+        memoryReference = self.memoryReference
         if update_ids_to_dap:
             if variablesReference is not None:
                 variablesReference = self._translate_id_to_dap(variablesReference)
@@ -18628,6 +19105,8 @@ class SetVariableResponseBody(BaseSchema):
             dct['namedVariables'] = namedVariables
         if indexedVariables is not None:
             dct['indexedVariables'] = indexedVariables
+        if memoryReference is not None:
+            dct['memoryReference'] = memoryReference
         dct.update(self.kwargs)
         return dct    
     
@@ -18653,7 +19132,7 @@ class SourceResponseBody(BaseSchema):
         },
         "mimeType": {
             "type": "string",
-            "description": "Optional content type (mime type) of the source."
+            "description": "Content type (MIME type) of the source."
         }
     }
     __refs__ = set()
@@ -18663,7 +19142,7 @@ class SourceResponseBody(BaseSchema):
     def __init__(self, content, mimeType=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string content: Content of the source reference.
-        :param string mimeType: Optional content type (mime type) of the source.
+        :param string mimeType: Content type (MIME type) of the source.
         """
         self.content = content
         self.mimeType = mimeType
@@ -18835,27 +19314,27 @@ class EvaluateResponseBody(BaseSchema):
         },
         "type": {
             "type": "string",
-            "description": "The optional type of the evaluate result.\nThis attribute should only be returned by a debug adapter if the client has passed the value true for the 'supportsVariableType' capability of the 'initialize' request."
+            "description": "The type of the evaluate result.\nThis attribute should only be returned by a debug adapter if the corresponding capability `supportsVariableType` is True."
         },
         "presentationHint": {
-            "description": "Properties of a evaluate result that can be used to determine how to render the result in the UI.",
+            "description": "Properties of an evaluate result that can be used to determine how to render the result in the UI.",
             "type": "VariablePresentationHint"
         },
         "variablesReference": {
             "type": "integer",
-            "description": "If variablesReference is > 0, the evaluate result is structured and its children can be retrieved by passing variablesReference to the VariablesRequest.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+            "description": "If `variablesReference` is > 0, the evaluate result is structured and its children can be retrieved by passing `variablesReference` to the `variables` request as long as execution remains suspended. See 'Lifetime of Object References' in the Overview section for details."
         },
         "namedVariables": {
             "type": "integer",
-            "description": "The number of named child variables.\nThe client can use this optional information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+            "description": "The number of named child variables.\nThe client can use this information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
         },
         "indexedVariables": {
             "type": "integer",
-            "description": "The number of indexed child variables.\nThe client can use this optional information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+            "description": "The number of indexed child variables.\nThe client can use this information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
         },
         "memoryReference": {
             "type": "string",
-            "description": "Optional memory reference to a location appropriate for this result.\nFor pointer type eval results, this is generally a reference to the memory address contained in the pointer.\nThis attribute should be returned by a debug adapter if the client has passed the value true for the 'supportsMemoryReferences' capability of the 'initialize' request."
+            "description": "A memory reference to a location appropriate for this result.\nFor pointer type eval results, this is generally a reference to the memory address contained in the pointer.\nThis attribute may be returned by a debug adapter if corresponding capability `supportsMemoryReferences` is True."
         }
     }
     __refs__ = set(['presentationHint'])
@@ -18865,20 +19344,19 @@ class EvaluateResponseBody(BaseSchema):
     def __init__(self, result, variablesReference, type=None, presentationHint=None, namedVariables=None, indexedVariables=None, memoryReference=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string result: The result of the evaluate request.
-        :param integer variablesReference: If variablesReference is > 0, the evaluate result is structured and its children can be retrieved by passing variablesReference to the VariablesRequest.
-        The value should be less than or equal to 2147483647 (2^31-1).
-        :param string type: The optional type of the evaluate result.
-        This attribute should only be returned by a debug adapter if the client has passed the value true for the 'supportsVariableType' capability of the 'initialize' request.
-        :param VariablePresentationHint presentationHint: Properties of a evaluate result that can be used to determine how to render the result in the UI.
+        :param integer variablesReference: If `variablesReference` is > 0, the evaluate result is structured and its children can be retrieved by passing `variablesReference` to the `variables` request as long as execution remains suspended. See 'Lifetime of Object References' in the Overview section for details.
+        :param string type: The type of the evaluate result.
+        This attribute should only be returned by a debug adapter if the corresponding capability `supportsVariableType` is true.
+        :param VariablePresentationHint presentationHint: Properties of an evaluate result that can be used to determine how to render the result in the UI.
         :param integer namedVariables: The number of named child variables.
-        The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
+        The client can use this information to present the variables in a paged UI and fetch them in chunks.
         The value should be less than or equal to 2147483647 (2^31-1).
         :param integer indexedVariables: The number of indexed child variables.
-        The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
+        The client can use this information to present the variables in a paged UI and fetch them in chunks.
         The value should be less than or equal to 2147483647 (2^31-1).
-        :param string memoryReference: Optional memory reference to a location appropriate for this result.
+        :param string memoryReference: A memory reference to a location appropriate for this result.
         For pointer type eval results, this is generally a reference to the memory address contained in the pointer.
-        This attribute should be returned by a debug adapter if the client has passed the value true for the 'supportsMemoryReferences' capability of the 'initialize' request.
+        This attribute may be returned by a debug adapter if corresponding capability `supportsMemoryReferences` is true.
         """
         self.result = result
         self.variablesReference = variablesReference
@@ -18951,7 +19429,7 @@ class SetExpressionResponseBody(BaseSchema):
         },
         "type": {
             "type": "string",
-            "description": "The optional type of the value.\nThis attribute should only be returned by a debug adapter if the client has passed the value true for the 'supportsVariableType' capability of the 'initialize' request."
+            "description": "The type of the value.\nThis attribute should only be returned by a debug adapter if the corresponding capability `supportsVariableType` is True."
         },
         "presentationHint": {
             "description": "Properties of a value that can be used to determine how to render the result in the UI.",
@@ -18959,35 +19437,41 @@ class SetExpressionResponseBody(BaseSchema):
         },
         "variablesReference": {
             "type": "integer",
-            "description": "If variablesReference is > 0, the value is structured and its children can be retrieved by passing variablesReference to the VariablesRequest.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+            "description": "If `variablesReference` is > 0, the evaluate result is structured and its children can be retrieved by passing `variablesReference` to the `variables` request as long as execution remains suspended. See 'Lifetime of Object References' in the Overview section for details."
         },
         "namedVariables": {
             "type": "integer",
-            "description": "The number of named child variables.\nThe client can use this optional information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+            "description": "The number of named child variables.\nThe client can use this information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
         },
         "indexedVariables": {
             "type": "integer",
-            "description": "The number of indexed child variables.\nThe client can use this optional information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+            "description": "The number of indexed child variables.\nThe client can use this information to present the variables in a paged UI and fetch them in chunks.\nThe value should be less than or equal to 2147483647 (2^31-1)."
+        },
+        "memoryReference": {
+            "type": "string",
+            "description": "A memory reference to a location appropriate for this result.\nFor pointer type eval results, this is generally a reference to the memory address contained in the pointer.\nThis attribute may be returned by a debug adapter if corresponding capability `supportsMemoryReferences` is True."
         }
     }
     __refs__ = set(['presentationHint'])
 
     __slots__ = list(__props__.keys()) + ['kwargs']
 
-    def __init__(self, value, type=None, presentationHint=None, variablesReference=None, namedVariables=None, indexedVariables=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+    def __init__(self, value, type=None, presentationHint=None, variablesReference=None, namedVariables=None, indexedVariables=None, memoryReference=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string value: The new value of the expression.
-        :param string type: The optional type of the value.
-        This attribute should only be returned by a debug adapter if the client has passed the value true for the 'supportsVariableType' capability of the 'initialize' request.
+        :param string type: The type of the value.
+        This attribute should only be returned by a debug adapter if the corresponding capability `supportsVariableType` is true.
         :param VariablePresentationHint presentationHint: Properties of a value that can be used to determine how to render the result in the UI.
-        :param integer variablesReference: If variablesReference is > 0, the value is structured and its children can be retrieved by passing variablesReference to the VariablesRequest.
-        The value should be less than or equal to 2147483647 (2^31-1).
+        :param integer variablesReference: If `variablesReference` is > 0, the evaluate result is structured and its children can be retrieved by passing `variablesReference` to the `variables` request as long as execution remains suspended. See 'Lifetime of Object References' in the Overview section for details.
         :param integer namedVariables: The number of named child variables.
-        The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
+        The client can use this information to present the variables in a paged UI and fetch them in chunks.
         The value should be less than or equal to 2147483647 (2^31-1).
         :param integer indexedVariables: The number of indexed child variables.
-        The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
+        The client can use this information to present the variables in a paged UI and fetch them in chunks.
         The value should be less than or equal to 2147483647 (2^31-1).
+        :param string memoryReference: A memory reference to a location appropriate for this result.
+        For pointer type eval results, this is generally a reference to the memory address contained in the pointer.
+        This attribute may be returned by a debug adapter if corresponding capability `supportsMemoryReferences` is true.
         """
         self.value = value
         self.type = type
@@ -18998,6 +19482,7 @@ class SetExpressionResponseBody(BaseSchema):
         self.variablesReference = variablesReference
         self.namedVariables = namedVariables
         self.indexedVariables = indexedVariables
+        self.memoryReference = memoryReference
         if update_ids_from_dap:
             self.variablesReference = self._translate_id_from_dap(self.variablesReference)
         self.kwargs = kwargs
@@ -19016,6 +19501,7 @@ class SetExpressionResponseBody(BaseSchema):
         variablesReference = self.variablesReference
         namedVariables = self.namedVariables
         indexedVariables = self.indexedVariables
+        memoryReference = self.memoryReference
         if update_ids_to_dap:
             if variablesReference is not None:
                 variablesReference = self._translate_id_to_dap(variablesReference)
@@ -19032,6 +19518,8 @@ class SetExpressionResponseBody(BaseSchema):
             dct['namedVariables'] = namedVariables
         if indexedVariables is not None:
             dct['indexedVariables'] = indexedVariables
+        if memoryReference is not None:
+            dct['memoryReference'] = memoryReference
         dct.update(self.kwargs)
         return dct    
     
@@ -19056,7 +19544,7 @@ class StepInTargetsResponseBody(BaseSchema):
             "items": {
                 "$ref": "#/definitions/StepInTarget"
             },
-            "description": "The possible stepIn targets of the specified source location."
+            "description": "The possible step-in targets of the specified source location."
         }
     }
     __refs__ = set()
@@ -19065,7 +19553,7 @@ class StepInTargetsResponseBody(BaseSchema):
 
     def __init__(self, targets, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param array targets: The possible stepIn targets of the specified source location.
+        :param array targets: The possible step-in targets of the specified source location.
         """
         self.targets = targets
         if update_ids_from_dap and self.targets:
@@ -19186,7 +19674,7 @@ class ExceptionInfoResponseBody(BaseSchema):
         },
         "description": {
             "type": "string",
-            "description": "Descriptive text for the exception provided by the debug adapter."
+            "description": "Descriptive text for the exception."
         },
         "breakMode": {
             "description": "Mode that caused the exception notification to be raised.",
@@ -19205,7 +19693,7 @@ class ExceptionInfoResponseBody(BaseSchema):
         """
         :param string exceptionId: ID of the exception that was thrown.
         :param ExceptionBreakMode breakMode: Mode that caused the exception notification to be raised.
-        :param string description: Descriptive text for the exception provided by the debug adapter.
+        :param string description: Descriptive text for the exception.
         :param ExceptionDetails details: Detailed information about the exception.
         """
         self.exceptionId = exceptionId
@@ -19248,15 +19736,15 @@ class ReadMemoryResponseBody(BaseSchema):
     __props__ = {
         "address": {
             "type": "string",
-            "description": "The address of the first byte of data returned.\nTreated as a hex value if prefixed with '0x', or as a decimal value otherwise."
+            "description": "The address of the first byte of data returned.\nTreated as a hex value if prefixed with `0x`, or as a decimal value otherwise."
         },
         "unreadableBytes": {
             "type": "integer",
-            "description": "The number of unreadable bytes encountered after the last successfully read byte.\nThis can be used to determine the number of bytes that must be skipped before a subsequent 'readMemory' request will succeed."
+            "description": "The number of unreadable bytes encountered after the last successfully read byte.\nThis can be used to determine the number of bytes that should be skipped before a subsequent `readMemory` request succeeds."
         },
         "data": {
             "type": "string",
-            "description": "The bytes read from memory, encoded using base64."
+            "description": "The bytes read from memory, encoded using base64. If the decoded length of `data` is less than the requested `count` in the original `readMemory` request, and `unreadableBytes` is zero or omitted, then the client should assume it's reached the end of readable memory."
         }
     }
     __refs__ = set()
@@ -19266,10 +19754,10 @@ class ReadMemoryResponseBody(BaseSchema):
     def __init__(self, address, unreadableBytes=None, data=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string address: The address of the first byte of data returned.
-        Treated as a hex value if prefixed with '0x', or as a decimal value otherwise.
+        Treated as a hex value if prefixed with `0x`, or as a decimal value otherwise.
         :param integer unreadableBytes: The number of unreadable bytes encountered after the last successfully read byte.
-        This can be used to determine the number of bytes that must be skipped before a subsequent 'readMemory' request will succeed.
-        :param string data: The bytes read from memory, encoded using base64.
+        This can be used to determine the number of bytes that should be skipped before a subsequent `readMemory` request succeeds.
+        :param string data: The bytes read from memory, encoded using base64. If the decoded length of `data` is less than the requested `count` in the original `readMemory` request, and `unreadableBytes` is zero or omitted, then the client should assume it's reached the end of readable memory.
         """
         self.address = address
         self.unreadableBytes = unreadableBytes
@@ -19303,11 +19791,11 @@ class WriteMemoryResponseBody(BaseSchema):
     __props__ = {
         "offset": {
             "type": "integer",
-            "description": "Optional property that should be returned when 'allowPartial' is true to indicate the offset of the first byte of data successfully written. Can be negative."
+            "description": "Property that should be returned when `allowPartial` is True to indicate the offset of the first byte of data successfully written. Can be negative."
         },
         "bytesWritten": {
             "type": "integer",
-            "description": "Optional property that should be returned when 'allowPartial' is true to indicate the number of bytes starting from address that were successfully written."
+            "description": "Property that should be returned when `allowPartial` is True to indicate the number of bytes starting from address that were successfully written."
         }
     }
     __refs__ = set()
@@ -19316,8 +19804,8 @@ class WriteMemoryResponseBody(BaseSchema):
 
     def __init__(self, offset=None, bytesWritten=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param integer offset: Optional property that should be returned when 'allowPartial' is true to indicate the offset of the first byte of data successfully written. Can be negative.
-        :param integer bytesWritten: Optional property that should be returned when 'allowPartial' is true to indicate the number of bytes starting from address that were successfully written.
+        :param integer offset: Property that should be returned when `allowPartial` is true to indicate the offset of the first byte of data successfully written. Can be negative.
+        :param integer bytesWritten: Property that should be returned when `allowPartial` is true to indicate the number of bytes starting from address that were successfully written.
         """
         self.offset = offset
         self.bytesWritten = bytesWritten

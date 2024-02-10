@@ -470,7 +470,7 @@ def update_class_to_generate_props(class_to_generate):
 
     properties = class_to_generate['properties']
     class_to_generate['props'] = '    __props__ = %s' % _indent_lines(
-        json.dumps(properties, indent=4, default=default)).strip()
+        json.dumps(properties, indent=4, default=default).replace('true', 'True')).strip()
 
 
 def update_class_to_generate_refs(class_to_generate):
