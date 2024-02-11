@@ -4,26 +4,26 @@ from tests_python.debugger_unittest import IS_PY36_OR_GREATER, IS_CPYTHON
 from tests_python.debug_constants import TEST_CYTHON
 pytestmark = pytest.mark.skipif(not IS_PY36_OR_GREATER or not IS_CPYTHON or not TEST_CYTHON, reason='Requires CPython >= 3.6')
 #!/usr/bin/env python3
-import opcode
 import sys
 import textwrap
 import types
 import unittest
 
+import opcode
 from _pydevd_frame_eval.vendored.bytecode import (
     UNSET,
-    Label,
-    Instr,
-    SetLineno,
     Bytecode,
     CellVar,
-    FreeVar,
     CompilerFlags,
-    ConcreteInstr,
     ConcreteBytecode,
+    ConcreteInstr,
+    FreeVar,
+    Instr,
+    Label,
+    SetLineno,
 )
 from _pydevd_frame_eval.vendored.bytecode.concrete import OFFSET_AS_INSTRUCTION
-from _pydevd_frame_eval.vendored.bytecode.tests import get_code, TestCase
+from _pydevd_frame_eval.vendored.bytecode.tests import TestCase, get_code
 
 
 class ConcreteInstrTests(TestCase):
@@ -1507,6 +1507,16 @@ class BytecodeToConcreteTests(TestCase):
 
         f.__code__ = code.to_code()
         self.assertEqual(f(), (obj1, obj2, obj3, obj4))
+
+    def test_packing_lines(self):
+        from _pydevd_frame_eval.vendored.bytecode.tests.long_lines_example import long_lines
+        import dis
+
+        line_starts = list(dis.findlinestarts(long_lines.__code__))
+
+        concrete = ConcreteBytecode.from_code(long_lines.__code__)
+        as_code = concrete.to_code()
+        self.assertEqual(line_starts, list(dis.findlinestarts(as_code)))
 
 
 if __name__ == "__main__":
