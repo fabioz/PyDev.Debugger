@@ -1257,8 +1257,12 @@ def _has_qt():
             from PySide import QtCore  # @UnresolvedImport
             return True
         except:
-            from PySide2 import QtCore  # @UnresolvedImport
-            return True
+            try:
+                from PySide2 import QtCore  # @UnresolvedImport
+                return True
+            except:
+                from PySide6 import QtCore  # @UnresolvedImport
+                return True
     except:
         try:
             from PyQt4 import QtCore  # @UnresolvedImport
@@ -1268,7 +1272,11 @@ def _has_qt():
                 from PyQt5 import QtCore  # @UnresolvedImport
                 return True
             except:
-                pass
+                try:
+                    from PyQt6 import QtCore  # @UnresolvedImport
+                    return True
+                except:
+                    pass
     return False
 
 
@@ -1343,7 +1351,7 @@ def test_case_qthread4(case_setup):
             if 'native Qt signal is not callable' in stderr:
                 raise AssertionError('Did not expect "native Qt signal is not callable" to be in stderr:\n%s' % (stderr,))
 
-        breakpoint_id = writer.write_add_breakpoint(28, 'on_start')  # breakpoint on print('On start called2').
+        breakpoint_id = writer.write_add_breakpoint(writer.get_line_index_with_content('break here'), 'on_start')  # breakpoint on print('On start called2').
         writer.write_make_initial_run()
 
         hit = writer.wait_for_breakpoint_hit()
