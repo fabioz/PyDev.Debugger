@@ -282,7 +282,7 @@ class NetCommandFactory(object):
 
         return ''.join(cmd_text_list), thread_stack_str
 
-    def make_thread_suspend_message(self, py_db, thread_id, frames_list, stop_reason, message, trace_suspend_type):
+    def make_thread_suspend_message(self, py_db, thread_id, frames_list, stop_reason, message, trace_suspend_type, thread, additional_info):
         try:
             thread_suspend_str, thread_stack_str = self.make_thread_suspend_str(
                 py_db, thread_id, frames_list, stop_reason, message, trace_suspend_type)
@@ -307,7 +307,7 @@ class NetCommandFactory(object):
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
-    def make_thread_run_message(self, thread_id, reason):
+    def make_thread_run_message(self, py_db, thread_id, reason):
         try:
             return NetCommand(CMD_THREAD_RUN, 0, "%s\t%s" % (thread_id, reason))
         except:

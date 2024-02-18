@@ -450,6 +450,9 @@ def start_server(port):
 
     try:
         s.listen(1)
+        # Let the user know it's halted waiting for the connection.
+        pydev_log.critical("pydevd: waiting for connection at: %s:%s\n", *s.getsockname())
+            
         new_socket, _addr = s.accept()
         pydev_log.info("Connection accepted")
         # closing server socket is not necessary but we don't need it

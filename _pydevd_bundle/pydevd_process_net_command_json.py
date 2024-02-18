@@ -541,12 +541,21 @@ class PyDevJsonCommandProcessor(object):
             cmd = NetCommand(CMD_RETURN, 0, response, is_json=True)
             py_db.writer.add_command(cmd)
 
-        # Only send resumed notification when it has actually resumed!
-        # (otherwise the user could send a continue, receive the notification and then
-        # request a new pause which would be paused without sending any notification as
-        # it didn't really run in the first place).
-        py_db.threads_suspended_single_notification.add_on_resumed_callback(on_resumed)
-        self.api.request_resume_thread(thread_id)
+        if py_db.multi_threads_single_notification:
+
+            # Only send resumed notification when it has actually resumed!
+            # (otherwise the user could send a continue, receive the notification and then
+            # request a new pause which would be paused without sending any notification as
+            # it didn't really run in the first place).
+            py_db.threads_suspended_single_notification.add_on_resumed_callback(on_resumed)
+            self.api.request_resume_thread(thread_id)
+        else:
+            # Only send resumed notification when it has actually resumed!
+            # (otherwise the user could send a continue, receive the notification and then
+            # request a new pause which would be paused without sending any notification as
+            # it didn't really run in the first place).
+            self.api.request_resume_thread(thread_id)
+            on_resumed()
 
     def on_next_request(self, py_db, request):
         '''
@@ -735,7 +744,7 @@ class PyDevJsonCommandProcessor(object):
 
         arguments = request.arguments  # : :type arguments: SetFunctionBreakpointsArguments
         function_breakpoints = []
-        suspend_policy = 'ALL'
+        suspend_policy = 'ALL' if py_db.multi_threads_single_notification else 'NONE'
 
         # Not currently covered by the DAP.
         is_logpoint = False
@@ -775,7 +784,7 @@ class PyDevJsonCommandProcessor(object):
         self.api.remove_all_breakpoints(py_db, filename)
 
         btype = 'python-line'
-        suspend_policy = 'ALL'
+        suspend_policy = 'ALL' if py_db.multi_threads_single_notification else 'NONE'
 
         if not filename.lower().endswith('.py'):  # Note: check based on original file, not mapping.
             if self._options.django_debug:

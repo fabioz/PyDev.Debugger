@@ -15,7 +15,7 @@ from _pydevd_bundle._debug_adapter.pydevd_schema import (ThreadEvent, ModuleEven
     ExceptionOptions, Response, StoppedEvent, ContinuedEvent, ProcessEvent, InitializeRequest,
     InitializeRequestArguments, TerminateArguments, TerminateRequest, TerminatedEvent,
     FunctionBreakpoint, SetFunctionBreakpointsRequest, SetFunctionBreakpointsArguments,
-    BreakpointEvent, InitializedEvent)
+    BreakpointEvent, InitializedEvent, ContinueResponse)
 from _pydevd_bundle.pydevd_comm_constants import file_system_encoding
 from _pydevd_bundle.pydevd_constants import (int_types, IS_64BIT_PROCESS,
     PY_VERSION_STR, PY_IMPL_VERSION_STR, PY_IMPL_NAME, IS_PY36_OR_GREATER,
@@ -85,7 +85,7 @@ class JsonFacade(object):
         msg = self.writer.wait_for_message(accept_json_message, unquote_msg=False, expect_xml=False)
         return from_json(msg)
 
-    def wait_for_response(self, request, response_class=None):
+    def build_accept_response(self, request, response_class=None):
         if response_class is None:
             response_class = pydevd_base_schema.get_response_class(request)
 
@@ -98,7 +98,11 @@ class JsonFacade(object):
                     return True
             return False
 
-        return self.wait_for_json_message((response_class, Response), accept_message)
+        return (response_class, Response), accept_message
+
+    def wait_for_response(self, request, response_class=None):
+        expected_classes, accept_message = self.build_accept_response(request, response_class)
+        return self.wait_for_json_message(expected_classes, accept_message)
 
     def write_request(self, request):
         seq = self.writer.next_seq()
@@ -337,19 +341,38 @@ class JsonFacade(object):
             references.append(reference)
         return references
 
-    def wait_for_continued_event(self):
-        assert self.wait_for_json_message(ContinuedEvent).body.allThreadsContinued
+    def wait_for_continued_event(self, all_threads_continued=True):
+        ev = self.wait_for_json_message(ContinuedEvent)
+        assert ev.body.allThreadsContinued == all_threads_continued
 
-    def write_continue(self, wait_for_response=True):
+    def _by_type(self, *msgs):
+        ret = {}
+        for msg in msgs:
+            assert msg.__class__ not in ret
+            ret[msg.__class__] = msg
+        return ret
+
+    def write_continue(self, wait_for_response=True, thread_id='*'):
         continue_request = self.write_request(
-            pydevd_schema.ContinueRequest(pydevd_schema.ContinueArguments('*')))
+            pydevd_schema.ContinueRequest(pydevd_schema.ContinueArguments(threadId=thread_id)))
 
         if wait_for_response:
-            # The continued event is received before the response.
-            self.wait_for_continued_event()
+            if thread_id != '*':
+                # event, response may be sent in any order
+                msg1 = self.wait_for_json_message((ContinuedEvent, ContinueResponse))
+                msg2 = self.wait_for_json_message((ContinuedEvent, ContinueResponse))
+                by_type = self._by_type(msg1, msg2)
+                continued_ev = by_type[ContinuedEvent]
+                continue_response = by_type[ContinueResponse]
+                assert continue_response.request_seq == continue_request.seq
 
-            continue_response = self.wait_for_response(continue_request)
-            assert continue_response.body.allThreadsContinued
+                assert continued_ev.body.allThreadsContinued == False
+                assert continue_response.body.allThreadsContinued == False
+            else:
+                # The continued event is received before the response.
+                self.wait_for_continued_event(all_threads_continued=True)
+                continue_response = self.wait_for_response(continue_request)
+                assert continue_response.body.allThreadsContinued
 
     def write_pause(self):
         pause_request = self.write_request(
@@ -719,6 +742,24 @@ def test_case_json_change_breaks(case_setup_dap):
         json_facade.wait_for_thread_stopped(line=break1_line)
         json_facade.write_set_breakpoints([])
         json_facade.write_continue()
+
+        writer.finished_ok = True
+
+
+def test_case_json_suspend_notification(case_setup_dap):
+    with case_setup_dap.test_file('_debugger_case_change_breaks.py') as writer:
+        json_facade = JsonFacade(writer)
+        json_facade.writer.write_multi_threads_single_notification(False)
+        break1_line = writer.get_line_index_with_content('break 1')
+        json_facade.write_launch()
+        json_facade.write_set_breakpoints(break1_line)
+        json_facade.write_make_initial_run()
+
+        json_hit = json_facade.wait_for_thread_stopped(line=break1_line)
+        json_facade.write_continue(thread_id=json_hit.thread_id)
+
+        json_hit = json_facade.wait_for_thread_stopped(line=break1_line)
+        json_facade.write_continue(thread_id=json_hit.thread_id, wait_for_response=False)
 
         writer.finished_ok = True
 

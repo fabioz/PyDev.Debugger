@@ -461,9 +461,11 @@ class ThreadsSuspendedSingleNotification(AbstractSingleNotificationBehavior):
     @contextmanager
     def notify_thread_suspended(self, thread_id, thread, stop_reason):
         if self.multi_threads_single_notification:
+            pydev_log.info('Thread suspend mode: single notification')
             with AbstractSingleNotificationBehavior.notify_thread_suspended(self, thread_id, thread, stop_reason):
                 yield
         else:
+            pydev_log.info('Thread suspend mode: NOT single notification')
             yield
 
 
@@ -2096,7 +2098,7 @@ class PyDB(object):
 
         with self.suspended_frames_manager.track_frames(self) as frames_tracker:
             frames_tracker.track(thread_id, frames_list)
-            cmd = frames_tracker.create_thread_suspend_command(thread_id, stop_reason, message, trace_suspend_type)
+            cmd = frames_tracker.create_thread_suspend_command(thread_id, stop_reason, message, trace_suspend_type, thread, thread.additional_info)
             self.writer.add_command(cmd)
 
             with CustomFramesContainer.custom_frames_lock:  # @UndefinedVariable
@@ -2111,7 +2113,7 @@ class PyDB(object):
                             frame_custom_thread_id, custom_frame.name))
 
                         self.writer.add_command(
-                            frames_tracker.create_thread_suspend_command(frame_custom_thread_id, CMD_THREAD_SUSPEND, "", trace_suspend_type))
+                            frames_tracker.create_thread_suspend_command(frame_custom_thread_id, CMD_THREAD_SUSPEND, "", trace_suspend_type, thread, thread.additional_info))
 
                     from_this_thread.append(frame_custom_thread_id)
 
@@ -2228,7 +2230,7 @@ class PyDB(object):
             if stop:
                 # Uninstall the current frames tracker before running it.
                 frames_tracker.untrack_all()
-                cmd = self.cmd_factory.make_thread_run_message(get_current_thread_id(thread), info.pydev_step_cmd)
+                cmd = self.cmd_factory.make_thread_run_message(self, get_current_thread_id(thread), info.pydev_step_cmd)
                 self.writer.add_command(cmd)
                 info.pydev_state = STATE_SUSPEND
                 thread.stop_reason = CMD_SET_NEXT_STATEMENT
@@ -2287,7 +2289,7 @@ class PyDB(object):
                 del f
 
         del frame
-        cmd = self.cmd_factory.make_thread_run_message(get_current_thread_id(thread), info.pydev_step_cmd)
+        cmd = self.cmd_factory.make_thread_run_message(self, get_current_thread_id(thread), info.pydev_step_cmd)
         self.writer.add_command(cmd)
 
         with CustomFramesContainer.custom_frames_lock:
@@ -2862,7 +2864,7 @@ def settrace(
     port=5678,
     suspend=True,
     trace_only_current_thread=False,
-    overwrite_prev_trace=False,
+    overwrite_prev_trace=False,  # Deprecated
     patch_multiprocessing=False,
     stop_at_frame=None,
     block_until_connected=True,

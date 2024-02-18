@@ -18,7 +18,7 @@ from _pydevd_bundle.pydevd_comm_constants import CMD_THREAD_CREATE, CMD_RETURN, 
     CMD_SET_NEXT_STATEMENT, CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION, \
     CMD_THREAD_RESUME_SINGLE_NOTIFICATION, CMD_THREAD_KILL, CMD_STOP_ON_START, CMD_INPUT_REQUESTED, \
     CMD_EXIT, CMD_STEP_INTO_COROUTINE, CMD_STEP_RETURN_MY_CODE, CMD_SMART_STEP_INTO, \
-    CMD_SET_FUNCTION_BREAK
+    CMD_SET_FUNCTION_BREAK, CMD_THREAD_RUN
 from _pydevd_bundle.pydevd_constants import get_thread_id, ForkSafeLock, DebugInfoHolder
 from _pydevd_bundle.pydevd_net_command import NetCommand, NULL_NET_COMMAND
 from _pydevd_bundle.pydevd_net_command_factory_xml import NetCommandFactory
@@ -435,12 +435,62 @@ class NetCommandFactoryJson(NetCommandFactory):
         return cmd
 
     @overrides(NetCommandFactory.make_thread_suspend_message)
-    def make_thread_suspend_message(self, *args, **kwargs):
-        return NULL_NET_COMMAND  # Not a part of the debug adapter protocol
+    def make_thread_suspend_message(self, py_db, thread_id, frames_list, stop_reason, message, trace_suspend_type, thread, info):
+        from _pydevd_bundle.pydevd_comm_constants import CMD_THREAD_SUSPEND
+        if py_db.multi_threads_single_notification:
+            pydev_log.debug("Skipping per-thread thread suspend notification.")
+            return NULL_NET_COMMAND  # Don't send per-thread, send a single one.
+        pydev_log.debug("Sending per-thread thread suspend notification (stop_reason: %s)", stop_reason)
+
+        exc_desc = None
+        exc_name = None
+        preserve_focus_hint = False
+        if stop_reason in self._STEP_REASONS:
+            if info.pydev_original_step_cmd == CMD_STOP_ON_START:
+
+                # Just to make sure that's not set as the original reason anymore.
+                info.pydev_original_step_cmd = -1
+                stop_reason = 'entry'
+            else:
+                stop_reason = 'step'
+        elif stop_reason in self._EXCEPTION_REASONS:
+            stop_reason = 'exception'
+        elif stop_reason == CMD_SET_BREAK:
+            stop_reason = 'breakpoint'
+        elif stop_reason == CMD_SET_FUNCTION_BREAK:
+            stop_reason = 'function breakpoint'
+        elif stop_reason == CMD_SET_NEXT_STATEMENT:
+            stop_reason = 'goto'
+        else:
+            stop_reason = 'pause'
+            preserve_focus_hint = True
+
+        if stop_reason == 'exception':
+            exception_info_response = build_exception_info_response(
+                py_db, thread_id, thread, -1, set_additional_thread_info, self._iter_visible_frames_info, max_frames=-1)
+            exception_info_response
+
+            exc_name = exception_info_response.body.exceptionId
+            exc_desc = exception_info_response.body.description
+
+        body = pydevd_schema.StoppedEventBody(
+            reason=stop_reason,
+            description=exc_desc,
+            threadId=thread_id,
+            text=exc_name,
+            allThreadsStopped=False,
+            preserveFocusHint=preserve_focus_hint,
+        )
+        event = pydevd_schema.StoppedEvent(body)
+        return NetCommand(CMD_THREAD_SUSPEND, 0, event, is_json=True)
 
     @overrides(NetCommandFactory.make_thread_run_message)
-    def make_thread_run_message(self, *args, **kwargs):
-        return NULL_NET_COMMAND  # Not a part of the debug adapter protocol
+    def make_thread_run_message(self, py_db, thread_id, reason):
+        if py_db.multi_threads_single_notification:
+            return NULL_NET_COMMAND  # Don't send per-thread, send a single one.
+        body = ContinuedEventBody(threadId=thread_id, allThreadsContinued=False)
+        event = pydevd_schema.ContinuedEvent(body)
+        return NetCommand(CMD_THREAD_RUN, 0, event, is_json=True)
 
     @overrides(NetCommandFactory.make_reloaded_code_message)
     def make_reloaded_code_message(self, *args, **kwargs):

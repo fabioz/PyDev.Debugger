@@ -93,13 +93,17 @@ jobs:
         pip install psutil --no-warn-script-location
         pip install ipython --no-warn-script-location
         pip install untangle --no-warn-script-location
-        pip install "django<=4.2" --no-warn-script-location
     - name: Install Python 3.x deps
       if: contains(matrix.name, 'py3') && !contains(matrix.name, 'pypy') && !contains(matrix.name, 'py312') && !contains(matrix.name, 'py311')
       run: |
         pip install PySide2 --no-warn-script-location
         pip install cherrypy --no-warn-script-location
         pip install gevent greenlet
+        
+    - name: Install django
+      if: "!contains(matrix.name, 'py38')"
+      run: pip install "django<=4.2" --no-warn-script-location
+      
     - name: Install Pandas
       if: contains(matrix.name, 'py310') && !contains(matrix.name, 'pypy')
       # The pandas Styler also requires jinja2. 
