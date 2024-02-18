@@ -140,7 +140,7 @@ def get_target_filename(is_target_process_64=None, prefix=None, extension=None):
     # debugger -- the only situation where it's imported is if the user actually does an attach to
     # process, through `attach_pydevd.py`, but this should usually be called from the IDE directly
     # and not from the debugger).
-    libdir = os.path.dirname(__file__)
+    libdir = os.path.dirname(os.path.abspath(__file__))
 
     if is_target_process_64 is None:
         if IS_WINDOWS:
@@ -403,7 +403,9 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
 
     target_dll = get_target_filename()
     if not target_dll:
-        raise RuntimeError('Could not find .so for attach to process.')
+        libdir = os.path.dirname(os.path.abspath(__file__))
+        found = [name for name in os.listdir(libdir) if name.startswith('attach_') and name.endswith('.so')]
+        raise RuntimeError('Could not find .so for attach to process.\nLibdir: %s.\nAvailable: %s' % (libdir, found,))
     target_dll_name = os.path.splitext(os.path.basename(target_dll))[0]
 
     # Note: we currently don't support debug builds
