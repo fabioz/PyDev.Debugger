@@ -14,24 +14,33 @@ from os.path import basename, splitext
 
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_dont_trace
-from _pydevd_bundle.pydevd_constants import (GlobalDebuggerHolder, ForkSafeLock,
-    PYDEVD_IPYTHON_CONTEXT, EXCEPTION_TYPE_USER_UNHANDLED, RETURN_VALUES_DICT,
-    PYTHON_SUSPEND)
-from pydevd_file_utils import (NORM_PATHS_AND_BASE_CONTAINER,
+from _pydevd_bundle.pydevd_constants import (
+    GlobalDebuggerHolder,
+    ForkSafeLock,
+    PYDEVD_IPYTHON_CONTEXT,
+    EXCEPTION_TYPE_USER_UNHANDLED,
+    RETURN_VALUES_DICT,
+    PYTHON_SUSPEND,
+)
+from pydevd_file_utils import (
+    NORM_PATHS_AND_BASE_CONTAINER,
     get_abs_path_real_path_and_base_from_file,
-    get_abs_path_real_path_and_base_from_frame)
+    get_abs_path_real_path_and_base_from_frame,
+)
 from _pydevd_bundle.pydevd_trace_dispatch import should_stop_on_exception, handle_exception
 from _pydevd_bundle.pydevd_constants import EXCEPTION_TYPE_HANDLED
 from _pydevd_bundle.pydevd_trace_dispatch import is_unhandled_exception
 from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
 from _pydevd_bundle.pydevd_utils import get_clsname_for_code
 
+# fmt: off
 # IFDEF CYTHON
 # import cython
 # from _pydevd_bundle.pydevd_cython cimport set_additional_thread_info, any_thread_stepping, PyDBAdditionalThreadInfo
 # ELSE
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info, any_thread_stepping, PyDBAdditionalThreadInfo
 # ENDIF
+# fmt: on
 
 try:
     from _pydevd_bundle.pydevd_bytecode_utils import get_smart_step_into_variant_from_frame_offset
@@ -40,7 +49,8 @@ except ImportError:
     def get_smart_step_into_variant_from_frame_offset(*args, **kwargs):
         return None
 
-if hasattr(sys, 'monitoring'):
+
+if hasattr(sys, "monitoring"):
     DEBUGGER_ID = sys.monitoring.DEBUGGER_ID
     monitor = sys.monitoring
 
@@ -64,20 +74,22 @@ CMD_SET_FUNCTION_BREAK: int = 208
 STATE_RUN: int = 1
 STATE_SUSPEND: int = 2
 
-IGNORE_EXCEPTION_TAG = re.compile('[^#]*#.*@IgnoreException')
-DEBUG_START = ('pydevd.py', 'run')
-DEBUG_START_PY3K = ('_pydev_execfile.py', 'execfile')
-TRACE_PROPERTY = 'pydevd_traceproperty.py'
+IGNORE_EXCEPTION_TAG = re.compile("[^#]*#.*@IgnoreException")
+DEBUG_START = ("pydevd.py", "run")
+DEBUG_START_PY3K = ("_pydev_execfile.py", "execfile")
+TRACE_PROPERTY = "pydevd_traceproperty.py"
 
 _global_notify_skipped_step_in = False
 _global_notify_skipped_step_in_lock = ForkSafeLock()
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _notify_skipped_step_in_because_of_filters(py_db, frame):
 # ELSE
 def _notify_skipped_step_in_because_of_filters(py_db, frame):
 # ENDIF
+# fmt: on
     global _global_notify_skipped_step_in
 
     with _global_notify_skipped_step_in_lock:
@@ -91,6 +103,7 @@ def _notify_skipped_step_in_because_of_filters(py_db, frame):
 
 # Easy for cython: always get the one at level 0 as that's the caller frame
 # (on Python we have to control the depth to get the first user frame).
+# fmt: off
 # IFDEF CYTHON
 # @cython.cfunc
 # def _getframe(depth=0):
@@ -98,13 +111,16 @@ def _notify_skipped_step_in_because_of_filters(py_db, frame):
 # ELSE
 _getframe = sys._getframe
 # ENDIF
+# fmt: on
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _get_bootstrap_frame(depth):
 # ELSE
 def _get_bootstrap_frame(depth: int) -> Tuple[Optional[FrameType], bool]:
 # ENDIF
+# fmt: on
     try:
         return _thread_local_info.f_bootstrap, _thread_local_info.is_bootstrap_frame_internal
     except:
@@ -116,27 +132,27 @@ def _get_bootstrap_frame(depth: int) -> Tuple[Optional[FrameType], bool]:
             filename = f_bootstrap.f_code.co_filename
             name = splitext(basename(filename))[0]
 
-            if name == 'threading':
-                if f_bootstrap.f_code.co_name in ('__bootstrap', '_bootstrap'):
+            if name == "threading":
+                if f_bootstrap.f_code.co_name in ("__bootstrap", "_bootstrap"):
                     # We need __bootstrap_inner, not __bootstrap.
                     return None, False
 
-                elif f_bootstrap.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner', 'is_alive'):
+                elif f_bootstrap.f_code.co_name in ("__bootstrap_inner", "_bootstrap_inner", "is_alive"):
                     # Note: be careful not to use threading.current_thread to avoid creating a dummy thread.
                     is_bootstrap_frame_internal = True
                     break
 
-            elif name == 'pydev_monkey':
-                if f_bootstrap.f_code.co_name == '__call__':
+            elif name == "pydev_monkey":
+                if f_bootstrap.f_code.co_name == "__call__":
                     is_bootstrap_frame_internal = True
                     break
 
-            elif name == 'pydevd':
-                if f_bootstrap.f_code.co_name in ('run', 'main'):
+            elif name == "pydevd":
+                if f_bootstrap.f_code.co_name in ("run", "main"):
                     # We need to get to _exec
                     return None, False
 
-                if f_bootstrap.f_code.co_name == '_exec':
+                if f_bootstrap.f_code.co_name == "_exec":
                     is_bootstrap_frame_internal = True
                     break
 
@@ -153,11 +169,13 @@ def _get_bootstrap_frame(depth: int) -> Tuple[Optional[FrameType], bool]:
         return f_bootstrap, is_bootstrap_frame_internal
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _get_unhandled_exception_frame(int depth):
 # ELSE
 def _get_unhandled_exception_frame(depth: int) -> Optional[FrameType]:
 # ENDIF
+# fmt: on
     try:
         return _thread_local_info.f_unhandled
     except:
@@ -171,20 +189,20 @@ def _get_unhandled_exception_frame(depth: int) -> Optional[FrameType]:
 
             # When the back frame is the bootstrap (or if we have no back
             # frame) then use this frame as the one to track.
-            if name == 'threading':
-                if f_back.f_code.co_name in ('__bootstrap', '_bootstrap', '__bootstrap_inner', '_bootstrap_inner', 'run'):
+            if name == "threading":
+                if f_back.f_code.co_name in ("__bootstrap", "_bootstrap", "__bootstrap_inner", "_bootstrap_inner", "run"):
                     break
 
-            elif name == 'pydev_monkey':
-                if f_back.f_code.co_name == '__call__':
+            elif name == "pydev_monkey":
+                if f_back.f_code.co_name == "__call__":
                     break
 
-            elif name == 'pydevd':
-                if f_back.f_code.co_name in ('_exec', 'run', 'main'):
+            elif name == "pydevd":
+                if f_back.f_code.co_name in ("_exec", "run", "main"):
                     break
 
-            elif name == 'pydevd_runpy':
-                if f_back.f_code.co_name.startswith(('run', '_run')):
+            elif name == "pydevd_runpy":
+                if f_back.f_code.co_name.startswith(("run", "_run")):
                     break
 
             f_unhandled = f_back
@@ -196,6 +214,7 @@ def _get_unhandled_exception_frame(depth: int) -> Optional[FrameType]:
         return f_unhandled
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef class ThreadInfo:
 #     cdef unsigned long thread_ident
@@ -209,12 +228,15 @@ class ThreadInfo:
     thread: threading.Thread
     trace: bool
 # ENDIF
+# fmt: on
 
-# IFDEF CYTHON
-#     def __init__(self, thread, unsigned long thread_ident, bint trace, PyDBAdditionalThreadInfo additional_info):
-# ELSE
+    # fmt: off
+    # IFDEF CYTHON
+    # def __init__(self, thread, unsigned long thread_ident, bint trace, PyDBAdditionalThreadInfo additional_info):
+    # ELSE
     def __init__(self, thread: threading.Thread, thread_ident: int, trace: bool, additional_info: PyDBAdditionalThreadInfo):
-# ENDIF
+    # ENDIF
+    # fmt: on
         self.thread = thread
         self.thread_ident = thread_ident
         self.additional_info = additional_info
@@ -222,9 +244,9 @@ class ThreadInfo:
 
 
 class _DeleteDummyThreadOnDel:
-    '''
+    """
     Helper class to remove a dummy thread from threading._active on __del__.
-    '''
+    """
 
     def __init__(self, dummy_thread):
         self._dummy_thread = dummy_thread
@@ -243,12 +265,14 @@ class _DeleteDummyThreadOnDel:
                 _thread_active.pop(self._tident, None)
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _create_thread_info(depth):
 #     cdef unsigned long thread_ident
 # ELSE
 def _create_thread_info(depth):
 # ENDIF
+# fmt: on
     # Don't call threading.currentThread because if we're too early in the process
     # we may create a dummy thread.
     thread_ident = _get_ident()
@@ -259,15 +283,15 @@ def _create_thread_info(depth):
 
     if is_bootstrap_frame_internal:
         t = None
-        if f_bootstrap_frame.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner', 'is_alive'):
+        if f_bootstrap_frame.f_code.co_name in ("__bootstrap_inner", "_bootstrap_inner", "is_alive"):
             # Note: be careful not to use threading.current_thread to avoid creating a dummy thread.
-            t = f_bootstrap_frame.f_locals.get('self')
+            t = f_bootstrap_frame.f_locals.get("self")
             if not isinstance(t, threading.Thread):
                 t = None
 
-        elif f_bootstrap_frame.f_code.co_name in ('_exec', '__call__'):
+        elif f_bootstrap_frame.f_code.co_name in ("_exec", "__call__"):
             # Note: be careful not to use threading.current_thread to avoid creating a dummy thread.
-            t = f_bootstrap_frame.f_locals.get('t')
+            t = f_bootstrap_frame.f_locals.get("t")
             if not isinstance(t, threading.Thread):
                 t = None
 
@@ -286,7 +310,7 @@ def _create_thread_info(depth):
     if t is None:
         return None
 
-    if getattr(t, 'is_pydev_daemon_thread', False):
+    if getattr(t, "is_pydev_daemon_thread", False):
         return ThreadInfo(t, thread_ident, False, None)
     else:
         try:
@@ -298,6 +322,7 @@ def _create_thread_info(depth):
         return ThreadInfo(t, thread_ident, True, additional_info)
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef class FuncCodeInfo:
 #     cdef str co_filename
@@ -321,12 +346,12 @@ def _create_thread_info(depth):
 #     cdef str co_name
 # ELSE
 class FuncCodeInfo:
-
 # ENDIF
+# fmt: on
     def __init__(self):
-        self.co_filename: str = ''
-        self.canonical_normalized_filename:str = ''
-        self.abs_path_filename: str = ''
+        self.co_filename: str = ""
+        self.canonical_normalized_filename: str = ""
+        self.abs_path_filename: str = ""
 
         # These is never seen and we never stop, even if it's a callback coming
         # from user code (these are completely invisible to the debugging tracing).
@@ -362,7 +387,7 @@ class FuncCodeInfo:
 
         self.try_except_container_obj: Optional[_TryExceptContainerObj] = None
         self.code_obj: CodeType = None
-        self.co_name: str = ''
+        self.co_name: str = ""
 
     def get_line_of_offset(self, offset):
         for start, end, line in self.code_obj.co_lines():
@@ -371,16 +396,18 @@ class FuncCodeInfo:
         return -1
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _get_thread_info(bint create, int depth):
 # ELSE
-def _get_thread_info(create: bool, depth:int) -> Optional[ThreadInfo]:
+def _get_thread_info(create: bool, depth: int) -> Optional[ThreadInfo]:
 # ENDIF
-    '''
+# fmt: on
+    """
     Provides thread-related info.
 
     May return None if the thread is still not active.
-    '''
+    """
     try:
         # Note: changing to a `dict[thread.ident] = thread_info` had almost no
         # effect in the performance.
@@ -396,15 +423,17 @@ def _get_thread_info(create: bool, depth:int) -> Optional[ThreadInfo]:
         return _thread_local_info.thread_info
 
 
-_CodeLineInfo = namedtuple('_CodeLineInfo', 'line_to_offset, first_line, last_line')
+_CodeLineInfo = namedtuple("_CodeLineInfo", "line_to_offset, first_line, last_line")
 
 
 # Note: this method has a version in cython too
+# fmt: off
 # IFDEF CYTHON
 # cdef _get_code_line_info(code_obj, _cache={}):
 # ELSE
 def _get_code_line_info(code_obj, _cache={}):
 # ENDIF
+# fmt: on
     try:
         return _cache[code_obj]
     except:
@@ -423,23 +452,25 @@ def _get_code_line_info(code_obj, _cache={}):
         return ret
 
 
-_code_to_func_code_info_cache: Dict[CodeType, 'FuncCodeInfo'] = {}
+_code_to_func_code_info_cache: Dict[CodeType, "FuncCodeInfo"] = {}
 
 
+# fmt: off
 # IFDEF CYTHON
 # cpdef FuncCodeInfo _get_func_code_info(code_obj, frame_or_depth):
 #     cdef FuncCodeInfo func_code_info
 # ELSE
 def _get_func_code_info(code_obj, frame_or_depth) -> FuncCodeInfo:
 # ENDIF
-    '''
+# fmt: on
+    """
     Provides code-object related info.
 
     Note that it contains informations on the breakpoints for a given function.
     If breakpoints change a new FuncCodeInfo instance will be created.
 
     Note that this can be called by any thread.
-    '''
+    """
     py_db = GlobalDebuggerHolder.global_dbg
     if py_db is None:
         return None
@@ -451,22 +482,24 @@ def _get_func_code_info(code_obj, frame_or_depth) -> FuncCodeInfo:
             # print('_get_func_code_info: matched mtime', key, code_obj)
             return func_code_info
 
-# IFDEF CYTHON
-#     cdef dict cache_file_type
-#     cdef tuple cache_file_type_key
-#     cdef PyCodeObject * code
-#     cdef str co_filename
-#     cdef str co_name
-#     code = <PyCodeObject *> code_obj
-#     co_filename = <str> code.co_filename
-#     co_name = <str> code.co_name
-# ELSE
+    # fmt: off
+    # IFDEF CYTHON
+    # cdef dict cache_file_type
+    # cdef tuple cache_file_type_key
+    # cdef PyCodeObject * code
+    # cdef str co_filename
+    # cdef str co_name
+    # code = <PyCodeObject *> code_obj
+    # co_filename = <str> code.co_filename
+    # co_name = <str> code.co_name
+    # ELSE
     cache_file_type: dict
     cache_file_type_key: tuple
     code = code_obj
     co_filename: str = code.co_filename
     co_name: str = code.co_name
-# ENDIF
+    # ENDIF
+    # fmt: on
 
     # print('_get_func_code_info: new (mtime did not match)', key, code_obj)
 
@@ -501,7 +534,7 @@ def _get_func_code_info(code_obj, frame_or_depth) -> FuncCodeInfo:
                 frame = _getframe(frame_or_depth + 1)
             else:
                 frame = frame_or_depth
-            assert frame.f_code is code_obj, '%s != %s' % (frame.f_code, code_obj)
+            assert frame.f_code is code_obj, "%s != %s" % (frame.f_code, code_obj)
 
         file_type = py_db.get_file_type(frame, abs_path_real_path_and_base)  # we don't want to debug anything related to pydevd
 
@@ -578,58 +611,66 @@ def _get_func_code_info(code_obj, frame_or_depth) -> FuncCodeInfo:
         if is_tracked_frame:
             if py_db.has_plugin_line_breaks:
                 required_events_breakpoint = plugin_manager.required_events_breakpoint()
-                func_code_info.plugin_line_breakpoint_found = 'line' in required_events_breakpoint
-                func_code_info.plugin_call_breakpoint_found = 'call' in required_events_breakpoint
+                func_code_info.plugin_line_breakpoint_found = "line" in required_events_breakpoint
+                func_code_info.plugin_call_breakpoint_found = "call" in required_events_breakpoint
 
             required_events_stepping = plugin_manager.required_events_stepping()
-            func_code_info.plugin_line_stepping: bool = 'line' in required_events_stepping
-            func_code_info.plugin_call_stepping: bool = 'call' in required_events_stepping
-            func_code_info.plugin_return_stepping: bool = 'return' in required_events_stepping
+            func_code_info.plugin_line_stepping: bool = "line" in required_events_stepping
+            func_code_info.plugin_call_stepping: bool = "call" in required_events_stepping
+            func_code_info.plugin_return_stepping: bool = "return" in required_events_stepping
 
     _code_to_func_code_info_cache[code_obj] = func_code_info
     return func_code_info
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _enable_line_tracing(code):
 # ELSE
 def _enable_line_tracing(code):
 # ENDIF
+# fmt: on
     # print('enable line tracing', code)
     events = monitor.get_local_events(DEBUGGER_ID, code)
     monitor.set_local_events(DEBUGGER_ID, code, events | monitor.events.LINE | monitor.events.JUMP)
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _enable_return_tracing(code):
 # ELSE
 def _enable_return_tracing(code):
 # ENDIF
+# fmt: on
     # print('enable return tracing', code)
     events = monitor.get_local_events(DEBUGGER_ID, code)
     monitor.set_local_events(DEBUGGER_ID, code, events | monitor.events.PY_RETURN)
 
 
+# fmt: off
 # IFDEF CYTHON
 # cpdef disable_code_tracing(code):
 # ELSE
 def disable_code_tracing(code):
 # ENDIF
+# fmt: on
     monitor.set_local_events(DEBUGGER_ID, code, 0)
 
 
+# fmt: off
 # IFDEF CYTHON
 # cpdef enable_code_tracing(unsigned long thread_ident, code, frame):
 # ELSE
 def enable_code_tracing(thread_ident: Optional[int], code, frame) -> bool:
 # ENDIF
-    '''
+# fmt: on
+    """
     Note: this must enable code tracing for the given code/frame.
 
     The frame can be from any thread!
 
     :return: Whether code tracing was added in this function to the given code.
-    '''
+    """
     # DEBUG = False  # 'my_code.py' in code.co_filename or 'other.py' in code.co_filename
     # if DEBUG:
     #     print('==== enable code tracing', code.co_filename[-30:], code.co_name)
@@ -655,6 +696,7 @@ def enable_code_tracing(thread_ident: Optional[int], code, frame) -> bool:
     return _enable_code_tracing(py_db, additional_info, func_code_info, code, frame, False)
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef bint _enable_code_tracing(py_db, PyDBAdditionalThreadInfo additional_info, FuncCodeInfo func_code_info, code, frame, bint warn_on_filtered_out):
 #     cdef int step_cmd
@@ -663,9 +705,10 @@ def enable_code_tracing(thread_ident: Optional[int], code, frame) -> bool:
 # ELSE
 def _enable_code_tracing(py_db, additional_info, func_code_info: FuncCodeInfo, code, frame, warn_on_filtered_out) -> bool:
 # ENDIF
-    '''
+# fmt: on
+    """
     :return: Whether code tracing was added in this function to the given code.
-    '''
+    """
     # DEBUG = False  # 'my_code.py' in code.co_filename or 'other.py' in code.co_filename
     step_cmd = additional_info.pydev_step_cmd
     is_stepping = step_cmd != -1
@@ -674,7 +717,12 @@ def _enable_code_tracing(py_db, additional_info, func_code_info: FuncCodeInfo, c
     if func_code_info.always_filtered_out:
         # if DEBUG:
         #     print('disable (always filtered out)')
-        if warn_on_filtered_out and is_stepping and additional_info.pydev_original_step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE) and not _global_notify_skipped_step_in:
+        if (
+            warn_on_filtered_out
+            and is_stepping
+            and additional_info.pydev_original_step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE)
+            and not _global_notify_skipped_step_in
+        ):
             _notify_skipped_step_in_because_of_filters(py_db, frame)
 
         if is_stepping:
@@ -694,11 +742,13 @@ def _enable_code_tracing(py_db, additional_info, func_code_info: FuncCodeInfo, c
     return code_tracing_added
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _enable_step_tracing(py_db, code, step_cmd, PyDBAdditionalThreadInfo info, frame):
 # ELSE
 def _enable_step_tracing(py_db, code, step_cmd, info, frame):
 # ENDIF
+# fmt: on
     if step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE, CMD_SMART_STEP_INTO):
         # Stepping (must have line/return tracing enabled).
         _enable_line_tracing(code)
@@ -719,26 +769,32 @@ def _enable_step_tracing(py_db, code, step_cmd, info, frame):
             _enable_return_tracing(code)
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef class _TryExceptContainerObj:
 #     cdef list try_except_infos
 # ELSE
 class _TryExceptContainerObj:
 # ENDIF
-    '''
+# fmt: on
+    """
     A dumb container object just to contain the try..except info when needed. Meant to be
     persistent among multiple PyDBFrames to the same code object.
-    '''
+    """
 
+    # fmt: off
     # IFDEF CYTHON
-#     def __init__(self, list try_except_infos):
-#         self.try_except_infos = try_except_infos
+    # def __init__(self, list try_except_infos):
+    #     self.try_except_infos = try_except_infos
     # ELSE
     def __init__(self, try_except_infos):
         self.try_except_infos = try_except_infos
+
     # ENDIF
+    # fmt: on
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _unwind_event(code, instruction, exc):
 #     cdef ThreadInfo thread_info
@@ -746,6 +802,7 @@ class _TryExceptContainerObj:
 # ELSE
 def _unwind_event(code, instruction, exc):
 # ENDIF
+# fmt: on
     try:
         thread_info = _thread_local_info.thread_info
     except:
@@ -771,12 +828,13 @@ def _unwind_event(code, instruction, exc):
     arg = (type(exc), exc, exc.__traceback__)
 
     has_caught_exception_breakpoint_in_pydb = (
-        py_db.break_on_caught_exceptions
-        or py_db.break_on_user_uncaught_exceptions
-        or py_db.has_plugin_exception_breaks)
+        py_db.break_on_caught_exceptions or py_db.break_on_user_uncaught_exceptions or py_db.has_plugin_exception_breaks
+    )
 
     if has_caught_exception_breakpoint_in_pydb:
-        _should_stop, frame, user_uncaught_exc_info = should_stop_on_exception(py_db, thread_info.additional_info, frame, thread_info.thread, arg, None)
+        _should_stop, frame, user_uncaught_exc_info = should_stop_on_exception(
+            py_db, thread_info.additional_info, frame, thread_info.thread, arg, None
+        )
         if user_uncaught_exc_info:
             # TODO: Check: this may no longer be needed as in the unwind we know it's
             # an exception bubbling up (wait for all tests to pass to check it).
@@ -784,7 +842,9 @@ def _unwind_event(code, instruction, exc):
                 container_obj = _TryExceptContainerObj(py_db.collect_try_except_info(frame.f_code))
                 func_code_info.try_except_container_obj = container_obj
 
-            if is_unhandled_exception(func_code_info.try_except_container_obj, py_db, frame, user_uncaught_exc_info[1], user_uncaught_exc_info[2]):
+            if is_unhandled_exception(
+                func_code_info.try_except_container_obj, py_db, frame, user_uncaught_exc_info[1], user_uncaught_exc_info[2]
+            ):
                 # print('stop in user uncaught')
                 handle_exception(py_db, thread_info.thread, frame, user_uncaught_exc_info[0], EXCEPTION_TYPE_USER_UNHANDLED)
                 return
@@ -796,6 +856,7 @@ def _unwind_event(code, instruction, exc):
             return
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _raise_event(code, instruction, exc):
 #     cdef ThreadInfo thread_info
@@ -803,7 +864,8 @@ def _unwind_event(code, instruction, exc):
 # ELSE
 def _raise_event(code, instruction, exc):
 # ENDIF
-    '''
+# fmt: on
+    """
     The way this should work is the following: when the user is using
     pydevd to do the launch and we're on a managed stack, we should consider
     unhandled only if it gets into a pydevd. If it's a thread, if it stops
@@ -812,7 +874,7 @@ def _raise_event(code, instruction, exc):
 
     Note: unlike other events, this one is global and not per-code (so,
     it cannot be individually enabled/disabled for a given code object).
-    '''
+    """
     try:
         thread_info = _thread_local_info.thread_info
     except:
@@ -837,19 +899,23 @@ def _raise_event(code, instruction, exc):
 
     frame = _getframe(1)
     arg = (type(exc), exc, exc.__traceback__)
-    should_stop, frame, _user_uncaught_exc_info = should_stop_on_exception(py_db, thread_info.additional_info, frame, thread_info.thread, arg, None)
+    should_stop, frame, _user_uncaught_exc_info = should_stop_on_exception(
+        py_db, thread_info.additional_info, frame, thread_info.thread, arg, None
+    )
     # print('!!!! should_stop (in raise)', should_stop)
     if should_stop:
         handle_exception(py_db, thread_info.thread, frame, arg, EXCEPTION_TYPE_HANDLED)
         return
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef str get_func_name(frame):
 #     cdef str func_name
 # ELSE
 def get_func_name(frame):
 # ENDIF
+# fmt: on
     code_obj = frame.f_code
     func_name = code_obj.co_name
     try:
@@ -863,11 +929,13 @@ def get_func_name(frame):
         return func_name
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _show_return_values(frame, arg):
 # ELSE
 def _show_return_values(frame, arg):
 # ENDIF
+# fmt: on
     try:
         try:
             f_locals_back = getattr(frame.f_back, "f_locals", None)
@@ -884,11 +952,13 @@ def _show_return_values(frame, arg):
         f_locals_back = None
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _remove_return_values(py_db, frame):
 # ELSE
 def _remove_return_values(py_db, frame):
 # ENDIF
+# fmt: on
     try:
         try:
             # Showing return values was turned off, we should remove them from locals dict.
@@ -904,6 +974,7 @@ def _remove_return_values(py_db, frame):
         f_locals_back = None
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _return_event(code, instruction, retval):
 #     cdef ThreadInfo thread_info
@@ -913,6 +984,7 @@ def _remove_return_values(py_db, frame):
 # ELSE
 def _return_event(code, instruction, retval):
 # ENDIF
+# fmt: on
     try:
         thread_info = _thread_local_info.thread_info
     except:
@@ -945,7 +1017,7 @@ def _return_event(code, instruction, retval):
     if info.suspend_type != PYTHON_SUSPEND:
         # Plugin stepping
         if func_code_info.plugin_return_stepping:
-            _plugin_stepping(py_db, step_cmd, 'return', frame, thread_info)
+            _plugin_stepping(py_db, step_cmd, "return", frame, thread_info)
         return
 
     # Python line stepping
@@ -956,18 +1028,18 @@ def _return_event(code, instruction, retval):
             back_func_code_info = _get_func_code_info(frame.f_back.f_code, frame.f_back)
             if (
                 # Not filtered out.
-                not back_func_code_info.always_skip_code and not back_func_code_info.always_filtered_out
+                not back_func_code_info.always_skip_code
+                and not back_func_code_info.always_filtered_out
                 and not (force_check_project_scope and back_func_code_info.filtered_out_force_checked)
-
                 # Prevent stopping in a return to the same location we were initially
                 # (i.e.: double-stop at the same place due to some filtering).
                 and info.step_in_initial_location != (frame.f_back, frame.f_back.f_lineno)
-                ):
-                    if py_db.show_return_values:
-                        _show_return_values(frame, retval)
+            ):
+                if py_db.show_return_values:
+                    _show_return_values(frame, retval)
 
-                    _stop_on_return(py_db, thread_info, info, step_cmd, frame, retval)
-                    return
+                _stop_on_return(py_db, thread_info, info, step_cmd, frame, retval)
+                return
 
     if step_cmd in (CMD_STEP_RETURN, CMD_STEP_RETURN_MY_CODE) and _is_same_frame(info, stop_frame, frame):
         if py_db.show_return_values:
@@ -976,7 +1048,11 @@ def _return_event(code, instruction, retval):
         _stop_on_return(py_db, thread_info, info, step_cmd, frame, retval)
         return
 
-    elif step_cmd in (CMD_STEP_OVER, CMD_STEP_OVER_MY_CODE) and not info.pydev_use_scoped_step_frame and _is_same_frame(info, stop_frame, frame):
+    elif (
+        step_cmd in (CMD_STEP_OVER, CMD_STEP_OVER_MY_CODE)
+        and not info.pydev_use_scoped_step_frame
+        and _is_same_frame(info, stop_frame, frame)
+    ):
         # This isn't in the sys.settrace version: on a step over, if we return and the return is valid, show
         # as a step return instead of going back to step into mode (but if the back frame is not valid, then
         # go to step into mode).
@@ -985,10 +1061,12 @@ def _return_event(code, instruction, retval):
             back_func_code_info = _get_func_code_info(f_back.f_code, 2)
             force_check_project_scope = step_cmd == CMD_STEP_OVER_MY_CODE
 
-            if back_func_code_info is not None and not back_func_code_info.always_skip_code \
-                    and not back_func_code_info.always_filtered_out \
-                    and not (force_check_project_scope and back_func_code_info.filtered_out_force_checked):
-
+            if (
+                back_func_code_info is not None
+                and not back_func_code_info.always_skip_code
+                and not back_func_code_info.always_filtered_out
+                and not (force_check_project_scope and back_func_code_info.filtered_out_force_checked)
+            ):
                 if py_db.show_return_values:
                     _show_return_values(frame, retval)
 
@@ -1006,15 +1084,18 @@ def _return_event(code, instruction, retval):
 
     if py_db.show_return_values:
         if (
-                (info.pydev_step_cmd in (CMD_STEP_OVER, CMD_STEP_OVER_MY_CODE, CMD_SMART_STEP_INTO) and (_is_same_frame(info, stop_frame, frame.f_back))) or
-                (info.pydev_step_cmd in (CMD_STEP_RETURN, CMD_STEP_RETURN_MY_CODE) and (info, _is_same_frame(info, stop_frame, frame))) or
-                (info.pydev_step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_COROUTINE)) or
-                (
-                    info.pydev_step_cmd == CMD_STEP_INTO_MY_CODE
-                    and frame.f_back is not None
-                    and not py_db.apply_files_filter(frame.f_back, frame.f_back.f_code.co_filename, True)
-                )
-            ):
+            (
+                info.pydev_step_cmd in (CMD_STEP_OVER, CMD_STEP_OVER_MY_CODE, CMD_SMART_STEP_INTO)
+                and (_is_same_frame(info, stop_frame, frame.f_back))
+            )
+            or (info.pydev_step_cmd in (CMD_STEP_RETURN, CMD_STEP_RETURN_MY_CODE) and (info, _is_same_frame(info, stop_frame, frame)))
+            or (info.pydev_step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_COROUTINE))
+            or (
+                info.pydev_step_cmd == CMD_STEP_INTO_MY_CODE
+                and frame.f_back is not None
+                and not py_db.apply_files_filter(frame.f_back, frame.f_back.f_code.co_filename, True)
+            )
+        ):
             _show_return_values(frame, retval)
 
     if step_cmd in (CMD_STEP_OVER, CMD_STEP_RETURN, CMD_STEP_OVER_MY_CODE, CMD_STEP_RETURN_MY_CODE, CMD_SMART_STEP_INTO):
@@ -1036,12 +1117,14 @@ def _return_event(code, instruction, retval):
                 _show_return_values(frame, retval)
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _enable_code_tracing_for_frame_and_parents(ThreadInfo thread_info, frame):
 #     cdef FuncCodeInfo func_code_info
 # ELSE
 def _enable_code_tracing_for_frame_and_parents(thread_info, frame):
 # ENDIF
+# fmt: on
     py_db: object = GlobalDebuggerHolder.global_dbg
     if py_db is None or py_db.pydb_disposed:
         return
@@ -1056,11 +1139,13 @@ def _enable_code_tracing_for_frame_and_parents(thread_info, frame):
         frame = frame.f_back
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _stop_on_return(py_db, ThreadInfo thread_info, PyDBAdditionalThreadInfo info, int step_cmd, frame, retval):
 # ELSE
 def _stop_on_return(py_db, thread_info, info, step_cmd, frame, retval):
 # ENDIF
+# fmt: on
     back = frame.f_back
     if back is not None:
         # When we get to the pydevd run function, the debugging has actually finished for the main thread
@@ -1088,7 +1173,7 @@ def _stop_on_return(py_db, thread_info, info, step_cmd, frame, retval):
     if back is not None:
         # if we're in a return, we want it to appear to the user in the previous frame!
         py_db.set_suspend(thread_info.thread, step_cmd, original_step_cmd=info.pydev_original_step_cmd)
-        _do_wait_suspend(py_db, thread_info, back, 'return', retval)
+        _do_wait_suspend(py_db, thread_info, back, "return", retval)
     else:
         # in jython we may not have a back frame
         info.pydev_step_stop = None
@@ -1098,13 +1183,17 @@ def _stop_on_return(py_db, thread_info, info, step_cmd, frame, retval):
         info.update_stepping_info()
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _stop_on_breakpoint(py_db, ThreadInfo thread_info, int stop_reason, bp, frame, new_frame, bint stop, bint stop_on_plugin_breakpoint, str bp_type):
 #     cdef PyDBAdditionalThreadInfo additional_info
 # ELSE
-def _stop_on_breakpoint(py_db, thread_info: ThreadInfo, stop_reason: int, bp, frame, new_frame, stop: bool, stop_on_plugin_breakpoint: bool, bp_type:str):
+def _stop_on_breakpoint(
+    py_db, thread_info: ThreadInfo, stop_reason: int, bp, frame, new_frame, stop: bool, stop_on_plugin_breakpoint: bool, bp_type: str
+):
 # ENDIF
-    '''
+# fmt: on
+    """
     :param bp: the breakpoint hit (additional conditions will be checked now).
     :param frame: the actual frame
     :param new_frame: either the actual frame or the frame provided by the plugins.
@@ -1114,7 +1203,7 @@ def _stop_on_breakpoint(py_db, thread_info: ThreadInfo, stop_reason: int, bp, fr
     :return:
         True if the breakpoint was suspended inside this function and False otherwise.
         Note that even if False is returned, it's still possible
-    '''
+    """
     additional_info = thread_info.additional_info
     # ok, hit breakpoint, now, we have to discover if it is a conditional breakpoint
     # lets do the conditional stuff here
@@ -1135,7 +1224,7 @@ def _stop_on_breakpoint(py_db, thread_info: ThreadInfo, stop_reason: int, bp, fr
         stop_on_plugin_breakpoint = False
 
         if additional_info.pydev_message is not None and len(additional_info.pydev_message) > 0:
-            cmd = py_db.cmd_factory.make_io_message(additional_info.pydev_message + os.linesep, '1')
+            cmd = py_db.cmd_factory.make_io_message(additional_info.pydev_message + os.linesep, "1")
             py_db.writer.add_command(cmd)
 
     if stop:
@@ -1145,18 +1234,19 @@ def _stop_on_breakpoint(py_db, thread_info: ThreadInfo, stop_reason: int, bp, fr
             suspend_other_threads=bp and bp.suspend_policy == "ALL",
         )
         # print('suspend on breakpoint...')
-        _do_wait_suspend(py_db, thread_info, frame, 'line', None)
+        _do_wait_suspend(py_db, thread_info, frame, "line", None)
         return True
 
     elif stop_on_plugin_breakpoint:
         stop_at_frame = py_db.plugin.suspend(py_db, thread_info.thread, frame, bp_type)
         if stop_at_frame and thread_info.additional_info.pydev_state == STATE_SUSPEND:
-            _do_wait_suspend(py_db, thread_info, stop_at_frame, 'line', None)
+            _do_wait_suspend(py_db, thread_info, stop_at_frame, "line", None)
         return
 
     return False
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _plugin_stepping(py_db, int step_cmd, event, frame, ThreadInfo thread_info):
 #     cdef bint stop
@@ -1164,9 +1254,13 @@ def _stop_on_breakpoint(py_db, thread_info: ThreadInfo, stop_reason: int, bp, fr
 # ELSE
 def _plugin_stepping(py_db, step_cmd, event, frame, thread_info):
 # ENDIF
+# fmt: on
     plugin_manager = py_db.plugin
     # Step return makes no sense for plugins (I guess?!?), so, just handle as step into.
-    if step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE, CMD_SMART_STEP_INTO) or step_cmd in (CMD_STEP_RETURN, CMD_STEP_RETURN_MY_CODE):
+    if step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE, CMD_SMART_STEP_INTO) or step_cmd in (
+        CMD_STEP_RETURN,
+        CMD_STEP_RETURN_MY_CODE,
+    ):
         stop_info = {}
         stop = False
         result = plugin_manager.cmd_step_into(py_db, frame, event, thread_info.additional_info, thread_info.thread, stop_info, stop)
@@ -1188,6 +1282,7 @@ def _plugin_stepping(py_db, step_cmd, event, frame, thread_info):
                     return
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _jump_event(code, int from_offset, int to_offset):
 #     cdef ThreadInfo thread_info
@@ -1197,6 +1292,7 @@ def _plugin_stepping(py_db, step_cmd, event, frame, thread_info):
 # ELSE
 def _jump_event(code, from_offset, to_offset):
 # ENDIF
+# fmt: on
     # A bunch of things have to be repeated especially because in the sys.monitoring
     # everything is global, yet, when we start tracing something for stepping that
     # needs to be per-thread.
@@ -1240,6 +1336,7 @@ def _jump_event(code, from_offset, to_offset):
     return _internal_line_event(func_code_info, frame, frame.f_lineno)
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _line_event(code, int line):
 #     cdef ThreadInfo thread_info
@@ -1247,6 +1344,7 @@ def _jump_event(code, from_offset, to_offset):
 # ELSE
 def _line_event(code, line):
 # ENDIF
+# fmt: on
 
     # A bunch of things have to be repeated especially because in the sys.monitoring
     # everything is global, yet, when we start tracing something for stepping that
@@ -1278,6 +1376,7 @@ def _line_event(code, line):
     return _internal_line_event(func_code_info, frame, line)
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _internal_line_event(FuncCodeInfo func_code_info, frame, int line):
 #     cdef ThreadInfo thread_info
@@ -1290,6 +1389,7 @@ def _line_event(code, line):
 # ELSE
 def _internal_line_event(func_code_info, frame, line):
 # ENDIF
+# fmt: on
     py_db: object = GlobalDebuggerHolder.global_dbg
     thread_info = _thread_local_info.thread_info
     info = thread_info.additional_info
@@ -1315,11 +1415,11 @@ def _internal_line_event(func_code_info, frame, line):
             stop = True
 
         if bp:
-            if _stop_on_breakpoint(py_db, thread_info, stop_reason, bp, frame, new_frame, stop, stop_on_plugin_breakpoint, 'python-line'):
+            if _stop_on_breakpoint(py_db, thread_info, stop_reason, bp, frame, new_frame, stop, stop_on_plugin_breakpoint, "python-line"):
                 return
 
     if func_code_info.plugin_line_breakpoint_found:
-        result = py_db.plugin.get_breakpoint(py_db, frame, 'line', info)
+        result = py_db.plugin.get_breakpoint(py_db, frame, "line", info)
         if result:
             stop_reason = CMD_SET_BREAK
             stop = False
@@ -1331,7 +1431,7 @@ def _internal_line_event(func_code_info, frame, line):
     if info.pydev_state == STATE_SUSPEND:
         # Note: it's possible that it was suspended with a pause (and we'd stop here too).
         # print('suspend (pause)...')
-        _do_wait_suspend(py_db, thread_info, frame, 'line', None)
+        _do_wait_suspend(py_db, thread_info, frame, "line", None)
         return
 
     # Ok, did not suspend due to a breakpoint, let's see if we're stepping.
@@ -1345,7 +1445,7 @@ def _internal_line_event(func_code_info, frame, line):
     if info.suspend_type != PYTHON_SUSPEND:
         # Plugin stepping
         if func_code_info.plugin_line_stepping:
-            _plugin_stepping(py_db, step_cmd, 'line', frame, thread_info)
+            _plugin_stepping(py_db, step_cmd, "line", frame, thread_info)
         return
 
     # Python stepping now
@@ -1356,7 +1456,7 @@ def _internal_line_event(func_code_info, frame, line):
                 return
 
             py_db.set_suspend(thread_info.thread, step_cmd, original_step_cmd=info.pydev_original_step_cmd)
-            _do_wait_suspend(py_db, thread_info, frame, 'line', None)
+            _do_wait_suspend(py_db, thread_info, frame, "line", None)
             return
         else:
             # Make sure we check the filtering inside ipython calls too...
@@ -1366,7 +1466,7 @@ def _internal_line_event(func_code_info, frame, line):
             stop = False
             # We can only stop inside the ipython call.
             filename = frame.f_code.co_filename
-            if filename.endswith('.pyc'):
+            if filename.endswith(".pyc"):
                 filename = filename[:-1]
 
             if not filename.endswith(PYDEVD_IPYTHON_CONTEXT[0]):
@@ -1375,10 +1475,10 @@ def _internal_line_event(func_code_info, frame, line):
                     if f.f_code.co_name == PYDEVD_IPYTHON_CONTEXT[1]:
                         f2 = f.f_back
                         if f2 is not None and f2.f_code.co_name == PYDEVD_IPYTHON_CONTEXT[2]:
-                            pydev_log.debug('Stop inside ipython call')
+                            pydev_log.debug("Stop inside ipython call")
                             py_db.set_suspend(thread_info.thread, step_cmd, original_step_cmd=info.pydev_original_step_cmd)
-                            thread_info.additional_info.trace_suspend_type = 'sys_monitor'
-                            _do_wait_suspend(py_db, thread_info, frame, 'line', None)
+                            thread_info.additional_info.trace_suspend_type = "sys_monitor"
+                            _do_wait_suspend(py_db, thread_info, frame, "line", None)
                             break
                     f = f.f_back
 
@@ -1394,7 +1494,7 @@ def _internal_line_event(func_code_info, frame, line):
         # into and in the other we go to a step into my code).
         if _is_same_frame(info, stop_frame, frame):
             py_db.set_suspend(thread_info.thread, step_cmd, original_step_cmd=info.pydev_original_step_cmd)
-            _do_wait_suspend(py_db, thread_info, frame, 'line', None)
+            _do_wait_suspend(py_db, thread_info, frame, "line", None)
             return
 
     elif step_cmd == CMD_SMART_STEP_INTO:
@@ -1413,16 +1513,17 @@ def _internal_line_event(func_code_info, frame, line):
                 if pydev_smart_parent_offset >= 0 and pydev_smart_step_into_variants:
                     # Preferred mode (when the smart step into variants are available
                     # and the offset is set).
-                    stop = get_smart_step_into_variant_from_frame_offset(back.f_lasti, pydev_smart_step_into_variants) is \
-                           get_smart_step_into_variant_from_frame_offset(pydev_smart_parent_offset, pydev_smart_step_into_variants)
+                    stop = get_smart_step_into_variant_from_frame_offset(
+                        back.f_lasti, pydev_smart_step_into_variants
+                    ) is get_smart_step_into_variant_from_frame_offset(pydev_smart_parent_offset, pydev_smart_step_into_variants)
 
                 else:
                     # Only the name/line is available, so, check that.
                     curr_func_name = frame.f_code.co_name
 
                     # global context is set with an empty name
-                    if curr_func_name in ('?', '<module>') or curr_func_name is None:
-                        curr_func_name = ''
+                    if curr_func_name in ("?", "<module>") or curr_func_name is None:
+                        curr_func_name = ""
                     if curr_func_name == info.pydev_func_name and stop_frame.f_lineno == info.pydev_next_line:
                         stop = True
 
@@ -1449,13 +1550,15 @@ def _internal_line_event(func_code_info, frame, line):
                     # the child (because this is a generator, the parent may have moved forward
                     # already -- and that's ok, so, we just check that the parent frame
                     # matches in this case).
-                    smart_step_into_variant = get_smart_step_into_variant_from_frame_offset(pydev_smart_parent_offset, pydev_smart_step_into_variants)
+                    smart_step_into_variant = get_smart_step_into_variant_from_frame_offset(
+                        pydev_smart_parent_offset, pydev_smart_step_into_variants
+                    )
                     # print('matched parent offset', pydev_smart_parent_offset)
                     # Ok, now, check the child variant
                     children_variants = smart_step_into_variant.children_variants
                     stop = children_variants and (
-                        get_smart_step_into_variant_from_frame_offset(back.f_lasti, children_variants) is \
-                        get_smart_step_into_variant_from_frame_offset(pydev_smart_child_offset, children_variants)
+                        get_smart_step_into_variant_from_frame_offset(back.f_lasti, children_variants)
+                        is get_smart_step_into_variant_from_frame_offset(pydev_smart_child_offset, children_variants)
                     )
                     # print('stop at child', stop)
 
@@ -1466,10 +1569,11 @@ def _internal_line_event(func_code_info, frame, line):
 
         if stop:
             py_db.set_suspend(thread_info.thread, step_cmd, original_step_cmd=info.pydev_original_step_cmd)
-            _do_wait_suspend(py_db, thread_info, frame, 'line', None)
+            _do_wait_suspend(py_db, thread_info, frame, "line", None)
             return
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _start_method_event(code, instruction_offset):
 #     cdef ThreadInfo thread_info
@@ -1483,6 +1587,7 @@ def _internal_line_event(func_code_info, frame, line):
 # ELSE
 def _start_method_event(code, instruction_offset):
 # ENDIF
+# fmt: on
     try:
         thread_info = _thread_local_info.thread_info
     except:
@@ -1515,7 +1620,7 @@ def _start_method_event(code, instruction_offset):
         stop_reason = CMD_SET_FUNCTION_BREAK
         stop_on_plugin_breakpoint = False
 
-        _stop_on_breakpoint(py_db, thread_info, stop_reason, bp, frame, new_frame, stop, stop_on_plugin_breakpoint, 'python-function')
+        _stop_on_breakpoint(py_db, thread_info, stop_reason, bp, frame, new_frame, stop, stop_on_plugin_breakpoint, "python-function")
         return
 
     if py_db.plugin:
@@ -1524,7 +1629,7 @@ def _start_method_event(code, instruction_offset):
         # Check breaking on breakpoints in a 'call'
         info = thread_info.additional_info
         if func_code_info.plugin_call_breakpoint_found:
-            result = plugin_manager.get_breakpoint(py_db, frame, 'call', info)
+            result = plugin_manager.get_breakpoint(py_db, frame, "call", info)
             if result:
                 stop_reason = CMD_SET_BREAK
                 stop = False
@@ -1538,7 +1643,7 @@ def _start_method_event(code, instruction_offset):
         # Check breaking on line stepping in a 'call'
         step_cmd = info.pydev_step_cmd
         if step_cmd != -1 and func_code_info.plugin_call_stepping and info.suspend_type != PYTHON_SUSPEND:
-            _plugin_stepping(py_db, step_cmd, 'call', frame, thread_info)
+            _plugin_stepping(py_db, step_cmd, "call", frame, thread_info)
             return
 
     if keep_enabled or any_thread_stepping():
@@ -1547,17 +1652,19 @@ def _start_method_event(code, instruction_offset):
     return monitor.DISABLE
 
 
+# fmt: off
 # IFDEF CYTHON
 # cpdef start_monitoring(bint all_threads=False):
 #     cdef ThreadInfo thread_info
 # ELSE
 def start_monitoring(all_threads=False):
 # ENDIF
+# fmt: on
     if all_threads:
         # print('start monitoring, all_threads=', all_threads)
         DEBUGGER_ID = monitor.DEBUGGER_ID
         if not monitor.get_tool(DEBUGGER_ID):
-            monitor.use_tool_id(DEBUGGER_ID, 'pydevd')
+            monitor.use_tool_id(DEBUGGER_ID, "pydevd")
             update_monitor_events()
             restart_events()
     else:
@@ -1573,15 +1680,17 @@ def start_monitoring(all_threads=False):
         thread_info.trace = True
 
 
+# fmt: off
 # IFDEF CYTHON
 # cpdef stop_monitoring(all_threads=False):
 #     cdef ThreadInfo thread_info
 # ELSE
 def stop_monitoring(all_threads=False):
 # ENDIF
+# fmt: on
     if all_threads:
         # print('stop monitoring, all_threads=', all_threads)
-        if monitor.get_tool(monitor.DEBUGGER_ID) == 'pydevd':
+        if monitor.get_tool(monitor.DEBUGGER_ID) == "pydevd":
             monitor.set_events(monitor.DEBUGGER_ID, 0)
             monitor.register_callback(DEBUGGER_ID, monitor.events.PY_START, None)
             monitor.register_callback(DEBUGGER_ID, monitor.events.PY_RESUME, None)
@@ -1601,13 +1710,13 @@ def stop_monitoring(all_threads=False):
         thread_info.trace = False
 
 
-def update_monitor_events(suspend_requested: Optional[bool]=None) -> None:
-    '''
+def update_monitor_events(suspend_requested: Optional[bool] = None) -> None:
+    """
     This should be called when breakpoints change.
 
     :param suspend: means the user requested threads to be suspended
-    '''
-    if monitor.get_tool(monitor.DEBUGGER_ID) != 'pydevd':
+    """
+    if monitor.get_tool(monitor.DEBUGGER_ID) != "pydevd":
         # It is still not initialized.
         return
 
@@ -1621,7 +1730,7 @@ def update_monitor_events(suspend_requested: Optional[bool]=None) -> None:
         suspend_requested = False
 
         for t in threading.enumerate():
-            if getattr(t, 'pydev_do_not_trace', False):
+            if getattr(t, "pydev_do_not_trace", False):
                 continue
             try:
                 additional_info = t.additional_info
@@ -1637,9 +1746,8 @@ def update_monitor_events(suspend_requested: Optional[bool]=None) -> None:
     required_events = 0
 
     has_caught_exception_breakpoint_in_pydb = (
-        py_db.break_on_caught_exceptions
-        or py_db.break_on_user_uncaught_exceptions
-        or py_db.has_plugin_exception_breaks)
+        py_db.break_on_caught_exceptions or py_db.break_on_user_uncaught_exceptions or py_db.has_plugin_exception_breaks
+    )
 
     break_on_uncaught_exceptions = py_db.break_on_uncaught_exceptions
 
@@ -1694,11 +1802,13 @@ def restart_events() -> None:
     monitor.restart_events()
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _is_same_frame(PyDBAdditionalThreadInfo info, target_frame, current_frame):
 # ELSE
 def _is_same_frame(info, target_frame, current_frame):
 # ENDIF
+# fmt: on
     if target_frame is current_frame:
         return True
 
@@ -1718,13 +1828,16 @@ def _is_same_frame(info, target_frame, current_frame):
     return False
 
 
+# fmt: off
 # IFDEF CYTHON
 # def _do_wait_suspend(py_db, ThreadInfo thread_info, frame, event, arg):
 # ELSE
 def _do_wait_suspend(py_db, thread_info, frame, event, arg):
 # ENDIF
-    thread_info.additional_info.trace_suspend_type = 'sys_monitor'
+# fmt: on
+    thread_info.additional_info.trace_suspend_type = "sys_monitor"
     py_db.do_wait_suspend(thread_info.thread, frame, event, arg)
+
 
 # This can be used to diagnose exceptions inside of the debugger itself.
 #

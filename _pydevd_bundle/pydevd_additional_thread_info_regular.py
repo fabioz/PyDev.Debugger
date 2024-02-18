@@ -1,5 +1,13 @@
-from _pydevd_bundle.pydevd_constants import (STATE_RUN, PYTHON_SUSPEND, SUPPORT_GEVENT, ForkSafeLock,
-    _current_frames, STATE_SUSPEND, get_global_debugger, get_thread_id)
+from _pydevd_bundle.pydevd_constants import (
+    STATE_RUN,
+    PYTHON_SUSPEND,
+    SUPPORT_GEVENT,
+    ForkSafeLock,
+    _current_frames,
+    STATE_SUSPEND,
+    get_global_debugger,
+    get_thread_id,
+)
 from _pydev_bundle import pydev_log
 from _pydev_bundle._pydev_saved_modules import threading
 import weakref
@@ -7,57 +15,56 @@ import weakref
 version = 11
 
 
-#=======================================================================================================================
+# =======================================================================================================================
 # PyDBAdditionalThreadInfo
-#=======================================================================================================================
+# =======================================================================================================================
+# fmt: off
 # IFDEF CYTHON
 # cdef class PyDBAdditionalThreadInfo:
 # ELSE
 class PyDBAdditionalThreadInfo(object):
 # ENDIF
+# fmt: on
 
     # Note: the params in cython are declared in pydevd_cython.pxd.
+    # fmt: off
     # IFDEF CYTHON
     # ELSE
     __slots__ = [
-        'pydev_state',
-        'pydev_step_stop',
-        'pydev_original_step_cmd',
-        'pydev_step_cmd',
-        'pydev_notify_kill',
-        'pydev_django_resolve_frame',
-        'pydev_call_from_jinja2',
-        'pydev_call_inside_jinja2',
-        'is_tracing',
-        'conditional_breakpoint_exception',
-        'pydev_message',
-        'suspend_type',
-        'pydev_next_line',
-        'pydev_func_name',
-        'suspended_at_unhandled',
-        'trace_suspend_type',
-        'top_level_thread_tracer_no_back_frames',
-        'top_level_thread_tracer_unhandled',
-        'thread_tracer',
-        'step_in_initial_location',
-
+        "pydev_state",
+        "pydev_step_stop",
+        "pydev_original_step_cmd",
+        "pydev_step_cmd",
+        "pydev_notify_kill",
+        "pydev_django_resolve_frame",
+        "pydev_call_from_jinja2",
+        "pydev_call_inside_jinja2",
+        "is_tracing",
+        "conditional_breakpoint_exception",
+        "pydev_message",
+        "suspend_type",
+        "pydev_next_line",
+        "pydev_func_name",
+        "suspended_at_unhandled",
+        "trace_suspend_type",
+        "top_level_thread_tracer_no_back_frames",
+        "top_level_thread_tracer_unhandled",
+        "thread_tracer",
+        "step_in_initial_location",
         # Used for CMD_SMART_STEP_INTO (to know which smart step into variant to use)
-        'pydev_smart_parent_offset',
-        'pydev_smart_child_offset',
-
+        "pydev_smart_parent_offset",
+        "pydev_smart_child_offset",
         # Used for CMD_SMART_STEP_INTO (list[_pydevd_bundle.pydevd_bytecode_utils.Variant])
         # Filled when the cmd_get_smart_step_into_variants is requested (so, this is a copy
         # of the last request for a given thread and pydev_smart_parent_offset/pydev_smart_child_offset relies on it).
-        'pydev_smart_step_into_variants',
-        'target_id_to_smart_step_into_variant',
-
-        'pydev_use_scoped_step_frame',
-
-        'weak_thread',
-
-        'is_in_wait_loop',
+        "pydev_smart_step_into_variants",
+        "target_id_to_smart_step_into_variant",
+        "pydev_use_scoped_step_frame",
+        "weak_thread",
+        "is_in_wait_loop",
     ]
     # ENDIF
+    # fmt: on
 
     def __init__(self):
         self.pydev_state = STATE_RUN  # STATE_RUN or STATE_SUSPEND
@@ -78,12 +85,12 @@ class PyDBAdditionalThreadInfo(object):
         self.pydev_call_inside_jinja2 = None
         self.is_tracing = 0
         self.conditional_breakpoint_exception = None
-        self.pydev_message = ''
+        self.pydev_message = ""
         self.suspend_type = PYTHON_SUSPEND
         self.pydev_next_line = -1
-        self.pydev_func_name = '.invalid.'  # Must match the type in cython
+        self.pydev_func_name = ".invalid."  # Must match the type in cython
         self.suspended_at_unhandled = False
-        self.trace_suspend_type = 'trace'  # 'trace' or 'frame_eval'
+        self.trace_suspend_type = "trace"  # 'trace' or 'frame_eval'
         self.top_level_thread_tracer_no_back_frames = []
         self.top_level_thread_tracer_unhandled = None
         self.thread_tracer = None
@@ -111,11 +118,13 @@ class PyDBAdditionalThreadInfo(object):
         # to pause).
         self.is_in_wait_loop = False
 
-# IFDEF CYTHON
-#     cpdef object _get_related_thread(self):
-# ELSE
+    # fmt: off
+    # IFDEF CYTHON
+    # cpdef object _get_related_thread(self):
+    # ELSE
     def _get_related_thread(self):
-# ENDIF
+    # ENDIF
+    # fmt: on
         if self.pydev_notify_kill:  # Already killed
             return None
 
@@ -130,7 +139,7 @@ class PyDBAdditionalThreadInfo(object):
             return None
 
         if thread._ident is None:  # Can this happen?
-            pydev_log.critical('thread._ident is None in _get_related_thread!')
+            pydev_log.critical("thread._ident is None in _get_related_thread!")
             return None
 
         if threading._active.get(thread._ident) is not thread:
@@ -138,11 +147,13 @@ class PyDBAdditionalThreadInfo(object):
 
         return thread
 
-# IFDEF CYTHON
-#     cpdef bint _is_stepping(self):
-# ELSE
+    # fmt: off
+    # IFDEF CYTHON
+    # cpdef bint _is_stepping(self):
+    # ELSE
     def _is_stepping(self):
-# ENDIF
+    # ENDIF
+    # fmt: on
         if self.pydev_state == STATE_RUN and self.pydev_step_cmd != -1:
             # This means actually stepping in a step operation.
             return True
@@ -154,16 +165,18 @@ class PyDBAdditionalThreadInfo(object):
 
         return False
 
-# IFDEF CYTHON
-#     cpdef get_topmost_frame(self, thread):
-# ELSE
+    # fmt: off
+    # IFDEF CYTHON
+    # cpdef get_topmost_frame(self, thread):
+    # ELSE
     def get_topmost_frame(self, thread):
-# ENDIF
-        '''
+    # ENDIF
+    # fmt: on
+        """
         Gets the topmost frame for the given thread. Note that it may be None
         and callers should remove the reference to the frame as soon as possible
         to avoid disturbing user code.
-        '''
+        """
         # sys._current_frames(): dictionary with thread id -> topmost frame
         current_frames = _current_frames()
         topmost_frame = current_frames.get(thread._ident)
@@ -171,8 +184,7 @@ class PyDBAdditionalThreadInfo(object):
             # Note: this is expected for dummy threads (so, getting the topmost frame should be
             # treated as optional).
             pydev_log.info(
-                'Unable to get topmost frame for thread: %s, thread.ident: %s, id(thread): %s\nCurrent frames: %s.\n'
-                'GEVENT_SUPPORT: %s',
+                "Unable to get topmost frame for thread: %s, thread.ident: %s, id(thread): %s\nCurrent frames: %s.\n" "GEVENT_SUPPORT: %s",
                 thread,
                 thread.ident,
                 id(thread),
@@ -182,27 +194,30 @@ class PyDBAdditionalThreadInfo(object):
 
         return topmost_frame
 
-# IFDEF CYTHON
-#     cpdef update_stepping_info(self):
-# ELSE
+    # fmt: off
+    # IFDEF CYTHON
+    # cpdef update_stepping_info(self):
+    # ELSE
     def update_stepping_info(self):
-# ENDIF
+    # ENDIF
+    # fmt: on
         _update_stepping_info(self)
 
     def __str__(self):
-        return 'State:%s Stop:%s Cmd: %s Kill:%s' % (
-            self.pydev_state, self.pydev_step_stop, self.pydev_step_cmd, self.pydev_notify_kill)
+        return "State:%s Stop:%s Cmd: %s Kill:%s" % (self.pydev_state, self.pydev_step_stop, self.pydev_step_cmd, self.pydev_notify_kill)
 
 
 _set_additional_thread_info_lock = ForkSafeLock()
 _next_additional_info = [PyDBAdditionalThreadInfo()]
 
 
+# fmt: off
 # IFDEF CYTHON
 # cpdef set_additional_thread_info(thread):
 # ELSE
 def set_additional_thread_info(thread):
 # ENDIF
+# fmt: on
     try:
         additional_info = thread.additional_info
         if additional_info is None:
@@ -230,24 +245,29 @@ def set_additional_thread_info(thread):
 
     return additional_info
 
+
+# fmt: off
 # IFDEF CYTHON
 # cdef set _all_infos
 # cdef set _infos_stepping
 # cdef object _update_infos_lock
 # ELSE
 # ENDIF
-
+# fmt: on
 
 _all_infos = set()
 _infos_stepping = set()
 _update_infos_lock = ForkSafeLock()
 
 
+# fmt: off
 # IFDEF CYTHON
 # cdef _update_stepping_info(PyDBAdditionalThreadInfo info):
 # ELSE
 def _update_stepping_info(info):
 # ENDIF
+# fmt: on
+
     global _infos_stepping
     global _all_infos
 
@@ -273,31 +293,35 @@ def _update_stepping_info(info):
             _queue, event = py_db.get_internal_queue_and_event(thread_id)
             event.set()
 
-
+# fmt: off
 # IFDEF CYTHON
 # cpdef add_additional_info(PyDBAdditionalThreadInfo info):
 # ELSE
 def add_additional_info(info):
 # ENDIF
+# fmt: on
     with _update_infos_lock:
         _all_infos.add(info)
         if info._is_stepping():
             _infos_stepping.add(info)
 
-
+# fmt: off
 # IFDEF CYTHON
 # cpdef remove_additional_info(PyDBAdditionalThreadInfo info):
 # ELSE
 def remove_additional_info(info):
 # ENDIF
+# fmt: on
     with _update_infos_lock:
         _all_infos.discard(info)
         _infos_stepping.discard(info)
 
 
+# fmt: off
 # IFDEF CYTHON
 # cpdef bint any_thread_stepping():
 # ELSE
 def any_thread_stepping():
 # ENDIF
+# fmt: on
     return bool(_infos_stepping)
