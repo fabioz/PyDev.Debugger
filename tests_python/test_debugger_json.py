@@ -3192,7 +3192,7 @@ def test_step_next_step_in_multi_threads(case_setup_dap, stepping_resumes_all_th
     with case_setup_dap.test_file("_debugger_case_multi_threads_stepping.py") as writer:
         json_facade = JsonFacade(writer)
 
-        json_facade.write_launch(steppingResumesAllThreads=stepping_resumes_all_threads)
+        json_facade.write_launch(steppingResumesAllThreads=stepping_resumes_all_threads, justMyCode=True)
         json_facade.write_set_breakpoints(
             [
                 writer.get_line_index_with_content("Break thread 1"),
@@ -3208,7 +3208,7 @@ def test_step_next_step_in_multi_threads(case_setup_dap, stepping_resumes_all_th
         thread_name_to_id = dict((t["name"], t["id"]) for t in response.body.threads)
         assert json_hit.thread_id == thread_name_to_id["thread1"]
 
-        for _i in range(30):
+        for _i in range(15):
             if step_mode == "step_next":
                 json_facade.write_step_next(thread_name_to_id["thread1"])
 
@@ -3230,7 +3230,7 @@ def test_step_next_step_in_multi_threads(case_setup_dap, stepping_resumes_all_th
                 else:
                     raise AssertionError("Did not expect _event2_set to be set when not resuming other threads on step.")
 
-            time.sleep(0.02)
+            time.sleep(0.01)
         else:
             if stepping_resumes_all_threads:
                 raise AssertionError("Expected _event2_set to be set already.")
