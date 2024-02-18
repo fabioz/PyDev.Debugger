@@ -28,6 +28,7 @@ import os
 
 
 class BinaryDistribution(Distribution):
+
     def is_pure(self):
         return False
 
@@ -47,15 +48,19 @@ def accept_file(f):
     return f in ["readme", "makefile"]
 
 
+def make_rel(p):
+    return os.path.relpath(p, this_dir)
+
+
 data_files.append(
     (
         "pydevd_attach_to_process",
-        [os.path.join(attach_to_process_dir, f) for f in os.listdir(attach_to_process_dir) if accept_file(f)],
+        [make_rel(os.path.join(attach_to_process_dir, f)) for f in os.listdir(attach_to_process_dir) if accept_file(f)],
     )
 )
 for root, dirs, files in os.walk(attach_to_process_dir):
     for d in dirs:
-        data_files.append((os.path.join(root, d), [os.path.join(root, d, f) for f in os.listdir(os.path.join(root, d)) if accept_file(f)]))
+        data_files.append((make_rel(os.path.join(root, d)), [make_rel(os.path.join(root, d, f)) for f in os.listdir(os.path.join(root, d)) if accept_file(f)]))
 
 import pydevd
 
