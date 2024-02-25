@@ -2937,6 +2937,7 @@ def settrace(
     access_token=None,
     client_access_token=None,
     notify_stdin=True,
+    protocol=None,
     **kwargs,
 ):
     """Sets the tracing function with the pydev debug function and initializes needed facilities.
@@ -2991,7 +2992,14 @@ def settrace(
         as an input to the process or as a command to be evaluated.
         Note that parallel-python has issues with this (because it tries to assert that sys.stdin
         is of a given type instead of just checking that it has what it needs).
+
+    :param protocol:
+        When using in Eclipse the protocol should not be passed, but when used in VSCode
+        or some other IDE/editor that accepts the Debug Adapter Protocol then 'dap' should
+        be passed.
     """
+    if protocol and protocol.lower() == "dap":
+        pydevd_defaults.PydevdCustomization.DEFAULT_PROTOCOL = pydevd_constants.HTTP_JSON_PROTOCOL
 
     stdout_to_server = stdout_to_server or kwargs.get("stdoutToServer", False)  # Backward compatibility
     stderr_to_server = stderr_to_server or kwargs.get("stderrToServer", False)  # Backward compatibility
