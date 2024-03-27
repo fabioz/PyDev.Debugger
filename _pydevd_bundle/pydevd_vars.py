@@ -556,6 +556,8 @@ def evaluate_expression(py_db, frame, expression, is_exec):
                             raise t.exc[1].with_traceback(t.exc[2])
                     else:
                         Exec(compiled, updated_globals, updated_locals)
+                except Exception as e:
+                    pydev_log.exception(e)
                 finally:
                     # Update the globals even if it errored as it may have partially worked.
                     update_globals_and_locals(updated_globals, initial_globals, frame)
