@@ -6,6 +6,7 @@ from _pydev_runfiles.pydev_runfiles_coverage import start_coverage_support
 from _pydevd_bundle.pydevd_constants import *  # @UnusedWildImport
 import re
 import time
+import json
 
 
 # =======================================================================================================================
@@ -227,6 +228,19 @@ def parse_cmdline(argv=None):
 
             else:
                 sys.stderr.write("Could not find config file: %s\n" % (config_file,))
+
+    filter_tests_env_var = os.environ.get("PYDEV_RUNFILES_FILTER_TESTS", None)
+    if filter_tests_env_var:
+        loaded = json.loads(filter_tests_env_var)
+        include = loaded["include"]
+        for path, name in include:
+            existing = files_to_tests.get(path)
+            if not existing:
+                existing = files_to_tests[path] = []
+            existing.append(name)
+        # Note: at this point exclude or `*` is not handled.
+        # Clients need to do all the filtering on their side (could
+        # change to have `exclude` and support `*` entries).
 
     if type([]) != type(dirs):
         dirs = [dirs]
@@ -747,6 +761,12 @@ class PydevTestRunner(object):
         else:
             sys.stdout.write("done.\n")
         sys.stdout.write("Importing test modules ... ")
+
+        if self.configuration.django:
+            import django
+
+            if hasattr(django, "setup"):
+                django.setup()
 
         if handle_coverage:
             coverage_files, coverage = start_coverage_support(self.configuration)

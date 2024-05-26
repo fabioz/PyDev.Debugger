@@ -3,16 +3,8 @@ import sys
 
 IS_JYTHON = sys.platform.find("java") != -1
 
-try:
-    this_file_name = __file__
-except NameError:
-    # stupid jython. plain old __file__ isnt working for some reason
-    import test_runfiles  # @UnresolvedImport - importing the module itself
-
-    this_file_name = test_runfiles.__file__
-
-desired_runfiles_path = os.path.normpath(os.path.dirname(this_file_name) + "/..")
-sys.path.insert(0, desired_runfiles_path)
+project_rootdir = os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, project_rootdir)
 
 from _pydev_runfiles import pydev_runfiles_unittest
 from _pydev_runfiles import pydev_runfiles_xml_rpc
@@ -43,7 +35,7 @@ assert file_dir in sys.path
 sys.path = orig_syspath[:]
 
 # remove it so that we leave it ok for other tests
-sys.path.remove(desired_runfiles_path)
+sys.path.remove(project_rootdir)
 
 
 class RunfilesTest(unittest.TestCase):
@@ -75,7 +67,7 @@ class RunfilesTest(unittest.TestCase):
         self.filtered_tests = self.MyTestRunner.filter_tests(self.all_tests)
 
     def setUp(self):
-        self.file_dir = [os.path.abspath(os.path.join(desired_runfiles_path, "tests_runfiles/samples"))]
+        self.file_dir = [os.path.abspath(os.path.join(project_rootdir, "tests_runfiles", "samples"))]
         self._setup_scenario(self.file_dir, None)
 
     def test_suite_used(self):
