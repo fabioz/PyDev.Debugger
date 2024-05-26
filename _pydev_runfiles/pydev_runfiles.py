@@ -229,12 +229,13 @@ def parse_cmdline(argv=None):
             else:
                 sys.stderr.write("Could not find config file: %s\n" % (config_file,))
 
-    filter_tests_env_var = os.environ.get('PYDEV_RUNFILES_FILTER_TESTS', None)
+    filter_tests_env_var = os.environ.get("PYDEV_RUNFILES_FILTER_TESTS", None)
     if filter_tests_env_var:
+        print("PYDEV_RUNFILES_FILTER_TESTS", filter_tests_env_var)
         loaded = json.loads(filter_tests_env_var)
-        include = loaded['include']
-        exclude = loaded['exclude']
-        for (path, name) in include:
+        include = loaded["include"]
+        exclude = loaded["exclude"]
+        for path, name in include:
             existing = files_to_tests.get(path)
             if not existing:
                 existing = files_to_tests[path] = []
@@ -764,7 +765,8 @@ class PydevTestRunner(object):
 
         if self.configuration.django:
             import django
-            if hasattr(django, 'setup'):
+
+            if hasattr(django, "setup"):
                 django.setup()
 
         if handle_coverage:

@@ -3,6 +3,7 @@ from subprocess import CompletedProcess
 import subprocess
 import sys
 from typing import Union, Literal, Optional, Dict
+import json
 
 
 def python_run(
@@ -51,6 +52,7 @@ def test_runfiles_integrated():
     cwd = os.path.join(project_rootdir, "tests_runfiles", "samples_integrated")
     runfiles = os.path.join(project_rootdir, "runfiles.py")
     assert os.path.exists(cwd), f"{cwd} does not exist."
-    completed = python_run(["-Xfrozen_modules=off", runfiles, cwd], returncode=0, cwd=cwd)
+    env = {"PYDEV_RUNFILES_FILTER_TESTS": json.dumps({})}
+    completed = python_run(["-Xfrozen_modules=off", runfiles, cwd], returncode=0, cwd=cwd, env=env)
     print(completed.stdout.decode("utf-8"))
     print(completed.stderr.decode("utf-8"))
