@@ -47,12 +47,61 @@ def python_run(
     )
 
 
+project_rootdir = os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+cwd = os.path.join(project_rootdir, "tests_runfiles", "samples_integrated")
+runfiles = os.path.join(project_rootdir, "runfiles.py")
+test_in_root = os.path.join(cwd, "root", "test_in_root.py")
+
+assert os.path.exists(cwd), f"{cwd} does not exist."
+assert os.path.exists(runfiles), f"{runfiles} does not exist."
+assert os.path.exists(test_in_root), f"{test_in_root} does not exist."
+assert os.path.exists(project_rootdir), f"{project_rootdir} does not exist."
+
+
+env_filter_1 = {
+    "PYDEV_RUNFILES_FILTER_TESTS": json.dumps(
+        {
+            "include": [
+                [
+                    test_in_root,
+                    "*",
+                ]
+            ],
+            "exclude": [
+                [
+                    test_in_root,
+                    "test1",
+                ]
+            ],
+        }
+    )
+}
+
+env_filter_2 = {
+    "PYDEV_RUNFILES_FILTER_TESTS": json.dumps(
+        {
+            "include": [
+                [
+                    test_in_root,
+                    "MyTest",
+                ],
+                [
+                    test_in_root,
+                    "test1",
+                ],
+            ],
+            "exclude": [
+                [
+                    test_in_root,
+                    "test2",
+                ]
+            ],
+        }
+    )
+}
+
+
 def test_runfiles_integrated():
-    project_rootdir = os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    cwd = os.path.join(project_rootdir, "tests_runfiles", "samples_integrated")
-    runfiles = os.path.join(project_rootdir, "runfiles.py")
-    assert os.path.exists(cwd), f"{cwd} does not exist."
-    env = {"PYDEV_RUNFILES_FILTER_TESTS": json.dumps({})}
-    completed = python_run(["-Xfrozen_modules=off", runfiles, cwd], returncode=0, cwd=cwd, env=env)
+    completed = python_run(["-Xfrozen_modules=off", runfiles, cwd], returncode=0, cwd=cwd, additional_env=env_filter_2)
     print(completed.stdout.decode("utf-8"))
     print(completed.stderr.decode("utf-8"))
