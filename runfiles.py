@@ -205,11 +205,26 @@ def main():
             # See related issue (for which we work-around below):
             # https://bitbucket.org/hpk42/pytest/issue/639/conftest-being-loaded-twice-giving
 
-            for path in sys.path:
-                path_dotted = dotted(path)
-                if curr_dotted.startswith(path_dotted):
-                    os.chdir(path)
+            found_conftest = False
+
+            curdir_abs = os.path.abspath(os.curdir)
+            while True:
+                if os.path.exists(os.path.join(curdir_abs, 'conftest.py')):
+                    os.chdir(curdir_abs)
+                    found_conftest = True
                     break
+
+                parent = os.path.dirname(curdir_abs)
+                if curdir_abs == parent or not parent:
+                    break
+                curdir_abs = parent
+
+            if not found_conftest:
+                for path in sys.path:
+                    path_dotted = dotted(path)
+                    if curr_dotted.startswith(path_dotted):
+                        os.chdir(path)
+                        break
 
             remove = []
             for i in range(len(argv)):

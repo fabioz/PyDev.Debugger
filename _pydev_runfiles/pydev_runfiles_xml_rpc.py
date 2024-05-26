@@ -4,7 +4,7 @@ import traceback
 import warnings
 
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
-from _pydev_bundle.pydev_imports import xmlrpclib, _queue
+from _pydev_bundle.pydev_imports import _queue, xmlrpclib
 from _pydevd_bundle.pydevd_constants import Null
 
 Queue = _queue.Queue
@@ -159,7 +159,8 @@ def initialize_server(port, daemon=False):
             _ServerHolder.SERVER_COMM = Null()
 
     try:
-        _ServerHolder.SERVER.notifyConnected()
+        if _ServerHolder.SERVER is not None:
+            _ServerHolder.SERVER.notifyConnected()
     except:
         traceback.print_exc()
 
@@ -170,7 +171,8 @@ def initialize_server(port, daemon=False):
 def notifyTestsCollected(tests_count):
     assert tests_count is not None
     try:
-        _ServerHolder.SERVER.notifyTestsCollected(tests_count)
+        if _ServerHolder.SERVER is not None:
+            _ServerHolder.SERVER.notifyTestsCollected(tests_count)
     except:
         traceback.print_exc()
 
@@ -188,7 +190,8 @@ def notifyStartTest(file, test):
         test = ""  # Could happen if we have an import error importing module.
 
     try:
-        _ServerHolder.SERVER.notifyStartTest(file, test)
+        if _ServerHolder.SERVER is not None:
+            _ServerHolder.SERVER.notifyStartTest(file, test)
     except:
         traceback.print_exc()
 
@@ -200,7 +203,7 @@ def _encode_if_needed(obj):
 
     elif isinstance(obj, bytes):
         try:
-            return xmlrpclib.Binary(obj.decode(sys.stdin.encoding).encode("ISO-8859-1", "xmlcharrefreplace"))
+            return xmlrpclib.Binary(obj.decode(sys.stdin.encoding, 'replace').encode("ISO-8859-1", "xmlcharrefreplace"))
         except:
             return xmlrpclib.Binary(obj)  # bytes already
 
@@ -219,6 +222,9 @@ def notifyTest(cond, captured_output, error_contents, file, test, time):
     @param test: the test ran (i.e.: TestCase.test1)
     @param time: float with the number of seconds elapsed
     """
+    if _ServerHolder.SERVER is None:
+        return
+
     assert cond is not None
     assert captured_output is not None
     assert error_contents is not None
@@ -241,7 +247,8 @@ def notifyTest(cond, captured_output, error_contents, file, test, time):
 def notifyTestRunFinished(total_time):
     assert total_time is not None
     try:
-        _ServerHolder.SERVER.notifyTestRunFinished(total_time)
+        if _ServerHolder.SERVER is not None:
+            _ServerHolder.SERVER.notifyTestRunFinished(total_time)
     except:
         traceback.print_exc()
 
