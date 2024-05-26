@@ -46,7 +46,7 @@ def main():
     from _pydevd_bundle import pydevd_constants
     from pydevd_file_utils import canonical_normalized_path
 
-    DEBUG = 0
+    DEBUG = 1
     if DEBUG:
         sys.stdout.write("Received parameters: %s\n" % (sys.argv,))
         sys.stdout.write("Params for pydev: %s\n" % (pydev_params,))
