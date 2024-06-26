@@ -54,10 +54,13 @@ VSCode Python Extension and Visual Studio Python).
 
 It is however available in PyPi so that it can be installed for doing remote debugging with `pip` -- so, when
 debugging a process which runs in another machine, it's possible to `pip install pydevd` and in the code use
-`pydevd.settrace(host='10.1.1.1')` to connect the debugger backend to the debugger UI running in the IDE
+`pydevd.settrace(host='10.1.1.1')` (in PyDev) or `pydevd.settrace(host="10.1.1.1", protocol="dap")` (in PyDev for VSCode)
+to connect the debugger backend to the debugger UI running in the IDE
 (whereas previously the sources had to be manually copied from the IDE installation).
 
 For instructions on how to `Remote Debug` with `PyDev`, see: https://www.pydev.org/manual_adv_remote_debugger.html
+
+For instructions on how to `Remote Debug` with `PyDev for VSCode`, see: https://marketplace.visualstudio.com/items?itemName=fabioz.vscode-pydev-python-debugger
 
 `pydevd` is compatible with Python 3.8 onwards and is tested both with CPython as well as PyPy.
 
