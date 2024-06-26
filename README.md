@@ -11,10 +11,12 @@ really fast tracing on `Python 3.12` (so, if speed is an issue, make sure you up
 This repository (https://github.com/fabioz/PyDev.Debugger) is the main repository
 for `pydevd` and the latest versions can always be used directly in:
 
-- [PyDev for Eclipse](http://pydev.org): Enables the usage of `pydevd` in Eclipse.
+- [PyDev for Eclipse](http://pydev.org): Enables the usage of `pydevd` in Eclipse (Open Source).
 
 - [Python Debugger (PyDev) for VSCode](https://marketplace.visualstudio.com/items?itemName=fabioz.vscode-pydev-python-debugger): Enables
-    the usage of `pydevd` in VSCode.
+    the usage of `pydevd` in VSCode (note that while `pydevd` itself is open source, this extension is commercial 
+    and helps in the development of the Open Source version. It has a free trial and can be used by acquiring a license for 
+    `PyDev for VSCode` at: https://www.pydev.org/vscode/index.html).
     
     Note that the `Python Debugger (PyDev) for VSCode` may be used as a standalane extension for debugging `Python` by
     creating the proper configuration in a `launch.json` and launching it, although it can
