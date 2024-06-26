@@ -8,7 +8,7 @@ really fast tracing on `Python 3.12` (so, if speed is an issue, make sure you up
 
 ## Important
 
-This repository (https://github.com/fabioz/PyDev.Debugger) is the main repository
+https://github.com/fabioz/PyDev.Debugger is the main repository
 for `pydevd` and the latest versions can always be used directly in:
 
 - [PyDev for Eclipse](http://pydev.org): Enables the usage of `pydevd` in Eclipse (Open Source).
