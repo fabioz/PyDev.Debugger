@@ -20,8 +20,9 @@ for `pydevd` and the latest versions can always be used directly in:
     
     Note that the `Python Debugger (PyDev) for VSCode` may be used as a standalane extension for debugging `Python` by
     creating the proper configuration in a `launch.json` and launching it.
-    [PyDev for VSCode](https://marketplace.visualstudio.com/items?itemName=fabioz.vscode-pydev)
-    makes use of it to make custom launches (i.e.: using it makes it possible to debug test cases using `pydevd`).
+    
+    Alternatively, [PyDev for VSCode](https://marketplace.visualstudio.com/items?itemName=fabioz.vscode-pydev)
+    leverages it under the hood and offers additional features like debugging of test cases.
 
 ## History / Support
 
