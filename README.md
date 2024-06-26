@@ -22,7 +22,7 @@ for `pydevd` and the latest versions can always be used directly in:
     creating the proper configuration in a `launch.json` and launching it.
     
     Alternatively, [PyDev for VSCode](https://marketplace.visualstudio.com/items?itemName=fabioz.vscode-pydev)
-    leverages it under the hood and offers additional features like debugging of test cases.
+    leverages it to offer additional features such as debugging of test cases.
 
 ## History / Support
 
