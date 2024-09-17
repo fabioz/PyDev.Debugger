@@ -8,6 +8,7 @@ backends = {
     "qt": "QtAgg",  # Auto-choose qt4/5
     "qt4": "Qt4Agg",
     "qt5": "Qt5Agg",
+    "qt6": "Qt6Agg",
     "osx": "MacOSX",
 }
 
