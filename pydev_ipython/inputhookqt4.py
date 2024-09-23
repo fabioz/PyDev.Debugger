@@ -19,7 +19,8 @@ Author: Christian Boos
 import os
 import signal
 
-from _pydev_bundle._pydev_saved_modules import threading
+import threading
+
 
 from pydev_ipython.qt_for_kernel import QtCore, QtGui
 from pydev_ipython.inputhook import allow_CTRL_C, ignore_CTRL_C, stdin_ready
@@ -45,7 +46,6 @@ class InteractiveShell:
 # -----------------------------------------------------------------------------
 # Module Globals
 # -----------------------------------------------------------------------------
-
 
 got_kbdint = False
 sigint_timer = None

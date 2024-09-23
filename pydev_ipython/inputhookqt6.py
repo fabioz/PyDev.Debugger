@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Qt5's inputhook support function
+Qt6's inputhook support function
 
-Author: Christian Boos
+Author: Christian Boos, Marijn van Vliet
 """
 
 # -----------------------------------------------------------------------------
@@ -55,8 +55,8 @@ sigint_timer = None
 # -----------------------------------------------------------------------------
 
 
-def create_inputhook_qt5(mgr, app=None):
-    """Create an input hook for running the Qt5 application event loop.
+def create_inputhook_qt6(mgr, app=None):
+    """Create an input hook for running the Qt6 application event loop.
 
     Parameters
     ----------
@@ -73,7 +73,7 @@ def create_inputhook_qt5(mgr, app=None):
 
     Notes
     -----
-    We use a custom input hook instead of PyQt5's default one, as it
+    We use a custom input hook instead of PyQt6's default one, as it
     interacts better with the readline packages (issue #481).
 
     The inputhook function works in tandem with a 'pre_prompt_hook'
@@ -85,20 +85,20 @@ def create_inputhook_qt5(mgr, app=None):
     if app is None:
         app = QtCore.QCoreApplication.instance()
         if app is None:
-            from PyQt5 import QtWidgets
+            from PyQt6 import QtWidgets
 
             app = QtWidgets.QApplication([" "])
 
     # Re-use previously created inputhook if any
     ip = InteractiveShell.instance()
-    if hasattr(ip, "_inputhook_qt5"):
-        return app, ip._inputhook_qt5
+    if hasattr(ip, "_inputhook_qt6"):
+        return app, ip._inputhook_qt6
 
-    # Otherwise create the inputhook_qt5/preprompthook_qt5 pair of
+    # Otherwise create the inputhook_qt6/preprompthook_qt6 pair of
     # hooks (they both share the got_kbdint flag)
 
-    def inputhook_qt5():
-        """PyOS_InputHook python hook for Qt5.
+    def inputhook_qt6():
+        """PyOS_InputHook python hook for Qt6.
 
         Process pending Qt events and if there's no pending keyboard
         input, spend a short slice of time (50ms) running the Qt event
@@ -114,7 +114,7 @@ def create_inputhook_qt5(mgr, app=None):
             app = QtCore.QCoreApplication.instance()
             if not app:  # shouldn't happen, but safer if it happens anyway...
                 return 0
-            app.processEvents(QtCore.QEventLoop.AllEvents, 300)
+            app.processEvents(QtCore.QEventLoop.ProcessEventsFlag.AllEvents, 300)
             if not stdin_ready():
                 # Generally a program would run QCoreApplication::exec()
                 # from main() to enter and process the Qt event loop until
@@ -142,7 +142,7 @@ def create_inputhook_qt5(mgr, app=None):
                 timer.timeout.connect(event_loop.quit)
                 while not stdin_ready():
                     timer.start(50)
-                    event_loop.exec_()
+                    event_loop.exec()
                     timer.stop()
         except KeyboardInterrupt:
             global got_kbdint, sigint_timer
@@ -173,14 +173,14 @@ def create_inputhook_qt5(mgr, app=None):
             from traceback import print_exc
 
             print_exc()
-            print("Got exception from inputhook_qt5, unregistering.")
+            print("Got exception from inputhook_qt6, unregistering.")
             mgr.clear_inputhook()
         finally:
             allow_CTRL_C()
         return 0
 
-    def preprompthook_qt5(ishell):
-        """'pre_prompt_hook' used to restore the Qt5 input hook
+    def preprompthook_qt6(ishell):
+        """'pre_prompt_hook' used to restore the Qt6 input hook
 
         (in case the latter was temporarily deactivated after a
         CTRL+C)
@@ -192,10 +192,10 @@ def create_inputhook_qt5(mgr, app=None):
             sigint_timer = None
 
         if got_kbdint:
-            mgr.set_inputhook(inputhook_qt5)
+            mgr.set_inputhook(inputhook_qt6)
         got_kbdint = False
 
-    ip._inputhook_qt5 = inputhook_qt5
-    ip.set_hook("pre_prompt_hook", preprompthook_qt5)
+    ip._inputhook_qt6 = inputhook_qt6
+    ip.set_hook("pre_prompt_hook", preprompthook_qt6)
 
-    return app, inputhook_qt5
+    return app, inputhook_qt6

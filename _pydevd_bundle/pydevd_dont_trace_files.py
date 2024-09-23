@@ -30,6 +30,7 @@ LIB_FILES_IN_DONT_TRACE_DIRS = {
     'inputhookpyglet.py',
     'inputhookqt4.py',
     'inputhookqt5.py',
+    'inputhookqt6.py',
     'inputhooktk.py',
     'inputhookwx.py',
     'matplotlibtools.py',
