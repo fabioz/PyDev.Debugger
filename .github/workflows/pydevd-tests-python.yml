@@ -114,6 +114,22 @@ jobs:
       run: |
         pip install trio
         
+    - name: Check that wheels can be built
+      if: contains(matrix.name, 'checkbin') && contains(matrix.name, 'ubuntu')
+      run: |
+        python -m pip install cibuildwheel==2.21.2
+        # Remove these .so files (will be rebuilt)
+        rm pydevd_attach_to_process/*.so
+        python -m cibuildwheel --output-dir wheelhouse
+      env:
+        CIBW_BUILD: cp310-*manylinux*x86_64 cp311-*manylinux*x86_64 cp312-*manylinux*x86_64
+        CIBW_BUILD_VERBOSITY: 1
+        
+    - name: Rebuild .so
+      if: contains(matrix.name, 'checkbin') && contains(matrix.name, 'ubuntu')
+      run: |
+        pydevd_attach_to_process/linux_and_mac/compile_linux.sh
+        
     - name: Check cython unchanged
       if: contains(matrix.name, 'checkbin')
       env:
@@ -121,7 +137,7 @@ jobs:
       run: |
         python build_tools/build.py
         python build_tools/check_no_git_modifications.py
-        
+
     - name: Create cython binaries
       if: contains(matrix.name, 'cython')
       run: |
@@ -138,13 +154,3 @@ jobs:
       run: |
         python -m pytest -n auto -rfE
 
-    - name: Check that wheels can be built
-      if: contains(matrix.name, 'checkbin') && contains(matrix.name, 'ubuntu')
-      run: |
-        python -m pip install cibuildwheel==2.21.2
-        # Remove these .so files (will be rebuilt)
-        rm pydevd_attach_to_process/*.so
-        python -m cibuildwheel --output-dir wheelhouse
-      env:
-        CIBW_BUILD: cp310-*manylinux*x86_64 cp311-*manylinux*x86_64 cp312-*manylinux*x86_64
-        CIBW_BUILD_VERBOSITY: 1
