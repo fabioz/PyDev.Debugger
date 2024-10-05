@@ -97,8 +97,9 @@ jobs:
       if: contains(matrix.name, 'py3') && !contains(matrix.name, 'pypy') && !contains(matrix.name, 'py312') && !contains(matrix.name, 'py311')
       run: |
         pip install PySide2 --no-warn-script-location
+        pip install "numpy<2" --force --no-warn-script-location
         pip install cherrypy --no-warn-script-location
-        pip install gevent greenlet
+        pip install gevent==23.9.1 greenlet
         
     - name: Install django
       if: "!contains(matrix.name, 'py38')"
