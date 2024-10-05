@@ -97,8 +97,9 @@ jobs:
       if: contains(matrix.name, 'py3') && !contains(matrix.name, 'pypy') && !contains(matrix.name, 'py312') && !contains(matrix.name, 'py311')
       run: |
         pip install PySide2 --no-warn-script-location
+        pip install "numpy<2" --force --no-warn-script-location
         pip install cherrypy --no-warn-script-location
-        pip install gevent greenlet
+        pip install gevent==23.9.1 greenlet
         
     - name: Install django
       if: "!contains(matrix.name, 'py38')"
@@ -116,13 +117,18 @@ jobs:
     - name: Check that wheels can be built
       if: contains(matrix.name, 'checkbin') && contains(matrix.name, 'ubuntu')
       run: |
-        python -m pip install cibuildwheel==2.16.2
+        python -m pip install cibuildwheel==2.21.2
         # Remove these .so files (will be rebuilt)
         rm pydevd_attach_to_process/*.so
         python -m cibuildwheel --output-dir wheelhouse
       env:
         CIBW_BUILD: cp310-*manylinux*x86_64 cp311-*manylinux*x86_64 cp312-*manylinux*x86_64
         CIBW_BUILD_VERBOSITY: 1
+        
+    - name: Rebuild .so
+      if: contains(matrix.name, 'checkbin') && contains(matrix.name, 'ubuntu')
+      run: |
+        pydevd_attach_to_process/linux_and_mac/compile_linux.sh
         
     - name: Check cython unchanged
       if: contains(matrix.name, 'checkbin')
@@ -131,7 +137,6 @@ jobs:
       run: |
         python build_tools/build.py
         python build_tools/check_no_git_modifications.py
-        
 
     - name: Create cython binaries
       if: contains(matrix.name, 'cython')
