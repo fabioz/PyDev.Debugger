@@ -728,9 +728,12 @@ class AbstractWriterThread(threading.Thread):
                 "warning: Debugger speedups",
                 "pydev debugger: New process is launching",
                 "pydev debugger: To debug that process",
+                "pydevd: New process is launching",
+                "pydevd: To debug that process",
                 "*** Multiprocess",
                 "WARNING: This is a development server. Do not use it in a production deployment",
                 "Press CTRL+C to quit",
+                "pydevd: waiting for connection at:",
             )
         ):
             return True
