@@ -13,7 +13,6 @@ import dis
 import os
 import re
 import sys
-
 from _pydev_bundle._pydev_saved_modules import threading
 from types import CodeType, FrameType
 from typing import Dict, Optional, Tuple, Any
