@@ -1088,7 +1088,6 @@ class PyDB(object):
                     return PYDEV_FILE
 
                 f = frame.f_back
-                back_frames = ""
                 while f is not None:
                     if self.get_file_type(f) != self.PYDEV_FILE and pydevd_file_utils.basename(f.f_code.co_filename) not in (
                         "runpy.py",
@@ -1106,7 +1105,6 @@ class PyDB(object):
                         _cache_file_type[cache_key] = LIB_FILE
                         return LIB_FILE
                     
-                    back_frames += " -> %s" % (pydevd_file_utils.basename(f.f_code.co_filename))
                     f = f.f_back
                 else:
                     # This is a top-level file (used in python -c), so, trace it as usual... we
@@ -2399,7 +2397,6 @@ class PyDB(object):
         while frame is not None:
             if not isinstance(frame, FrameType):
                 # This is the case for django/jinja frames.
-                pydev_log.debug("Not a frame: %s", frame)
                 frame = frame.f_back
                 continue
 

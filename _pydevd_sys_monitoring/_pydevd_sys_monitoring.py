@@ -22,7 +22,7 @@ from _pydevd_bundle.pydevd_constants import (
     RETURN_VALUES_DICT,
     PYTHON_SUSPEND,
 )
-from _pydevd_bundle.pydevd_frame_utils import short_tb, flag_as_unwinding, short_frame
+from _pydevd_bundle.pydevd_frame_utils import flag_as_unwinding
 from pydevd_file_utils import (
     NORM_PATHS_AND_BASE_CONTAINER,
     get_abs_path_real_path_and_base_from_file,
