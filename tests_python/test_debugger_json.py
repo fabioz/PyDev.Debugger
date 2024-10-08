@@ -4642,7 +4642,7 @@ def test_case_django_no_attribute_exception_breakpoint(case_setup_django_dap, jm
                     "protected": "inline",
                 },
             )
-            json_facade.write_set_exception_breakpoints(["raised"])
+            json_facade.write_set_exception_breakpoints(["raised", "uncaught"])
         else:
             json_facade.write_launch(
                 debugOptions=["DebugStdLib", "Django"],
@@ -4708,6 +4708,12 @@ def test_case_django_no_attribute_exception_breakpoint(case_setup_django_dap, jm
         ]
 
         json_facade.write_continue()
+
+        if jmc:
+            # If one jmc, uncaught should come through as well
+            json_hit = json_facade.wait_for_thread_stopped("exception", line=7, file="template_error.html")
+            json_facade.write_continue()
+
         writer.finished_ok = True
 
 
