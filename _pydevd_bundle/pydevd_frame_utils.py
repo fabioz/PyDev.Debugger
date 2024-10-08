@@ -46,14 +46,14 @@ def just_raised(trace):
     
     return trace.tb_next is None
 
-def short_tb(exc_type, exc_value, exc_tb):
+def short_tb(exc_tb):
     traceback = []
     while exc_tb:
         traceback.append('{%r, %r, %r}' % (exc_tb.tb_frame.f_code.co_filename,
                                            exc_tb.tb_frame.f_code.co_name,
                                            exc_tb.tb_lineno))
         exc_tb = exc_tb.tb_next
-    return 'Traceback: %s\nError: %s %r\n' % (' -> '.join(traceback), exc_type.__name__, str(exc_value))
+    return 'Traceback: %s\n' % (' -> '.join(traceback))
 
 def short_frame(frame):
     if frame is None:

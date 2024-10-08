@@ -41,7 +41,6 @@
 
 // Access to std::cout and std::endl
 #include <iostream>
-#include <mutex>
 // DECLDIR will perform an export for us
 #define DLL_EXPORT
 
@@ -108,7 +107,7 @@ struct InitializeThreadingInfo {
     PyImport_ImportModule* pyImportMod;
     PyEval_Lock* initThreads;
 
-    std::mutex mutex;
+    CRITICAL_SECTION cs;
     HANDLE initedEvent;  // Note: only access with mutex locked (and check if not already nullptr).
     bool completed; // Note: only access with mutex locked
 };
@@ -122,12 +121,12 @@ int AttachCallback(void *voidInitializeThreadingInfo) {
     initializeThreadingInfo->initThreads(); // Note: calling multiple times is ok.
     initializeThreadingInfo->pyImportMod("threading");
 
-    initializeThreadingInfo->mutex.lock();
+    EnterCriticalSection(&initializeThreadingInfo->cs);
+    initializeThreadingInfo->completed = true;
     if(initializeThreadingInfo->initedEvent != nullptr) {
         SetEvent(initializeThreadingInfo->initedEvent);
     }
-    initializeThreadingInfo->completed = true;
-    initializeThreadingInfo->mutex.unlock();
+    LeaveCriticalSection(&initializeThreadingInfo->cs);
     return 0;
 }
 
@@ -368,6 +367,7 @@ extern "C"
         initializeThreadingInfo->pyImportMod = pyImportMod;
         initializeThreadingInfo->initThreads = initThreads;
         initializeThreadingInfo->initedEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+        InitializeCriticalSection(&initializeThreadingInfo->cs);
 
         // Add the call to initialize threading.
         addPendingCall(&AttachCallback, initializeThreadingInfo);
@@ -375,15 +375,16 @@ extern "C"
         ::WaitForSingleObject(initializeThreadingInfo->initedEvent, 5000);
 
         // Whether this completed or not, release the event handle as we won't use it anymore.
-        initializeThreadingInfo->mutex.lock();
+        EnterCriticalSection(&initializeThreadingInfo->cs);
         CloseHandle(initializeThreadingInfo->initedEvent);
         bool completed = initializeThreadingInfo->completed;
         initializeThreadingInfo->initedEvent = nullptr;
-        initializeThreadingInfo->mutex.unlock();
+        LeaveCriticalSection(&initializeThreadingInfo->cs);
 
         if(completed) {
             // Note that this structure will leak if addPendingCall did not complete in the timeout
             // (we can't release now because it's possible that it'll still be called).
+            DeleteCriticalSection(&initializeThreadingInfo->cs);
             delete initializeThreadingInfo;
             if (showDebugInfo) {
                 std::cout << "addPendingCall to initialize threads/import threading completed. " << std::endl << std::flush;

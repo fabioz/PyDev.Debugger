@@ -829,8 +829,6 @@ def _unwind_event(code, instruction, exc):
         if thread_info is None:
             return
 
-    frame = _getframe(1)
-    arg = (type(exc), exc, exc.__traceback__)
 
     py_db: object = GlobalDebuggerHolder.global_dbg
     if py_db is None or py_db.pydb_disposed:
@@ -846,6 +844,8 @@ def _unwind_event(code, instruction, exc):
         return
     
     pydev_log.debug('_unwind_event', code, exc)
+    frame = _getframe(1)
+    arg = (type(exc), exc, exc.__traceback__)
 
     has_caught_exception_breakpoint_in_pydb = (
         py_db.break_on_caught_exceptions or py_db.break_on_user_uncaught_exceptions or py_db.has_plugin_exception_breaks
@@ -854,7 +854,7 @@ def _unwind_event(code, instruction, exc):
 
     if has_caught_exception_breakpoint_in_pydb:
         _should_stop, frame, user_uncaught_exc_info = should_stop_on_exception(
-            py_db, thread_info.additional_info, frame, thread_info.thread, arg, None
+            py_db, thread_info.additional_info, frame, thread_info.thread, arg, None, is_unwind=True
         )
         if user_uncaught_exc_info:
             # TODO: Check: this may no longer be needed as in the unwind we know it's
