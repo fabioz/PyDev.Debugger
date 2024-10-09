@@ -1354,7 +1354,7 @@ def _jump_event(code, from_offset, to_offset):
 
     from_line = func_code_info.get_line_of_offset(from_offset)
     to_line = func_code_info.get_line_of_offset(to_offset)
-    # print('jump event', code.co_name, 'from line', from_line, 'to line', to_line)
+    pydev_log.debug('jump event', code.co_name, 'from line', from_line, 'to line', to_line)
 
     if from_line != to_line:
         # I.e.: use case: "yield from [j for j in a if j % 2 == 0]"
@@ -1410,7 +1410,7 @@ def _line_event(code, line):
     if func_code_info.always_skip_code or func_code_info.always_filtered_out:
         return monitor.DISABLE
 
-    # print('line event', code.co_name, line)
+    pydev_log.debug('line event', code.co_name, line)
 
     # We know the frame depth.
     frame = _getframe(1)

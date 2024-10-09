@@ -729,6 +729,30 @@ def test_case_json_hit_condition_error(case_setup_dap):
 
         writer.finished_ok = True
 
+def test_case_json_hit_condition_error_count(case_setup_dap):
+    with case_setup_dap.test_file("_debugger_case_hit_count_conditional.py") as writer:
+        json_facade = JsonFacade(writer)
+
+        json_facade.write_launch()
+        bp = writer.get_line_index_with_content("for line")
+        bp2 = writer.get_line_index_with_content("after loop line")
+        json_facade.write_set_breakpoints([bp, bp2], line_to_info={bp: {"condition": "1 / 0"}, bp2: {}})
+        json_facade.write_make_initial_run()
+
+        def accept_message(msg):
+            if msg.body.category == "important":
+                if "Error while evaluating expression in conditional breakpoint" in msg.body.output:
+                    return True
+            return False
+
+        json_facade.wait_for_thread_stopped()
+        messages = json_facade.mark_messages(OutputEvent, accept_message=accept_message)
+        assert len(messages) == 11
+      
+        json_facade.write_continue()
+
+        writer.finished_ok = True
+
 
 def test_case_process_event(case_setup_dap):
     with case_setup_dap.test_file("_debugger_case_change_breaks.py") as writer:
