@@ -1053,7 +1053,7 @@ class PyDBFrame:
 
 
 # IFDEF CYTHON
-# def should_stop_on_exception(py_db, PyDBAdditionalThreadInfo info, frame, thread, arg, prev_user_uncaught_exc_info):
+# def should_stop_on_exception(py_db, PyDBAdditionalThreadInfo info, frame, thread, arg, prev_user_uncaught_exc_info, is_unwind):
 #     cdef bint should_stop;
 #     cdef bint was_just_raised;
 #     cdef list check_excs;

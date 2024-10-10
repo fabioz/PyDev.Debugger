@@ -2794,6 +2794,7 @@ static const char __pyx_k_exc_break[] = "exc_break";
 static const char __pyx_k_exception[] = "exception";
 static const char __pyx_k_f_globals[] = "f_globals";
 static const char __pyx_k_func_name[] = "func_name";
+static const char __pyx_k_is_unwind[] = "is_unwind";
 static const char __pyx_k_isenabled[] = "isenabled";
 static const char __pyx_k_last_stat[] = "last_stat";
 static const char __pyx_k_linecache[] = "linecache";
@@ -3170,7 +3171,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_8handle_us
 static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_10trace_dispatch(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBFrame *__pyx_v_self, PyObject *__pyx_v_frame, PyObject *__pyx_v_event, PyObject *__pyx_v_arg); /* proto */
 static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_12__reduce_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBFrame *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_14__setstate_cython__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBFrame *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exception(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_py_db, struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo *__pyx_v_info, PyObject *__pyx_v_frame, PyObject *__pyx_v_thread, PyObject *__pyx_v_arg, PyObject *__pyx_v_prev_user_uncaught_exc_info); /* proto */
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exception(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_py_db, struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo *__pyx_v_info, PyObject *__pyx_v_frame, PyObject *__pyx_v_thread, PyObject *__pyx_v_arg, PyObject *__pyx_v_prev_user_uncaught_exc_info, PyObject *__pyx_v_is_unwind); /* proto */
 static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_14handle_exception(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_py_db, PyObject *__pyx_v_thread, PyObject *__pyx_v_frame, PyObject *__pyx_v_arg, PyObject *__pyx_v_exception_type); /* proto */
 static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_16notify_skipped_step_in_because_of_filters(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_py_db, PyObject *__pyx_v_frame); /* proto */
 static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_15SafeCallWrapper___init__(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper *__pyx_v_self, PyObject *__pyx_v_method_object); /* proto */
@@ -3537,6 +3538,7 @@ typedef struct {
   PyObject *__pyx_n_s_is_stopped;
   PyObject *__pyx_n_s_is_thread_alive;
   PyObject *__pyx_n_s_is_unhandled_exception;
+  PyObject *__pyx_n_s_is_unwind;
   PyObject *__pyx_n_s_is_user_uncaught;
   PyObject *__pyx_kp_u_isenabled;
   PyObject *__pyx_n_s_j;
@@ -4113,6 +4115,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_is_stopped);
   Py_CLEAR(clear_module_state->__pyx_n_s_is_thread_alive);
   Py_CLEAR(clear_module_state->__pyx_n_s_is_unhandled_exception);
+  Py_CLEAR(clear_module_state->__pyx_n_s_is_unwind);
   Py_CLEAR(clear_module_state->__pyx_n_s_is_user_uncaught);
   Py_CLEAR(clear_module_state->__pyx_kp_u_isenabled);
   Py_CLEAR(clear_module_state->__pyx_n_s_j);
@@ -4667,6 +4670,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_is_stopped);
   Py_VISIT(traverse_module_state->__pyx_n_s_is_thread_alive);
   Py_VISIT(traverse_module_state->__pyx_n_s_is_unhandled_exception);
+  Py_VISIT(traverse_module_state->__pyx_n_s_is_unwind);
   Py_VISIT(traverse_module_state->__pyx_n_s_is_user_uncaught);
   Py_VISIT(traverse_module_state->__pyx_kp_u_isenabled);
   Py_VISIT(traverse_module_state->__pyx_n_s_j);
@@ -5245,6 +5249,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_is_stopped __pyx_mstate_global->__pyx_n_s_is_stopped
 #define __pyx_n_s_is_thread_alive __pyx_mstate_global->__pyx_n_s_is_thread_alive
 #define __pyx_n_s_is_unhandled_exception __pyx_mstate_global->__pyx_n_s_is_unhandled_exception
+#define __pyx_n_s_is_unwind __pyx_mstate_global->__pyx_n_s_is_unwind
 #define __pyx_n_s_is_user_uncaught __pyx_mstate_global->__pyx_n_s_is_user_uncaught
 #define __pyx_kp_u_isenabled __pyx_mstate_global->__pyx_kp_u_isenabled
 #define __pyx_n_s_j __pyx_mstate_global->__pyx_n_s_j
@@ -26708,7 +26713,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_14__setsta
 /* "_pydevd_bundle/pydevd_cython.pyx":1377
  * 
  * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- * def should_stop_on_exception(py_db, PyDBAdditionalThreadInfo info, frame, thread, arg, prev_user_uncaught_exc_info):             # <<<<<<<<<<<<<<
+ * def should_stop_on_exception(py_db, PyDBAdditionalThreadInfo info, frame, thread, arg, prev_user_uncaught_exc_info, is_unwind):             # <<<<<<<<<<<<<<
  *     cdef bint should_stop;
  *     cdef bint was_just_raised;
  */
@@ -26735,11 +26740,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   PyObject *__pyx_v_thread = 0;
   PyObject *__pyx_v_arg = 0;
   PyObject *__pyx_v_prev_user_uncaught_exc_info = 0;
+  PyObject *__pyx_v_is_unwind = 0;
   #if !CYTHON_METH_FASTCALL
   CYTHON_UNUSED Py_ssize_t __pyx_nargs;
   #endif
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
-  PyObject* values[6] = {0,0,0,0,0,0};
+  PyObject* values[7] = {0,0,0,0,0,0,0};
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -26755,10 +26761,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   #endif
   __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
   {
-    PyObject **__pyx_pyargnames[] = {&__pyx_n_s_py_db,&__pyx_n_s_info,&__pyx_n_s_frame,&__pyx_n_s_thread,&__pyx_n_s_arg,&__pyx_n_s_prev_user_uncaught_exc_info,0};
+    PyObject **__pyx_pyargnames[] = {&__pyx_n_s_py_db,&__pyx_n_s_info,&__pyx_n_s_frame,&__pyx_n_s_thread,&__pyx_n_s_arg,&__pyx_n_s_prev_user_uncaught_exc_info,&__pyx_n_s_is_unwind,0};
     if (__pyx_kwds) {
       Py_ssize_t kw_args;
       switch (__pyx_nargs) {
+        case  7: values[6] = __Pyx_Arg_FASTCALL(__pyx_args, 6);
+        CYTHON_FALLTHROUGH;
         case  6: values[5] = __Pyx_Arg_FASTCALL(__pyx_args, 5);
         CYTHON_FALLTHROUGH;
         case  5: values[4] = __Pyx_Arg_FASTCALL(__pyx_args, 4);
@@ -26791,7 +26799,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
         }
         else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 1377, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("should_stop_on_exception", 1, 6, 6, 1); __PYX_ERR(0, 1377, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("should_stop_on_exception", 1, 7, 7, 1); __PYX_ERR(0, 1377, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
@@ -26801,7 +26809,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
         }
         else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 1377, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("should_stop_on_exception", 1, 6, 6, 2); __PYX_ERR(0, 1377, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("should_stop_on_exception", 1, 7, 7, 2); __PYX_ERR(0, 1377, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
@@ -26811,7 +26819,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
         }
         else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 1377, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("should_stop_on_exception", 1, 6, 6, 3); __PYX_ERR(0, 1377, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("should_stop_on_exception", 1, 7, 7, 3); __PYX_ERR(0, 1377, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
@@ -26821,7 +26829,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
         }
         else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 1377, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("should_stop_on_exception", 1, 6, 6, 4); __PYX_ERR(0, 1377, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("should_stop_on_exception", 1, 7, 7, 4); __PYX_ERR(0, 1377, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  5:
@@ -26831,14 +26839,24 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
         }
         else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 1377, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("should_stop_on_exception", 1, 6, 6, 5); __PYX_ERR(0, 1377, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("should_stop_on_exception", 1, 7, 7, 5); __PYX_ERR(0, 1377, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  6:
+        if (likely((values[6] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_is_unwind)) != 0)) {
+          (void)__Pyx_Arg_NewRef_FASTCALL(values[6]);
+          kw_args--;
+        }
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 1377, __pyx_L3_error)
+        else {
+          __Pyx_RaiseArgtupleInvalid("should_stop_on_exception", 1, 7, 7, 6); __PYX_ERR(0, 1377, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
         if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "should_stop_on_exception") < 0)) __PYX_ERR(0, 1377, __pyx_L3_error)
       }
-    } else if (unlikely(__pyx_nargs != 6)) {
+    } else if (unlikely(__pyx_nargs != 7)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
@@ -26847,6 +26865,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
       values[3] = __Pyx_Arg_FASTCALL(__pyx_args, 3);
       values[4] = __Pyx_Arg_FASTCALL(__pyx_args, 4);
       values[5] = __Pyx_Arg_FASTCALL(__pyx_args, 5);
+      values[6] = __Pyx_Arg_FASTCALL(__pyx_args, 6);
     }
     __pyx_v_py_db = values[0];
     __pyx_v_info = ((struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo *)values[1]);
@@ -26854,10 +26873,11 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
     __pyx_v_thread = values[3];
     __pyx_v_arg = values[4];
     __pyx_v_prev_user_uncaught_exc_info = values[5];
+    __pyx_v_is_unwind = values[6];
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("should_stop_on_exception", 1, 6, 6, __pyx_nargs); __PYX_ERR(0, 1377, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("should_stop_on_exception", 1, 7, 7, __pyx_nargs); __PYX_ERR(0, 1377, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -26872,7 +26892,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_info), __pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo, 1, "info", 0))) __PYX_ERR(0, 1377, __pyx_L1_error)
-  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exception(__pyx_self, __pyx_v_py_db, __pyx_v_info, __pyx_v_frame, __pyx_v_thread, __pyx_v_arg, __pyx_v_prev_user_uncaught_exc_info);
+  __pyx_r = __pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exception(__pyx_self, __pyx_v_py_db, __pyx_v_info, __pyx_v_frame, __pyx_v_thread, __pyx_v_arg, __pyx_v_prev_user_uncaught_exc_info, __pyx_v_is_unwind);
 
   /* function exit code */
   goto __pyx_L0;
@@ -26889,7 +26909,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exception(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_py_db, struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo *__pyx_v_info, PyObject *__pyx_v_frame, PyObject *__pyx_v_thread, PyObject *__pyx_v_arg, PyObject *__pyx_v_prev_user_uncaught_exc_info) {
+static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exception(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_py_db, struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo *__pyx_v_info, PyObject *__pyx_v_frame, PyObject *__pyx_v_thread, PyObject *__pyx_v_arg, PyObject *__pyx_v_prev_user_uncaught_exc_info, PyObject *__pyx_v_is_unwind) {
   int __pyx_v_should_stop;
   int __pyx_v_was_just_raised;
   PyObject *__pyx_v_check_excs = 0;
@@ -27066,7 +27086,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exce
  *             exception_breakpoint = None
  *             try:             # <<<<<<<<<<<<<<
  *                 if py_db.plugin is not None:
- *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg)
+ *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg, is_unwind)
  */
       {
         __Pyx_PyThreadState_declare
@@ -27081,7 +27101,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exce
  *             exception_breakpoint = None
  *             try:
  *                 if py_db.plugin is not None:             # <<<<<<<<<<<<<<
- *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg)
+ *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg, is_unwind)
  *                     if result:
  */
           __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_db, __pyx_n_s_plugin); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1398, __pyx_L9_error)
@@ -27093,7 +27113,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exce
             /* "_pydevd_bundle/pydevd_cython.pyx":1399
  *             try:
  *                 if py_db.plugin is not None:
- *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg)             # <<<<<<<<<<<<<<
+ *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg, is_unwind)             # <<<<<<<<<<<<<<
  *                     if result:
  *                         should_stop, frame = result
  */
@@ -27117,8 +27137,8 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exce
             }
             #endif
             {
-              PyObject *__pyx_callargs[5] = {__pyx_t_3, __pyx_v_py_db, __pyx_v_frame, __pyx_v_thread, __pyx_v_arg};
-              __pyx_t_4 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_11, 4+__pyx_t_11);
+              PyObject *__pyx_callargs[6] = {__pyx_t_3, __pyx_v_py_db, __pyx_v_frame, __pyx_v_thread, __pyx_v_arg, __pyx_v_is_unwind};
+              __pyx_t_4 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_11, 5+__pyx_t_11);
               __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
               if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1399, __pyx_L9_error)
               __Pyx_GOTREF(__pyx_t_4);
@@ -27129,7 +27149,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exce
 
             /* "_pydevd_bundle/pydevd_cython.pyx":1400
  *                 if py_db.plugin is not None:
- *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg)
+ *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg, is_unwind)
  *                     if result:             # <<<<<<<<<<<<<<
  *                         should_stop, frame = result
  *             except:
@@ -27138,7 +27158,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exce
             if (__pyx_t_1) {
 
               /* "_pydevd_bundle/pydevd_cython.pyx":1401
- *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg)
+ *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg, is_unwind)
  *                     if result:
  *                         should_stop, frame = result             # <<<<<<<<<<<<<<
  *             except:
@@ -27196,7 +27216,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exce
 
               /* "_pydevd_bundle/pydevd_cython.pyx":1400
  *                 if py_db.plugin is not None:
- *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg)
+ *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg, is_unwind)
  *                     if result:             # <<<<<<<<<<<<<<
  *                         should_stop, frame = result
  *             except:
@@ -27207,7 +27227,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exce
  *             exception_breakpoint = None
  *             try:
  *                 if py_db.plugin is not None:             # <<<<<<<<<<<<<<
- *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg)
+ *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg, is_unwind)
  *                     if result:
  */
           }
@@ -27217,7 +27237,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exce
  *             exception_breakpoint = None
  *             try:             # <<<<<<<<<<<<<<
  *                 if py_db.plugin is not None:
- *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg)
+ *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg, is_unwind)
  */
         }
         __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
@@ -27290,7 +27310,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exce
  *             exception_breakpoint = None
  *             try:             # <<<<<<<<<<<<<<
  *                 if py_db.plugin is not None:
- *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg)
+ *                     result = py_db.plugin.exception_break(py_db, frame, thread, arg, is_unwind)
  */
         __pyx_L11_except_error:;
         __Pyx_XGIVEREF(__pyx_t_8);
@@ -28808,7 +28828,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_12should_stop_on_exce
   /* "_pydevd_bundle/pydevd_cython.pyx":1377
  * 
  * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- * def should_stop_on_exception(py_db, PyDBAdditionalThreadInfo info, frame, thread, arg, prev_user_uncaught_exc_info):             # <<<<<<<<<<<<<<
+ * def should_stop_on_exception(py_db, PyDBAdditionalThreadInfo info, frame, thread, arg, prev_user_uncaught_exc_info, is_unwind):             # <<<<<<<<<<<<<<
  *     cdef bint should_stop;
  *     cdef bint was_just_raised;
  */
@@ -45868,6 +45888,7 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_is_stopped, __pyx_k_is_stopped, sizeof(__pyx_k_is_stopped), 0, 0, 1, 1},
     {&__pyx_n_s_is_thread_alive, __pyx_k_is_thread_alive, sizeof(__pyx_k_is_thread_alive), 0, 0, 1, 1},
     {&__pyx_n_s_is_unhandled_exception, __pyx_k_is_unhandled_exception, sizeof(__pyx_k_is_unhandled_exception), 0, 0, 1, 1},
+    {&__pyx_n_s_is_unwind, __pyx_k_is_unwind, sizeof(__pyx_k_is_unwind), 0, 0, 1, 1},
     {&__pyx_n_s_is_user_uncaught, __pyx_k_is_user_uncaught, sizeof(__pyx_k_is_user_uncaught), 0, 0, 1, 1},
     {&__pyx_kp_u_isenabled, __pyx_k_isenabled, sizeof(__pyx_k_isenabled), 0, 1, 0, 0},
     {&__pyx_n_s_j, __pyx_k_j, sizeof(__pyx_k_j), 0, 0, 1, 1},
@@ -46422,14 +46443,14 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   /* "_pydevd_bundle/pydevd_cython.pyx":1377
  * 
  * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- * def should_stop_on_exception(py_db, PyDBAdditionalThreadInfo info, frame, thread, arg, prev_user_uncaught_exc_info):             # <<<<<<<<<<<<<<
+ * def should_stop_on_exception(py_db, PyDBAdditionalThreadInfo info, frame, thread, arg, prev_user_uncaught_exc_info, is_unwind):             # <<<<<<<<<<<<<<
  *     cdef bint should_stop;
  *     cdef bint was_just_raised;
  */
-  __pyx_tuple__57 = PyTuple_Pack(21, __pyx_n_s_py_db, __pyx_n_s_info, __pyx_n_s_frame, __pyx_n_s_thread, __pyx_n_s_arg, __pyx_n_s_prev_user_uncaught_exc_info, __pyx_n_s_should_stop, __pyx_n_s_was_just_raised, __pyx_n_s_check_excs, __pyx_n_s_maybe_user_uncaught_exc_info, __pyx_n_s_exception, __pyx_n_s_value, __pyx_n_s_trace, __pyx_n_s_exception_breakpoint, __pyx_n_s_result, __pyx_n_s_exc_break_user, __pyx_n_s_exc_break_caught, __pyx_n_s_exc_break, __pyx_n_s_is_user_uncaught, __pyx_n_s_exc_info, __pyx_n_s_lines); if (unlikely(!__pyx_tuple__57)) __PYX_ERR(0, 1377, __pyx_L1_error)
+  __pyx_tuple__57 = PyTuple_Pack(22, __pyx_n_s_py_db, __pyx_n_s_info, __pyx_n_s_frame, __pyx_n_s_thread, __pyx_n_s_arg, __pyx_n_s_prev_user_uncaught_exc_info, __pyx_n_s_is_unwind, __pyx_n_s_should_stop, __pyx_n_s_was_just_raised, __pyx_n_s_check_excs, __pyx_n_s_maybe_user_uncaught_exc_info, __pyx_n_s_exception, __pyx_n_s_value, __pyx_n_s_trace, __pyx_n_s_exception_breakpoint, __pyx_n_s_result, __pyx_n_s_exc_break_user, __pyx_n_s_exc_break_caught, __pyx_n_s_exc_break, __pyx_n_s_is_user_uncaught, __pyx_n_s_exc_info, __pyx_n_s_lines); if (unlikely(!__pyx_tuple__57)) __PYX_ERR(0, 1377, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__57);
   __Pyx_GIVEREF(__pyx_tuple__57);
-  __pyx_codeobj__58 = (PyObject*)__Pyx_PyCode_New(6, 0, 0, 21, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__57, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_pydevd_bundle_pydevd_cython_pyx, __pyx_n_s_should_stop_on_exception, 1377, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__58)) __PYX_ERR(0, 1377, __pyx_L1_error)
+  __pyx_codeobj__58 = (PyObject*)__Pyx_PyCode_New(7, 0, 0, 22, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__57, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_pydevd_bundle_pydevd_cython_pyx, __pyx_n_s_should_stop_on_exception, 1377, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__58)) __PYX_ERR(0, 1377, __pyx_L1_error)
 
   /* "_pydevd_bundle/pydevd_cython.pyx":1510
  * 
@@ -48266,7 +48287,7 @@ if (!__Pyx_RefNanny) {
   /* "_pydevd_bundle/pydevd_cython.pyx":1377
  * 
  * # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
- * def should_stop_on_exception(py_db, PyDBAdditionalThreadInfo info, frame, thread, arg, prev_user_uncaught_exc_info):             # <<<<<<<<<<<<<<
+ * def should_stop_on_exception(py_db, PyDBAdditionalThreadInfo info, frame, thread, arg, prev_user_uncaught_exc_info, is_unwind):             # <<<<<<<<<<<<<<
  *     cdef bint should_stop;
  *     cdef bint was_just_raised;
  */

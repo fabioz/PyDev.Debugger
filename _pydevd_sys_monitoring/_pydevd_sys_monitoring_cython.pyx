@@ -28,7 +28,6 @@ from _pydevd_bundle.pydevd_constants import (
     RETURN_VALUES_DICT,
     PYTHON_SUSPEND,
 )
-from _pydevd_bundle.pydevd_frame_utils import short_tb, flag_as_unwinding, short_frame
 from pydevd_file_utils import (
     NORM_PATHS_AND_BASE_CONTAINER,
     get_abs_path_real_path_and_base_from_file,
@@ -226,7 +225,7 @@ cdef _is_last_user_frame(frame: FrameType):
     if not _is_user_frame(frame):
         return False
     
-    # If this frame is the last frame, then it is the last one
+    # If this frame is the end of the callstack, then it is the last one
     if frame.f_back is None:
         return True
     
@@ -836,8 +835,6 @@ cdef _unwind_event(code, instruction, exc):
         if thread_info is None:
             return
 
-    frame = _getframe(1)
-    arg = (type(exc), exc, exc.__traceback__)
 
     py_db: object = GlobalDebuggerHolder.global_dbg
     if py_db is None or py_db.pydb_disposed:
@@ -853,6 +850,8 @@ cdef _unwind_event(code, instruction, exc):
         return
     
     # print('_unwind_event', code, exc)
+    frame = _getframe(1)
+    arg = (type(exc), exc, exc.__traceback__)
 
     has_caught_exception_breakpoint_in_pydb = (
         py_db.break_on_caught_exceptions or py_db.break_on_user_uncaught_exceptions or py_db.has_plugin_exception_breaks
@@ -861,7 +860,7 @@ cdef _unwind_event(code, instruction, exc):
 
     if has_caught_exception_breakpoint_in_pydb:
         _should_stop, frame, user_uncaught_exc_info = should_stop_on_exception(
-            py_db, thread_info.additional_info, frame, thread_info.thread, arg, None
+            py_db, thread_info.additional_info, frame, thread_info.thread, arg, None, is_unwind=True
         )
         if user_uncaught_exc_info:
             # TODO: Check: this may no longer be needed as in the unwind we know it's
@@ -875,7 +874,6 @@ cdef _unwind_event(code, instruction, exc):
             )
 
             if is_unhandled:
-                # print('stop in user uncaught')
                 handle_exception(py_db, thread_info.thread, frame, user_uncaught_exc_info[0], EXCEPTION_TYPE_USER_UNHANDLED)
                 return
 
@@ -910,9 +908,6 @@ cdef _raise_event(code, instruction, exc):
         if thread_info is None:
             return
 
-    frame = _getframe(1)
-    arg = (type(exc), exc, exc.__traceback__)
-
     py_db: object = GlobalDebuggerHolder.global_dbg
     if py_db is None or py_db.pydb_disposed:
         return
@@ -926,7 +921,8 @@ cdef _raise_event(code, instruction, exc):
     if func_code_info.always_skip_code:
         return
 
-    # print('_raise_event --- ', code, exc)
+    frame = _getframe(1)
+    arg = (type(exc), exc, exc.__traceback__)
 
     # Compute the previous exception info (if any). We use it to check if the exception
     # should be stopped
@@ -941,10 +937,6 @@ cdef _raise_event(code, instruction, exc):
     # print('!!!! should_stop (in raise)', should_stop)
     if should_stop:
         handle_exception(py_db, thread_info.thread, frame, arg, EXCEPTION_TYPE_HANDLED)
-
-    # Once we leave the raise event, we are no longer in the state of 'just_raised', so 
-    # indicate that this traceback is for an exception in the unwinding state
-    flag_as_unwinding(exc.__traceback__)
 
 
 # fmt: off
@@ -1341,10 +1333,14 @@ cdef _jump_event(code, int from_offset, int to_offset):
         thread_info = _get_thread_info(True, 1)
         if thread_info is None:
             return
-
+        
     py_db: object = GlobalDebuggerHolder.global_dbg
     if py_db is None or py_db.pydb_disposed:
         return monitor.DISABLE
+
+    # If we get another jump event, remove the extra check for the line event
+    if hasattr(_thread_local_info, "f_disable_next_line_if_match"):
+        del _thread_local_info.f_disable_next_line_if_match
 
     if not thread_info.trace or thread_info.thread._is_stopped:
         # For thread-related stuff we can't disable the code tracing because other
@@ -1364,7 +1360,6 @@ cdef _jump_event(code, int from_offset, int to_offset):
 
     from_line = func_code_info.get_line_of_offset(from_offset)
     to_line = func_code_info.get_line_of_offset(to_offset)
-    # print('jump event', code.co_name, 'from line', from_line, 'to line', to_line)
 
     if from_line != to_line:
         # I.e.: use case: "yield from [j for j in a if j % 2 == 0]"
@@ -1374,7 +1369,7 @@ cdef _jump_event(code, int from_offset, int to_offset):
     frame = _getframe(1)
 
     # Disable the next line event as we're jumping to a line. The line event will be redundant.
-    _thread_local_info.f_disable_next_line_if_match = frame.f_lineno
+    _thread_local_info.f_disable_next_line_if_match = (func_code_info.co_filename, frame.f_lineno)
 
     return _internal_line_event(func_code_info, frame, frame.f_lineno)
 
@@ -1402,19 +1397,20 @@ cdef _line_event(code, int line):
     py_db: object = GlobalDebuggerHolder.global_dbg
     if py_db is None or py_db.pydb_disposed:
         return monitor.DISABLE
+    
+    # If we get another line event, remove the extra check for the line event
+    if hasattr(_thread_local_info, "f_disable_next_line_if_match"):
+        (co_filename, line_to_skip) = _thread_local_info.f_disable_next_line_if_match
+        del _thread_local_info.f_disable_next_line_if_match
+        if line_to_skip is line and co_filename == code.co_filename:
+            # The last jump already jumped to this line and we haven't had any
+            # line events or jumps since then. We don't want to consider this line twice
+            return
 
     if not thread_info.trace or thread_info.thread._is_stopped:
         # For thread-related stuff we can't disable the code tracing because other
         # threads may still want it...
         return
-    
-    if hasattr(_thread_local_info, "f_disable_next_line_if_match"):
-        if _thread_local_info.f_disable_next_line_if_match is line:
-            # If we're in a jump, we should skip this line event. The jump would have
-            # been considered a line event for this same line and we don't want to
-            # stop twice.
-            del _thread_local_info.f_disable_next_line_if_match
-            return
 
     func_code_info: FuncCodeInfo = _get_func_code_info(code, 1)
     if func_code_info.always_skip_code or func_code_info.always_filtered_out:
