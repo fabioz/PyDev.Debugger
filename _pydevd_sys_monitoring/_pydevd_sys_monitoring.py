@@ -1331,10 +1331,14 @@ def _jump_event(code, from_offset, to_offset):
         thread_info = _get_thread_info(True, 1)
         if thread_info is None:
             return
-
+        
     py_db: object = GlobalDebuggerHolder.global_dbg
     if py_db is None or py_db.pydb_disposed:
         return monitor.DISABLE
+
+    # If we get another jump event, remove the extra check for the line event
+    if hasattr(_thread_local_info, "f_disable_next_line_if_match"):
+        del _thread_local_info.f_disable_next_line_if_match
 
     if not thread_info.trace or thread_info.thread._is_stopped:
         # For thread-related stuff we can't disable the code tracing because other
@@ -1350,21 +1354,24 @@ def _jump_event(code, from_offset, to_offset):
     # Ignore forward jump.
     # print('jump event', code.co_name, 'from offset', from_offset, 'to offset', to_offset)
     if to_offset > from_offset:
+        pydev_log.debug('_jump_event', code.co_name, ' skipping because from_offset is less than to_offset', threading.current_thread())
         return monitor.DISABLE
 
     from_line = func_code_info.get_line_of_offset(from_offset)
     to_line = func_code_info.get_line_of_offset(to_offset)
-    pydev_log.debug('jump event', code.co_name, 'from line', from_line, 'to line', to_line)
 
     if from_line != to_line:
         # I.e.: use case: "yield from [j for j in a if j % 2 == 0]"
+        pydev_log.debug('_jump_event', code.co_name, ' skipping because from and to are different ', from_line, to_line, threading.current_thread())
         return monitor.DISABLE
 
     # We know the frame depth.
     frame = _getframe(1)
 
+    pydev_log.debug('_jump_event', code.co_name, 'from line', from_line, 'to line', frame.f_lineno, threading.current_thread())
+
     # Disable the next line event as we're jumping to a line. The line event will be redundant.
-    _thread_local_info.f_disable_next_line_if_match = frame.f_lineno
+    _thread_local_info.f_disable_next_line_if_match = (func_code_info.co_filename, frame.f_lineno)
 
     return _internal_line_event(func_code_info, frame, frame.f_lineno)
 
@@ -1392,28 +1399,31 @@ def _line_event(code, line):
     py_db: object = GlobalDebuggerHolder.global_dbg
     if py_db is None or py_db.pydb_disposed:
         return monitor.DISABLE
+    
+    # If we get another line event, remove the extra check for the line event
+    if hasattr(_thread_local_info, "f_disable_next_line_if_match"):
+        (co_filename, line_to_skip) = _thread_local_info.f_disable_next_line_if_match
+        del _thread_local_info.f_disable_next_line_if_match
+        if line_to_skip is line and co_filename == code.co_filename:
+            pydev_log.debug('_line_event', code.co_name, line, ' skipping because of jump event', threading.current_thread())
+            # The last jump already jumped to this line and we haven't had any
+            # line events or jumps since then. We don't want to consider this line twice
+            return
 
     if not thread_info.trace or thread_info.thread._is_stopped:
         # For thread-related stuff we can't disable the code tracing because other
         # threads may still want it...
         return
-    
-    if hasattr(_thread_local_info, "f_disable_next_line_if_match"):
-        if _thread_local_info.f_disable_next_line_if_match is line:
-            # If we're in a jump, we should skip this line event. The jump would have
-            # been considered a line event for this same line and we don't want to
-            # stop twice.
-            del _thread_local_info.f_disable_next_line_if_match
-            return
 
     func_code_info: FuncCodeInfo = _get_func_code_info(code, 1)
     if func_code_info.always_skip_code or func_code_info.always_filtered_out:
         return monitor.DISABLE
 
-    pydev_log.debug('line event', code.co_name, line)
-
     # We know the frame depth.
     frame = _getframe(1)
+
+    pydev_log.debug('_line_event', code.co_name, line, frame.f_lineno, threading.current_thread())
+    
     return _internal_line_event(func_code_info, frame, line)
 
 
@@ -1438,7 +1448,7 @@ def _internal_line_event(func_code_info, frame, line):
     step_cmd = info.pydev_step_cmd
 
     # print('line event', info, id(info), thread_info.thread.name)
-    # print('line event', info.pydev_state, line, threading.current_thread(), code)
+    pydev_log.debug('_internal_line_event', info.pydev_state, line, threading.current_thread())
     # If we reached here, it was not filtered out.
 
     if func_code_info.breakpoint_found:
