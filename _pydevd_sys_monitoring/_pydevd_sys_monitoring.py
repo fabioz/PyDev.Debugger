@@ -843,7 +843,7 @@ def _unwind_event(code, instruction, exc):
     if func_code_info.always_skip_code:
         return
     
-    pydev_log.debug('_unwind_event', code, exc)
+    # print('_unwind_event', code, exc)
     frame = _getframe(1)
     arg = (type(exc), exc, exc.__traceback__)
 
@@ -868,15 +868,12 @@ def _unwind_event(code, instruction, exc):
             )
 
             if is_unhandled:
-                pydev_log.debug('stop in user uncaught')
                 handle_exception(py_db, thread_info.thread, frame, user_uncaught_exc_info[0], EXCEPTION_TYPE_USER_UNHANDLED)
                 return
 
     break_on_uncaught_exceptions = py_db.break_on_uncaught_exceptions
     if break_on_uncaught_exceptions and _is_last_user_frame(frame):
         stop_on_unhandled_exception(py_db, thread_info.thread, thread_info.additional_info, arg)
-    else:
-        pydev_log.debug('not stopping in unwind', break_on_uncaught_exceptions, _is_last_user_frame(frame))
 
 
 # fmt: off
@@ -924,7 +921,6 @@ def _raise_event(code, instruction, exc):
     # Compute the previous exception info (if any). We use it to check if the exception
     # should be stopped
     prev_exc_info = _thread_local_info._user_uncaught_exc_info if hasattr(_thread_local_info, "_user_uncaught_exc_info") else None
-    pydev_log.debug('_raise_event --- ', code, exc, prev_exc_info)
     should_stop, frame, _user_uncaught_exc_info = should_stop_on_exception(
         py_db, thread_info.additional_info, frame, thread_info.thread, arg, prev_exc_info
     )
@@ -1354,7 +1350,6 @@ def _jump_event(code, from_offset, to_offset):
     # Ignore forward jump.
     # print('jump event', code.co_name, 'from offset', from_offset, 'to offset', to_offset)
     if to_offset > from_offset:
-        pydev_log.debug('_jump_event', code.co_name, ' skipping because from_offset is less than to_offset', threading.current_thread())
         return monitor.DISABLE
 
     from_line = func_code_info.get_line_of_offset(from_offset)
@@ -1362,13 +1357,10 @@ def _jump_event(code, from_offset, to_offset):
 
     if from_line != to_line:
         # I.e.: use case: "yield from [j for j in a if j % 2 == 0]"
-        pydev_log.debug('_jump_event', code.co_name, ' skipping because from and to are different ', from_line, to_line, threading.current_thread())
         return monitor.DISABLE
 
     # We know the frame depth.
     frame = _getframe(1)
-
-    pydev_log.debug('_jump_event', code.co_name, 'from line', from_line, 'to line', frame.f_lineno, threading.current_thread())
 
     # Disable the next line event as we're jumping to a line. The line event will be redundant.
     _thread_local_info.f_disable_next_line_if_match = (func_code_info.co_filename, frame.f_lineno)
@@ -1405,7 +1397,6 @@ def _line_event(code, line):
         (co_filename, line_to_skip) = _thread_local_info.f_disable_next_line_if_match
         del _thread_local_info.f_disable_next_line_if_match
         if line_to_skip is line and co_filename == code.co_filename:
-            pydev_log.debug('_line_event', code.co_name, line, ' skipping because of jump event', threading.current_thread())
             # The last jump already jumped to this line and we haven't had any
             # line events or jumps since then. We don't want to consider this line twice
             return
@@ -1419,11 +1410,10 @@ def _line_event(code, line):
     if func_code_info.always_skip_code or func_code_info.always_filtered_out:
         return monitor.DISABLE
 
+    # print('line event', code.co_name, line)
+
     # We know the frame depth.
     frame = _getframe(1)
-
-    pydev_log.debug('_line_event', code.co_name, line, frame.f_lineno, threading.current_thread())
-    
     return _internal_line_event(func_code_info, frame, line)
 
 
@@ -1448,7 +1438,7 @@ def _internal_line_event(func_code_info, frame, line):
     step_cmd = info.pydev_step_cmd
 
     # print('line event', info, id(info), thread_info.thread.name)
-    pydev_log.debug('_internal_line_event', info.pydev_state, line, threading.current_thread())
+    # print('line event', info.pydev_state, line, threading.current_thread(), code)
     # If we reached here, it was not filtered out.
 
     if func_code_info.breakpoint_found:

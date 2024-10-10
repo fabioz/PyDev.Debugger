@@ -12,7 +12,6 @@ IS_PY312 = sys.version_info[0:2] == (3, 12)
 IS_CPYTHON = platform.python_implementation() == "CPython"
 IS_PYPY = platform.python_implementation() == "PyPy"
 
-TODO_PY312 = IS_PY312  # Code which needs to be fixed in 3.12 should use this constant.
 TODO_PYPY = IS_PYPY  # Code which needs to be fixed in pypy.
 
 IS_PY36 = False
