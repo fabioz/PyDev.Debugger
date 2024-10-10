@@ -6,7 +6,6 @@ from _pydevd_frame_eval.vendored.bytecode.flags import infer_flags
 
 
 class BaseBytecode:
-
     def __init__(self):
         self.argcount = 0
         if sys.version_info > (3, 8):
@@ -130,7 +129,6 @@ class _BaseBytecodeList(BaseBytecode, list):
 
 
 class _InstrList(list):
-
     def _flat(self):
         instructions = []
         labels = {}
@@ -162,7 +160,6 @@ class _InstrList(list):
 
 
 class Bytecode(_InstrList, _BaseBytecodeList):
-
     def __init__(self, instructions=()):
         BaseBytecode.__init__(self)
         self.argnames = []
@@ -179,9 +176,7 @@ class Bytecode(_InstrList, _BaseBytecodeList):
     def _check_instr(self, instr):
         if not isinstance(instr, (Label, SetLineno, Instr)):
             raise ValueError(
-                "Bytecode must only contain Label, "
-                "SetLineno, and Instr objects, "
-                "but %s was found" % type(instr).__name__
+                "Bytecode must only contain Label, " "SetLineno, and Instr objects, " "but %s was found" % type(instr).__name__
             )
 
     def _copy_attr_from(self, bytecode):
@@ -192,7 +187,7 @@ class Bytecode(_InstrList, _BaseBytecodeList):
     @staticmethod
     def from_code(code):
         if sys.version_info[:2] >= (3, 11):
-            raise RuntimeError('This is not updated for Python 3.11 onwards, use only up to Python 3.10!!')
+            raise RuntimeError("This is not updated for Python 3.11 onwards, use only up to Python 3.10!!")
         concrete = _bytecode.ConcreteBytecode.from_code(code)
         return concrete.to_bytecode()
 
@@ -200,9 +195,7 @@ class Bytecode(_InstrList, _BaseBytecodeList):
         cfg = _bytecode.ControlFlowGraph.from_bytecode(self)
         return cfg.compute_stacksize(check_pre_and_post=check_pre_and_post)
 
-    def to_code(
-        self, compute_jumps_passes=None, stacksize=None, *, check_pre_and_post=True
-    ):
+    def to_code(self, compute_jumps_passes=None, stacksize=None, *, check_pre_and_post=True):
         # Prevent reconverting the concrete bytecode to bytecode and cfg to do the
         # calculation if we need to do it.
         if stacksize is None:

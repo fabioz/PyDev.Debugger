@@ -3,9 +3,11 @@
 
 __version_info__ in pydevd.py
 
+Update cython-generated files (must update cython and then run build_tools/build.py on python 3.10 and 3.12)
+
 Create tag:
 -----------
-git tag pydev_debugger_3_0_2 -a -m "PyDev.Debugger 3.0.2"
+git tag pydev_debugger_3_1_0 -a -m "PyDev.Debugger 3.1.0"
 git push --tags
 
 

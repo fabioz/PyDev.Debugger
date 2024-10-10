@@ -4,9 +4,8 @@ Utility for version comparison
 
 
 class _Version:
-
     def __init__(self, s):
-        parts = s.split('.')
+        parts = s.split(".")
         version_parts = []
         for p in parts:
             try:
@@ -39,13 +38,13 @@ def check_version(found_version, expected_min_or_eq_to_version):
         return True
 
 
-if __name__ == '__main__':
-    assert check_version('1.2.3', '1.2.3')
-    assert check_version('1.2.4', '1.2.3')
-    assert check_version('1.2', '1.2.bar')
-    assert check_version('1.3', '1.2.bar')
-    assert check_version('1.3', '1.2b')
-    assert not check_version('1.2', '1.3')
-    assert not check_version('1.2.0', '1.2.1')
-    assert not check_version('1.2', '1.2.1')
-    print('Ok, checks passed')
+if __name__ == "__main__":
+    assert check_version("1.2.3", "1.2.3")
+    assert check_version("1.2.4", "1.2.3")
+    assert check_version("1.2", "1.2.bar")
+    assert check_version("1.3", "1.2.bar")
+    assert check_version("1.3", "1.2b")
+    assert not check_version("1.2", "1.3")
+    assert not check_version("1.2.0", "1.2.1")
+    assert not check_version("1.2", "1.2.1")
+    print("Ok, checks passed")
