@@ -80,7 +80,8 @@ class _MessageWithMark(object):
 class JsonFacade(object):
     def __init__(self, writer):
         self.writer = writer
-        writer.reader_thread.accept_xml_messages = False
+        if hasattr(writer, "reader_thread"):
+            writer.reader_thread.accept_xml_messages = False
         self._all_json_messages_found = []
         self._sent_launch_or_attach = False
 
@@ -729,6 +730,7 @@ def test_case_json_hit_condition_error(case_setup_dap):
 
         writer.finished_ok = True
 
+
 def test_case_json_hit_condition_error_count(case_setup_dap):
     with case_setup_dap.test_file("_debugger_case_hit_count_conditional.py") as writer:
         json_facade = JsonFacade(writer)
@@ -748,7 +750,7 @@ def test_case_json_hit_condition_error_count(case_setup_dap):
         json_facade.wait_for_thread_stopped()
         messages = json_facade.mark_messages(OutputEvent, accept_message=accept_message)
         assert len(messages) == 11
-      
+
         json_facade.write_continue()
 
         writer.finished_ok = True
@@ -1365,16 +1367,16 @@ def test_case_sys_exit_0_handled_exception(case_setup_dap, break_on_system_exit_
 
         writer.finished_ok = True
 
+
 @pytest.mark.skipif(
-    sys.platform == "darwin",
+    sys.platform == "darwin" or not SUPPORT_ATTACH_TO_PID,
     reason="https://github.com/microsoft/ptvsd/issues/1988",
 )
-@pytest.mark.flaky(retries=2, delay=1)
 @pytest.mark.parametrize("raised", ["raised", ""])
 @pytest.mark.parametrize("uncaught", ["uncaught", ""])
 @pytest.mark.parametrize("zero", ["zero", ""])
 @pytest.mark.parametrize("exit_code", [0, 1, "nan"])
-def test_case_sys_exit_multiple_exception(case_setup_dap, raised, uncaught, zero, exit_code):
+def test_case_sys_exit_multiple_exception_attach(case_setup_remote, raised, uncaught, zero, exit_code):
     filters = []
     if raised:
         filters += ["raised"]
@@ -1386,33 +1388,50 @@ def test_case_sys_exit_multiple_exception(case_setup_dap, raised, uncaught, zero
         ret = debugger_unittest.AbstractWriterThread.update_command_line_args(writer, args)
         ret.append(repr(exit_code))
         return ret
-    
-    evaled_exit_code = exit_code if exit_code != 'nan' else 1
 
-    with case_setup_dap.test_file(
-            "_debugger_case_sysexit_unhandled.py", 
-            update_command_line_args=update_command_line_args, 
-            EXPECTED_RETURNCODE=evaled_exit_code
-        ) as writer:
+    evaled_exit_code = exit_code if exit_code != "nan" else 1
+
+    with case_setup_remote.test_file(
+        "_debugger_case_sysexit_unhandled_attach.py",
+        update_command_line_args=update_command_line_args,
+        EXPECTED_RETURNCODE=evaled_exit_code,
+        wait_for_port=False,
+    ) as writer:
+        _attach_to_writer_pid(writer)
+        wait_for_condition(lambda: hasattr(writer, "reader_thread"))
+
+        json_facade = JsonFacade(writer)
+
+        bp_line = writer.get_line_index_with_content("break here")
         handled_line = writer.get_line_index_with_content("@handled")
         unhandled_line = writer.get_line_index_with_content("@unhandled")
         original_ignore_stderr_line = writer._ignore_stderr_line
 
         @overrides(writer._ignore_stderr_line)
         def _ignore_stderr_line(line):
-            if exit_code == 'nan':
+            if exit_code == "nan":
                 return True
             return original_ignore_stderr_line(line)
-        writer._ignore_stderr_line = _ignore_stderr_line
-        
-        json_facade = JsonFacade(writer)
-        json_facade.write_launch(
-            breakOnSystemExitZero=True if zero else False,
-            debugOptions=["BreakOnSystemExitZero", "ShowReturnValue"] if zero else ["ShowReturnValue"],
-        )
-        json_facade.write_set_exception_breakpoints(filters)
-        json_facade.write_make_initial_run()
 
+        writer._ignore_stderr_line = _ignore_stderr_line
+
+        # Not really a launch, but we want to send these before the make_initial_run.
+        json_facade.write_launch(
+             breakpointOnSystemExit=True if zero else False,
+             debugOptions=["BreakOnSystemExitZero", "ShowReturnValue"] if zero else ["ShowReturnValue"],
+        )
+
+        json_facade.write_set_exception_breakpoints(filters)
+        json_facade.write_set_breakpoints([bp_line])
+        json_facade.write_make_initial_run()
+        hit = json_facade.wait_for_thread_stopped(line=bp_line)
+
+        # Stop looping
+        json_facade.get_global_var(hit.frame_id, "wait")
+        json_facade.write_set_variable(hit.frame_id, "wait", "False")
+        json_facade.write_set_breakpoints([])
+        json_facade.write_continue()
+        
         # When breaking on raised exceptions, we'll stop on both lines,
         # unless it's SystemExit(0) and we asked to ignore that.
         if raised and (zero or exit_code != 0):
@@ -1441,10 +1460,7 @@ def test_case_sys_exit_multiple_exception(case_setup_dap, raised, uncaught, zero
             )
             json_facade.write_continue()
 
-
         writer.finished_ok = True
-
-
 
 
 def test_case_handled_exception_breaks_by_type(case_setup_dap):
@@ -1977,11 +1993,11 @@ def test_stack_and_variables_dict(case_setup_dap):
         # : :type variables_response: VariablesResponse
 
         expected_unicode = {
-            "name": "\u16A0",
+            "name": "\u16a0",
             "value": "'\u16a1'",
             "type": "str",
             "presentationHint": {"attributes": ["rawString"]},
-            "evaluateName": "\u16A0",
+            "evaluateName": "\u16a0",
         }
         assert variables_response.body.variables == [
             {"name": "variable_for_test_1", "value": "10", "type": "int", "evaluateName": "variable_for_test_1"},
@@ -2237,8 +2253,22 @@ def test_evaluate_numpy(case_setup_dap, pyfile):
 
         check = [dict([(variable["name"], variable["value"])]) for variable in variables_response.body.variables]
         assert check in (
-            [{'special variables': ''}, {'dtype': "dtype('int64')"}, {'max': 'np.int64(2)'}, {'min': 'np.int64(2)'}, {'shape': '()'}, {'size': '1'}],
-            [{'special variables': ''}, {'dtype': "dtype('int32')"}, {'max': 'np.int32(2)'}, {'min': 'np.int32(2)'}, {'shape': '()'}, {'size': '1'}],
+            [
+                {"special variables": ""},
+                {"dtype": "dtype('int64')"},
+                {"max": "np.int64(2)"},
+                {"min": "np.int64(2)"},
+                {"shape": "()"},
+                {"size": "1"},
+            ],
+            [
+                {"special variables": ""},
+                {"dtype": "dtype('int32')"},
+                {"max": "np.int32(2)"},
+                {"min": "np.int32(2)"},
+                {"shape": "()"},
+                {"size": "1"},
+            ],
             [{"special variables": ""}, {"dtype": "dtype('int32')"}, {"max": "2"}, {"min": "2"}, {"shape": "()"}, {"size": "1"}],
             [{"special variables": ""}, {"dtype": "dtype('int64')"}, {"max": "2"}, {"min": "2"}, {"shape": "()"}, {"size": "1"}],
             [
@@ -2576,7 +2606,7 @@ def test_evaluate_unicode(case_setup_dap):
         json_hit = json_facade.wait_for_thread_stopped()
         json_hit = json_facade.get_stack_as_json_hit(json_hit.thread_id)
 
-        evaluate_response = json_facade.evaluate("\u16A0", json_hit.frame_id)
+        evaluate_response = json_facade.evaluate("\u16a0", json_hit.frame_id)
 
         evaluate_response_body = evaluate_response.body.to_dict()
 
@@ -5019,7 +5049,7 @@ def test_redirect_output(case_setup_dap):
             if original_ignore_stderr_line(line):
                 return True
 
-            binary_junk = b"\xe8\xF0\x80\x80\x80"
+            binary_junk = b"\xe8\xf0\x80\x80\x80"
             if sys.version_info[0] >= 3:
                 binary_junk = binary_junk.decode("utf-8", "replace")
 

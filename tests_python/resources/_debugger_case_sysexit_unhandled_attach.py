@@ -1,4 +1,9 @@
 import sys
+import time
+
+wait = True
+while wait:
+    time.sleep(1)  # break here
 
 
 exit_code = eval(sys.argv[1])
