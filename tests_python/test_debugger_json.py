@@ -1365,6 +1365,87 @@ def test_case_sys_exit_0_handled_exception(case_setup_dap, break_on_system_exit_
 
         writer.finished_ok = True
 
+@pytest.mark.skipif(
+    sys.platform == "darwin",
+    reason="https://github.com/microsoft/ptvsd/issues/1988",
+)
+@pytest.mark.flaky(retries=2, delay=1)
+@pytest.mark.parametrize("raised", ["raised", ""])
+@pytest.mark.parametrize("uncaught", ["uncaught", ""])
+@pytest.mark.parametrize("zero", ["zero", ""])
+@pytest.mark.parametrize("exit_code", [0, 1, "nan"])
+def test_case_sys_exit_multiple_exception(case_setup_dap, raised, uncaught, zero, exit_code):
+    filters = []
+    if raised:
+        filters += ["raised"]
+    if uncaught:
+        filters += ["uncaught"]
+
+    def update_command_line_args(writer, args):
+        # Add exit code to command line args
+        ret = debugger_unittest.AbstractWriterThread.update_command_line_args(writer, args)
+        ret.append(repr(exit_code))
+        return ret
+    
+    evaled_exit_code = exit_code if exit_code != 'nan' else 1
+
+    with case_setup_dap.test_file(
+            "_debugger_case_sysexit_unhandled.py", 
+            update_command_line_args=update_command_line_args, 
+            EXPECTED_RETURNCODE=evaled_exit_code
+        ) as writer:
+        handled_line = writer.get_line_index_with_content("@handled")
+        unhandled_line = writer.get_line_index_with_content("@unhandled")
+        original_ignore_stderr_line = writer._ignore_stderr_line
+
+        @overrides(writer._ignore_stderr_line)
+        def _ignore_stderr_line(line):
+            if exit_code == 'nan':
+                return True
+            return original_ignore_stderr_line(line)
+        writer._ignore_stderr_line = _ignore_stderr_line
+        
+        json_facade = JsonFacade(writer)
+        json_facade.write_launch(
+            breakOnSystemExitZero=True if zero else False,
+            debugOptions=["BreakOnSystemExitZero", "ShowReturnValue"] if zero else ["ShowReturnValue"],
+        )
+        json_facade.write_set_exception_breakpoints(filters)
+        json_facade.write_make_initial_run()
+
+        # When breaking on raised exceptions, we'll stop on both lines,
+        # unless it's SystemExit(0) and we asked to ignore that.
+        if raised and (zero or exit_code != 0):
+            json_facade.wait_for_thread_stopped(
+                "exception",
+                line=handled_line,
+            )
+            json_facade.write_continue()
+
+            json_facade.wait_for_thread_stopped(
+                "exception",
+                line=unhandled_line,
+            )
+            json_facade.write_continue()
+
+        # When breaking on uncaught exceptions, we'll stop on the second line,
+        # unless it's SystemExit(0) and we asked to ignore that.
+        # Note that if both raised and uncaught filters are set, there will be
+        # two stop for the second line - one for exception being raised, and one
+        # for it unwinding the stack without finding a handler. The block above
+        # takes care of the first stop, so here we just take care of the second.
+        if uncaught and (zero or exit_code != 0):
+            json_facade.wait_for_thread_stopped(
+                "exception",
+                line=unhandled_line,
+            )
+            json_facade.write_continue()
+
+
+        writer.finished_ok = True
+
+
+
 
 def test_case_handled_exception_breaks_by_type(case_setup_dap):
     with case_setup_dap.test_file("_debugger_case_exceptions.py") as writer:
