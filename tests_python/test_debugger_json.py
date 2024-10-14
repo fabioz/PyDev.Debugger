@@ -1392,7 +1392,7 @@ def test_case_sys_exit_multiple_exception_attach(case_setup_remote, raised, unca
     evaled_exit_code = exit_code if exit_code != "nan" else 1
 
     with case_setup_remote.test_file(
-        "_debugger_case_sysexit_unhandled_attach.py",
+        "_debugger_case_sysexit_unhandled_launcher.py",
         update_command_line_args=update_command_line_args,
         EXPECTED_RETURNCODE=evaled_exit_code,
         wait_for_port=False,
@@ -1402,9 +1402,12 @@ def test_case_sys_exit_multiple_exception_attach(case_setup_remote, raised, unca
 
         json_facade = JsonFacade(writer)
 
+        target_file = debugger_unittest._get_debugger_test_file("_debugger_case_sysexit_unhandled_attach.py")
+
         bp_line = writer.get_line_index_with_content("break here")
-        handled_line = writer.get_line_index_with_content("@handled")
-        unhandled_line = writer.get_line_index_with_content("@unhandled")
+        final_line = writer.get_line_index_with_content("final break")
+        handled_line = writer.get_line_index_with_content("@handled", filename=target_file)
+        unhandled_line = writer.get_line_index_with_content("@unhandled", filename=target_file)
         original_ignore_stderr_line = writer._ignore_stderr_line
 
         @overrides(writer._ignore_stderr_line)
@@ -1444,6 +1447,12 @@ def test_case_sys_exit_multiple_exception_attach(case_setup_remote, raised, unca
             json_facade.wait_for_thread_stopped(
                 "exception",
                 line=unhandled_line,
+            )
+            json_facade.write_continue()
+
+            json_facade.wait_for_thread_stopped(
+                "exception",
+                line=final_line,
             )
             json_facade.write_continue()
 

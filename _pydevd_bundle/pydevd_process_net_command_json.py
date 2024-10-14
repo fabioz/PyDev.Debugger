@@ -345,7 +345,6 @@ class PyDevJsonCommandProcessor(object):
         return remote_root
 
     def _set_debug_options(self, py_db, args, start_reason):
-        pydev_log.debug("RCHIODO -- setting debug options")
         rules = args.get("rules")
         stepping_resumes_all_threads = args.get("steppingResumesAllThreads", True)
         self.api.set_stepping_resumes_all_threads(py_db, stepping_resumes_all_threads)

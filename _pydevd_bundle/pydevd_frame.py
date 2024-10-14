@@ -1095,7 +1095,7 @@ def should_stop_on_exception(py_db, info, frame, thread, arg, prev_user_uncaught
                     pass
 
                 else:
-                    was_just_raised = just_raised(trace)
+                    was_just_raised = trace.tb_next is None
 
                     # It was not handled by any plugin, lets check exception breakpoints.
                     check_excs = []

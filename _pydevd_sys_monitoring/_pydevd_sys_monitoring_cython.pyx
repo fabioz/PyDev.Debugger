@@ -38,6 +38,9 @@ from _pydevd_bundle.pydevd_constants import EXCEPTION_TYPE_HANDLED
 from _pydevd_bundle.pydevd_trace_dispatch import is_unhandled_exception
 from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
 from _pydevd_bundle.pydevd_utils import get_clsname_for_code
+from _pydevd_bundle.pydevd_frame_utils import short_frame
+from _pydevd_bundle.pydevd_dont_trace_files import PYDEV_FILE
+
 
 # fmt: off
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
@@ -176,65 +179,78 @@ cdef _get_bootstrap_frame(depth):
 
 # fmt: off
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
-cdef _is_user_frame(frame: FrameType):
+cdef _get_unhandled_exception_frame(int depth):
 # ELSE
-# def _is_user_frame(frame: FrameType) -> bool:
+# def _get_unhandled_exception_frame(depth: int) -> Optional[FrameType]:
 # ENDIF
 # fmt: on
-    if frame is None:
-        return False
+    try:
+        result = _thread_local_info.f_unhandled
 
-    filename = frame.f_code.co_filename
-    name = splitext(basename(filename))[0]
+        # Make sure the result is from the same exception. That means the result is in the stack somewhere.
+        if result is not None:
+            orig = frame = _getframe(depth)
+            while result != frame and frame is not None:
+                frame = frame.f_back
+            if frame is not None:
+                pydev_log.debug('Returning saved unhandled frame', short_frame(result))
+                return result
+            pydev_log.debug('Unhandled frame from different exception', short_frame(result), short_frame(orig))
+            del _thread_local_info.f_unhandled
+            raise AttributeError("Unhandled frame from different exception")
+    except:
+        pydev_log.debug('No saved unhandled frame')
+        py_db = GlobalDebuggerHolder.global_dbg
+        if py_db is None:
+            return None
 
-    # When the frame is the bootstrap it is not a user frame.
-    if name == "threading":
-        if frame.f_code.co_name in ("__bootstrap", "_bootstrap", "__bootstrap_inner", "_bootstrap_inner", "run"):
-            return False
+        f_unhandled = _getframe(depth)
+        search_depth = 0
 
-    elif name == "pydev_monkey":
-        if frame.f_code.co_name == "__call__":
-            return False
+        while f_unhandled is not None and f_unhandled.f_back is not None:
+            f_back = f_unhandled.f_back
+            filename = f_back.f_code.co_filename
+            name = splitext(basename(filename))[0]
+            search_depth += 1
 
-    elif name == "pydevd":
-        if frame.f_code.co_name in ("_exec", "run", "main"):
-            return False
+            # When the back frame is the bootstrap (or if we have no back
+            # frame) then use this frame as the one to track.
+            if name == "threading":
+                if f_back.f_code.co_name in ("__bootstrap", "_bootstrap", "__bootstrap_inner", "_bootstrap_inner", "run"):
+                    break
 
-    elif name == "pydevd_runpy":
-        if frame.f_code.co_name.startswith(("run", "_run")):
-            return False
+            elif name == "pydev_monkey":
+                if f_back.f_code.co_name == "__call__":
+                    break
 
-    elif filename == "<frozen runpy>":
-        if frame.f_code.co_name.startswith(("run", "_run")):
-            return False
+            elif name == "pydevd":
+                if f_back.f_code.co_name in ("_exec", "run", "main"):
+                    break
 
-    elif name == 'runpy':
-        if frame.f_code.co_name.startswith(("run", "_run")):
-            return False
+            elif name == "pydevd_runpy":
+                if f_back.f_code.co_name.startswith(("run", "_run")):
+                    break
 
-    return True
+            elif name == "<frozen runpy>":
+                if f_back.f_code.co_name.startswith(("run", "_run")):
+                    break
 
-# fmt: off
-# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
-cdef _is_last_user_frame(frame: FrameType):
-# ELSE
-# def _is_last_user_frame(frame: FrameType) -> bool:
-# ENDIF
-# fmt: on 
-    # If this frame is not a user frame, then it can't be the last one
-    if not _is_user_frame(frame):
-        return False
-    
-    # If this frame is the end of the callstack, then it is the last one
-    if frame.f_back is None:
-        return True
-    
-    # If the next frame is not a user frame, then this frame is the last one
-    if not _is_user_frame(frame.f_back):
-        return True
-    
-    # Otherwise if the next frame is a user frame, then this frame is not the last one
-    return False
+            elif name == "runpy":
+                if f_back.f_code.co_name.startswith(("run", "_run")):
+                    break
+            
+            elif py_db.get_file_type(f_back) is PYDEV_FILE:
+                break
+
+            f_unhandled = f_back
+
+        if f_unhandled is not None:
+            pydev_log.debug('Saving unhandled frame', short_frame(f_unhandled), search_depth)
+            _thread_local_info.f_unhandled = f_unhandled
+            return _thread_local_info.f_unhandled
+
+        return f_unhandled
+
 
 # fmt: off
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
@@ -844,12 +860,13 @@ cdef _unwind_event(code, instruction, exc):
         # For thread-related stuff we can't disable the code tracing because other
         # threads may still want it...
         return
-    
+
+    pydev_log.debug('_unwind_event', code, exc)
+
     func_code_info: FuncCodeInfo = _get_func_code_info(code, 1)
     if func_code_info.always_skip_code:
         return
-    
-    # print('_unwind_event', code, exc)
+
     frame = _getframe(1)
     arg = (type(exc), exc, exc.__traceback__)
 
@@ -878,8 +895,14 @@ cdef _unwind_event(code, instruction, exc):
                 return
 
     break_on_uncaught_exceptions = py_db.break_on_uncaught_exceptions
-    if break_on_uncaught_exceptions and _is_last_user_frame(frame):
-        stop_on_unhandled_exception(py_db, thread_info.thread, thread_info.additional_info, arg)
+    if break_on_uncaught_exceptions:
+        unhandled_frame = _get_unhandled_exception_frame(1)
+        if frame is unhandled_frame:
+            pydev_log.debug("Stopping on unhandled_frame", short_frame(frame))
+            stop_on_unhandled_exception(py_db, thread_info.thread, thread_info.additional_info, arg)
+            return
+        else:
+            pydev_log.debug("Ignoring uncaught exception as it's not the top frame", short_frame(frame), short_frame(unhandled_frame))
 
 
 # fmt: off
@@ -907,7 +930,7 @@ cdef _raise_event(code, instruction, exc):
         thread_info = _get_thread_info(True, 1)
         if thread_info is None:
             return
-
+        
     py_db: object = GlobalDebuggerHolder.global_dbg
     if py_db is None or py_db.pydb_disposed:
         return
@@ -920,6 +943,8 @@ cdef _raise_event(code, instruction, exc):
     func_code_info: FuncCodeInfo = _get_func_code_info(code, 1)
     if func_code_info.always_skip_code:
         return
+
+    pydev_log.debug('_raise_event', code, exc)
 
     frame = _getframe(1)
     arg = (type(exc), exc, exc.__traceback__)
@@ -1333,7 +1358,7 @@ cdef _jump_event(code, int from_offset, int to_offset):
         thread_info = _get_thread_info(True, 1)
         if thread_info is None:
             return
-        
+
     py_db: object = GlobalDebuggerHolder.global_dbg
     if py_db is None or py_db.pydb_disposed:
         return monitor.DISABLE
@@ -1397,7 +1422,7 @@ cdef _line_event(code, int line):
     py_db: object = GlobalDebuggerHolder.global_dbg
     if py_db is None or py_db.pydb_disposed:
         return monitor.DISABLE
-    
+
     # If we get another line event, remove the extra check for the line event
     if hasattr(_thread_local_info, "f_disable_next_line_if_match"):
         (co_filename, line_to_skip) = _thread_local_info.f_disable_next_line_if_match
