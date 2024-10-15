@@ -28,7 +28,7 @@ def raise_exception():
                 print("    {0}=={1}\n", pkg.name, pkg.version)
         except Exception:  # pragma: no cover
             print(
-                "Error while enumerating installed packages.", level="info"
+                "Error while enumerating installed packages."
             )
 raise_exception()
 
