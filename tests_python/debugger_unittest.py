@@ -647,7 +647,7 @@ class DebuggerRunner(object):
             except:
                 traceback.print_exc()
             finish[0] = True
-            print("Log on success: " + self.get_log_contents())
+            # print("Log on success: " + self.get_log_contents())
 
     def get_log_contents(self):
         log_contents = ""

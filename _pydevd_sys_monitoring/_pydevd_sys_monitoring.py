@@ -32,7 +32,6 @@ from _pydevd_bundle.pydevd_constants import EXCEPTION_TYPE_HANDLED
 from _pydevd_bundle.pydevd_trace_dispatch import is_unhandled_exception
 from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
 from _pydevd_bundle.pydevd_utils import get_clsname_for_code
-from _pydevd_bundle.pydevd_frame_utils import short_frame
 from _pydevd_bundle.pydevd_dont_trace_files import PYDEV_FILE
 
 
@@ -187,13 +186,10 @@ def _get_unhandled_exception_frame(depth: int) -> Optional[FrameType]:
             while result != frame and frame is not None:
                 frame = frame.f_back
             if frame is not None:
-                pydev_log.debug('Returning saved unhandled frame', short_frame(result))
                 return result
-            pydev_log.debug('Unhandled frame from different exception', short_frame(result), short_frame(orig))
             del _thread_local_info.f_unhandled
             raise AttributeError("Unhandled frame from different exception")
     except:
-        pydev_log.debug('No saved unhandled frame')
         py_db = GlobalDebuggerHolder.global_dbg
         if py_db is None:
             return None
@@ -239,7 +235,6 @@ def _get_unhandled_exception_frame(depth: int) -> Optional[FrameType]:
             f_unhandled = f_back
 
         if f_unhandled is not None:
-            pydev_log.debug('Saving unhandled frame', short_frame(f_unhandled), search_depth)
             _thread_local_info.f_unhandled = f_unhandled
             return _thread_local_info.f_unhandled
 
@@ -855,12 +850,11 @@ def _unwind_event(code, instruction, exc):
         # threads may still want it...
         return
 
-    pydev_log.debug('_unwind_event', code, exc)
-
     func_code_info: FuncCodeInfo = _get_func_code_info(code, 1)
     if func_code_info.always_skip_code:
         return
 
+    # print('_unwind_event', code, exc)
     frame = _getframe(1)
     arg = (type(exc), exc, exc.__traceback__)
 
@@ -890,13 +884,9 @@ def _unwind_event(code, instruction, exc):
 
     break_on_uncaught_exceptions = py_db.break_on_uncaught_exceptions
     if break_on_uncaught_exceptions:
-        unhandled_frame = _get_unhandled_exception_frame(1)
-        if frame is unhandled_frame:
-            pydev_log.debug("Stopping on unhandled_frame", short_frame(frame))
+        if frame is _get_unhandled_exception_frame(1):
             stop_on_unhandled_exception(py_db, thread_info.thread, thread_info.additional_info, arg)
             return
-        else:
-            pydev_log.debug("Ignoring uncaught exception as it's not the top frame", short_frame(frame), short_frame(unhandled_frame))
 
 
 # fmt: off
@@ -937,8 +927,6 @@ def _raise_event(code, instruction, exc):
     func_code_info: FuncCodeInfo = _get_func_code_info(code, 1)
     if func_code_info.always_skip_code:
         return
-
-    pydev_log.debug('_raise_event', code, exc)
 
     frame = _getframe(1)
     arg = (type(exc), exc, exc.__traceback__)
