@@ -63,6 +63,13 @@ def short_frame(frame):
     name = splitext(basename(filename))[0]
     return '%s::%s %s' % (name, frame.f_code.co_name, frame.f_lineno)
 
+def short_stack(frame):
+    stack = []
+    while frame:
+        stack.append(short_frame(frame))
+        frame = frame.f_back
+    return 'Stack: %s\n' % (' -> '.join(stack))
+
 def ignore_exception_trace(trace):
     while trace is not None:
         filename = trace.tb_frame.f_code.co_filename
