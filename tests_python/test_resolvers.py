@@ -109,7 +109,6 @@ def test_object_resolver_hasattr_error():
 
 def test_object_resolver_empty_slot():
     from _pydevd_bundle.pydevd_resolver import DefaultResolver
-    from _pydevd_bundle.pydevd_xml import get_type
 
     default_resolver = DefaultResolver()
 
