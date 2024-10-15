@@ -5741,7 +5741,7 @@ def test_stop_on_entry2(case_setup_dap):
         json_facade.write_continue()
         writer.finished_ok = True
 
-def test_stop_on_entry_verify_lambdas(case_setup_dap):
+def test_stop_on_entry_verify_strings(case_setup_dap):
     with case_setup_dap.test_file("not_my_code/main_on_entry3.py") as writer:
         json_facade = JsonFacade(writer)
         json_facade.write_set_debugger_property([], ["main_on_entry3.py"])
