@@ -201,13 +201,11 @@ cdef _get_unhandled_exception_frame(int depth):
             return None
 
         f_unhandled = _getframe(depth)
-        search_depth = 0
 
         while f_unhandled is not None and f_unhandled.f_back is not None:
             f_back = f_unhandled.f_back
             filename = f_back.f_code.co_filename
             name = splitext(basename(filename))[0]
-            search_depth += 1
 
             # When the back frame is the bootstrap (or if we have no back
             # frame) then use this frame as the one to track.
