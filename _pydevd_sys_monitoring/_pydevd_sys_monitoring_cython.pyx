@@ -196,10 +196,6 @@ cdef _get_unhandled_exception_frame(int depth):
             del _thread_local_info.f_unhandled
             raise AttributeError("Unhandled frame from different exception")
     except:
-        py_db = GlobalDebuggerHolder.global_dbg
-        if py_db is None:
-            return None
-
         f_unhandled = _getframe(depth)
 
         while f_unhandled is not None and f_unhandled.f_back is not None:
@@ -232,9 +228,6 @@ cdef _get_unhandled_exception_frame(int depth):
             elif name == "runpy":
                 if f_back.f_code.co_name.startswith(("run", "_run")):
                     break
-            
-            elif py_db.get_file_type(f_back) is PYDEV_FILE:
-                break
 
             f_unhandled = f_back
 
