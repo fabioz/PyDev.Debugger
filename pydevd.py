@@ -100,7 +100,7 @@ from _pydevd_bundle.pydevd_defaults import PydevdCustomization  # Note: import a
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE, LIB_FILE, DONT_TRACE_DIRS
 from _pydevd_bundle.pydevd_extension_api import DebuggerEventHandler
-from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, remove_exception_from_frame
+from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, remove_exception_from_frame, short_stack
 from _pydevd_bundle.pydevd_net_command_factory_xml import NetCommandFactory
 from _pydevd_bundle.pydevd_trace_dispatch import (
     trace_dispatch as _trace_dispatch,
@@ -1077,6 +1077,10 @@ class PyDB(object):
             if abs_real_path_and_basename[0] == "<string>":
                 # Consider it an untraceable file unless there's no back frame (ignoring
                 # internal files and runpy.py).
+                if frame.f_back is not None and self.get_file_type(frame.f_back) == self.PYDEV_FILE:
+                    # Special case, this is a string coming from pydevd itself (or another internal file)
+                    return self.PYDEV_FILE
+
                 f = frame.f_back
                 while f is not None:
                     if self.get_file_type(f) != self.PYDEV_FILE and pydevd_file_utils.basename(f.f_code.co_filename) not in (
@@ -1094,6 +1098,7 @@ class PyDB(object):
                         # to show it in the stack.
                         _cache_file_type[cache_key] = LIB_FILE
                         return LIB_FILE
+                    
                     f = f.f_back
                 else:
                     # This is a top-level file (used in python -c), so, trace it as usual... we

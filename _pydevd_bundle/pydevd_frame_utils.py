@@ -2,6 +2,7 @@ from _pydevd_bundle.pydevd_constants import EXCEPTION_TYPE_USER_UNHANDLED, EXCEP
 from _pydev_bundle import pydev_log
 import itertools
 from typing import Any, Dict
+from os.path import basename, splitext
 
 
 class Frame(object):
@@ -42,8 +43,32 @@ FILES_WITH_IMPORT_HOOKS = ["pydev_monkey_qt.py", "pydev_import_hook.py"]
 def just_raised(trace):
     if trace is None:
         return False
+    
     return trace.tb_next is None
 
+def short_tb(exc_tb):
+    traceback = []
+    while exc_tb:
+        traceback.append('{%r, %r, %r}' % (exc_tb.tb_frame.f_code.co_filename,
+                                           exc_tb.tb_frame.f_code.co_name,
+                                           exc_tb.tb_lineno))
+        exc_tb = exc_tb.tb_next
+    return 'Traceback: %s\n' % (' -> '.join(traceback))
+
+def short_frame(frame):
+    if frame is None:
+        return 'None'
+    
+    filename = frame.f_code.co_filename
+    name = splitext(basename(filename))[0]
+    return '%s::%s %s' % (name, frame.f_code.co_name, frame.f_lineno)
+
+def short_stack(frame):
+    stack = []
+    while frame:
+        stack.append(short_frame(frame))
+        frame = frame.f_back
+    return 'Stack: %s\n' % (' -> '.join(stack))
 
 def ignore_exception_trace(trace):
     while trace is not None:
