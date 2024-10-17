@@ -56,11 +56,11 @@ def find_gui_and_backend():
 def is_interactive_backend(backend):
     """Check if backend is interactive"""
     matplotlib = sys.modules["matplotlib"]
-    from matplotlib.rcsetup import interactive_bk, non_interactive_bk  # @UnresolvedImport
+    from matplotlib.backends import BackendFilter, backend_registry  # @UnresolvedImport
 
-    if backend in interactive_bk:
+    if backend in backend_registry.list_builtin(BackendFilter.INTERACTIVE):
         return True
-    elif backend in non_interactive_bk:
+    elif backend in backend_registry.list_builtin(BackendFilter.NON_INTERACTIVE):
         return False
     else:
         return matplotlib.is_interactive()
