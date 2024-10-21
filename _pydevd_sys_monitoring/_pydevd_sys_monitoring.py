@@ -16,6 +16,7 @@ from _pydev_bundle import pydev_log
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydevd_bundle import pydevd_dont_trace
 from _pydevd_bundle.pydevd_constants import (
+    IS_PY313_OR_GREATER,
     GlobalDebuggerHolder,
     ForkSafeLock,
     PYDEVD_IPYTHON_CONTEXT,
@@ -320,7 +321,7 @@ def _create_thread_info(depth):
     if t is None:
         t = _thread_active.get(thread_ident)
 
-    if isinstance(t, threading._DummyThread):
+    if isinstance(t, threading._DummyThread) and not IS_PY313_OR_GREATER:
         _thread_local_info._ref = _DeleteDummyThreadOnDel(t)
 
     if t is None:

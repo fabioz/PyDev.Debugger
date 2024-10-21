@@ -1,3 +1,6 @@
+from _pydevd_bundle.pydevd_constants import IS_PY313_OR_GREATER
+
+
 def get_main_thread_instance(threading):
     if hasattr(threading, "main_thread"):
         return threading.main_thread()
@@ -81,6 +84,10 @@ def fix_main_thread_id(on_warn=lambda msg: None, on_exception=lambda msg: None, 
     import sys
     import threading
 
+    # This no longer works in Py 3.13
+    if IS_PY313_OR_GREATER:
+        return
+    
     try:
         with threading._active_limbo_lock:
             main_thread_instance = get_main_thread_instance(threading)
