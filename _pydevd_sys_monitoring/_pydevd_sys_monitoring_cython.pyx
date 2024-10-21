@@ -19,6 +19,7 @@ from typing import Dict, Optional, Tuple, Any
 from os.path import basename, splitext
 
 from _pydev_bundle import pydev_log
+from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydevd_bundle import pydevd_dont_trace
 from _pydevd_bundle.pydevd_constants import (
     GlobalDebuggerHolder,
@@ -178,23 +179,19 @@ cdef _get_bootstrap_frame(depth):
 
 # fmt: off
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
-cdef _get_unhandled_exception_frame(int depth):
+cdef _get_unhandled_exception_frame(exc, int depth):
 # ELSE
-# def _get_unhandled_exception_frame(depth: int) -> Optional[FrameType]:
+# def _get_unhandled_exception_frame(exc, depth: int) -> Optional[FrameType]:
 # ENDIF
 # fmt: on
     try:
-        result = _thread_local_info.f_unhandled
-
-        # Make sure the result is from the same exception. That means the result is in the stack somewhere.
-        if result is not None:
-            orig = frame = _getframe(depth)
-            while result != frame and frame is not None:
-                frame = frame.f_back
-            if frame is not None:
-                return result
-            del _thread_local_info.f_unhandled
-            raise AttributeError("Unhandled frame from different exception")
+        # Unhandled frame has to be from the same exception.
+        if _thread_local_info.f_unhandled_exc is exc:
+            return _thread_local_info.f_unhandled_frame
+        else:
+            del _thread_local_info.f_unhandled_frame
+            del _thread_local_info.f_unhandled_exc
+            raise AttributeError('Not the same exception')
     except:
         f_unhandled = _getframe(depth)
 
@@ -232,8 +229,9 @@ cdef _get_unhandled_exception_frame(int depth):
             f_unhandled = f_back
 
         if f_unhandled is not None:
-            _thread_local_info.f_unhandled = f_unhandled
-            return _thread_local_info.f_unhandled
+            _thread_local_info.f_unhandled_frame = f_unhandled
+            _thread_local_info.f_unhandled_exc = exc
+            return _thread_local_info.f_unhandled_frame
 
         return f_unhandled
 
@@ -466,9 +464,10 @@ cdef _get_code_line_info(code_obj, _cache={}):
         last_line = None
 
         for offset, line in dis.findlinestarts(code_obj):
-            line_to_offset[line] = offset
+            if offset is not None and line is not None:
+                line_to_offset[line] = offset
 
-        if line_to_offset:
+        if len(line_to_offset):
             first_line = min(line_to_offset)
             last_line = max(line_to_offset)
         ret = _CodeLineInfo(line_to_offset, first_line, last_line)
@@ -842,7 +841,7 @@ cdef _unwind_event(code, instruction, exc):
     if py_db is None or py_db.pydb_disposed:
         return
 
-    if not thread_info.trace or thread_info.thread._is_stopped:
+    if not thread_info.trace or not is_thread_alive(thread_info.thread):
         # For thread-related stuff we can't disable the code tracing because other
         # threads may still want it...
         return
@@ -881,7 +880,7 @@ cdef _unwind_event(code, instruction, exc):
 
     break_on_uncaught_exceptions = py_db.break_on_uncaught_exceptions
     if break_on_uncaught_exceptions:
-        if frame is _get_unhandled_exception_frame(1):
+        if frame is _get_unhandled_exception_frame(exc, 1):
             stop_on_unhandled_exception(py_db, thread_info.thread, thread_info.additional_info, arg)
             return
 
@@ -916,7 +915,7 @@ cdef _raise_event(code, instruction, exc):
     if py_db is None or py_db.pydb_disposed:
         return
 
-    if not thread_info.trace or thread_info.thread._is_stopped:
+    if not thread_info.trace or not is_thread_alive(thread_info.thread):
         # For thread-related stuff we can't disable the code tracing because other
         # threads may still want it...
         return
@@ -1031,7 +1030,7 @@ cdef _return_event(code, instruction, retval):
     if py_db is None or py_db.pydb_disposed:
         return monitor.DISABLE
 
-    if not thread_info.trace or thread_info.thread._is_stopped:
+    if not thread_info.trace or not is_thread_alive(thread_info.thread):
         # For thread-related stuff we can't disable the code tracing because other
         # threads may still want it...
         return
@@ -1346,7 +1345,7 @@ cdef _jump_event(code, int from_offset, int to_offset):
     if hasattr(_thread_local_info, "f_disable_next_line_if_match"):
         del _thread_local_info.f_disable_next_line_if_match
 
-    if not thread_info.trace or thread_info.thread._is_stopped:
+    if not thread_info.trace or not is_thread_alive(thread_info.thread):
         # For thread-related stuff we can't disable the code tracing because other
         # threads may still want it...
         return
@@ -1362,8 +1361,9 @@ cdef _jump_event(code, int from_offset, int to_offset):
     if to_offset > from_offset:
         return monitor.DISABLE
 
-    from_line = func_code_info.get_line_of_offset(from_offset)
-    to_line = func_code_info.get_line_of_offset(to_offset)
+    from_line = func_code_info.get_line_of_offset(from_offset or 0)
+    to_line = func_code_info.get_line_of_offset(to_offset or 0)
+    # print('jump event', code.co_name, 'from line', from_line, 'to line', to_line)
 
     if from_line != to_line:
         # I.e.: use case: "yield from [j for j in a if j % 2 == 0]"
@@ -1402,6 +1402,11 @@ cdef _line_event(code, int line):
     if py_db is None or py_db.pydb_disposed:
         return monitor.DISABLE
 
+    if not thread_info.trace or not is_thread_alive(thread_info.thread):
+        # For thread-related stuff we can't disable the code tracing because other
+        # threads may still want it...
+        return
+    
     # If we get another line event, remove the extra check for the line event
     if hasattr(_thread_local_info, "f_disable_next_line_if_match"):
         (co_filename, line_to_skip) = _thread_local_info.f_disable_next_line_if_match
@@ -1410,11 +1415,6 @@ cdef _line_event(code, int line):
             # The last jump already jumped to this line and we haven't had any
             # line events or jumps since then. We don't want to consider this line twice
             return
-
-    if not thread_info.trace or thread_info.thread._is_stopped:
-        # For thread-related stuff we can't disable the code tracing because other
-        # threads may still want it...
-        return
 
     func_code_info: FuncCodeInfo = _get_func_code_info(code, 1)
     if func_code_info.always_skip_code or func_code_info.always_filtered_out:
@@ -1650,7 +1650,7 @@ cdef _start_method_event(code, instruction_offset):
     if py_db is None or py_db.pydb_disposed:
         return monitor.DISABLE
 
-    if not thread_info.trace or thread_info.thread._is_stopped:
+    if not thread_info.trace or not is_thread_alive(thread_info.thread):
         # For thread-related stuff we can't disable the code tracing because other
         # threads may still want it...
         return

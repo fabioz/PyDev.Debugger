@@ -24,6 +24,8 @@ jobs:
           "ubuntu-py311-cython",
           "ubuntu-py312-cython-checkbin",
           "windows-py312-cython-checkbin",
+          "ubuntu-py313-cython",
+          "windows-py313-cython",
         ]
         
         include:
@@ -62,6 +64,14 @@ jobs:
             PYDEVD_USE_CYTHON: YES
           - name: "windows-py312-cython-checkbin"
             python: "3.12"
+            os: windows-latest
+            PYDEVD_USE_CYTHON: YES
+          - name: "ubuntu-py313"
+            python: "3.13.0"
+            os: ubuntu-20.04
+            PYDEVD_USE_CYTHON: YES
+          - name: "windows-py313-cython"
+            python: "3.13"
             os: windows-latest
             PYDEVD_USE_CYTHON: YES
 
