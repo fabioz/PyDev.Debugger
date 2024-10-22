@@ -1175,6 +1175,7 @@ threading_modules_to_patch = _get_threading_modules_to_patch()
 
 def patch_thread_module(thread_module):
     attr = "_start_joinable_thread" if IS_PY313_OR_GREATER else "_start_new_thread"
+    is_start_joinable = thread_module is threading and IS_PY313_OR_GREATER
     if getattr(thread_module, "_original_start_new_thread", None) is None:
         if thread_module is threading:
             if not hasattr(thread_module, attr):
@@ -1186,12 +1187,22 @@ def patch_thread_module(thread_module):
         _original_start_new_thread = thread_module._original_start_new_thread
 
     class ClassWithPydevStartNewThread:
-        def pydev_start_new_thread(self, function, *args, **kwargs):
+        def pydev_start_new_thread(self, function, args=(), kwargs={}):
             """
             We need to replace the original thread_module.start_new_thread with this function so that threads started
             through it and not through the threading module are properly traced.
             """
-            return _original_start_new_thread(_UseNewThreadStartup(function, (), {}), *args, **kwargs)
+            return _original_start_new_thread(_UseNewThreadStartup(function, args, kwargs), ())
+
+    class ClassWithPydevStartJoinableThread:
+        def pydev_start_joinable_thread(self, function, *args, **kwargs):
+            """
+            We need to replace the original thread_module._start_joinable_thread with this function so that threads started
+            through it and not through the threading module are properly traced.
+            """
+            handle = kwargs.pop("handle", None)
+            daemon = kwargs.pop("daemon", True)
+            return _original_start_new_thread(_UseNewThreadStartup(function, args, kwargs), handle=handle, daemon=daemon)
 
     # This is a hack for the situation where the thread_module.start_new_thread is declared inside a class, such as the one below
     # class F(object):
@@ -1201,7 +1212,11 @@ def patch_thread_module(thread_module):
     #        self.start_new_thread(self.function, args, kwargs)
     # So, if it's an already bound method, calling self.start_new_thread won't really receive a different 'self' -- it
     # does work in the default case because in builtins self isn't passed either.
-    pydev_start_new_thread = ClassWithPydevStartNewThread().pydev_start_new_thread
+    pydev_start_new_thread = (
+        ClassWithPydevStartJoinableThread().pydev_start_joinable_thread
+        if is_start_joinable
+        else ClassWithPydevStartNewThread().pydev_start_new_thread
+    )
 
     try:
         # We need to replace the original thread_module.start_new_thread with this function so that threads started through
