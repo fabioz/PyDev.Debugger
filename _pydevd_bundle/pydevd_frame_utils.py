@@ -1,4 +1,4 @@
-from _pydevd_bundle.pydevd_constants import EXCEPTION_TYPE_USER_UNHANDLED, EXCEPTION_TYPE_UNHANDLED, IS_PY311_OR_GREATER
+from _pydevd_bundle.pydevd_constants import EXCEPTION_TYPE_USER_UNHANDLED, EXCEPTION_TYPE_UNHANDLED, IS_PY311_OR_GREATER, IS_PY313_OR_GREATER
 from _pydev_bundle import pydev_log
 import itertools
 from typing import Any, Dict
@@ -34,12 +34,9 @@ def add_exception_to_frame(frame, exception_info):
 
 
 def remove_exception_from_frame(frame):
-    # In 3.13 frame.f_locals became a proxy for a dict, so we need to copy it to a real dict
-    # so we can call the defined update method. Just deleting the entry throws in 3.13.
-    items = {key: value for key, value in frame.f_locals.items()}
-    if "__exception__" in items:
-        del items["__exception__"]
-    frame.f_locals.update(items)
+    # In 3.13 frame.f_locals became a proxy for a dict, It does not
+    # have methods to allow items to be removed, only added. So just set the item to None.
+    frame.f_locals["__exception__"] = None
 
 
 FILES_WITH_IMPORT_HOOKS = ["pydev_monkey_qt.py", "pydev_import_hook.py"]

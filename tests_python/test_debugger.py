@@ -1521,9 +1521,9 @@ def test_case_handled_and_unhandled_exception_generator(case_setup, target_file,
         EXPECTED_RETURNCODE=1,
     ) as writer:
         if unhandled:
-            writer.write_add_exception_breakpoint_with_policy("Exception", "0", "1", "0")
+            writer.write_add_exception_breakpoint_with_policy("Exception", "0", "1", "1")
         else:
-            writer.write_add_exception_breakpoint_with_policy("Exception", "1", "0", "0")
+            writer.write_add_exception_breakpoint_with_policy("Exception", "1", "0", "1")
 
         writer.write_make_initial_run()
 

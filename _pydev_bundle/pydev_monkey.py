@@ -4,6 +4,7 @@ import re
 import sys
 from _pydev_bundle._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_constants import (
+    IS_PY313_OR_GREATER,
     get_global_debugger,
     IS_WINDOWS,
     IS_JYTHON,
@@ -1173,23 +1174,24 @@ threading_modules_to_patch = _get_threading_modules_to_patch()
 
 
 def patch_thread_module(thread_module):
+    attr = "_start_joinable_thread" if IS_PY313_OR_GREATER else "_start_new_thread"
     if getattr(thread_module, "_original_start_new_thread", None) is None:
         if thread_module is threading:
-            if not hasattr(thread_module, "_start_new_thread"):
+            if not hasattr(thread_module, attr):
                 return  # Jython doesn't have it.
-            _original_start_new_thread = thread_module._original_start_new_thread = thread_module._start_new_thread
+            _original_start_new_thread = thread_module._original_start_new_thread = getattr(thread_module, attr)
         else:
             _original_start_new_thread = thread_module._original_start_new_thread = thread_module.start_new_thread
     else:
         _original_start_new_thread = thread_module._original_start_new_thread
 
     class ClassWithPydevStartNewThread:
-        def pydev_start_new_thread(self, function, args=(), kwargs={}):
+        def pydev_start_new_thread(self, function, *args, **kwargs):
             """
             We need to replace the original thread_module.start_new_thread with this function so that threads started
             through it and not through the threading module are properly traced.
             """
-            return _original_start_new_thread(_UseNewThreadStartup(function, args, kwargs), ())
+            return _original_start_new_thread(_UseNewThreadStartup(function, (), {}), *args, **kwargs)
 
     # This is a hack for the situation where the thread_module.start_new_thread is declared inside a class, such as the one below
     # class F(object):
@@ -1205,7 +1207,7 @@ def patch_thread_module(thread_module):
         # We need to replace the original thread_module.start_new_thread with this function so that threads started through
         # it and not through the threading module are properly traced.
         if thread_module is threading:
-            thread_module._start_new_thread = pydev_start_new_thread
+            setattr(thread_module, attr, pydev_start_new_thread)
         else:
             thread_module.start_new_thread = pydev_start_new_thread
             thread_module.start_new = pydev_start_new_thread
