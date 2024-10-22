@@ -1336,6 +1336,10 @@ def _jump_event(code, from_offset, to_offset):
     if py_db is None or py_db.pydb_disposed:
         return monitor.DISABLE
 
+    # If we get another jump event, remove the extra check for the line event
+    if hasattr(_thread_local_info, "f_disable_next_line_if_match"):
+        del _thread_local_info.f_disable_next_line_if_match
+
     if not thread_info.trace or not is_thread_alive(thread_info.thread):
         # For thread-related stuff we can't disable the code tracing because other
         # threads may still want it...
@@ -1355,13 +1359,15 @@ def _jump_event(code, from_offset, to_offset):
     from_line = func_code_info.get_line_of_offset(from_offset or 0)
     to_line = func_code_info.get_line_of_offset(to_offset or 0)
 
-    if from_line <= to_line:
+    if from_line != to_line:
         # I.e.: use case: "yield from [j for j in a if j % 2 == 0]"
         return monitor.DISABLE
 
     # We know the frame depth.
     frame = _getframe(1)
 
+    # Disable the next line event as we're jumping to a line. The line event will be redundant.
+    _thread_local_info.f_disable_next_line_if_match = (func_code_info.co_filename, frame.f_lineno)
     pydev_log.debug('_jump_event', code.co_name, 'from line', from_line, 'to line', frame.f_lineno)
 
     return _internal_line_event(func_code_info, frame, frame.f_lineno)
@@ -1390,6 +1396,16 @@ def _line_event(code, line):
     py_db: object = GlobalDebuggerHolder.global_dbg
     if py_db is None or py_db.pydb_disposed:
         return monitor.DISABLE
+
+    # If we get another line event, remove the extra check for the line event
+    if hasattr(_thread_local_info, "f_disable_next_line_if_match"):
+        (co_filename, line_to_skip) = _thread_local_info.f_disable_next_line_if_match
+        del _thread_local_info.f_disable_next_line_if_match
+        if line_to_skip is line and co_filename == code.co_filename:
+            # The last jump already jumped to this line and we haven't had any
+            # line events or jumps since then. We don't want to consider this line twice
+            pydev_log.debug('_line_event skipped', line)
+            return
 
     if not thread_info.trace or not is_thread_alive(thread_info.thread):
         # For thread-related stuff we can't disable the code tracing because other
@@ -1827,7 +1843,10 @@ def update_monitor_events(suspend_requested: Optional[bool] = None) -> None:
         monitor.register_callback(DEBUGGER_ID, monitor.events.PY_START, _start_method_event)
         # monitor.register_callback(DEBUGGER_ID, monitor.events.PY_RESUME, _resume_method_event)
         monitor.register_callback(DEBUGGER_ID, monitor.events.LINE, _line_event)
-        monitor.register_callback(DEBUGGER_ID, monitor.events.JUMP, _jump_event)
+        if not IS_PY313_OR_GREATER:
+            # In Python 3.13+ jump_events aren't necessary as we have a line_event for every
+            # jump location. 
+            monitor.register_callback(DEBUGGER_ID, monitor.events.JUMP, _jump_event)
         monitor.register_callback(DEBUGGER_ID, monitor.events.PY_RETURN, _return_event)
 
     else:
