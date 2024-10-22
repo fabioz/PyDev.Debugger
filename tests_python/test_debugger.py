@@ -1726,7 +1726,7 @@ def test_unhandled_exceptions_in_top_level4(case_setup_unhandled_exceptions):
         EXPECTED_RETURNCODE=1,
     ) as writer:
         # Handled and unhandled
-        writer.write_add_exception_breakpoint_with_policy("Exception", "1", "1", "0")
+        writer.write_add_exception_breakpoint_with_policy("Exception", "1", "1", "1")
         writer.write_make_initial_run()
 
         # We have an exception thrown and handled and another which is thrown and is then unhandled.
