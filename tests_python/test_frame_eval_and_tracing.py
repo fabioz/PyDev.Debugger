@@ -295,7 +295,7 @@ def test_frame_eval_change_breakpoints(case_setup_force_frame_eval):
 
         writer.finished_ok = True
 
-pytest.mark.skipif(IS_PY313_OR_GREATER, reason="Flakey on python 3.13 or newer")
+@pytest.mark.skipif(IS_PY313_OR_GREATER, reason="Flakey on python 3.13 or newer")
 def test_generator_code_cache(case_setup_force_frame_eval):
     with case_setup_force_frame_eval.test_file("_debugger_case_yield_from.py") as writer:
         break1_line = writer.get_line_index_with_content("break1")
