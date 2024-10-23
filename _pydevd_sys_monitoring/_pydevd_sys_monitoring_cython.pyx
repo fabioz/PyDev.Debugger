@@ -1364,7 +1364,6 @@ cdef _jump_event(code, int from_offset, int to_offset):
 
     from_line = func_code_info.get_line_of_offset(from_offset or 0)
     to_line = func_code_info.get_line_of_offset(to_offset or 0)
-    # print('jump event', code.co_name, 'from line', from_line, 'to line', to_line)
 
     if from_line != to_line:
         # I.e.: use case: "yield from [j for j in a if j % 2 == 0]"
@@ -1375,6 +1374,7 @@ cdef _jump_event(code, int from_offset, int to_offset):
 
     # Disable the next line event as we're jumping to a line. The line event will be redundant.
     _thread_local_info.f_disable_next_line_if_match = (func_code_info.co_filename, frame.f_lineno)
+    pydev_log.debug('_jump_event', code.co_name, 'from line', from_line, 'to line', frame.f_lineno)
 
     return _internal_line_event(func_code_info, frame, frame.f_lineno)
 
@@ -1403,11 +1403,6 @@ cdef _line_event(code, int line):
     if py_db is None or py_db.pydb_disposed:
         return monitor.DISABLE
 
-    if not thread_info.trace or not is_thread_alive(thread_info.thread):
-        # For thread-related stuff we can't disable the code tracing because other
-        # threads may still want it...
-        return
-    
     # If we get another line event, remove the extra check for the line event
     if hasattr(_thread_local_info, "f_disable_next_line_if_match"):
         (co_filename, line_to_skip) = _thread_local_info.f_disable_next_line_if_match
@@ -1415,13 +1410,19 @@ cdef _line_event(code, int line):
         if line_to_skip is line and co_filename == code.co_filename:
             # The last jump already jumped to this line and we haven't had any
             # line events or jumps since then. We don't want to consider this line twice
+            pydev_log.debug('_line_event skipped', line)
             return
 
+    if not thread_info.trace or not is_thread_alive(thread_info.thread):
+        # For thread-related stuff we can't disable the code tracing because other
+        # threads may still want it...
+        return
+    
     func_code_info: FuncCodeInfo = _get_func_code_info(code, 1)
     if func_code_info.always_skip_code or func_code_info.always_filtered_out:
         return monitor.DISABLE
 
-    # print('line event', code.co_name, line)
+    pydev_log.debug('_line_event', code.co_name, line)
 
     # We know the frame depth.
     frame = _getframe(1)
@@ -1848,7 +1849,10 @@ def update_monitor_events(suspend_requested: Optional[bool] = None) -> None:
         monitor.register_callback(DEBUGGER_ID, monitor.events.PY_START, _start_method_event)
         # monitor.register_callback(DEBUGGER_ID, monitor.events.PY_RESUME, _resume_method_event)
         monitor.register_callback(DEBUGGER_ID, monitor.events.LINE, _line_event)
-        monitor.register_callback(DEBUGGER_ID, monitor.events.JUMP, _jump_event)
+        if not IS_PY313_OR_GREATER:
+            # In Python 3.13+ jump_events aren't necessary as we have a line_event for every
+            # jump location. 
+            monitor.register_callback(DEBUGGER_ID, monitor.events.JUMP, _jump_event)
         monitor.register_callback(DEBUGGER_ID, monitor.events.PY_RETURN, _return_event)
 
     else:
