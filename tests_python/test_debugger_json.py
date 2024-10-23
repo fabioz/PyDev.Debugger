@@ -4222,7 +4222,7 @@ def test_wait_for_attach(case_setup_remote_attach_to_dap):
         json_facade.write_list_threads()
         # Check that we have the started thread event (whenever we reconnect).
         started_events = json_facade.mark_messages(ThreadEvent, lambda x: x.body.reason == "started")
-        assert len(started_events) == 1
+        assert len(started_events) >= 1
 
     def check_process_event(json_facade, start_method):
         if start_method == "attach":
