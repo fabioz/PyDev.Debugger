@@ -1374,7 +1374,7 @@ cdef _jump_event(code, int from_offset, int to_offset):
 
     # Disable the next line event as we're jumping to a line. The line event will be redundant.
     _thread_local_info.f_disable_next_line_if_match = (func_code_info.co_filename, frame.f_lineno)
-    pydev_log.debug('_jump_event', code.co_name, 'from line', from_line, 'to line', frame.f_lineno)
+    # pydev_log.debug('_jump_event', code.co_name, 'from line', from_line, 'to line', frame.f_lineno)
 
     return _internal_line_event(func_code_info, frame, frame.f_lineno)
 
@@ -1410,7 +1410,7 @@ cdef _line_event(code, int line):
         if line_to_skip is line and co_filename == code.co_filename:
             # The last jump already jumped to this line and we haven't had any
             # line events or jumps since then. We don't want to consider this line twice
-            pydev_log.debug('_line_event skipped', line)
+            # pydev_log.debug('_line_event skipped', line)
             return
 
     if not thread_info.trace or not is_thread_alive(thread_info.thread):
@@ -1422,7 +1422,7 @@ cdef _line_event(code, int line):
     if func_code_info.always_skip_code or func_code_info.always_filtered_out:
         return monitor.DISABLE
 
-    pydev_log.debug('_line_event', code.co_name, line)
+    # pydev_log.debug('_line_event', code.co_name, line)
 
     # We know the frame depth.
     frame = _getframe(1)
