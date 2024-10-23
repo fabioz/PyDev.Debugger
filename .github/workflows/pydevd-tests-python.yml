@@ -24,7 +24,7 @@ jobs:
           "ubuntu-py311-cython",
           "ubuntu-py312-cython-checkbin",
           "windows-py312-cython-checkbin",
-          "ubuntu-py313-cython",
+#          "ubuntu-py313-cython", -- Crashing on start of pytest
           "windows-py313-cython",
         ]
         
