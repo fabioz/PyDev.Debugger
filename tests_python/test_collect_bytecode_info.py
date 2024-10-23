@@ -5,11 +5,10 @@ import sys
 import traceback
 
 from _pydevd_bundle.pydevd_collect_bytecode_info import collect_try_except_info, \
-    collect_return_info
+    collect_return_info, code_to_bytecode_representation
 from tests_python.debugger_unittest import IS_CPYTHON, IS_PYPY
 from _pydevd_bundle.pydevd_constants import IS_PY38_OR_GREATER, IS_JYTHON
 from tests_python.debug_constants import IS_PY311_OR_GREATER, TODO_PYPY
-from .bytecode_info_temp import code_to_bytecode_representation
 
 def _method_call_with_error():
     try:

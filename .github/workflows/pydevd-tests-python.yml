@@ -66,8 +66,8 @@ jobs:
             python: "3.12"
             os: windows-latest
             PYDEVD_USE_CYTHON: YES
-          - name: "ubuntu-py313"
-            python: "3.13.0"
+          - name: "ubuntu-py313-cython"
+            python: "3.13"
             os: ubuntu-20.04
             PYDEVD_USE_CYTHON: YES
           - name: "windows-py313-cython"
