@@ -1,6 +1,3 @@
-from _pydevd_bundle.pydevd_constants import IS_PY313_OR_GREATER
-
-
 def get_main_thread_instance(threading):
     if hasattr(threading, "main_thread"):
         return threading.main_thread()
@@ -85,7 +82,7 @@ def fix_main_thread_id(on_warn=lambda msg: None, on_exception=lambda msg: None, 
     import threading
 
     # This no longer works in Py 3.13
-    if IS_PY313_OR_GREATER:
+    if sys.version_info >= (3, 13):
         return
     
     try:
