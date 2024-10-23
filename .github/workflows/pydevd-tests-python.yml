@@ -129,7 +129,7 @@ jobs:
       if: contains(matrix.name, 'checkbin') && contains(matrix.name, 'ubuntu')
       run: |
         python -m pip install setuptools --no-warn-script-location
-        python -m pip install cibuildwheel==2.21.2
+        python -m pip install cibuildwheel==2.21.3
         # Remove these .so files (will be rebuilt)
         rm pydevd_attach_to_process/*.so
         python -m cibuildwheel --output-dir wheelhouse
