@@ -408,8 +408,9 @@ class FuncCodeInfo:
 
     def get_line_of_offset(self, offset):
         for start, end, line in self.code_obj.co_lines():
-            if offset >= start and offset <= end:
-                return line
+            if start is not None and end is not None and line is not None:
+                if offset >= start and offset <= end:
+                    return line
         return -1
 
 
