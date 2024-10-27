@@ -34,7 +34,9 @@ def add_exception_to_frame(frame, exception_info):
 
 
 def remove_exception_from_frame(frame):
-    frame.f_locals.pop("__exception__", None)
+    # In 3.13 frame.f_locals became a proxy for a dict, It does not
+    # have methods to allow items to be removed, only added. So just set the item to None.
+    frame.f_locals["__exception__"] = None
 
 
 FILES_WITH_IMPORT_HOOKS = ["pydev_monkey_qt.py", "pydev_import_hook.py"]
@@ -139,6 +141,7 @@ _utf8_with_4_bytes = 0x10000
 def _utf8_byte_offset_to_character_offset(s: str, offset: int):
     byte_offset = 0
     char_offset = 0
+    offset = offset or 0
 
     for char_offset, character in enumerate(s):
         byte_offset += 1

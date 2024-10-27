@@ -109,7 +109,7 @@ def build():
         # set VS100COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 9.0\Common7\Tools
 
         if "GITHUB_ACTION" not in os.environ:
-            if sys.version_info[:2] in ((3, 6), (3, 7), (3, 8), (3, 9), (3, 10), (3, 11), (3, 12)):
+            if sys.version_info[:2] in ((3, 6), (3, 7), (3, 8), (3, 9), (3, 10), (3, 11), (3, 12), (3, 13)):
                 FORCE_PYDEVD_VC_VARS = os.environ.get("FORCE_PYDEVD_VC_VARS")
                 if FORCE_PYDEVD_VC_VARS:
                     env.update(get_environment_from_batch_command([FORCE_PYDEVD_VC_VARS], initial=os.environ.copy()))

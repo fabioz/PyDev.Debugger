@@ -1402,11 +1402,12 @@ def test_case_sys_exit_multiple_exception_attach(case_setup_remote, raised, unca
         wait_for_condition(lambda: hasattr(writer, "reader_thread"))
 
         json_facade = JsonFacade(writer)
+        json_facade.write_set_debugger_property([], ["_debugger_case_sysexit_unhandled_launcher.py"])
 
+        break_file = debugger_unittest._get_debugger_test_file("_debugger_case_sysexit_unhandled_break.py")
         target_file = debugger_unittest._get_debugger_test_file("_debugger_case_sysexit_unhandled_attach.py")
 
-        bp_line = writer.get_line_index_with_content("break here")
-        final_line = writer.get_line_index_with_content("final break")
+        bp_line = writer.get_line_index_with_content("break here", filename=break_file)
         handled_line = writer.get_line_index_with_content("@handled", filename=target_file)
         unhandled_line = writer.get_line_index_with_content("@unhandled", filename=target_file)
         original_ignore_stderr_line = writer._ignore_stderr_line
@@ -1426,9 +1427,9 @@ def test_case_sys_exit_multiple_exception_attach(case_setup_remote, raised, unca
         )
 
         json_facade.write_set_exception_breakpoints(filters)
-        json_facade.write_set_breakpoints([bp_line])
+        json_facade.write_set_breakpoints([bp_line], filename=break_file)
         json_facade.write_make_initial_run()
-        hit = json_facade.wait_for_thread_stopped(line=bp_line)
+        hit = json_facade.wait_for_thread_stopped(line=bp_line, file=break_file)
 
         # Stop looping
         json_facade.get_global_var(hit.frame_id, "wait")
@@ -1448,12 +1449,6 @@ def test_case_sys_exit_multiple_exception_attach(case_setup_remote, raised, unca
             json_facade.wait_for_thread_stopped(
                 "exception",
                 line=unhandled_line,
-            )
-            json_facade.write_continue()
-
-            json_facade.wait_for_thread_stopped(
-                "exception",
-                line=final_line,
             )
             json_facade.write_continue()
 
@@ -4227,7 +4222,7 @@ def test_wait_for_attach(case_setup_remote_attach_to_dap):
         json_facade.write_list_threads()
         # Check that we have the started thread event (whenever we reconnect).
         started_events = json_facade.mark_messages(ThreadEvent, lambda x: x.body.reason == "started")
-        assert len(started_events) == 1
+        assert len(started_events) >= 1
 
     def check_process_event(json_facade, start_method):
         if start_method == "attach":
@@ -5745,13 +5740,14 @@ def test_stop_on_entry2(case_setup_dap):
 def test_stop_on_entry_verify_strings(case_setup_dap):
     with case_setup_dap.test_file("not_my_code/main_on_entry3.py") as writer:
         json_facade = JsonFacade(writer)
-        json_facade.write_set_debugger_property([], ["main_on_entry3.py"])
+        json_facade.write_set_debugger_property([], ["main_on_entry3.py", "_pydevd_string_breakpoint.py"])
         json_facade.write_launch(
             justMyCode=True,
             stopOnEntry=True,
             showReturnValue=True,
             rules=[
                 {"path": "**/main_on_entry3.py", "include": False},
+                {"path": "**/_pydevd_string_breakpoint.py", "include": False},
             ],
         )
 

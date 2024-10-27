@@ -81,6 +81,10 @@ def fix_main_thread_id(on_warn=lambda msg: None, on_exception=lambda msg: None, 
     import sys
     import threading
 
+    # This no longer works in Py 3.13
+    if sys.version_info >= (3, 13):
+        return
+    
     try:
         with threading._active_limbo_lock:
             main_thread_instance = get_main_thread_instance(threading)
