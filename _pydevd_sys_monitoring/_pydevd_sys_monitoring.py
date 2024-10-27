@@ -13,7 +13,6 @@ from typing import Dict, Optional, Tuple, Any
 from os.path import basename, splitext
 
 from _pydev_bundle import pydev_log
-from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydevd_bundle import pydevd_dont_trace
 from _pydevd_bundle.pydevd_constants import (
     IS_PY313_OR_GREATER,
@@ -34,7 +33,6 @@ from _pydevd_bundle.pydevd_constants import EXCEPTION_TYPE_HANDLED
 from _pydevd_bundle.pydevd_trace_dispatch import is_unhandled_exception
 from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
 from _pydevd_bundle.pydevd_utils import get_clsname_for_code
-from _pydevd_bundle.pydevd_dont_trace_files import PYDEV_FILE
 
 
 # fmt: off
@@ -62,10 +60,8 @@ _thread_local_info = threading.local()
 _get_ident = threading.get_ident
 _thread_active = threading._active  # noqa
 
-STATE_SUSPEND: int = 2
 CMD_STEP_INTO: int = 107
 CMD_STEP_OVER: int = 108
-CMD_STEP_OVER_MY_CODE: int = 159
 CMD_STEP_INTO_MY_CODE: int = 144
 CMD_STEP_INTO_COROUTINE: int = 206
 CMD_SMART_STEP_INTO: int = 128
@@ -238,6 +234,7 @@ def _get_unhandled_exception_frame(exc, depth: int) -> Optional[FrameType]:
 #     cdef PyDBAdditionalThreadInfo additional_info
 #     thread: threading.Thread
 #     trace: bool
+#     _use_is_stopped: bool
 # ELSE
 class ThreadInfo:
     additional_info: PyDBAdditionalThreadInfo
@@ -258,6 +255,19 @@ class ThreadInfo:
         self.thread_ident = thread_ident
         self.additional_info = additional_info
         self.trace = trace
+        self._use_is_stopped = hasattr(thread, '_is_stopped')
+        
+    # fmt: off
+    # IFDEF CYTHON
+    # cdef bint is_thread_alive(self):
+    # ELSE
+    def is_thread_alive(self):
+    # ENDIF
+    # fmt: on
+        if self._use_is_stopped:
+            return not self.thread._is_stopped
+        else:
+            return not self.thread._handle.is_done()
 
 
 class _DeleteDummyThreadOnDel:
@@ -837,7 +847,7 @@ def _unwind_event(code, instruction, exc):
     if py_db is None or py_db.pydb_disposed:
         return
 
-    if not thread_info.trace or not is_thread_alive(thread_info.thread):
+    if not thread_info.trace or not thread_info.is_thread_alive():
         # For thread-related stuff we can't disable the code tracing because other
         # threads may still want it...
         return
@@ -911,7 +921,7 @@ def _raise_event(code, instruction, exc):
     if py_db is None or py_db.pydb_disposed:
         return
 
-    if not thread_info.trace or not is_thread_alive(thread_info.thread):
+    if not thread_info.trace or not thread_info.is_thread_alive():
         # For thread-related stuff we can't disable the code tracing because other
         # threads may still want it...
         return
@@ -1026,7 +1036,7 @@ def _return_event(code, instruction, retval):
     if py_db is None or py_db.pydb_disposed:
         return monitor.DISABLE
 
-    if not thread_info.trace or not is_thread_alive(thread_info.thread):
+    if not thread_info.trace or not thread_info.is_thread_alive():
         # For thread-related stuff we can't disable the code tracing because other
         # threads may still want it...
         return
@@ -1341,7 +1351,7 @@ def _jump_event(code, from_offset, to_offset):
     if hasattr(_thread_local_info, "f_disable_next_line_if_match"):
         del _thread_local_info.f_disable_next_line_if_match
 
-    if not thread_info.trace or not is_thread_alive(thread_info.thread):
+    if not thread_info.trace or not thread_info.is_thread_alive():
         # For thread-related stuff we can't disable the code tracing because other
         # threads may still want it...
         return
@@ -1408,7 +1418,7 @@ def _line_event(code, line):
             # pydev_log.debug('_line_event skipped', line)
             return
 
-    if not thread_info.trace or not is_thread_alive(thread_info.thread):
+    if not thread_info.trace or not thread_info.is_thread_alive():
         # For thread-related stuff we can't disable the code tracing because other
         # threads may still want it...
         return
@@ -1647,7 +1657,7 @@ def _start_method_event(code, instruction_offset):
     if py_db is None or py_db.pydb_disposed:
         return monitor.DISABLE
 
-    if not thread_info.trace or not is_thread_alive(thread_info.thread):
+    if not thread_info.trace or not thread_info.is_thread_alive():
         # For thread-related stuff we can't disable the code tracing because other
         # threads may still want it...
         return
