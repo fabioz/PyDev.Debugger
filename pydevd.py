@@ -3,6 +3,7 @@ Entry point module (keep at root):
 
 This module starts the debugger.
 """
+
 import sys  # @NoMove
 
 if sys.version_info[:2] < (3, 6):
@@ -11,14 +12,11 @@ if sys.version_info[:2] < (3, 6):
     )
 import os
 
-try:
-    # Just empty packages to check if they're in the PYTHONPATH.
-    import _pydev_bundle
-except ImportError:
-    # On the first import of a pydevd module, add pydevd itself to the PYTHONPATH
-    # if its dependencies cannot be imported.
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-    import _pydev_bundle
+# On the first import of a pydevd module, add pydevd itself to the PYTHONPATH
+this_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, this_dir)
+
+import _pydev_bundle
 
 # Import this first as it'll check for shadowed modules and will make sure that we import
 # things as needed for gevent.
@@ -1075,9 +1073,19 @@ class PyDB(object):
             return _cache_file_type[cache_key]
         except:
             if abs_real_path_and_basename[0] == "<string>":
+                # TODO: This isn't ideal. We should make it so that "<string>" is
+                # never marked as pydevd (i.e.: investigate all the use cases
+                # where pydevd does this and actually mark it as "<pydevd-string>")
+
                 # Consider it an untraceable file unless there's no back frame (ignoring
                 # internal files and runpy.py).
-                if frame.f_back is not None and self.get_file_type(frame.f_back) == self.PYDEV_FILE and is_pydevd_path(frame.f_back.f_code.co_filename):
+                if (
+                    frame.f_back is not None
+                    and self.get_file_type(frame.f_back) == self.PYDEV_FILE
+                    # TODO: This `is_pydevd_path` is actually a workaround for debugpy
+                    # (don't fully understand why, so, this needs more investigation).
+                    and is_pydevd_path(frame.f_back.f_code.co_filename)
+                ):
                     # Special case, this is a string coming from pydevd itself. However we have to skip this logic for other
                     # files that are also marked as PYDEV_FILE (like external files marked this way)
                     return self.PYDEV_FILE
@@ -1099,7 +1107,7 @@ class PyDB(object):
                         # to show it in the stack.
                         _cache_file_type[cache_key] = LIB_FILE
                         return LIB_FILE
-                    
+
                     f = f.f_back
                 else:
                     # This is a top-level file (used in python -c), so, trace it as usual... we
@@ -3700,6 +3708,14 @@ def main():
         if setup["cmd-line"]:
             debugger.wait_for_commands(globals)
 
+
+try:
+    # Remove the entry we added: it should no longer be needed as
+    # what we need should've been imported already
+    if sys.path[:1] == [this_dir]:
+        sys.path.remove(this_dir)
+except Exception:
+    pass
 
 if __name__ == "__main__":
     main()
