@@ -1291,3 +1291,7 @@ def get_original_start_new_thread(threading_module):
         return threading_module._original_start_new_thread
     except:
         return threading_module.start_new_thread
+
+
+a = lambda: None
+print(a.__code__)
