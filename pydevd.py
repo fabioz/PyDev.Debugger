@@ -123,7 +123,7 @@ from pydevd_file_utils import (
     get_abs_path_real_path_and_base_from_file,
     NORM_PATHS_AND_BASE_CONTAINER,
 )
-from pydevd_file_utils import get_fullname, get_package_dir, is_pydevd_path
+from pydevd_file_utils import get_fullname, get_package_dir
 from os.path import abspath as os_path_abspath
 import pydevd_tracing
 from _pydevd_bundle.pydevd_comm import InternalThreadCommand, InternalThreadCommandForAnyThread, create_server_socket, FSNotifyThread
@@ -1079,13 +1079,7 @@ class PyDB(object):
 
                 # Consider it an untraceable file unless there's no back frame (ignoring
                 # internal files and runpy.py).
-                if (
-                    frame.f_back is not None
-                    and self.get_file_type(frame.f_back) == self.PYDEV_FILE
-                    # TODO: This `is_pydevd_path` is actually a workaround for debugpy
-                    # (don't fully understand why, so, this needs more investigation).
-                    and is_pydevd_path(frame.f_back.f_code.co_filename)
-                ):
+                if frame.f_back is not None and self.get_file_type(frame.f_back) == self.PYDEV_FILE:
                     # Special case, this is a string coming from pydevd itself. However we have to skip this logic for other
                     # files that are also marked as PYDEV_FILE (like external files marked this way)
                     return self.PYDEV_FILE
