@@ -161,10 +161,10 @@ def has_binding(api):
 
         # we can also safely check PySide version
         if api == QT_API_PYSIDE:
-            return check_version(mod.__version__, '1.0.3') and submod_check
+            return check_version(mod.__version__, "1.0.3") and submod_check
         else:
             return submod_check
-                
+
     except ImportError:
         return False
 
