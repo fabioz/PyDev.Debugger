@@ -27,9 +27,9 @@ def pydevd_find_thread_by_id(thread_id):
 
 def mark_thread_suspended(thread, stop_reason: int, original_step_cmd: int = -1):
     info = set_additional_thread_info(thread)
-    info.suspend_type = PYTHON_SUSPEND
     if info.pydev_state != STATE_RUN:
         return info
+    info.suspend_type = PYTHON_SUSPEND
     if original_step_cmd != -1:
         stop_reason = original_step_cmd
     thread.stop_reason = stop_reason
