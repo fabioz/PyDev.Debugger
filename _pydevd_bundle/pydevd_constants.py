@@ -370,6 +370,10 @@ PYDEVD_UNBLOCK_THREADS_TIMEOUT = as_float_in_env("PYDEVD_UNBLOCK_THREADS_TIMEOUT
 # on how the thread interruption works (there are some caveats related to it).
 PYDEVD_INTERRUPT_THREAD_TIMEOUT = as_float_in_env("PYDEVD_INTERRUPT_THREAD_TIMEOUT", -1)
 
+# Timeout used to prevent class properties from resolving too slowly
+# A value <= 0 means this is disabled.
+PYDEVD_PROPERTY_RESOLVE_TIMEOUT = as_float_in_env("PYDEVD_PROPERTY_RESOLVE_TIMEOUT", 1.0)
+
 # If PYDEVD_APPLY_PATCHING_TO_HIDE_PYDEVD_THREADS is set to False, the patching to hide pydevd threads won't be applied.
 PYDEVD_APPLY_PATCHING_TO_HIDE_PYDEVD_THREADS = (
     os.getenv("PYDEVD_APPLY_PATCHING_TO_HIDE_PYDEVD_THREADS", "true").lower() in ENV_TRUE_LOWER_VALUES
