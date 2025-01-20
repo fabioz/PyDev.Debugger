@@ -349,6 +349,10 @@ class PyDevJsonCommandProcessor(object):
         stepping_resumes_all_threads = args.get("steppingResumesAllThreads", True)
         self.api.set_stepping_resumes_all_threads(py_db, stepping_resumes_all_threads)
 
+        stop_all_threads_on_suspend = args.get("stopAllThreadsOnSuspend")
+        if stop_all_threads_on_suspend is not None:
+            py_db.multi_threads_single_notification = stop_all_threads_on_suspend
+
         terminate_child_processes = args.get("terminateChildProcesses", True)
         self.api.set_terminate_child_processes(py_db, terminate_child_processes)
 
