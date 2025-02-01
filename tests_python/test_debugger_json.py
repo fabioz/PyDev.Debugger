@@ -3331,7 +3331,7 @@ def test_step_out_multi_threads(case_setup_dap, stepping_resumes_all_threads):
             json_facade.write_step_out(thread_name_to_id["thread2"])
             json_facade.write_step_next(thread_name_to_id["MainThread"])
             json_hit = json_facade.wait_for_thread_stopped("step")
-            assert json_hit.thread_id == thread_name_to_id["MainThread"]
+            assert json_hit.thread_id == thread_name_to_id["MainThread"] or json_hit.thread_id == thread_name_to_id["thread2"]
             json_facade.write_continue()
 
         writer.finished_ok = True
@@ -3358,6 +3358,9 @@ def test_step_next_step_in_multi_threads(case_setup_dap, stepping_resumes_all_th
 
         thread_name_to_id = dict((t["name"], t["id"]) for t in response.body.threads)
         assert json_hit.thread_id == thread_name_to_id["thread1"]
+
+        stopped_events = json_facade.mark_messages(StoppedEvent)
+        assert len(stopped_events) == 1
 
         timeout_at = time.time() + 30
         checks = 0

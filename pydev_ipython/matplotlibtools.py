@@ -12,6 +12,21 @@ backends = {
     "osx": "MacOSX",
 }
 
+lowercase_convert = {
+    "tkagg": "TkAgg",
+    "gtkagg": "GTKAgg",
+    "wxagg": "WXAgg",
+    "qtagg": "QtAgg",
+    "qt4agg": "Qt4Agg",
+    "qt5agg": "Qt5Agg",
+    "qt6agg": "Qt6Agg",
+    "macosx": "MacOSX",
+    "gtk": "GTK",
+    "gtkcairo": "GTKCairo",
+    "wx": "WX",
+    "cocoaagg": "CocoaAgg",
+}
+
 # We also need a reverse backends2guis mapping that will properly choose which
 # GUI support to activate based on the desired matplotlib backend.  For the
 # most part it's just a reverse of the above dict, but we also need to add a
@@ -47,16 +62,41 @@ def find_gui_and_backend():
     matplotlib = sys.modules["matplotlib"]
     # WARNING: this assumes matplotlib 1.1 or newer!!
     backend = matplotlib.rcParams["backend"]
+
+    # Translate to the real case as in 3.9 the case was forced to lowercase
+    # but our internal mapping is in the original case.
+    realcase_backend = lowercase_convert.get(backend, backend)
+
     # In this case, we need to find what the appropriate gui selection call
     # should be for IPython, so we can activate inputhook accordingly
-    gui = backend2gui.get(backend, None)
+    gui = backend2gui.get(realcase_backend, None)
     return gui, backend
+
+
+def _get_major_version(module):
+    return int(module.__version__.split('.')[0])
+
+
+def _get_minor_version(module):
+    return int(module.__version__.split('.')[1])
 
 
 def is_interactive_backend(backend):
     """Check if backend is interactive"""
     matplotlib = sys.modules["matplotlib"]
-    from matplotlib.rcsetup import interactive_bk, non_interactive_bk  # @UnresolvedImport
+    new_api_version = (3, 9)
+    installed_version = (
+        _get_major_version(matplotlib),
+        _get_minor_version(matplotlib)
+    )
+
+    if installed_version >= new_api_version:
+        interactive_bk = matplotlib.backends.backend_registry.list_builtin(
+            matplotlib.backends.BackendFilter.INTERACTIVE)
+        non_interactive_bk = matplotlib.backends.backend_registry.list_builtin(
+            matplotlib.backends.BackendFilter.NON_INTERACTIVE)
+    else:
+        from matplotlib.rcsetup import interactive_bk, non_interactive_bk  # @UnresolvedImport
 
     if backend in interactive_bk:
         return True

@@ -25,7 +25,7 @@ def pydevd_find_thread_by_id(thread_id):
     return None
 
 
-def mark_thread_suspended(thread, stop_reason: int, original_step_cmd: int = -1):
+def mark_thread_suspended(thread, stop_reason: int, original_step_cmd: int=-1, main_suspend: bool=True):
     info = set_additional_thread_info(thread)
     info.suspend_type = PYTHON_SUSPEND
     if original_step_cmd != -1:
@@ -34,7 +34,10 @@ def mark_thread_suspended(thread, stop_reason: int, original_step_cmd: int = -1)
 
     # Note: don't set the 'pydev_original_step_cmd' here if unset.
 
-    if info.pydev_step_cmd == -1:
+    if not main_suspend:
+        info.pydev_step_cmd = CMD_THREAD_SUSPEND
+        info.pydev_step_stop = None
+    elif info.pydev_step_cmd == -1:
         # If the step command is not specified, set it to step into
         # to make sure it'll break as soon as possible.
         info.pydev_step_cmd = CMD_STEP_INTO
@@ -91,7 +94,7 @@ def suspend_all_threads(py_db, except_thread):
         else:
             if t is except_thread:
                 continue
-            info = mark_thread_suspended(t, CMD_THREAD_SUSPEND)
+            info = mark_thread_suspended(t, CMD_THREAD_SUSPEND, main_suspend=False)
             frame = info.get_topmost_frame(t)
 
             # Reset the tracing as in this case as it could've set scopes to be untraced.

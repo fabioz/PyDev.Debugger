@@ -25,7 +25,9 @@ except ImportError:
     def get_smart_step_into_variant_from_frame_offset(*args, **kwargs):
         return None
 
+
 # IFDEF CYTHON
+# cython_inline_constant: CMD_THREAD_SUSPEND = 105
 # cython_inline_constant: CMD_STEP_INTO = 107
 # cython_inline_constant: CMD_STEP_INTO_MY_CODE = 144
 # cython_inline_constant: CMD_STEP_RETURN = 109
@@ -40,6 +42,7 @@ except ImportError:
 # cython_inline_constant: STATE_SUSPEND = 2
 # ELSE
 # Note: those are now inlined on cython.
+CMD_THREAD_SUSPEND = 105
 CMD_STEP_INTO = 107
 CMD_STEP_INTO_MY_CODE = 144
 CMD_STEP_RETURN = 109
@@ -122,6 +125,7 @@ class _TryExceptContainerObj(object):
     """
 
     try_except_infos = None
+
 
 # ENDIF
 
@@ -809,7 +813,7 @@ class PyDBFrame:
                 if should_skip:
                     stop = False
 
-                elif step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE):
+                elif step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE, CMD_THREAD_SUSPEND):
                     force_check_project_scope = step_cmd == CMD_STEP_INTO_MY_CODE
                     if is_line:
                         if not info.pydev_use_scoped_step_frame:
