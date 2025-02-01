@@ -559,6 +559,8 @@ class PyDevJsonCommandProcessor(object):
         """
         arguments = request.arguments  # : :type arguments: ContinueArguments
         thread_id = arguments.threadId
+        if py_db.multi_threads_single_notification:
+            thread_id = "*"
 
         def on_resumed():
             body = {"allThreadsContinued": thread_id == "*"}

@@ -3054,7 +3054,7 @@ static const char __pyx_k_notify_skipped_step_in_because_o[] = "notify_skipped_s
 static const char __pyx_k_pyx_unpickle_TopLevelThreadTra_2[] = "__pyx_unpickle_TopLevelThreadTracerNoBackFrame";
 static const char __pyx_k_send_caught_exception_stack_proc[] = "send_caught_exception_stack_proceeded";
 static const char __pyx_k_skip_on_exceptions_thrown_in_sam[] = "skip_on_exceptions_thrown_in_same_context";
-static const char __pyx_k_thread__ident_is_None_in__get_re[] = "thread._ident is None in _get_related_thread!";
+static const char __pyx_k_thread__ident_is_None_in__get_re[] = "thread._ident is None in _get_related_thread! - thread: %s";
 static const char __pyx_k_top_level_thread_tracer_unhandle[] = "top_level_thread_tracer_unhandled";
 static const char __pyx_k_trace_dispatch_and_unhandled_exc[] = "trace_dispatch_and_unhandled_exceptions";
 static const char __pyx_k_TopLevelThreadTracerNoBackFrame_2[] = "TopLevelThreadTracerNoBackFrame.trace_dispatch_and_unhandled_exceptions";
@@ -6167,7 +6167,7 @@ static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython_24PyDBAdditionalThread
  *             return None
  * 
  *         if thread._ident is None:  # Can this happen?             # <<<<<<<<<<<<<<
- *             pydev_log.critical("thread._ident is None in _get_related_thread!")
+ *             pydev_log.critical("thread._ident is None in _get_related_thread! - thread: %s", thread)
  *             return None
  */
   __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_thread, __pyx_n_s_ident); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 148, __pyx_L1_error)
@@ -6179,7 +6179,7 @@ static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython_24PyDBAdditionalThread
     /* "_pydevd_bundle/pydevd_cython.pyx":149
  * 
  *         if thread._ident is None:  # Can this happen?
- *             pydev_log.critical("thread._ident is None in _get_related_thread!")             # <<<<<<<<<<<<<<
+ *             pydev_log.critical("thread._ident is None in _get_related_thread! - thread: %s", thread)             # <<<<<<<<<<<<<<
  *             return None
  * 
  */
@@ -6203,8 +6203,8 @@ static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython_24PyDBAdditionalThread
     }
     #endif
     {
-      PyObject *__pyx_callargs[2] = {__pyx_t_2, __pyx_kp_s_thread__ident_is_None_in__get_re};
-      __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
+      PyObject *__pyx_callargs[3] = {__pyx_t_2, __pyx_kp_s_thread__ident_is_None_in__get_re, __pyx_v_thread};
+      __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 2+__pyx_t_5);
       __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
       if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 149, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
@@ -6214,7 +6214,7 @@ static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython_24PyDBAdditionalThread
 
     /* "_pydevd_bundle/pydevd_cython.pyx":150
  *         if thread._ident is None:  # Can this happen?
- *             pydev_log.critical("thread._ident is None in _get_related_thread!")
+ *             pydev_log.critical("thread._ident is None in _get_related_thread! - thread: %s", thread)
  *             return None             # <<<<<<<<<<<<<<
  * 
  *         if threading._active.get(thread._ident) is not thread:
@@ -6227,7 +6227,7 @@ static PyObject *__pyx_f_14_pydevd_bundle_13pydevd_cython_24PyDBAdditionalThread
  *             return None
  * 
  *         if thread._ident is None:  # Can this happen?             # <<<<<<<<<<<<<<
- *             pydev_log.critical("thread._ident is None in _get_related_thread!")
+ *             pydev_log.critical("thread._ident is None in _get_related_thread! - thread: %s", thread)
  *             return None
  */
   }
