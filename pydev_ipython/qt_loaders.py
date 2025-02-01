@@ -167,7 +167,7 @@ def has_binding(api):
                 return submod_check
         except:
             return False
-                
+
     except ImportError:
         return False
 

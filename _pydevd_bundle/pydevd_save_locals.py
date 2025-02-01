@@ -1,6 +1,7 @@
 """
 Utility for saving locals.
 """
+
 import sys
 from _pydevd_bundle.pydevd_constants import IS_PY313_OR_GREATER
 from _pydev_bundle import pydev_log

@@ -25,7 +25,8 @@ def pydevd_find_thread_by_id(thread_id):
     return None
 
 
-def mark_thread_suspended(thread, stop_reason: int, original_step_cmd: int=-1, main_suspend: bool=True):
+def mark_thread_suspended(thread, stop_reason: int, original_step_cmd: int = -1, main_suspend: bool = True):
+    pydev_log.info("Marking thread suspended. Name: %s, stop_reason: %s, main_suspend: %s", thread.name, stop_reason, main_suspend)
     info = set_additional_thread_info(thread)
     info.suspend_type = PYTHON_SUSPEND
     if original_step_cmd != -1:
@@ -76,6 +77,11 @@ def resume_threads(thread_id, except_thread=None):
             continue
 
         internal_run_thread(t, set_additional_thread_info=set_additional_thread_info)
+
+
+from _pydevd_bundle.pydevd_constants import ForkSafeLock
+
+suspend_threads_lock = ForkSafeLock()
 
 
 def suspend_all_threads(py_db, except_thread):

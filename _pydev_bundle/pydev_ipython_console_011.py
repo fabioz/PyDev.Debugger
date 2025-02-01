@@ -10,7 +10,7 @@
 #   eg: Completing a magic when user typed it without the leading % causes the % to be inserted
 #       to the left of what should be the first colon.
 """Interface to TerminalInteractiveShell for PyDev Interactive Console frontend
-   for IPython 0.11 to 1.0+.
+for IPython 0.11 to 1.0+.
 """
 
 from __future__ import print_function

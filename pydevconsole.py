@@ -1,6 +1,7 @@
 """
 Entry point module to start the interactive console.
 """
+
 from _pydev_bundle._pydev_saved_modules import thread, _code
 from _pydevd_bundle.pydevd_constants import IS_JYTHON
 
