@@ -148,7 +148,7 @@ def test_object_resolver_slow_property():
     _py_db = PyDB()
     obj = MyObject()
     dictionary = clear_contents_dictionary(default_resolver.get_dictionary(obj))
-    assert dictionary == {"a": 10, "b": 20, "c": property, "d": 40}
+    assert dictionary == {"a": 10, "b": 20, "c": "Timeout resolving property attribute: c", "d": 40}
 
     contents_debug_adapter_protocol = clear_contents_debug_adapter_protocol(
         default_resolver.get_contents_debug_adapter_protocol(obj)
@@ -156,7 +156,7 @@ def test_object_resolver_slow_property():
     assert contents_debug_adapter_protocol == [
         ("a", 10, ".a"),
         ("b", 20, ".b"),
-        ("c", property, ".c"),
+        ("c", "Timeout resolving property attribute: c", ".c"),
         ("d", 40, ".d"),
     ]
 

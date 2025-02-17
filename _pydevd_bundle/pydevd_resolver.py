@@ -197,28 +197,20 @@ class DefaultResolver:
                     class_attr_type = type(class_attr)
 
                 timeout_sec = pydevd_constants.PYDEVD_PROPERTY_RESOLVE_TIMEOUT
-                if class_attr_type is property and timeout_sec > 0:
-                    py_db = get_global_debugger()
-                    if py_db:
-                        try:
-                            on_interrupt_timeout = (
-                                create_interrupt_this_thread_callback()
-                            )
-                            timeout_tracker = py_db.timeout_tracker
-                            with timeout_tracker.call_on_timeout(
-                                timeout_sec, on_interrupt_timeout
-                            ):
-                                attr = getattr(var, name)
-                        except KeyboardInterrupt:
-                            if py_db.writer:
-                                py_db.writer.add_command(
-                                    py_db.cmd_factory.make_warning_message(
-                                        f"Timeout resolving property '{name}'\n"
-                                    )
-                                )
-                            attr = class_attr_type
-                    else:
-                        attr = getattr(var, name)
+                if (
+                    class_attr_type is property
+                    and timeout_sec > 0
+                    and (py_db := get_global_debugger())
+                ):
+                    try:
+                        on_interrupt_timeout = create_interrupt_this_thread_callback()
+                        timeout_tracker = py_db.timeout_tracker
+                        with timeout_tracker.call_on_timeout(
+                            timeout_sec, on_interrupt_timeout
+                        ):
+                            attr = getattr(var, name)
+                    except KeyboardInterrupt:
+                        attr = f"Timeout resolving {class_attr_type.__name__} attribute: {name}"
                 elif not used___dict__:
                     attr = getattr(var, name)
                 else:
