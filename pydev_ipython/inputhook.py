@@ -147,11 +147,11 @@ class InputHookManager(object):
             app = wx.App(redirect=False, clearSigInt=False)
         """
         import wx
-        from distutils.version import LooseVersion as V
+        from packaging.version import Version as V
 
-        wx_version = V(wx.__version__).version  # @UndefinedVariable
+        wx_version = V(wx.__version__)  # @UndefinedVariable
 
-        if wx_version < [2, 8]:
+        if wx_version < V("2.8"):
             raise ValueError("requires wxPython >= 2.8, but you have %s" % wx.__version__)  # @UndefinedVariable
 
         from pydev_ipython.inputhookwx import inputhook_wx
