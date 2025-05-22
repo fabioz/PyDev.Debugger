@@ -19,7 +19,6 @@ from typing import Dict, Optional, Tuple, Any
 from os.path import basename, splitext
 
 from _pydev_bundle import pydev_log
-from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydevd_bundle import pydevd_dont_trace
 from _pydevd_bundle.pydevd_constants import (
     IS_PY313_OR_GREATER,
@@ -269,6 +268,10 @@ cdef class ThreadInfo:
         self.additional_info = additional_info
         self.trace = trace
 
+        self._use_handle = hasattr(thread, "_handle")
+        self._use_started = hasattr(thread, "_started")
+        self._use_os_thread_handle = hasattr(thread, "_os_thread_handle")
+
     # fmt: off
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
     cdef bint is_thread_alive(self):
@@ -276,7 +279,17 @@ cdef class ThreadInfo:
 #     def is_thread_alive(self):
     # ENDIF
     # fmt: on
-        return is_thread_alive(self.thread)
+        # Python 3.14
+        if self._use_os_thread_handle and self._use_started:
+            return not self.thread._os_thread_handle.is_done()
+
+        # Python 3.13
+        elif self._use_handle and self._use_started:
+            return not self.thread._handle.is_done()
+
+        # Python 3.12
+        else:
+            return not self.thread._is_stopped
 
 
 class _DeleteDummyThreadOnDel:
