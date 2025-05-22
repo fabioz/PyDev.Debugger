@@ -247,7 +247,6 @@ cdef class ThreadInfo:
     cdef PyDBAdditionalThreadInfo additional_info
     thread: threading.Thread
     trace: bool
-    _use_is_stopped: bool
 # ELSE
 # class ThreadInfo:
 #     additional_info: PyDBAdditionalThreadInfo
@@ -268,8 +267,11 @@ cdef class ThreadInfo:
         self.thread_ident = thread_ident
         self.additional_info = additional_info
         self.trace = trace
-        self._use_is_stopped = hasattr(thread, '_is_stopped')
-        
+
+        self._use_handle = hasattr(thread, "_handle")
+        self._use_started = hasattr(thread, "_started")
+        self._use_os_thread_handle = hasattr(thread, "_os_thread_handle")
+
     # fmt: off
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
     cdef bint is_thread_alive(self):
@@ -277,10 +279,17 @@ cdef class ThreadInfo:
 #     def is_thread_alive(self):
     # ENDIF
     # fmt: on
-        if self._use_is_stopped:
-            return not self.thread._is_stopped
-        else:
+        # Python 3.14
+        if self._use_os_thread_handle and self._use_started:
+            return not self.thread._os_thread_handle.is_done()
+
+        # Python 3.13
+        elif self._use_handle and self._use_started:
             return not self.thread._handle.is_done()
+
+        # Python 3.12
+        else:
+            return not self.thread._is_stopped
 
 
 class _DeleteDummyThreadOnDel:
