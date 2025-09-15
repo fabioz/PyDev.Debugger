@@ -1373,7 +1373,6 @@ def test_case_sys_exit_0_handled_exception(case_setup_dap, break_on_system_exit_
     sys.platform == "darwin" or not SUPPORT_ATTACH_TO_PID or IS_PYPY,
     reason="https://github.com/microsoft/ptvsd/issues/1988",
 )
-@pytest.mark.flaky(retries=2, delay=1)
 @pytest.mark.parametrize("raised", ["raised", ""])
 @pytest.mark.parametrize("uncaught", ["uncaught", ""])
 @pytest.mark.parametrize("zero", ["zero", ""])
