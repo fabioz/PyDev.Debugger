@@ -201,7 +201,7 @@ def get_python_helper_lib_filename():
         pydev_log.info("Unable to set trace to all threads in platform: %s", sys.platform)
         return None
 
-    if arch.lower() not in ("amd64", "x86", "x86_64", "i386", "x86"):
+    if arch.lower() not in ("arm64", "amd64", "x86", "x86_64", "i386", "x86"):
         # We don't support this processor by default. Still, let's support the case where the
         # user manually compiled it himself with some heuristics.
         #

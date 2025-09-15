@@ -1,7 +1,6 @@
 """
 Support for a tag that allows skipping over functions while debugging.
 """
-
 import linecache
 import re
 

@@ -77,7 +77,7 @@ class NetCommand(_BaseNetCommand):
             as_dict["pydevd_cmd_id"] = cmd_id
             as_dict["seq"] = seq
             self.as_dict = as_dict
-            text = json.dumps(as_dict)
+            text = json.dumps(as_dict, default=str)
 
         assert isinstance(text, str)
 
