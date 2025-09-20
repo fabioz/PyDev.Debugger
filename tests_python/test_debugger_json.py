@@ -1373,7 +1373,6 @@ def test_case_sys_exit_0_handled_exception(case_setup_dap, break_on_system_exit_
     sys.platform == "darwin" or not SUPPORT_ATTACH_TO_PID or IS_PYPY,
     reason="https://github.com/microsoft/ptvsd/issues/1988",
 )
-@pytest.mark.flaky(retries=2, delay=1)
 @pytest.mark.parametrize("raised", ["raised", ""])
 @pytest.mark.parametrize("uncaught", ["uncaught", ""])
 @pytest.mark.parametrize("zero", ["zero", ""])
@@ -5931,13 +5930,28 @@ def test_send_json_message(case_setup_dap):
 def test_global_scope(case_setup_dap):
     with case_setup_dap.test_file("_debugger_case_globals.py") as writer:
         json_facade = JsonFacade(writer)
-        json_facade.write_set_breakpoints(writer.get_line_index_with_content("breakpoint here"))
+        break1 = writer.get_line_index_with_content("breakpoint here")
+        break2 = writer.get_line_index_with_content("second breakpoint")
+        json_facade.write_set_breakpoints([break1, break2])
 
         json_facade.write_make_initial_run()
         json_hit = json_facade.wait_for_thread_stopped()
 
         local_var = json_facade.get_global_var(json_hit.frame_id, "in_global_scope")
         assert local_var.value == "'in_global_scope_value'"
+
+        scopes_request = json_facade.write_request(pydevd_schema.ScopesRequest(pydevd_schema.ScopesArguments(json_hit.frame_id)))
+        scopes_response = json_facade.wait_for_response(scopes_request)
+        assert len(scopes_response.body.scopes) == 2
+        assert scopes_response.body.scopes[0]["name"] == "Locals"
+        assert scopes_response.body.scopes[1]["name"] == "Globals"
+        globals_varreference = scopes_response.body.scopes[1]["variablesReference"]
+
+        json_facade.write_set_variable(globals_varreference, "in_global_scope", "'new_value'")
+        json_facade.write_continue()
+        json_hit2 = json_facade.wait_for_thread_stopped()
+        global_var = json_facade.get_global_var(json_hit2.frame_id, "in_global_scope")
+        assert global_var.value == "'new_value'"
         json_facade.write_continue()
 
         writer.finished_ok = True

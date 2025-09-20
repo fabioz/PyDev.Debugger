@@ -256,12 +256,15 @@ def _get_unhandled_exception_frame(exc, depth: int) -> Optional[FrameType]:
 #     thread: threading.Thread
 #     trace: bool
 #     _use_is_stopped: bool
+#     _use_on_thread_handle: bool
 # ELSE
 class ThreadInfo:
     additional_info: PyDBAdditionalThreadInfo
     thread_ident: int
     thread: threading.Thread
     trace: bool
+    _use_is_stopped: bool
+    _use_on_thread_handle: bool
 # ENDIF
 # fmt: on
 
@@ -277,6 +280,7 @@ class ThreadInfo:
         self.additional_info = additional_info
         self.trace = trace
         self._use_is_stopped = hasattr(thread, '_is_stopped')
+        self._use_on_thread_handle = hasattr(thread, '_os_thread_handle')
         
     # fmt: off
     # IFDEF CYTHON
@@ -285,7 +289,9 @@ class ThreadInfo:
     def is_thread_alive(self):
     # ENDIF
     # fmt: on
-        if self._use_is_stopped:
+        if self._use_on_thread_handle:
+            return not self.thread._os_thread_handle.is_done()
+        elif self._use_is_stopped:
             return not self.thread._is_stopped
         else:
             return not self.thread._handle.is_done()
@@ -776,6 +782,16 @@ def enable_code_tracing(thread_ident: Optional[int], code, frame) -> bool:
 
     return _enable_code_tracing(py_db, additional_info, func_code_info, code, frame, False)
 
+# fmt: off
+# IFDEF CYTHON
+# cpdef reset_thread_local_info():
+# ELSE
+def reset_thread_local_info():
+# ENDIF
+# fmt: on
+    """Resets the thread local info TLS store for use after a fork()."""
+    global _thread_local_info
+    _thread_local_info = threading.local()
 
 # fmt: off
 # IFDEF CYTHON

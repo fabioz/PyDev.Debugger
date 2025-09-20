@@ -88,7 +88,14 @@ def _get_library_dir():
                 break
 
     if library_dir is None or not os_path_exists(library_dir):
-        library_dir = os.path.dirname(os.__file__)
+        if hasattr(os, "__file__"):
+            # "os" is a frozen import an thus "os.__file__" is not always set.
+            # See https://github.com/python/cpython/pull/28656
+            library_dir = os.path.dirname(os.__file__)
+        else:
+            # "threading" is not a frozen import an thus "threading.__file__" is always set.
+            import threading
+            library_dir = os.path.dirname(threading.__file__)
 
     return library_dir
 
@@ -190,7 +197,7 @@ def _resolve_listing_parts(resolved, parts_in_lowercase, filename):
         # Don't fail nor log unless the trace level is at least info. Just return the original file passed.
         if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 1:
             pydev_log.info(
-                "pydev debugger: OSError: Unable to get real case for file. Details:\nfilename: %s\ndrive: %s\nparts: %s\n",
+                "pydev debugger: OSError: Unable to get real case for file. Details:\n" "filename: %s\ndrive: %s\nparts: %s\n",
                 filename,
                 resolved,
                 parts_in_lowercase,
@@ -752,6 +759,16 @@ def setup_client_server_paths(paths):
         initial_paths_with_end_sep.append((path0, path1))
         paths_from_eclipse_to_python_with_end_sep.append((_normcase_from_client(path0), normcase(path1)))
 
+    if DEBUG_CLIENT_SERVER_TRANSLATION:
+        pydev_log.critical(
+            "pydev debugger: paths_from_eclipse_to_python %s",
+            ", ".join(
+                [
+                    '"%s=>%s"' % (x[0], x[1])
+                    for x in paths_from_eclipse_to_python
+                ]
+            ),
+        )
     # Fix things so that we always match the versions with a slash in the end first.
     initial_paths = initial_paths_with_end_sep + initial_paths
     paths_from_eclipse_to_python = paths_from_eclipse_to_python_with_end_sep + paths_from_eclipse_to_python
