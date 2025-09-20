@@ -33,7 +33,7 @@ jobs:
         include:
           - name: "ubuntu-pypy3"
             python: "pypy3.10"
-            os: ubuntu-20.04
+            os: ubuntu-latest
             PYDEVD_USE_CYTHON: NO
 #           - name: "macos-py37-cython"
 #             python: "3.7"
@@ -41,7 +41,7 @@ jobs:
 #             PYDEVD_USE_CYTHON: YES
           - name: "ubuntu-py38-cython-checkbin"
             python: "3.8"
-            os: ubuntu-20.04
+            os: ubuntu-latest
             PYDEVD_USE_CYTHON: YES
           - name: "windows-py39-cython"
             python: "3.9"
@@ -58,11 +58,11 @@ jobs:
             PYDEVD_USE_CYTHON: YES
           - name: "ubuntu-py311-cython"
             python: "3.11.0"
-            os: ubuntu-20.04
+            os: ubuntu-latest
             PYDEVD_USE_CYTHON: YES
           - name: "ubuntu-py312-cython-checkbin"
             python: "3.12.0"
-            os: ubuntu-20.04
+            os: ubuntu-latest
             PYDEVD_USE_CYTHON: YES
           - name: "windows-py312-cython-checkbin"
             python: "3.12"
@@ -70,7 +70,7 @@ jobs:
             PYDEVD_USE_CYTHON: YES
           - name: "ubuntu-py313-cython"
             python: "3.13"
-            os: ubuntu-20.04
+            os: ubuntu-latest
             PYDEVD_USE_CYTHON: YES
           - name: "windows-py313-cython"
             python: "3.13"
@@ -78,7 +78,7 @@ jobs:
             PYDEVD_USE_CYTHON: YES
           - name: "ubuntu-py314-cython"
             python: "3.14-dev"
-            os: ubuntu-20.04
+            os: ubuntu-latest
             PYDEVD_USE_CYTHON: YES
           - name: "windows-py314-cython"
             python: "3.14-dev"
