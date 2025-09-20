@@ -115,7 +115,7 @@ jobs:
         pip install untangle --no-warn-script-location
         pip install importlib-metadata --no-warn-script-location
     - name: Install Python 3.x deps
-      if: contains(matrix.name, 'py3') && !contains(matrix.name, 'pypy') && !contains(matrix.name, 'py312') && !contains(matrix.name, 'py311') && !contains(matrix.name, 'py313')
+      if: contains(matrix.name, 'py3') && !contains(matrix.name, 'pypy') && !contains(matrix.name, 'py312') && !contains(matrix.name, 'py311') && !contains(matrix.name, 'py313') && !contains(matrix.name, 'py314')
       run: |
         pip install PySide2 --no-warn-script-location
         pip install "numpy<2" --force --no-warn-script-location
