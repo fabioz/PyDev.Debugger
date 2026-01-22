@@ -2,12 +2,13 @@
 
 import sys
 import traceback
-from _pydevd_bundle.pydevconsole_code import InteractiveConsole, _EvalAwaitInNewEventLoop
+from _pydevd_bundle.pydevconsole_code import InteractiveConsole
 from _pydev_bundle import _pydev_completer
 from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn
 from _pydev_bundle.pydev_imports import Exec
 from _pydev_bundle.pydev_override import overrides
 from _pydevd_bundle import pydevd_save_locals
+from _pydevd_bundle.pydevd_async_utils import eval_async_coro
 from _pydevd_bundle.pydevd_io import IOBuf
 from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle.pydevd_xml import make_valid_xml_value
@@ -160,14 +161,10 @@ class DebugConsole(InteractiveConsole, BaseInterpreterInterface):
                 is_async = inspect.CO_COROUTINE & code.co_flags == inspect.CO_COROUTINE
 
             if is_async:
-                t = _EvalAwaitInNewEventLoop(code, updated_globals, updated_locals)
-                t.start()
-                t.join()
-
-                update_globals_and_locals(updated_globals, initial_globals, self.frame)
-                if t.exc:
-                    raise t.exc[1].with_traceback(t.exc[2])
-
+                try:
+                    eval_async_coro(code, updated_globals, updated_locals)
+                finally:
+                    update_globals_and_locals(updated_globals, initial_globals, self.frame)
             else:
                 try:
                     exec(code, updated_globals, updated_locals)

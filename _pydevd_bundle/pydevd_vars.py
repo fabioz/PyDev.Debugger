@@ -3,6 +3,8 @@ resolution/conversion to XML.
 """
 
 import pickle
+
+from _pydevd_bundle.pydevd_async_utils import eval_async_coro
 from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, iter_chars, silence_warnings_decorator, get_global_debugger
 
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
@@ -253,18 +255,7 @@ def eval_in_context(expression, global_vars, local_vars, py_db=None):
         is_async = inspect.CO_COROUTINE & compiled.co_flags == inspect.CO_COROUTINE
 
         if is_async:
-            if py_db is None:
-                py_db = get_global_debugger()
-                if py_db is None:
-                    raise RuntimeError("Cannot evaluate async without py_db.")
-            t = _EvalAwaitInNewEventLoop(py_db, compiled, global_vars, local_vars)
-            t.start()
-            t.join()
-
-            if t.exc:
-                raise t.exc[1].with_traceback(t.exc[2])
-            else:
-                result = t.evaluated_value
+            result = eval_async_coro(compiled, local_vars, global_vars)
         else:
             result = eval(compiled, global_vars, local_vars)
     except (Exception, KeyboardInterrupt):
@@ -416,31 +407,6 @@ def _compile_as_exec(expression):
         return compile(expression_to_evaluate, "<string>", "exec")
 
 
-class _EvalAwaitInNewEventLoop(PyDBDaemonThread):
-    def __init__(self, py_db, compiled, updated_globals, updated_locals):
-        PyDBDaemonThread.__init__(self, py_db)
-        self._compiled = compiled
-        self._updated_globals = updated_globals
-        self._updated_locals = updated_locals
-
-        # Output
-        self.evaluated_value = None
-        self.exc = None
-
-    async def _async_func(self):
-        return await eval(self._compiled, self._updated_locals, self._updated_globals)
-
-    def _on_run(self):
-        try:
-            import asyncio
-
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            self.evaluated_value = asyncio.run(self._async_func())
-        except:
-            self.exc = sys.exc_info()
-
-
 @_evaluate_with_timeouts
 def evaluate_expression(py_db, frame, expression, is_exec):
     """
@@ -550,12 +516,7 @@ def evaluate_expression(py_db, frame, expression, is_exec):
                     compiled = _compile_as_exec(expression)
                     is_async = inspect.CO_COROUTINE & compiled.co_flags == inspect.CO_COROUTINE
                     if is_async:
-                        t = _EvalAwaitInNewEventLoop(py_db, compiled, updated_globals, updated_locals)
-                        t.start()
-                        t.join()
-
-                        if t.exc:
-                            raise t.exc[1].with_traceback(t.exc[2])
+                        eval_async_coro(compiled, updated_globals, updated_locals)
                     else:
                         Exec(compiled, updated_globals, updated_locals)
                 finally:
@@ -564,14 +525,7 @@ def evaluate_expression(py_db, frame, expression, is_exec):
             else:
                 is_async = inspect.CO_COROUTINE & compiled.co_flags == inspect.CO_COROUTINE
                 if is_async:
-                    t = _EvalAwaitInNewEventLoop(py_db, compiled, updated_globals, updated_locals)
-                    t.start()
-                    t.join()
-
-                    if t.exc:
-                        raise t.exc[1].with_traceback(t.exc[2])
-                    else:
-                        result = t.evaluated_value
+                    result = eval_async_coro(compiled, updated_globals, updated_locals)
                 else:
                     result = eval(compiled, updated_globals, updated_locals)
                 if result is not None:  # Only print if it's not None (as python does)

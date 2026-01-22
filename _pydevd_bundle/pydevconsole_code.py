@@ -212,33 +212,8 @@ class CommandCompiler:
 
 __all__ = ["InteractiveInterpreter", "InteractiveConsole", "interact", "compile_command"]
 
-from _pydev_bundle._pydev_saved_modules import threading
 
-
-class _EvalAwaitInNewEventLoop(threading.Thread):
-    def __init__(self, compiled, updated_globals, updated_locals):
-        threading.Thread.__init__(self)
-        self.daemon = True
-        self._compiled = compiled
-        self._updated_globals = updated_globals
-        self._updated_locals = updated_locals
-
-        # Output
-        self.evaluated_value = None
-        self.exc = None
-
-    async def _async_func(self):
-        return await eval(self._compiled, self._updated_locals, self._updated_globals)
-
-    def run(self):
-        try:
-            import asyncio
-
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            self.evaluated_value = asyncio.run(self._async_func())
-        except:
-            self.exc = sys.exc_info()
+from _pydevd_bundle.pydevd_async_utils import eval_async_coro
 
 
 class InteractiveInterpreter:
@@ -321,13 +296,7 @@ class InteractiveInterpreter:
                 is_async = inspect.CO_COROUTINE & code.co_flags == inspect.CO_COROUTINE
 
             if is_async:
-                t = _EvalAwaitInNewEventLoop(code, self.locals, None)
-                t.start()
-                t.join()
-
-                if t.exc:
-                    raise t.exc[1].with_traceback(t.exc[2])
-
+                eval_async_coro(code, self.locals, None)
             else:
                 exec(code, self.locals)
         except SystemExit:
