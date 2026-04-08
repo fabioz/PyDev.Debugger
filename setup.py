@@ -21,9 +21,8 @@ build_tools\pydevd_release_process.txt
 for release process.
 """
 
-from setuptools import setup
+from setuptools import Extension, setup
 from setuptools.dist import Distribution
-from distutils.extension import Extension
 import os
 
 

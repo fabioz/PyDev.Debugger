@@ -181,7 +181,7 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython, 
                     stream.write(c_file_contents)
 
         # Always compile the .c (and not the .pyx) file (which we should keep up-to-date by running build_tools/build.py).
-        from distutils.extension import Extension
+        from setuptools import Extension
 
         extra_compile_args = []
         extra_link_args = []
