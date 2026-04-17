@@ -1,8 +1,9 @@
 from _pydevd_bundle.pydevd_constants import IS_PY36_OR_GREATER, GENERATED_LEN_ATTR_NAME
 from _pydevd_bundle import pydevd_constants, pydevd_frame_utils
+from pydevd import PyDB
+from time import sleep
 import pytest
 import sys
-
 
 def check_len_entry(len_entry, first_2_params):
     assert len_entry[:2] == first_2_params
@@ -122,6 +123,42 @@ def test_object_resolver__dict__non_strings():
 
     contents_debug_adapter_protocol = clear_contents_debug_adapter_protocol(default_resolver.get_contents_debug_adapter_protocol(obj))
     assert contents_debug_adapter_protocol == [("(1, 2)", (3, 4), ".__dict__[(1, 2)]")]
+
+
+def test_object_resolver_slow_property():
+    from _pydevd_bundle.pydevd_resolver import DefaultResolver
+
+    default_resolver = DefaultResolver()
+
+    class MyObject(object):
+        def __init__(self):
+            self.a = 10
+            self.b = 20
+
+        @property
+        def c(self):
+            sleep(0.2)
+            return 30
+
+        @property
+        def d(self):
+            return 40
+
+    pydevd_constants.PYDEVD_PROPERTY_RESOLVE_TIMEOUT = 0.1
+    _py_db = PyDB()
+    obj = MyObject()
+    dictionary = clear_contents_dictionary(default_resolver.get_dictionary(obj))
+    assert dictionary == {"a": 10, "b": 20, "c": "Timeout resolving property attribute: c", "d": 40}
+
+    contents_debug_adapter_protocol = clear_contents_debug_adapter_protocol(
+        default_resolver.get_contents_debug_adapter_protocol(obj)
+    )
+    assert contents_debug_adapter_protocol == [
+        ("a", 10, ".a"),
+        ("b", 20, ".b"),
+        ("c", "Timeout resolving property attribute: c", ".c"),
+        ("d", 40, ".d"),
+    ]
 
 
 def test_django_forms_resolver():

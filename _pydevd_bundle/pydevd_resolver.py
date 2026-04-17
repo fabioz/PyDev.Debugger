@@ -12,8 +12,10 @@ from _pydevd_bundle.pydevd_constants import (
     DebugInfoHolder,
     IS_PYPY,
     GENERATED_LEN_ATTR_NAME,
+    get_global_debugger,
 )
 from _pydevd_bundle.pydevd_safe_repr import SafeRepr
+from _pydevd_bundle.pydevd_timeout import create_interrupt_this_thread_callback
 from _pydevd_bundle import pydevd_constants
 
 TOO_LARGE_MSG = "Maximum number of items (%s) reached. To show more items customize the value of the PYDEVD_CONTAINER_RANDOM_ACCESS_MAX_ITEMS environment variable."
@@ -184,12 +186,32 @@ class DefaultResolver:
         timer = Timer()
         cls = type(var)
         for name in names:
+            name_as_str = name
             try:
-                name_as_str = name
                 if name_as_str.__class__ != str:
                     name_as_str = "%r" % (name_as_str,)
 
-                if not used___dict__:
+                class_attr_type = None
+                if hasattr(var.__class__, name_as_str):
+                    class_attr = getattr(var.__class__, name)
+                    class_attr_type = type(class_attr)
+
+                timeout_sec = pydevd_constants.PYDEVD_PROPERTY_RESOLVE_TIMEOUT
+                if (
+                    class_attr_type is property
+                    and timeout_sec > 0
+                    and (py_db := get_global_debugger())
+                ):
+                    try:
+                        on_interrupt_timeout = create_interrupt_this_thread_callback()
+                        timeout_tracker = py_db.timeout_tracker
+                        with timeout_tracker.call_on_timeout(
+                            timeout_sec, on_interrupt_timeout
+                        ):
+                            attr = getattr(var, name)
+                    except KeyboardInterrupt:
+                        attr = f"Timeout resolving {class_attr_type.__name__} attribute: {name}"
+                elif not used___dict__:
                     attr = getattr(var, name)
                 else:
                     attr = var.__dict__[name]
