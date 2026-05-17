@@ -503,6 +503,9 @@ def _apply_func_and_normalize_case(filename, func, isabs, normalize_case, os_pat
         ind += 4
         zip_path = r[:ind]
         inner_path = r[ind:]
+        if inner_path and not inner_path.startswith(("!", "/", "\\")):
+            # Keep paths such as ".zipx/main.py" as regular filesystem paths.
+            inner_path = ""
         if inner_path.startswith("!"):
             # Note (fabioz): although I can replicate this by creating a file ending as
             # .zip! or .egg!, I don't really know what's the real-world case for this
