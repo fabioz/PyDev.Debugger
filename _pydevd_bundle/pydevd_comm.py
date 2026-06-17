@@ -106,7 +106,10 @@ import itertools
 from urllib.parse import quote_plus, unquote_plus
 import pydevconsole
 from _pydevd_bundle import pydevd_vars, pydevd_io, pydevd_reload
-from _pydevd_bundle import pydevd_bytecode_utils
+try:
+    from _pydevd_bundle import pydevd_bytecode_utils
+except ImportError:
+    pydevd_bytecode_utils = None
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_vm_type
 import sys
