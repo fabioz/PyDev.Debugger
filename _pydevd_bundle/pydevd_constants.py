@@ -62,6 +62,7 @@ USER_CODE_BASENAMES_STARTING_WITH = ("<ipython",)
 LIBRARY_CODE_BASENAMES_STARTING_WITH = ("<",)
 
 IS_CPYTHON = platform.python_implementation() == "CPython"
+IS_GRAALPY = sys.implementation.name == "graalpy"
 
 # Hold a reference to the original _getframe (because psyco will change that as soon as it's imported)
 IS_IRONPYTHON = sys.platform == "cli"

@@ -4,6 +4,11 @@ Bytecode analysing utils. Originally added for using in smart step into.
 Note: not importable from Python 2.
 """
 
+from _pydevd_bundle.pydevd_constants import IS_GRAALPY
+
+if IS_GRAALPY:
+    raise ImportError("Smart step into bytecode utilities are not available on GraalPy.")
+
 from _pydev_bundle import pydev_log
 from types import CodeType
 from _pydevd_frame_eval.vendored.bytecode.instr import _Variable, Label
