@@ -220,6 +220,42 @@ class PyDevJsonCommandProcessor(object):
             if cmd is not None and send_response:
                 py_db.writer.add_command(cmd)
 
+    def on_breakpointlocations_request(self, py_db, request):
+        breakpoints = []
+        try:
+            import ast
+            import os
+            
+            source_path = request.arguments.source.path
+            start_line = getattr(request.arguments, 'line', 1)
+            end_line = getattr(request.arguments, 'endLine', start_line)
+            
+            if source_path and os.path.exists(source_path):
+                with open(source_path, 'r', encoding='utf-8') as f:
+                    source_code = f.read()
+                
+                tree = ast.parse(source_code)
+                valid_lines = set()
+                
+                for node in ast.walk(tree):
+                    if hasattr(node, 'lineno'):
+                        if start_line <= node.lineno <= end_line:
+                            valid_lines.add(node.lineno)
+                
+                for line_num in sorted(valid_lines):
+                    breakpoints.append({"line": line_num})
+        except Exception:
+            pass # Fallback to empty list on parsing errors
+            
+        response = {
+            "type": "response",
+            "request_seq": request.seq,
+            "success": True,
+            "command": request.command,
+            "body": {"breakpoints": breakpoints},
+        }
+        return NetCommand(CMD_RETURN, 0, response, is_json=True)
+
     def on_pydevdauthorize_request(self, py_db, request):
         client_access_token = py_db.authentication.client_access_token
         body = {"clientAccessToken": None}
