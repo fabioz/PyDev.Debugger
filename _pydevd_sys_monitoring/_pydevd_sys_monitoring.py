@@ -197,6 +197,12 @@ def _get_unhandled_exception_frame(exc, depth: int) -> Optional[FrameType]:
 # ENDIF
 # fmt: on
     try:
+        if _thread_local_info.f_reported_unhandled_exc_tag is exc:
+            return None
+    except AttributeError:
+        pass
+
+    try:
         # Unhandled frame has to be from the same exception.
         if _thread_local_info.f_unhandled_exc is exc:
             return _thread_local_info.f_unhandled_frame
@@ -950,6 +956,9 @@ def _unwind_event(code, instruction, exc):
     break_on_uncaught_exceptions = py_db.break_on_uncaught_exceptions
     if break_on_uncaught_exceptions:
         if frame is _get_unhandled_exception_frame(exc, 1):
+            _thread_local_info.f_reported_unhandled_exc_tag = _thread_local_info.f_unhandled_exc
+            del _thread_local_info.f_unhandled_exc
+            del _thread_local_info.f_unhandled_frame
             stop_on_unhandled_exception(py_db, thread_info.thread, thread_info.additional_info, arg)
             return
 
