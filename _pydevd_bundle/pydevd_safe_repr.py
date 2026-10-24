@@ -4,6 +4,8 @@
 
 # Gotten from ptvsd for supporting the format expected there.
 import sys
+from collections import defaultdict
+from types import FunctionType, BuiltinFunctionType
 from _pydevd_bundle.pydevd_constants import IS_PY36_OR_GREATER
 import locale
 from _pydev_bundle import pydev_log
@@ -97,6 +99,18 @@ class SafeRepr(object):
             except Exception:
                 return obj_repr is r
 
+        # Bound mapping values without invoking a custom factory representation.
+        # Preserve existing behavior for subclasses and explicit raw/hex formats.
+        if type(obj) is defaultdict and not self.raw_value and not self.convert_to_hex:
+            factory = obj.default_factory
+            if (
+                factory is None
+                or type(factory) is FunctionType
+                or type(factory) is BuiltinFunctionType
+                or any(factory is t for t in (list, dict, set, tuple, int, float, str, bool, bytes, object, frozenset))
+            ):
+                return self._repr_defaultdict(obj, level)
+
         for t, prefix, suffix, comma in self.collection_types:
             if isinstance(obj, t) and has_obj_repr(t):
                 return self._repr_iter(obj, level, prefix, suffix, comma)
@@ -113,6 +127,15 @@ class SafeRepr(object):
             return self._repr_long_iter(obj)
 
         return self._repr_other(obj, level)
+
+    def _repr_defaultdict(self, obj, level):
+        yield "defaultdict("
+        for part in self._repr_other(obj.default_factory, level + 1):
+            yield part
+        yield ", "
+        for part in self._repr_dict(obj, level, "{", "}", "", ": ", ""):
+            yield part
+        yield ")"
 
     # Determines whether an iterable exceeds the limits set in
     # maxlimits, and is therefore unsafe to repr().
